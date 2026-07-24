@@ -37,29 +37,10 @@ Raw Alerts  (JSON dicts from EDR, SIEM, Windows Event Log, …)
            │  (invalid alerts are rejected here — do not proceed)
            ▼
 ┌─────────────────────┐
-│  Knowledge Store    │  Returns KnowledgeFact objects (value + version +
-│  Lookup             │  confidence + timestamp) for user privilege tier,
-│  (knowledge_store   │  asset criticality/zone, network reachability, and
-│   .py)              │  prior-access baseline.
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Situational        │  Produces EnrichedIncident with THREE SEPARATE objects:
-│  Contextualization  │
-│  (contextualizer.py)│  ┌─────────────────────────────────────────────────┐
-│                     │  │ ImmutableContext  [STRUCTURED]                   │
-│                     │  │  Knowledge-store facts only.  Never holds        │
-│                     │  │  FREE_TEXT data (enforced at construction).      │
-│                     │  ├─────────────────────────────────────────────────┤
-│                     │  │ DerivedContext    [DERIVED]                      │
-│                     │  │  Computed by pure functions from ImmutableContext│
-│                     │  │  ONLY.  Evidence is a runtime TypeError here.   │
-│                     │  ├─────────────────────────────────────────────────┤
-│                     │  │ Evidence          [FREE_TEXT]                    │
-│                     │  │  Raw attacker-controlled fields, untouched.      │
-│                     │  │  risk_metadata empty in Phase 1 (ERA: Phase 2). │
-│                     │  └─────────────────────────────────────────────────┘
+│  Situational        │  Produces EnrichedIncident with THREE SEPARATE objects.
+│  Contextualization  │  (internally: KnowledgeStore lookups → ImmutableContext,
+│  (contextualizer.py)│   then compute_* rules → DerivedContext,
+│                     │   then free-text extraction → Evidence)
 └──────────┬──────────┘
            │
            ▼
@@ -74,6 +55,8 @@ Raw Alerts  (JSON dicts from EDR, SIEM, Windows Event Log, …)
            ▼
   Enriched Incident Clusters  →  downstream reasoning (Phase 2+, not built)
 ```
+
+*Note: If Knowledge Store lookup needs to be separately timed in a future phase, it would require its own `StageLogger` block added to `contextualizer.py`.*
 
 ---
 
