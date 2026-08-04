@@ -105,12 +105,24 @@ def attach_risk_metadata(
         else None
     )
 
-    # Assign to Evidence.risk_metadata — Evidence is mutable (not frozen).
-    # Original TrustedField.value attributes are never touched.
-    incident.evidence.risk_metadata = {
+    from types import MappingProxyType
+
+    def _make_immutable_dict(d: dict[str, Any]) -> MappingProxyType:
+        return MappingProxyType({
+            k: _make_immutable_dict(v) if isinstance(v, dict) else v
+            for k, v in d.items()
+        })
+
+    # Assign to Evidence.risk_metadata — Evidence is now frozen.
+    risk_metadata_dict = {
         "field_results": field_risk_dicts,
         "incident_result": incident_risk_dict,
     }
+    object.__setattr__(
+        incident.evidence,
+        "risk_metadata",
+        _make_immutable_dict(risk_metadata_dict)
+    )
 
     # Also populate the EnrichedIncident-level era_metadata extension point.
     # This is the full serialized bundle for use by downstream phases.

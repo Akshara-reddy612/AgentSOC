@@ -182,7 +182,7 @@ class DerivedContext:
 # Evidence
 # ---------------------------------------------------------------------------
 
-@dataclass
+@dataclass(frozen=True)
 class Evidence:
     """
     Raw free-text fields extracted from the alert, untouched.
@@ -214,6 +214,10 @@ class Evidence:
 
     def __post_init__(self) -> None:
         """Verify that all supplied TrustedField values are FREE_TEXT."""
+        from types import MappingProxyType
+        if isinstance(self.risk_metadata, dict) and not isinstance(self.risk_metadata, MappingProxyType):
+            object.__setattr__(self, "risk_metadata", MappingProxyType(self.risk_metadata))
+
         trusted_fields = {
             "process_name": self.process_name,
             "command_line": self.command_line,

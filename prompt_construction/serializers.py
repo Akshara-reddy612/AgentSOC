@@ -39,9 +39,15 @@ are system-controlled, because belt-and-suspenders escaping costs nothing.
 from __future__ import annotations
 
 import json
+from types import MappingProxyType
 from typing import Any
 
 from prompt_construction.package import PromptPackage
+
+def _json_default_safe(o: Any) -> Any:
+    if isinstance(o, MappingProxyType):
+        return dict(o)
+    return str(o)
 
 # XML escape table — all reserved XML characters, plus single quote for
 # completeness (required in attribute contexts; harmless in element content).
@@ -97,8 +103,8 @@ def _xml_escape_value(value: Any) -> str:
     Scalars are converted via str(); dicts and lists are JSON-serialized
     first so they remain human-readable in the output.
     """
-    if isinstance(value, (dict, list)):
-        raw = json.dumps(value, ensure_ascii=False, default=str)
+    if isinstance(value, (dict, list, MappingProxyType)):
+        raw = json.dumps(value, ensure_ascii=False, default=_json_default_safe)
     else:
         raw = str(value) if value is not None else ""
     return _xml_escape(raw)
@@ -158,7 +164,7 @@ def _render_evidence_entry(field_name: str, entry: dict[str, Any], indent: int) 
     risk_meta = entry.get("risk_metadata", {})
 
     escaped_value = _xml_escape(str(raw_value))
-    escaped_risk = _xml_escape(json.dumps(risk_meta, ensure_ascii=False, default=str))
+    escaped_risk = _xml_escape(json.dumps(risk_meta, ensure_ascii=False, default=_json_default_safe))
 
     lines = [
         f"{prefix}<{field_name}>",
@@ -272,4 +278,4 @@ def serialize_json(pkg: PromptPackage) -> str:
         "trusted_context": pkg.trusted_context,
         "untrusted_evidence": pkg.untrusted_evidence,
     }
-    return json.dumps(data, ensure_ascii=False, indent=2, default=str)
+    return json.dumps(data, ensure_ascii=False, indent=2, default=_json_default_safe)

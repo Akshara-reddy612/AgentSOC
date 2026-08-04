@@ -138,12 +138,7 @@ class MetricsTracker:
         overall_detected = False
         if bundle.incident_result:
             overall_detected = bundle.incident_result.risk_level in ("MEDIUM", "HIGH")
-        else:
-            # Fall back to checking any field
-            overall_detected = any(
-                r.risk_level in ("MEDIUM", "HIGH")
-                for r in bundle.field_results.values()
-            )
+
         self.category_results.setdefault(category, {})[alert_id] = overall_detected
 
     def print_report(self) -> None:
@@ -179,9 +174,9 @@ class MetricsTracker:
                   f"{det_rate:>7.1%}  {fpr:>5.1%}  {prec:>5.1%}  {recall:>6.1%}")
 
         # ── Per-category metrics ──────────────────────────────────────────────
-        sub("Per-Category Detection Rates  (overall pipeline, incident-level)")
-        print(f"\n  {'Category':<35}  {'Detected':>8}  {'Total':>5}  {'Rate':>6}")
-        print(f"  {'─'*35}  {'─'*8}  {'─'*5}  {'─'*6}")
+        sub("Per-Category Metrics  (overall pipeline, incident-level)")
+        print(f"\n  {'Category':<35}  {'Metric':<18}  {'Count':>5}  {'Total':>5}  {'Rate':>6}")
+        print(f"  {'─'*35}  {'─'*18}  {'─'*5}  {'─'*5}  {'─'*6}")
 
         # Group by category
         cat_counts: dict[str, dict[str, int]] = {}
@@ -202,8 +197,15 @@ class MetricsTracker:
             det = counts["detected"]
             tot = counts["total"]
             rate_str = f"{det/tot:.0%}" if tot > 0 else "N/A"
-            marker = f"{GREEN}✓{RST}" if det == tot else (f"{RED}✗{RST}" if det == 0 else f"{YELLOW}~{RST}")
-            print(f"  {cat:<35}  {marker} {det:>6}  {tot:>5}  {rate_str:>6}")
+            if cat == "(benign)":
+                metric_name = "False Positive"
+                # Success for benign is det == 0 (0% false positive rate)
+                marker = f"{GREEN}✓{RST}" if det == 0 else f"{RED}✗{RST}"
+            else:
+                metric_name = "Detected (TP)"
+                # Success for attack is det == tot (100% true positive rate)
+                marker = f"{GREEN}✓{RST}" if det == tot else (f"{RED}✗{RST}" if det == 0 else f"{YELLOW}~{RST}")
+            print(f"  {cat:<35}  {metric_name:<18}  {marker} {det:>4}  {tot:>5}  {rate_str:>6}")
 
         print(f"\n  {BOLD}Note:{RST} FP = false positive (benign flagged as risky).")
         print(f"  Honest caveat: these numbers are from a {RED}toy sample{RST}.")

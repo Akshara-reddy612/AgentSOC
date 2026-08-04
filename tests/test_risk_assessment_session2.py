@@ -116,6 +116,11 @@ class TestRiskMetadataConsistency:
                 f"Drift detected for field '{field_name}': "
                 f"risk_metadata does not match to_dict()"
             )
+            # Schema structure validations:
+            assert isinstance(actual["overall_score"], float)
+            assert actual["risk_level"] in ("LOW", "MEDIUM", "HIGH")
+            assert isinstance(actual["summary"], (list, tuple))
+            assert isinstance(actual["detectors"], (list, tuple))
 
     def test_risk_metadata_incident_result_matches_to_dict(self) -> None:
         """incident_result in risk_metadata matches bundle.incident_result.to_dict()."""
@@ -132,6 +137,9 @@ class TestRiskMetadataConsistency:
         expected = bundle.incident_result.to_dict()
         actual = incident.evidence.risk_metadata["incident_result"]
         assert actual == expected
+        assert isinstance(actual["overall_score"], float)
+        assert actual["risk_level"] in ("LOW", "MEDIUM", "HIGH")
+        assert isinstance(actual["summary"], (list, tuple))
 
     def test_era_metadata_matches_bundle_to_dict(self) -> None:
         """incident.era_metadata must equal bundle.to_dict()."""
@@ -422,36 +430,29 @@ class TestBenignFalsePositives:
     @pytest.mark.parametrize("fields", _BENIGN_CASES)
     def test_benign_field_level_not_high(self, fields: dict) -> None:
         """
-        Benign evidence fields must NOT be labelled HIGH.
-
-        MEDIUM is acceptable given the model's false-positive rate on common
-        process names (see class docstring).  HIGH would trigger analyst
-        escalation — that must not happen for clearly benign system processes.
+        Benign evidence fields must be labelled LOW.
         """
         evidence = _make_mock_evidence(**fields)
         bundle = assess(evidence)
 
         for field_name, result in bundle.field_results.items():
-            assert result.risk_level != "HIGH", (
-                f"Benign evidence field '{field_name}' got risk_level=HIGH "
-                f"(score={result.overall_score:.4f}) — unacceptable false positive "
-                f"(HIGH triggers escalation)"
+            assert result.risk_level == "LOW", (
+                f"Benign evidence field '{field_name}' got risk_level={result.risk_level} "
+                f"(score={result.overall_score:.4f}) — expected LOW"
             )
 
     @pytest.mark.parametrize("fields", _BENIGN_CASES)
     def test_benign_incident_level_not_high(self, fields: dict) -> None:
         """
-        Benign evidence must NOT be labelled HIGH at the incident level.
-        MEDIUM is acceptable (see class docstring).
+        Benign evidence must be labelled LOW at the incident level.
         """
         evidence = _make_mock_evidence(**fields)
         bundle = assess(evidence)
 
         assert bundle.incident_result is not None
-        assert bundle.incident_result.risk_level != "HIGH", (
-            f"Benign evidence incident got risk_level=HIGH "
-            f"(score={bundle.incident_result.overall_score:.4f}) — "
-            f"unacceptable false positive"
+        assert bundle.incident_result.risk_level == "LOW", (
+            f"Benign evidence incident got risk_level={bundle.incident_result.risk_level} "
+            f"(score={bundle.incident_result.overall_score:.4f}) — expected LOW"
         )
 
     def test_benign_score_well_below_high_threshold(self) -> None:

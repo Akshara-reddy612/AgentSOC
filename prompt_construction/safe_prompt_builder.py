@@ -95,6 +95,39 @@ def _extract_trusted_context(incident: "EnrichedIncident") -> dict[str, Any]:
     return ctx
 
 
+def _compact_risk_metadata(meta: Any) -> Any:
+    """
+    Produce a highly compact representation of risk_metadata to prevent consuming
+    the entire prompt character budget and starving actual evidence content.
+    Retains only overall scores, risk levels, combined matches, and custom/nested keys.
+    """
+    from types import MappingProxyType
+    if isinstance(meta, (dict, MappingProxyType)):
+        res = {}
+        if "overall_score" in meta:
+            res["overall_score"] = meta["overall_score"]
+        if "risk_level" in meta:
+            res["risk_level"] = meta["risk_level"]
+        
+        # Combine matches from all sub-detectors
+        matches = []
+        if "detectors" in meta:
+            for det in meta["detectors"]:
+                if "matches" in det:
+                    matches.extend(det["matches"])
+        if matches:
+            res["matches"] = sorted(list(set(matches)))
+            
+        # Copy any other custom or nested keys (excluding those we compacted/removed)
+        for k, v in meta.items():
+            if k not in ("overall_score", "risk_level", "detectors", "summary", "explanation", "evidence_field_name", "matches"):
+                res[k] = _compact_risk_metadata(v)
+        return res
+    elif isinstance(meta, list):
+        return [_compact_risk_metadata(x) for x in meta]
+    return meta
+
+
 def _extract_evidence(
     incident: "EnrichedIncident",
 ) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -129,9 +162,10 @@ def _extract_evidence(
             included = raw_value
             # No per-field truncation — don't add an entry for this field.
 
+        raw_meta = ev.risk_metadata.get("field_results", {}).get(field_name, {})
         evidence_dict[field_name] = {
             "value": included,
-            "risk_metadata": ev.risk_metadata.get("field_results", {}).get(field_name, {}),
+            "risk_metadata": _compact_risk_metadata(raw_meta),
         }
 
     return evidence_dict, truncation_info
@@ -144,14 +178,19 @@ def _apply_total_budget(
     """
     Apply the MAX_TOTAL_PROMPT_LENGTH budget across all evidence fields.
 
-    Truncates fields in definition order until the total value character
-    count fits within the budget.  Updates truncation_info accordingly.
-
-    Only the ``value`` string is counted toward the total; risk_metadata
-    dicts are not counted (they are structured, bounded metadata, not
-    attacker-controlled content).
+    Truncates fields in definition order until the total value + serialized
+    risk_metadata character count fits within the budget. Updates
+    truncation_info accordingly.
     """
-    total = sum(len(v["value"]) for v in evidence_dict.values())
+    import json
+
+    def _entry_len(entry: dict[str, Any]) -> int:
+        val_len = len(entry["value"])
+        # Serialize risk_metadata to count its length accurately
+        meta_str = json.dumps(entry["risk_metadata"], ensure_ascii=False, default=str)
+        return val_len + len(meta_str)
+
+    total = sum(_entry_len(v) for v in evidence_dict.values())
     if total <= MAX_TOTAL_PROMPT_LENGTH:
         return evidence_dict, truncation_info
 
@@ -165,13 +204,25 @@ def _apply_total_budget(
             continue
         entry = evidence_dict[field_name]
         val = entry["value"]
-        if len(val) <= remaining_budget:
-            new_evidence[field_name] = entry
-            remaining_budget -= len(val)
+        meta_str = json.dumps(entry["risk_metadata"], ensure_ascii=False, default=str)
+        meta_len = len(meta_str)
+
+        if meta_len >= remaining_budget:
+            # The metadata alone takes up all remaining budget.
+            # Truncate value to empty.
+            trimmed_val_len = 0
+            trimmed = ""
         else:
-            # Trim to remaining budget
+            trimmed_val_len = remaining_budget - meta_len
+            trimmed = val[:trimmed_val_len]
+
+        if len(val) <= trimmed_val_len:
+            # Complete field fits
+            new_evidence[field_name] = entry
+            remaining_budget -= (len(val) + meta_len)
+        else:
+            # We must truncate the value string to trimmed_val_len
             original_included = len(val)
-            trimmed = val[:remaining_budget]
             original_length = (
                 truncation_info[field_name]["original_length"]
                 if field_name in truncation_info
@@ -180,13 +231,13 @@ def _apply_total_budget(
             new_truncation[field_name] = {
                 "was_truncated": True,
                 "original_length": original_length,
-                "included_length": remaining_budget,
+                "included_length": trimmed_val_len,
             }
             new_evidence[field_name] = {
                 "value": trimmed,
                 "risk_metadata": entry["risk_metadata"],
             }
-            remaining_budget = 0
+            remaining_budget = max(0, remaining_budget - (trimmed_val_len + meta_len))
 
     return new_evidence, new_truncation
 
@@ -256,7 +307,7 @@ def build_prompt_package(incident: "EnrichedIncident") -> PromptPackage:
     if hasattr(incident.evidence, "risk_metadata"):
         incident_risk = incident.evidence.risk_metadata.get("incident_result", None)
     if incident_risk is not None:
-        metadata["incident_risk"] = incident_risk
+        metadata["incident_risk"] = _compact_risk_metadata(incident_risk)
 
     return PromptPackage(
         trusted_context=trusted_context,

@@ -151,8 +151,13 @@ class SplitFieldDetector(IncidentDetector):
         # Run existing detectors on the combined text.
         # decoded_candidates=[] because the combined text already incorporates
         # any decoded candidates from each field's NormalizationResult.
+        import re
+        # Strip/replace boundary markers [FIELD:...] with a single space for RegexDetector
+        # so that split words are adjacent and matched correctly by regex.
+        regex_clean_text = re.sub(r"\[FIELD:[^\]]+\]", " ", combined_text)
+
         regex_result: DetectorResult = _REGEX.detect(
-            normalized_text=combined_text,
+            normalized_text=regex_clean_text,
             decoded_candidates=[],
         )
         semantic_result: DetectorResult = _SEMANTIC.detect(
@@ -160,11 +165,17 @@ class SplitFieldDetector(IncidentDetector):
             decoded_candidates=[],
         )
 
+        from risk_assessment.config import SEMANTIC_THRESHOLD
+
+        # Gate sub-threshold semantic scores to prevent score leakage
+        gated_semantic_score = semantic_result.score if semantic_result.score >= SEMANTIC_THRESHOLD else 0.0
+        gated_semantic_confidence = semantic_result.confidence if semantic_result.score >= SEMANTIC_THRESHOLD else 0.0
+
         # Score = maximum of the two detector scores on the combined text.
         # Either detector independently catching the cross-field phrase is
         # sufficient evidence of a split injection.
-        best_score = max(regex_result.score, semantic_result.score)
-        best_confidence = max(regex_result.confidence, semantic_result.confidence)
+        best_score = max(regex_result.score, gated_semantic_score)
+        best_confidence = max(regex_result.confidence, gated_semantic_confidence)
 
         # Aggregate matches and explanations from both sub-detectors
         all_matches: list[str] = []

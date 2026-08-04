@@ -40,7 +40,15 @@ BUILDER_VERSION: str = "phase2"
 SCHEMA_VERSION: str = "1.0"
 
 
-@dataclass
+from types import MappingProxyType
+
+def _make_immutable_dict(d: dict[str, Any]) -> MappingProxyType:
+    return MappingProxyType({
+        k: _make_immutable_dict(v) if isinstance(v, dict) else v
+        for k, v in d.items()
+    })
+
+@dataclass(frozen=True)
 class PromptPackage:
     """
     Structured intermediate representation of a safe prompt.
@@ -88,3 +96,8 @@ class PromptPackage:
     untrusted_evidence: dict[str, Any]
     instructions: str
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "trusted_context", _make_immutable_dict(self.trusted_context))
+        object.__setattr__(self, "untrusted_evidence", _make_immutable_dict(self.untrusted_evidence))
+        object.__setattr__(self, "metadata", _make_immutable_dict(self.metadata))

@@ -249,6 +249,44 @@ class TestTruncation:
             f"{MAX_TOTAL_PROMPT_LENGTH}"
         )
 
+    def test_metadata_budget_respected(self) -> None:
+        """
+        If a field has very large risk_metadata, its serialized size is counted
+        against the budget and the value is truncated.
+        """
+        incident = _make_incident_with_fields(command_line="A" * 500)
+        # Inject large risk metadata using detectors and matches which survive compaction
+        large_meta = {
+            "detectors": [
+                {
+                    "detector": "RegexDetector",
+                    "score": 0.5,
+                    "confidence": 1.0,
+                    "matches": ["X" * (MAX_TOTAL_PROMPT_LENGTH - 100)]
+                }
+            ]
+        }
+        incident.evidence.risk_metadata = {
+            "field_results": {
+                "command_line": large_meta
+            },
+            "incident_result": None
+        }
+
+        pkg = build_prompt_package(incident)
+
+        # Check that value of command_line is truncated to fit the budget,
+        # and total serialized entry size is <= MAX_TOTAL_PROMPT_LENGTH
+        entry = pkg.untrusted_evidence["command_line"]
+        import json
+        from prompt_construction.serializers import _json_default_safe
+        entry_serialized_size = len(entry["value"]) + len(json.dumps(entry["risk_metadata"], default=_json_default_safe))
+        assert entry_serialized_size <= MAX_TOTAL_PROMPT_LENGTH
+        
+        # Verify that truncation was actually triggered for this field
+        assert "command_line" in pkg.metadata["truncated_fields"]
+        assert pkg.metadata["truncated_fields"]["command_line"]["was_truncated"] is True
+
 
 # ---------------------------------------------------------------------------
 # 3. PromptPackage.metadata provenance fields
@@ -356,3 +394,22 @@ class TestPromptPackageStructure:
         incident = _make_incident_with_fields(process_name="test.exe")
         pkg = build_prompt_package(incident)
         assert "DATA TO ANALYZE" in pkg.instructions or "data to analyze" in pkg.instructions.lower()
+
+    def test_prompt_package_is_frozen(self) -> None:
+        """PromptPackage must be frozen and deny setting attributes post-construction."""
+        import dataclasses
+        incident = _make_incident_with_fields(process_name="test.exe")
+        pkg = build_prompt_package(incident)
+        with pytest.raises((dataclasses.FrozenInstanceError, AttributeError)):
+            pkg.instructions = "new instructions"  # type: ignore[misc]
+
+    def test_prompt_package_dicts_are_immutable(self) -> None:
+        """PromptPackage dictionary properties must be MappingProxyType and deny mutation."""
+        incident = _make_incident_with_fields(process_name="test.exe")
+        pkg = build_prompt_package(incident)
+        with pytest.raises(TypeError):
+            pkg.trusted_context["new_key"] = "val"  # type: ignore[index,assignment]
+        with pytest.raises(TypeError):
+            pkg.untrusted_evidence["new_key"] = "val"  # type: ignore[index,assignment]
+        with pytest.raises(TypeError):
+            pkg.metadata["new_key"] = "val"  # type: ignore[index,assignment]

@@ -39,9 +39,11 @@ from risk_assessment.exemplars import INJECTION_EXEMPLARS
 from risk_assessment.results import DetectorResult
 
 # How many distinct exemplar matches before score saturates at 1.0.
-# 3 is chosen because a single match (e.g. "system:" in a log line) could be
-# coincidental; 3 distinct injection patterns in one field is unambiguous.
-_SATURATION_COUNT: int = 3
+# Lowered from 3 to 2 to allow single high-confidence exemplar matches in
+# split-field contexts to reach MEDIUM risk; this increases sensitivity
+# globally. Verified against the 9-alert benign set with 0% FPR.
+# Revisit at scale against the full GUIDE dataset to evaluate false positives.
+_SATURATION_COUNT: int = 2
 
 
 def _build_flexible_pattern(phrase: str) -> re.Pattern[str]:

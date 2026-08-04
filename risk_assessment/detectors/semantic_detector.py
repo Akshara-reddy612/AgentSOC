@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -68,29 +69,29 @@ os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 _MODEL: "SentenceTransformer | None" = None
 _EXEMPLAR_EMBEDDINGS: "np.ndarray | None" = None  # shape: (n_exemplars, 384)
 _EXEMPLAR_LIST: list[str] = list(INJECTION_EXEMPLARS)
+_MODEL_LOCK = threading.Lock()
 
 
 def _get_model() -> "SentenceTransformer":
     """
     Return the cached SentenceTransformer model, loading it on first call.
-    Thread-safe in CPython (GIL protects module-level assignment).
+    Uses a thread lock to ensure safe initialization across concurrent threads.
     """
     global _MODEL, _EXEMPLAR_EMBEDDINGS
     if _MODEL is None:
-        from sentence_transformers import SentenceTransformer  # type: ignore
+        with _MODEL_LOCK:
+            if _MODEL is None:
+                from sentence_transformers import SentenceTransformer  # type: ignore
 
-        logger.debug("Loading all-MiniLM-L6-v2 (first call — may take a moment)...")
-        _MODEL = SentenceTransformer("all-MiniLM-L6-v2")
-        # Pre-compute exemplar embeddings once; shape: (n_exemplars, 384)
-        _EXEMPLAR_EMBEDDINGS = _MODEL.encode(
-            _EXEMPLAR_LIST,
-            normalize_embeddings=True,  # L2-normalised → dot-product == cosine
-            show_progress_bar=False,
-        )
-        logger.debug(
-            "all-MiniLM-L6-v2 loaded. "
-            f"Exemplar embeddings shape: {_EXEMPLAR_EMBEDDINGS.shape}"
-        )
+                logger.debug("Loading all-MiniLM-L6-v2 (first call — may take a moment)...")
+                _MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+                # Pre-compute exemplar embeddings once; shape: (n_exemplars, 384)
+                _EXEMPLAR_EMBEDDINGS = _MODEL.encode(
+                    _EXEMPLAR_LIST,
+                    normalize_embeddings=True,  # L2-normalised → dot-product == cosine
+                    show_progress_bar=False,
+                )
+                logger.debug("all-MiniLM-L6-v2 model and exemplar embeddings loaded.")
     return _MODEL
 
 

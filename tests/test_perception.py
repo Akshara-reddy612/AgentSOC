@@ -160,6 +160,16 @@ class TestTrustedFieldImmutability:
         with pytest.raises((dataclasses.FrozenInstanceError, AttributeError)):
             tf.provenance_timestamp = datetime.now(tz=UTC)  # type: ignore[misc]
 
+    def test_evidence_is_frozen(self):
+        ev = Evidence(process_name=TrustedField("notepad.exe", TrustLevel.FREE_TEXT, SourceSystem.EDR))
+        with pytest.raises((dataclasses.FrozenInstanceError, AttributeError)):
+            ev.process_name = TrustedField("cmd.exe", TrustLevel.FREE_TEXT, SourceSystem.EDR)  # type: ignore[misc]
+
+    def test_evidence_risk_metadata_is_immutable(self):
+        ev = Evidence(process_name=TrustedField("notepad.exe", TrustLevel.FREE_TEXT, SourceSystem.EDR))
+        with pytest.raises(TypeError):
+            ev.risk_metadata["new_key"] = "val"  # type: ignore[index,assignment]
+
 
 # ---------------------------------------------------------------------------
 # Test 2: TrustedField rejects bad evidence_id and naive timestamp

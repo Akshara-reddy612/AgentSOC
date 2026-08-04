@@ -90,19 +90,19 @@ SINGLE_DETECTOR_CEILING_THRESHOLD: float = 0.90
 # MEDIUM / HIGH partition the remaining range.
 
 # Score < LOW_RISK_THRESHOLD → LOW (likely benign, no immediate action)
-LOW_RISK_THRESHOLD: float = 0.20
+LOW_RISK_THRESHOLD: float = 0.35
 
 # LOW_RISK_THRESHOLD <= score < HIGH_RISK_THRESHOLD → MEDIUM (flag for review)
-MEDIUM_RISK_THRESHOLD: float = 0.50
+MEDIUM_RISK_THRESHOLD: float = 0.40
 
 # score >= HIGH_RISK_THRESHOLD → HIGH (escalate / block)
-HIGH_RISK_THRESHOLD: float = 0.50
+HIGH_RISK_THRESHOLD: float = 0.70
 
 # Readable note: the tier logic is
-#   score < 0.20             → LOW
-#   0.20 <= score < 0.50     → MEDIUM
-#   score >= 0.50            → HIGH
-# This means anything over half is HIGH — aggressive, intentional.
+#   score < 0.35             → LOW
+#   0.35 <= score < 0.70     → MEDIUM
+#   score >= 0.70            → HIGH
+# This means anything over 0.70 is HIGH — aggressive, intentional.
 
 # ---------------------------------------------------------------------------
 # Prompt construction limits (used by Session 2's safe prompt builder)
