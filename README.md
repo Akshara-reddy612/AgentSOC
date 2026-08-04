@@ -190,10 +190,10 @@ prompt_construction/
     safe_prompt_builder.py  safe prompt extraction, truncation logic, metadata
     serializers.py          XML and JSON serializers (escaping reserved characters)
 tests/
-    test_perception.py      51 unit tests covering all 11 specified Phase 1 test cases
+    test_perception.py      53 unit tests covering Phase 1 (including immutability tests)
     test_risk_assessment_session1.py 38 unit tests covering Phase 2 Session 1
-    test_risk_assessment_session2.py 30 unit tests covering SplitField, Orchestrator, Integration
-    test_prompt_construction.py 25 unit tests covering safe prompt builder and serializers
+    test_risk_assessment_session2.py 33 unit tests covering SplitField, Orchestrator, Integration
+    test_prompt_construction.py 25 unit tests covering safe prompt builder and serializers (including budget accounting)
 sample_data/
     sample_alerts.json      4 sample alerts (benign, injection, malformed, duplicate)
     adversarial_alerts.json 9 alerts covering 6 attack categories & benign baseline
@@ -231,7 +231,8 @@ python demo_phase2.py           # Phase 2 demo
 pytest -v
 ```
 
-Expected: **144 passed**.
+Expected: **149 passed**.
+(144 original Phase 1/2 tests + 5 added during Phase 2 hardening: prompt-budget metadata accounting and Evidence/PromptPackage immutability.)
 
 ---
 
