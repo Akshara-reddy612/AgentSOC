@@ -163,6 +163,7 @@ _FIELD_WEIGHTS: dict[str, float] = {
     "RegexDetector": REGEX_WEIGHT,
     "SemanticDetector": SEMANTIC_WEIGHT,
     "SplitFieldDetector": SPLIT_FIELD_WEIGHT,
+    "ApprovalClaimDetector": 0.0,
 }
 
 

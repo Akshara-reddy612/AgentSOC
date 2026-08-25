@@ -1,0 +1,15 @@
+Source File: GUIDE_Train.csv
+SHA256: 3d6c286e1353236b3457a011a20cb9a8cec26a589ab685dab31dad261d47b8c3
+
+Sampling code:
+df_sorted = df.sort_values("Id")
+sample = df_sorted.sample(n=500, random_state=42)
+
+Label Distribution:
+IncidentGrade
+BenignPositive    222
+TruePositive      175
+FalsePositive      99
+
+Pandas Version:
+2.3.0

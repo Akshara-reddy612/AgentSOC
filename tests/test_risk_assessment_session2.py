@@ -537,3 +537,81 @@ class TestRegistry:
         assert field_ids.isdisjoint(incident_ids), (
             "A detector instance appears in both FIELD_DETECTORS and INCIDENT_DETECTORS"
         )
+
+
+# ---------------------------------------------------------------------------
+# 8. ApprovalClaimDetector validation
+# ---------------------------------------------------------------------------
+
+class TestApprovalClaimDetector:
+
+    def test_approval_claim_detector_registered(self) -> None:
+        """ApprovalClaimDetector must be in FIELD_DETECTORS."""
+        from risk_assessment.detectors.approval_claim_detector import ApprovalClaimDetector
+        assert any(isinstance(d, ApprovalClaimDetector) for d in FIELD_DETECTORS)
+
+    def test_fabricated_evidence_alerts_trigger_ceiling(self) -> None:
+        """
+        Scan the GUIDE_Dataset subtle alerts and scaled results for fabricated_evidence,
+        run them through assess(), and assert that ApprovalClaimDetector triggers
+        with score >= 0.90, forcing the overall score to 0.90+ and risk_level to HIGH.
+        """
+        import json
+        from pathlib import Path
+        from risk_assessment.detectors.approval_claim_detector import ApprovalClaimDetector
+
+        project_root = Path(__file__).resolve().parents[1]
+        
+        # Load the subtle alerts dataset and scale results
+        subtle_path = project_root / "GUIDE_Dataset" / "processed" / "guide_subtle_30_alerts.json"
+        scale_path = project_root / "agent" / "fabricated_evidence_scale_results.json"
+        
+        raw_log_lines = []
+        
+        if subtle_path.exists():
+            with open(subtle_path, "r", encoding="utf-8") as f:
+                alerts = json.load(f)
+                for alert in alerts:
+                    if alert.get("_ground_truth_injection_category") == "fabricated_evidence":
+                        # Find the contaminated field
+                        for field in ["raw_log_line", "command_line", "process_name"]:
+                            val = alert.get(field, "")
+                            if any(tok in val for tok in ["WL-", "INC-", "SEC-", "CHG-"]):
+                                raw_log_lines.append(val)
+                                
+        if scale_path.exists():
+            with open(scale_path, "r", encoding="utf-8") as f:
+                results = json.load(f)
+                for res in results:
+                    prompt = res.get("contaminated_prompt", "")
+                    for line in prompt.split("\n"):
+                        if line.startswith("Raw Log Line:") and any(tok in line for tok in ["WL-", "INC-", "SEC-", "CHG-"]):
+                            val = line.split("Raw Log Line:", 1)[1].strip()
+                            raw_log_lines.append(val)
+
+        # Ensure we found the fabricated evidence alerts (should be 9/9 or more total across sets)
+        assert len(raw_log_lines) >= 9, f"Expected at least 9 fabricated_evidence alerts, found {len(raw_log_lines)}"
+        
+        for raw_line in raw_log_lines:
+            evidence = _make_mock_evidence(raw_log_line=raw_line)
+            bundle = assess(evidence)
+            field_res = bundle.field_results.get("raw_log_line")
+            
+            assert field_res is not None
+            
+            # Check if raw_line contains any distancing language
+            contains_distancing = any(dk in raw_line.lower() for dk in ["prior", "previous", "last quarter", "last year", "historical", "unrelated to", "earlier", "in the past"])
+            
+            app_res = next((dr for dr in field_res.detector_results if dr.detector == "ApprovalClaimDetector"), None)
+            assert app_res is not None
+            
+            if contains_distancing:
+                assert app_res.score == 0.20
+                assert field_res.overall_score < 0.90
+            else:
+                assert app_res.score == 0.90
+                assert field_res.overall_score >= 0.90
+                assert field_res.risk_level == "HIGH"
+                assert len(app_res.matches) >= 2
+
+

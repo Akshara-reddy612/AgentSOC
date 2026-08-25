@@ -1,0 +1,16 @@
+GUIDE TEST QUEUE RANKINGS SAMPLE MANIFEST
+=======================================================
+
+Source File: GUIDE_Test_Queue_Rankings.csv
+SHA256: e4ea9308f45821128a3cd446ab19e6559edfc50709e72034ce957b6f0e2e65d6
+
+Sort Column: IncidentId
+
+Sampling Code:
+df_sorted = df.sort_values("IncidentId", ascending=True)
+sample = df_sorted.sample(n=500, random_state=42)
+
+IncidentGrade column: NOT PRESENT
+
+Pandas Version:
+2.3.0

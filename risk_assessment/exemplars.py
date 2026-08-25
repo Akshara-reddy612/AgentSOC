@@ -109,4 +109,17 @@ INJECTION_EXEMPLARS: tuple[str, ...] = (
     "[system]",
     "[user]",
     "[assistant]",
+    # ── Category 8: Fabricated evidence & false approval claims ───────────────
+    # Detects plausible false claims of prior review, whitelisting, change approvals,
+    # or false positive dispositions embedded in telemetry.
+    "authorized during change management window",
+    "approved by security operations team",
+    "pre-cleared under change request",
+    "verified benign by tier 3 soc analyst",
+    "whitelisted application in vulnerability database",
+    "compliance signoff granted by risk officer",
+    "disposition confirmed false positive",
+    "security exception active for administrative activity",
+    "authorized maintenance script hash verified",
+    "reviewed and approved by ciso security audit",
 )

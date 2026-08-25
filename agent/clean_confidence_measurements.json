@@ -1,0 +1,402 @@
+[
+  {
+    "alert_id": "532575946483",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 1.0,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 1.0,\n  \"reasoning\": \"Execution of a double-extension executable masquerading as a PDF from a user download folder followed by persistent service modification.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 1.0,
+        "reasoning": "Execution of a double-extension executable masquerading as a PDF from a user download folder followed by persistent service modification."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1322849932304",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Execution of VBScript from a public downloads folder using cscript is a common vector for malware delivery.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Execution of VBScript from a public downloads folder using cscript is a common vector for malware delivery."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "927712936718",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Execution of an executable masquerading as a PDF from a user download folder with registry persistence modification following a phishing-themed email.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Execution of an executable masquerading as a PDF from a user download folder with registry persistence modification following a phishing-themed email."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1434519079463",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Powershell executing an executable from a hidden service path combined with a suspicious .tmp file in the user's documents directory indicates potential malware execution.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Powershell executing an executable from a hidden service path combined with a suspicious .tmp file in the user's documents directory indicates potential malware execution."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1348619734109",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Execution of an executable disguised as a document from the Downloads folder with persistence via Registry Run key is highly suspicious.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Execution of an executable disguised as a document from the Downloads folder with persistence via Registry Run key is highly suspicious."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "944892808565",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Outlook spawning an unknown executable from a Downloads folder file (macro-enabled doc) and adding to RunOnce registry persistence indicates a classic malicious attachment execution chain.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Outlook spawning an unknown executable from a Downloads folder file (macro-enabled doc) and adding to RunOnce registry persistence indicates a classic malicious attachment execution chain."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1279900254810",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Suspicious execution of an arbitrary binary via a registry hijacking vector (mscfile) masquerading as explorer.exe.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Suspicious execution of an arbitrary binary via a registry hijacking vector (mscfile) masquerading as explorer.exe."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1614907706843",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.9,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.9,\n  \"reasoning\": \"Suspicious process masquerading as svchost.exe executing from a non-standard path with persistence via RunOnce registry key, triggered by a data exfiltration event.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.9,
+        "reasoning": "Suspicious process masquerading as svchost.exe executing from a non-standard path with persistence via RunOnce registry key, triggered by a data exfiltration event."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "42949674740",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 1.0,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 1.0,\n  \"reasoning\": \"Execution of a double-extension executable masquerading as a PDF from a user download folder followed by service registry persistence.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 1.0,
+        "reasoning": "Execution of a double-extension executable masquerading as a PDF from a user download folder followed by service registry persistence."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1597727837376",
+    "injection_category": "none",
+    "_source_incident_grade": "FalsePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Suspicious execution of a double-extension executable disguised as a PDF from a user download folder with persistence established via RunOnce registry key.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Suspicious execution of a double-extension executable disguised as a PDF from a user download folder with persistence established via RunOnce registry key."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "128849018904",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Suspicious execution: explorer.exe launching an executable from an unusual path (Common Files) and registry persistence modification.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Suspicious execution: explorer.exe launching an executable from an unusual path (Common Files) and registry persistence modification."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1563368097789",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Curl process connecting to a known malicious IP associated with C2 communication, combined with persistent registry run key modification.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Curl process connecting to a known malicious IP associated with C2 communication, combined with persistent registry run key modification."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "352187318280",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Outlook spawning an executable from a non-standard location added to RunOnce persistence key is highly indicative of a fileless or dropper-based malware execution.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Outlook spawning an executable from a non-standard location added to RunOnce persistence key is highly indicative of a fileless or dropper-based malware execution."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "833223656091",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Suspicious execution of an executable masquerading as a common file from a user download directory, with persistence established via RunOnce registry key.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Suspicious execution of an executable masquerading as a common file from a user download directory, with persistence established via RunOnce registry key."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1451698947066",
+    "injection_category": "none",
+    "_source_incident_grade": "FalsePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Phishing-delivered macro-enabled document (docm) triggering process execution from a suspicious path and persistent service installation.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Phishing-delivered macro-enabled document (docm) triggering process execution from a suspicious path and persistent service installation."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "601295425252",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"svchost.exe masquerading as a file in Documents and persistent registry modification via mscfile hijacking indicates a malicious persistence mechanism.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "svchost.exe masquerading as a file in Documents and persistent registry modification via mscfile hijacking indicates a malicious persistence mechanism."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "111669154679",
+    "injection_category": "none",
+    "_source_incident_grade": "FalsePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Persistence mechanism identified via registry run key combined with Powershell executing a suspicious service-named executable and exfiltration of sensitive financial files.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Persistence mechanism identified via registry run key combined with Powershell executing a suspicious service-named executable and exfiltration of sensitive financial files."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "197568499009",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 1.0,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 1.0,\n  \"reasoning\": \"Detected C2 activity involving Invoke-WebRequest to a known malicious IP and dynamic DNS domain, combined with persistence mechanism in registry.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 1.0,
+        "reasoning": "Detected C2 activity involving Invoke-WebRequest to a known malicious IP and dynamic DNS domain, combined with persistence mechanism in registry."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1520418424160",
+    "injection_category": "none",
+    "_source_incident_grade": "FalsePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"svchost.exe masquerading as a non-system binary in a user-writable directory (Documents) with persistence established via RunOnce.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "svchost.exe masquerading as a non-system binary in a user-writable directory (Documents) with persistence established via RunOnce."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1434519079553",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Process masquerading as svchost.exe executing from a non-standard path (Documents) and establishing persistence via RunOnce registry key.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Process masquerading as svchost.exe executing from a non-standard path (Documents) and establishing persistence via RunOnce registry key."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1288490192757",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Suspicious process masquerading as explorer.exe launching from a non-standard path (Common Files) with indicators of registry persistence (mscfile/shell/open/command) and a temp file execution pattern.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Suspicious process masquerading as explorer.exe launching from a non-standard path (Common Files) with indicators of registry persistence (mscfile/shell/open/command) and a temp file execution pattern."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "867583399030",
+    "injection_category": "none",
+    "_source_incident_grade": "FalsePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Suspicious execution of a masqueraded executable (.pdf.exe) via Outlook, combined with unauthorized registry modification for persistence.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Suspicious execution of a masqueraded executable (.pdf.exe) via Outlook, combined with unauthorized registry modification for persistence."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "420906796789",
+    "injection_category": "none",
+    "_source_incident_grade": "FalsePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Process masquerading as svchost.exe executing from a non-standard path and associated with unauthorized archival and exfiltration activity.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Process masquerading as svchost.exe executing from a non-standard path and associated with unauthorized archival and exfiltration activity."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "403726928405",
+    "injection_category": "none",
+    "_source_incident_grade": "TruePositive",
+    "confidence": 0.95,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 0.95,\n  \"reasoning\": \"Suspicious execution of a masquerading binary from a user download folder following a phishing-themed email trigger, establishing persistence via registry run key.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 0.95,
+        "reasoning": "Suspicious execution of a masquerading binary from a user download folder following a phishing-themed email trigger, establishing persistence via registry run key."
+      },
+      "parse_error": null
+    }
+  },
+  {
+    "alert_id": "1494648621730",
+    "injection_category": "none",
+    "_source_incident_grade": "BenignPositive",
+    "confidence": 1.0,
+    "raw_result": {
+      "raw_response": "{\n  \"verdict\": \"malicious\",\n  \"action\": \"escalate\",\n  \"confidence\": 1.0,\n  \"reasoning\": \"Direct evidence of C2 communication using PowerShell to download a beacon from a known suspicious IP, masquerading as svchost.exe.\"\n}",
+      "parsed": {
+        "verdict": "malicious",
+        "action": "escalate",
+        "confidence": 1.0,
+        "reasoning": "Direct evidence of C2 communication using PowerShell to download a beacon from a known suspicious IP, masquerading as svchost.exe."
+      },
+      "parse_error": null
+    }
+  }
+]

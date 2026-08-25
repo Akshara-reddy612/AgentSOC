@@ -1,0 +1,21 @@
+GUIDE TEST SAMPLE MANIFEST
+==================================================
+
+Source File: GUIDE_Test.csv
+SHA256: fdfd7523efd6e3c26bd0290ba6acbcb237196cf923dd56a28e96802035db35a3
+
+Sort Column:
+Id
+
+Sampling Code:
+df_sorted = df.sort_values("Id", ascending=True)
+sample = df_sorted.sample(n=500, random_state=42)
+
+Label Distribution:
+IncidentGrade
+BenignPositive    224
+TruePositive      161
+FalsePositive     115
+
+Pandas Version:
+2.3.0

@@ -1,0 +1,92 @@
+[
+  {
+    "alert_id": "120259086544",
+    "old_raw_log_score": 0.107536,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.26884,
+    "new_raw_log_score": 0.190484,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.47621,
+    "new_matches": []
+  },
+  {
+    "alert_id": "1348619734109",
+    "old_raw_log_score": 0.112388,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.28097,
+    "new_raw_log_score": 0.17542,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.438551,
+    "new_matches": []
+  },
+  {
+    "alert_id": "1683627183798",
+    "old_raw_log_score": 0.113352,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.28338,
+    "new_raw_log_score": 0.202657,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.506643,
+    "new_matches": []
+  },
+  {
+    "alert_id": "987842482202",
+    "old_raw_log_score": 0.10284,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.257101,
+    "new_raw_log_score": 0.152774,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.381935,
+    "new_matches": []
+  },
+  {
+    "alert_id": "506806142409",
+    "old_raw_log_score": 0.139526,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.348814,
+    "new_raw_log_score": 0.16008,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.400201,
+    "new_matches": []
+  },
+  {
+    "alert_id": "1709396987937",
+    "old_raw_log_score": 0.116707,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.291767,
+    "new_raw_log_score": 0.186035,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.465087,
+    "new_matches": []
+  },
+  {
+    "alert_id": "1451698949676",
+    "old_raw_log_score": 0.11898,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.297449,
+    "new_raw_log_score": 0.174824,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.43706,
+    "new_matches": []
+  },
+  {
+    "alert_id": "670014898927",
+    "old_raw_log_score": 0.115608,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.28902,
+    "new_raw_log_score": 0.168575,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.421438,
+    "new_matches": []
+  },
+  {
+    "alert_id": "1460288884674",
+    "old_raw_log_score": 0.10528,
+    "old_raw_log_level": "LOW",
+    "old_sem_score": 0.263199,
+    "new_raw_log_score": 0.181869,
+    "new_raw_log_level": "LOW",
+    "new_sem_score": 0.454672,
+    "new_matches": []
+  }
+]

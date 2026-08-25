@@ -29,6 +29,9 @@ instances would be wasteful even though the model is only loaded once.
 
 from __future__ import annotations
 
+from risk_assessment.detectors.approval_claim_detector import (
+    ApprovalClaimDetector,
+)
 from risk_assessment.detectors.base import FieldDetector, IncidentDetector
 from risk_assessment.detectors.regex_detector import RegexDetector
 from risk_assessment.detectors.semantic_detector import SemanticDetector
@@ -41,6 +44,7 @@ from risk_assessment.detectors.split_field_detector import SplitFieldDetector
 FIELD_DETECTORS: list[FieldDetector] = [
     RegexDetector(),
     SemanticDetector(),
+    ApprovalClaimDetector(),
 ]
 
 # ---------------------------------------------------------------------------
