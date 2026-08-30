@@ -25,6 +25,7 @@ from perception.knowledge_graph import (
     classify_host,
     group_node_id,
     host_node_id,
+    service_node_id,
     zone_node_id,
 )
 from perception.knowledge_store import InMemoryKnowledgeStore, KnowledgeFact
@@ -365,3 +366,91 @@ class TestAdditionalTopology:
     def test_external_zone_exists(self, graph):
         ext = zone_node_id("EXTERNAL")
         assert ext in graph.graph
+
+
+# ---------------------------------------------------------------------------
+# Test: Service node accessors (added Session 2)
+# ---------------------------------------------------------------------------
+
+class TestServiceNodeAccessors:
+    """Tests for service node accessors added in Session 2."""
+
+    @pytest.fixture
+    def graph(self):
+        return KnowledgeStoreGraph()
+
+    def test_get_or_create_service_node_idempotent(self, graph):
+        """Calling get_or_create_service_node twice returns the same ID
+        and does not grow the graph."""
+        id1 = graph.get_or_create_service_node("test-svc", "server-db01", 2)
+        count_after_first = graph.graph.number_of_nodes()
+        id2 = graph.get_or_create_service_node("test-svc", "server-db01", 2)
+        count_after_second = graph.graph.number_of_nodes()
+        assert id1 == id2
+        assert count_after_second == count_after_first
+
+    def test_get_or_create_service_node_has_hosted_on_edge(self, graph):
+        """A newly created service has a HOSTED_ON edge from its host."""
+        svc_id = graph.get_or_create_service_node("new-svc", "server-db01", 3)
+        h_node = host_node_id("server-db01")
+        assert graph.graph.has_edge(h_node, svc_id)
+        edges = graph.graph[h_node][svc_id]
+        hosted_on = any(
+            d.get("edge_type") == "HOSTED_ON" for d in edges.values()
+        )
+        assert hosted_on
+
+    def test_get_service_dependents_3_hop_chain(self, graph):
+        """A depends_on B depends_on C depends_on D.
+        get_service_dependents('svc-d') should return {C, B, A}."""
+        graph.get_or_create_service_node("svc-a", "server-db01", 1)
+        graph.get_or_create_service_node("svc-b", "server-db01", 1)
+        graph.get_or_create_service_node("svc-c", "server-db01", 1)
+        graph.get_or_create_service_node("svc-d", "server-db01", 1)
+
+        # A depends on B, B depends on C, C depends on D
+        # Edge direction: depends_on -> dependent
+        graph.add_dependency("svc-a", "svc-b")
+        graph.add_dependency("svc-b", "svc-c")
+        graph.add_dependency("svc-c", "svc-d")
+
+        deps = graph.get_service_dependents("svc-d")
+        assert set(deps) == {"svc-c", "svc-b", "svc-a"}
+
+    def test_get_service_dependents_cycle_safe(self, graph):
+        """A->B->C->A cycle must not infinite-loop."""
+        graph.get_or_create_service_node("cyc-a", "server-db01", 1)
+        graph.get_or_create_service_node("cyc-b", "server-db01", 1)
+        graph.get_or_create_service_node("cyc-c", "server-db01", 1)
+
+        graph.add_dependency("cyc-b", "cyc-a")  # A->B
+        graph.add_dependency("cyc-c", "cyc-b")  # B->C
+        graph.add_dependency("cyc-a", "cyc-c")  # C->A (creates cycle)
+
+        deps = graph.get_service_dependents("cyc-a")
+        # Should return B and C without hanging
+        assert set(deps) == {"cyc-b", "cyc-c"}
+
+    def test_add_dependency_creates_nodes(self, graph):
+        """add_dependency auto-creates service nodes if absent."""
+        graph.add_dependency("auto-dep", "auto-src")
+        dep_node = service_node_id("auto-dep")
+        src_node = service_node_id("auto-src")
+        assert dep_node in graph.graph
+        assert src_node in graph.graph
+
+    def test_get_services_on_host(self, graph):
+        """get_services_on_host finds services linked via HOSTED_ON edges."""
+        svc_id = graph.get_or_create_service_node(
+            "hosted-svc", "server-db01", 2
+        )
+        h_node = host_node_id("server-db01")
+        services = graph.get_services_on_host(h_node)
+        assert svc_id in services
+
+    def test_seeded_db_primary_discoverable(self, graph):
+        """The seeded db-primary ServiceNode is reachable via
+        get_services_on_host on server-db01."""
+        h_node = host_node_id("server-db01")
+        services = graph.get_services_on_host(h_node)
+        assert service_node_id("db-primary") in services

@@ -357,6 +357,142 @@ class KnowledgeStoreGraph:
         return None
 
     # ------------------------------------------------------------------
+    # Service node accessors and graph wrapping (added Session 2)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def from_graph(cls, graph: nx.MultiDiGraph) -> "KnowledgeStoreGraph":
+        """
+        Create a KnowledgeStoreGraph wrapping an existing MultiDiGraph.
+
+        Used by RSEM's compute_containment to run SSE checks against a
+        mutated graph copy without re-seeding from InMemoryKnowledgeStore.
+        The resulting instance has all public methods (get_host_zone,
+        get_or_create_*, etc.) but no seed data beyond what's already
+        in the provided graph.
+        """
+        instance = cls.__new__(cls)
+        instance._store = None
+        instance._graph = graph
+        return instance
+
+    def get_or_create_service_node(
+        self,
+        service_id: str,
+        hosted_on_host_id: str,
+        business_impact_score: int = 1,
+    ) -> str:
+        """
+        Return the node ID for ``service_id``, creating the node if absent.
+
+        Creates a ServiceNode with business_impact_score wrapped in
+        KnowledgeFact, plus a HOSTED_ON edge from the host to the service.
+
+        Idempotent: calling twice with the same service_id returns the
+        same node ID without duplicating or modifying the existing node.
+        """
+        node_id = service_node_id(service_id)
+        if node_id in self._graph:
+            return node_id
+
+        self._graph.add_node(
+            node_id,
+            node_type="ServiceNode",
+            service_id=service_id.lower(),
+            hosted_on_host_id=hosted_on_host_id.lower(),
+            business_impact_score=_fact(business_impact_score, 1.0),
+            dependents=[],
+        )
+
+        # HOSTED_ON edge: host -> service
+        h_node = self.get_or_create_host_node(hosted_on_host_id)
+        self._graph.add_edge(
+            h_node, node_id,
+            key="HOSTED_ON",
+            edge_type="HOSTED_ON",
+        )
+
+        return node_id
+
+    def get_service_dependents(
+        self, service_id: str, max_depth: int = 5
+    ) -> list[str]:
+        """
+        Return all transitively dependent service IDs reachable via
+        outgoing DEPENDS_ON edges from ``service_id``, up to
+        ``max_depth`` hops.
+
+        Uses BFS with a visited set (initialized with the start node)
+        to safely handle cycles in malformed dependency data without
+        infinite looping.
+        """
+        start = service_node_id(service_id)
+        if start not in self._graph:
+            return []
+
+        visited: set[str] = {start}
+        queue: list[tuple[str, int]] = [(start, 0)]
+        result: list[str] = []
+
+        while queue:
+            current, depth = queue.pop(0)
+            if depth >= max_depth:
+                continue
+            for _, neighbor, data in self._graph.out_edges(current, data=True):
+                if data.get("edge_type") != "DEPENDS_ON":
+                    continue
+                if neighbor in visited:
+                    continue
+                visited.add(neighbor)
+                node_data = self._graph.nodes[neighbor]
+                svc_id = node_data.get("service_id", neighbor)
+                result.append(svc_id)
+                queue.append((neighbor, depth + 1))
+
+        return result
+
+    def add_dependency(
+        self, dependent_service_id: str, depends_on_service_id: str
+    ) -> None:
+        """
+        Add a DEPENDS_ON edge from ``depends_on_service_id`` to
+        ``dependent_service_id``.
+
+        Creates either service node via get_or_create_service_node
+        (with default impact score 1 and host "unknown") if it doesn't
+        already exist.
+
+        Edge direction: depends_on → dependent, so that
+        get_service_dependents(depends_on_service_id) traverses outgoing
+        DEPENDS_ON edges to discover all dependents.
+        """
+        dep_node = service_node_id(dependent_service_id)
+        if dep_node not in self._graph:
+            self.get_or_create_service_node(
+                dependent_service_id, "unknown", 1
+            )
+
+        src_node = service_node_id(depends_on_service_id)
+        if src_node not in self._graph:
+            self.get_or_create_service_node(
+                depends_on_service_id, "unknown", 1
+            )
+
+        self._graph.add_edge(
+            src_node, dep_node,
+            key=f"DEPENDS_ON:{dependent_service_id}",
+            edge_type="DEPENDS_ON",
+        )
+
+    def get_services_on_host(self, host_node_id_str: str) -> list[str]:
+        """Return service node IDs hosted on a given host — needed by compute_business_impact to discover which services live on a target host before walking DEPENDS_ON from them."""
+        result: list[str] = []
+        for _, v, data in self._graph.out_edges(host_node_id_str, data=True):
+            if data.get("edge_type") == "HOSTED_ON":
+                result.append(v)
+        return result
+
+    # ------------------------------------------------------------------
     # Seed methods (private)
     # ------------------------------------------------------------------
 
@@ -562,6 +698,12 @@ class KnowledgeStoreGraph:
             hosted_on_host_id="server-db01",
             business_impact_score=_fact(3, 1.0),
             dependents=["web-app", "reporting-service"],
+        )
+        # HOSTED_ON edge so get_services_on_host() can discover db-primary
+        self._graph.add_edge(
+            db_node, svc_svc_node,
+            key="HOSTED_ON",
+            edge_type="HOSTED_ON",
         )
 
         # --- Low-confidence GRANTS for CONDITIONALLY_FEASIBLE testing ---
