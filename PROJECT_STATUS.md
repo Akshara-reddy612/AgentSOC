@@ -17,6 +17,10 @@
 | [`risk_assessment/`](file:///C:/agentsoc/risk_assessment/) | Implements the Evidence Risk Assessment (ERA) including homoglyph/base64 normalization, Regex and Semantic FieldDetectors, SplitField IncidentDetector, orchestrator risk fusion, and integration adapter. | Built & Tested |
 | [`agent/`](file:///C:/agentsoc/agent/) | Contains undefended baseline agents, evaluation scripts, and measurement tools for running triage simulations and measuring hijack rates. | Built & Tested |
 | [`GUIDE_Dataset/`](file:///C:/agentsoc/GUIDE_Dataset/) | Stores processed/raw incident telemetry datasets, CSV records, and generated evaluation subsets (subtle, hardersubtle, strongblunt, ambiguous). | Built & Tested |
+| [`perception/knowledge_graph.py`](file:///C:/agentsoc/perception/knowledge_graph.py) | Real graph-backed knowledge store extending InMemoryKnowledgeStore; hostname classification, lazy node creation, service dependency tracking | Built & Tested |
+| [`perception/sse.py`](file:///C:/agentsoc/perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
+| [`perception/rsem.py`](file:///C:/agentsoc/perception/rsem.py) | Risk Scoring and Evaluation Module — real graph-based containment simulation and business-impact scoring, action ranking | Built & Tested |
+| [`perception/nce_contract.py`](file:///C:/agentsoc/perception/nce_contract.py) | NCE output data contract + LLM-free mock generator; real NCE LLM implementation still pending | Contract Built, LLM Implementation Pending |
 
 ---
 
@@ -178,9 +182,13 @@ This section reports the results of evaluating the undefended baseline agent on 
 ---
 
 ## What's NOT Built Yet
+- **NCE real LLM implementation** — the data contract (NCEHypothesis) and a mock generator exist and are validated against SSE/RSEM; the actual LLM-calling hypothesis-generation logic itself is not yet built.
+- **Action/Playbook Layer** — Adaptive Playbook Generator, Policy/Safety Guardrails, simulated dry-run Execution Interface. Not started.
+- **Real-Time Monitoring feedback loop** (simulated). Not started.
+- **Full pipeline contamination re-evaluation** — the original defense-layer evaluation (58-hijack corpus, 140-alert held-out set) was run against a simplified single-verdict stand-in agent. Now that Knowledge Store, SSE, and RSEM are real, the highest-value remaining research task is re-running contamination attacks against the actual NCE→SSE→RSEM chain to test whether poisoned evidence can corrupt hypothesis generation in ways SSE's independent graph-feasibility check can or cannot catch — this is the paper's real headline research question and hasn't been tested yet.
 - **ApprovalClaimDetector False-Positive Mitigation:** Designing and implementing proximity analysis or temporal-context parsing (e.g., distinguishing current-event claims from historical references) to prevent legitimate dual-signal logs from triggering false positives on `raw_log_line`.
 
 ---
 
 ## Immediate Next Step
-Resolve the false-positive/detection trade-off on ApprovalClaimDetector (via token-proximity or temporal-context parsing), or explicitly document it as a known limitation with the trade-off data shown, before treating results as final.
+Decide between building NCE's real LLM implementation next (directly enables the full-pipeline contamination re-evaluation) or the Action/Playbook Layer (completes the architecture but doesn't unlock new research findings on its own). NCE is the higher-priority path since it's the dependency for the paper's central remaining research question.
