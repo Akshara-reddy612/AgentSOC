@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+markers = [
+    "smoke: marks tests as smoke tests requiring real API keys (deselect with '-m \"not smoke\"')",
+]
+# By default, exclude smoke tests from the regular suite.
+# Run smoke tests explicitly with: pytest -m smoke
+addopts = "-m 'not smoke'"

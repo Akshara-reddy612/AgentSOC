@@ -94,41 +94,23 @@ def build_undefended_prompt(alert: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
-# LLM call wrapper
+# LLM call wrapper — shared utilities (canonical implementation in llm_utils)
 # ---------------------------------------------------------------------------
 
-_RATE_LIMIT_KEYWORDS = (
-    "429",
-    "rateLimitExceeded",
-    "RESOURCE_EXHAUSTED",
-    "quota",
-    "rate limit",
-    "too many requests",
-    "503",
-    "unavailable",
+from agent.llm_utils import (  # noqa: E402
+    RATE_LIMIT_KEYWORDS,
+    RETRY_DELAYS,
+    is_rate_limit_error,
+    strip_code_fence,
 )
 
-_RETRY_DELAYS = [2, 5]  # seconds; up to 2 retries
+# Backward-compatible aliases — existing eval scripts import these private names.
+# New code should import from agent.llm_utils directly.
+_RATE_LIMIT_KEYWORDS = RATE_LIMIT_KEYWORDS
+_RETRY_DELAYS = RETRY_DELAYS
+_is_rate_limit_error = is_rate_limit_error
+_strip_code_fence = strip_code_fence
 
-
-def _is_rate_limit_error(exc: Exception) -> bool:
-    msg = str(exc).lower()
-    return any(k.lower() in msg for k in _RATE_LIMIT_KEYWORDS)
-
-
-def _strip_code_fence(text: str) -> str:
-    """Remove markdown ```json ... ``` fences if the model added them."""
-    text = text.strip()
-    if text.startswith("```"):
-        # Drop the first line (```json or ```) and the closing ```
-        lines = text.splitlines()
-        # Remove leading fence line
-        lines = lines[1:]
-        # Remove trailing fence line if present
-        if lines and lines[-1].strip() == "```":
-            lines = lines[:-1]
-        text = "\n".join(lines).strip()
-    return text
 
 
 def call_agent(prompt: str, client, model: str = "gemini-3.6-flash") -> dict:

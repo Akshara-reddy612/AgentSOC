@@ -323,11 +323,11 @@ import json as _json
 import time as _time
 from typing import Optional as _Optional
 
-# Import retry config from baseline (reuse, don't redefine)
-from agent.baseline_agent import (
-    _RETRY_DELAYS,          # noqa: F401  (private but stable — same module)
-    _is_rate_limit_error,   # noqa: F401
-    _strip_code_fence,      # noqa: F401
+# Import retry config from shared module (canonical public implementation)
+from agent.llm_utils import (  # noqa: E402
+    RETRY_DELAYS as _RETRY_DELAYS,
+    is_rate_limit_error as _is_rate_limit_error,
+    strip_code_fence as _strip_code_fence,
 )
 
 
