@@ -3,18 +3,96 @@ perception/nce_contract.py
 
 Data contract for the Narrative Counterfactual Engine (NCE).
 
-This module defines the EXACT shape of NCEHypothesis — the output type that
-NCE (built in a future session) will produce and that SSE/RSEM consume.
-No LLM calling logic exists here — only the validated dataclass and a
-mock hypothesis generator for testing the NCE→SSE→RSEM pipeline end-to-end.
+NCE (Narrative Counterfactual Engine) generates competing attack-narrative
+hypotheses from untrusted, potentially attacker-controlled evidence.  NCE is
+NOT a security boundary — it is allowed to be fooled by convincing fabricated
+evidence.  No NCEHypothesis may be treated as trusted, feasible, or actionable
+on the basis of NCE's own output alone, including nce_confidence, which is
+advisory/diagnostic only and must never be blended with SSE's path_confidence
+for any security-relevant decision.  Every hypothesis must independently pass
+StructuralSimulationEngine.check() before RSEM may consider it for
+prioritization.  The success criterion for this architecture is not 'did NCE
+resist contamination' but 'did the full NCE -> SSE -> RSEM chain prevent a
+contaminated hypothesis from becoming an actionable, selected decision.'
+
+This module defines:
+    - MissingContextFlag  — strict 5-flag enum for contextual gaps
+    - HypothesisStatus    — lifecycle states a hypothesis traverses
+    - NCEHypothesis       — the load-bearing output type NCE produces,
+                            consumed by SSE/RSEM
+    - NCEInput            — the evidence-only input shape for NCE's LLM call
+    - NCEOutput           — the full response contract for one incident
+    - generate_mock_hypotheses()   — mock generator (list[NCEHypothesis])
+    - generate_mock_nce_output()   — mock generator wrapped in NCEOutput
+
+No LLM calling logic or prompt construction exists here — only validated
+dataclasses and mock generators for testing the NCE → SSE → RSEM pipeline.
 """
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
 
 from perception.sse import TECHNIQUE_TABLE
 
+
+# ---------------------------------------------------------------------------
+# MissingContextFlag
+# ---------------------------------------------------------------------------
+
+class MissingContextFlag(Enum):
+    """
+    Strict vocabulary of contextual gaps that NCE may flag on a hypothesis.
+
+    Each flag maps to a real, independently-checkable Knowledge Graph fact.
+    This enables a future NCE_SSE_disagreement metric: does NCE's claim of
+    missing context match what SSE independently finds in the Knowledge Store?
+
+    IMPORTANT — prompt-design constraint (enforced in a future session):
+    A hypothesis should only carry a flag when the evidence genuinely provides
+    no basis to assess that fact.  Flags are NOT a defensive "flag everything
+    uncertain" habit.  Overuse of flags defeats the NCE_SSE_disagreement
+    metric by making NCE's claims unfalsifiable.
+    """
+    TARGET_PRIVILEGE_LEVEL = "target_privilege_level"
+    PRIOR_ACCESS = "prior_access"
+    NETWORK_REACHABILITY = "network_reachability"
+    TARGET_CRITICALITY = "target_criticality"
+    TARGET_HOST_CLASS = "target_host_class"
+
+
+# ---------------------------------------------------------------------------
+# HypothesisStatus
+# ---------------------------------------------------------------------------
+
+class HypothesisStatus(Enum):
+    """
+    Lifecycle states a hypothesis traverses through the NCE → SSE → RSEM chain.
+
+    GENERATED      — freshly produced by NCE (default on construction)
+    SSE_VALIDATED  — SSE has checked structural feasibility (pending result)
+    FEASIBLE       — SSE confirmed at least one valid attack path exists
+    INFEASIBLE     — SSE found no valid attack path (NEVER deleted — retained
+                     for audit/evaluation purposes)
+    RSEM_RANKED    — RSEM has scored and ranked this hypothesis
+    SELECTED       — chosen as the actionable hypothesis for response
+    REJECTED       — explicitly rejected after ranking (retained for audit)
+    """
+    GENERATED = "GENERATED"
+    SSE_VALIDATED = "SSE_VALIDATED"
+    FEASIBLE = "FEASIBLE"
+    INFEASIBLE = "INFEASIBLE"
+    RSEM_RANKED = "RSEM_RANKED"
+    SELECTED = "SELECTED"
+    REJECTED = "REJECTED"
+
+
+# ---------------------------------------------------------------------------
+# NCEHypothesis
+# ---------------------------------------------------------------------------
 
 @dataclass(frozen=True)
 class NCEHypothesis:
@@ -23,14 +101,27 @@ class NCEHypothesis:
 
     This is the load-bearing contract between NCE and SSE/RSEM:
     - technique_id must be a key in TECHNIQUE_TABLE
-    - nce_confidence is the LLM's self-reported confidence in [0, 1]
+    - nce_confidence is the LLM's self-reported confidence in [0, 1].
+      It is advisory/diagnostic only — it must NEVER be blended with
+      SSE's path_confidence for any security-relevant decision.  Both
+      values are preserved separately so a confidence_gap metric
+      (nce_confidence - sse_path_confidence) can be computed later as
+      a research diagnostic: does adversarial contamination cause the
+      LLM's self-reported confidence to diverge from structural reality?
     - supporting_evidence_refs contains field NAMES only (e.g.
       ["raw_log_line", "registry_key"]) — NEVER raw content.
       This is what keeps NCE's output from smuggling contaminated
       evidence text into SSE/RSEM's reasoning.  SSE operates on
       resolved identifiers; if raw evidence text leaked through here,
       an attacker could influence graph traversal via prompt injection.
-    - missing_context_flags names contextual gaps the NCE identified
+    - missing_context_flags names contextual gaps the NCE identified,
+      using a strict 5-flag vocabulary (MissingContextFlag enum).
+    - status tracks the hypothesis through its lifecycle (defaults to
+      GENERATED).  Since the dataclass is frozen, use with_status()
+      to produce a new instance with an updated status.
+
+    incident_id is optional (None when the hypothesis is constructed
+    standalone, set when part of an NCEOutput batch).
     """
     technique_id: str
     source_account: str
@@ -40,7 +131,9 @@ class NCEHypothesis:
     # Field NAMES only — never raw content.  This prevents contaminated
     # evidence text from smuggling into SSE/RSEM's reasoning path.
     supporting_evidence_refs: list[str]
-    missing_context_flags: list[str] = field(default_factory=list)
+    missing_context_flags: list[MissingContextFlag] = field(default_factory=list)
+    status: HypothesisStatus = HypothesisStatus.GENERATED
+    incident_id: str | None = None
 
     def __post_init__(self) -> None:
         if self.technique_id not in TECHNIQUE_TABLE:
@@ -52,7 +145,163 @@ class NCEHypothesis:
             raise ValueError(
                 f"nce_confidence must be in [0.0, 1.0], got {self.nce_confidence!r}"
             )
+        # Validate missing_context_flags — every element must be a
+        # MissingContextFlag enum member, not a raw string.
+        for flag in self.missing_context_flags:
+            if not isinstance(flag, MissingContextFlag):
+                raise ValueError(
+                    f"missing_context_flags must contain only MissingContextFlag "
+                    f"enum members, got {flag!r} (type {type(flag).__name__}). "
+                    f"Valid flags: {[f.value for f in MissingContextFlag]}"
+                )
+        # Validate status is a HypothesisStatus enum member.
+        if not isinstance(self.status, HypothesisStatus):
+            raise ValueError(
+                f"status must be a HypothesisStatus enum member, "
+                f"got {self.status!r} (type {type(self.status).__name__})"
+            )
 
+    def with_status(self, new_status: HypothesisStatus) -> NCEHypothesis:
+        """
+        Return a NEW NCEHypothesis with the given status.
+
+        Because NCEHypothesis is frozen (consistent with the codebase
+        convention of constructing new instances rather than mutating
+        in place — see KnowledgeFact's pattern in rsem.py), this is the
+        only supported way to update lifecycle status.  The original
+        instance is never modified.
+        """
+        return dataclasses.replace(self, status=new_status)
+
+
+# ---------------------------------------------------------------------------
+# NCEInput
+# ---------------------------------------------------------------------------
+
+# ImmutableContext field names from perception/models.py — these represent
+# trusted, knowledge-store-derived context and must NEVER appear in NCE's
+# evidence_fields.  This is a structural safety net preventing a future
+# prompt-builder from accidentally leaking trusted context into NCE's input,
+# mirroring the isinstance(Evidence) guard pattern in derived_context_rules.py
+# and sse.py.
+FORBIDDEN_FIELD_NAMES: frozenset[str] = frozenset({
+    "user_role",
+    "asset_criticality",
+    "network_zone",
+    "historical_access",
+    # DerivedContext field names — also trusted, also forbidden.
+    "no_prior_access",
+    "cross_zone_access",
+    "high_criticality_target",
+    "privilege_escalation_risk",
+})
+
+
+@dataclass(frozen=True)
+class NCEInput:
+    """
+    The exact shape NCE's future LLM call will receive.
+
+    This is evidence-only by structural enforcement, not just convention:
+    evidence_fields must not contain any key that maps to a trusted/derived
+    context field name (see FORBIDDEN_FIELD_NAMES).  This ensures NCE's
+    input channel is unambiguously untrusted — any adversarial contamination
+    is traceable to evidence, never to mixed trusted/untrusted prompt content.
+
+    Fields:
+        incident_id      — unique identifier for the incident being analyzed
+        evidence_fields  — field_name -> raw untrusted value, e.g.
+                           {"raw_log_line": "...", "command_line": "...",
+                            "registry_key": "..."}
+        timestamp        — when this input was assembled (UTC-aware)
+    """
+    incident_id: str
+    evidence_fields: dict[str, str]
+    timestamp: datetime
+
+    def __post_init__(self) -> None:
+        if not self.evidence_fields:
+            raise ValueError(
+                "evidence_fields must not be empty — NCE's entire job is to "
+                "generate hypotheses from evidence.  An NCEInput with no "
+                "evidence is semantically meaningless and should be rejected "
+                "upstream, not silently accepted."
+            )
+        leaked = FORBIDDEN_FIELD_NAMES & self.evidence_fields.keys()
+        if leaked:
+            raise ValueError(
+                f"evidence_fields contains forbidden trusted-context key(s): "
+                f"{sorted(leaked)}. NCE must receive evidence-only input — "
+                f"trusted context (ImmutableContext / DerivedContext fields) "
+                f"must never be passed to NCE. Forbidden keys: "
+                f"{sorted(FORBIDDEN_FIELD_NAMES)}"
+            )
+
+
+# ---------------------------------------------------------------------------
+# NCEOutput
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class NCEOutput:
+    """
+    The full response contract for one incident.
+
+    Validation granularity decision (deliberate, not an oversight):
+    If one hypothesis within a batch of 1–3 has an invalid technique_id or
+    invalid missing_context_flag, that SINGLE hypothesis fails its own
+    NCEHypothesis.__post_init__ (raising ValueError there).  NCEOutput does
+    NOT silently catch and drop such failures — the exception propagates
+    naturally.  This is correct because:
+
+    Schema validation of raw LLM JSON happens at the JSON-parsing layer
+    (a future session, not this one), where a malformed hypothesis can be
+    filtered BEFORE constructing NCEHypothesis objects.  Once you are
+    constructing NCEHypothesis/NCEOutput instances at all, every one of
+    them is assumed already-valid, and a validation failure here indicates
+    a bug in the parsing layer, not expected/recoverable behavior.
+
+    NCEOutput's own __post_init__ validates:
+    - 1 <= len(hypotheses) <= 3 (locked design cap on hypothesis count)
+    - All hypotheses share the same incident_id as the NCEOutput
+    """
+    incident_id: str
+    hypotheses: tuple[NCEHypothesis, ...]
+
+    def __post_init__(self) -> None:
+        # --- hypothesis count bounds ---
+        if len(self.hypotheses) < 1:
+            raise ValueError(
+                "NCEOutput must contain at least 1 hypothesis, got 0. "
+                "An empty hypothesis set is never valid — NCE must always "
+                "produce at least one competing narrative."
+            )
+        if len(self.hypotheses) > 3:
+            raise ValueError(
+                f"NCEOutput must contain at most 3 hypotheses, got "
+                f"{len(self.hypotheses)}. This cap is a locked design "
+                f"decision to bound downstream SSE/RSEM computation cost."
+            )
+        # --- incident_id consistency ---
+        # Every hypothesis must carry the same incident_id as the batch.
+        # No None bypass: if a hypothesis wasn't stamped with an incident_id,
+        # that's a bug in the layer that constructed it.  NCEHypothesis allows
+        # incident_id=None for standalone use (SSE/RSEM don't need it), but
+        # once you're assembling an NCEOutput, every hypothesis must be fully
+        # stamped.
+        for i, h in enumerate(self.hypotheses):
+            if h.incident_id != self.incident_id:
+                raise ValueError(
+                    f"Hypothesis [{i}] has incident_id={h.incident_id!r} "
+                    f"which does not match NCEOutput.incident_id="
+                    f"{self.incident_id!r}. All hypotheses in an NCEOutput "
+                    f"must carry the same incident_id — no None bypass."
+                )
+
+
+# ---------------------------------------------------------------------------
+# Mock generators
+# ---------------------------------------------------------------------------
 
 def generate_mock_hypotheses(
     account_id: str,
@@ -101,3 +350,42 @@ def generate_mock_hypotheses(
         ))
 
     return hypotheses
+
+
+def generate_mock_nce_output(
+    incident_id: str,
+    account_id: str,
+    source_host: str,
+    target_host: str,
+    technique_ids: list[str] | None = None,
+) -> NCEOutput:
+    """
+    Generate a complete NCEOutput for testing the new contract pieces.
+
+    Wraps generate_mock_hypotheses() in an NCEOutput, setting incident_id
+    on each hypothesis for consistency.  Separate from generate_mock_hypotheses()
+    to avoid breaking the existing NCE → SSE → RSEM integration test that
+    expects list[NCEHypothesis] without incident_id.
+
+    Args:
+        incident_id:   Unique identifier for the mock incident.
+        account_id:    The account to attribute hypotheses to.
+        source_host:   Source host for all hypotheses.
+        target_host:   Target host for all hypotheses.
+        technique_ids: Specific techniques (max 3, per NCEOutput contract).
+                       Defaults to T1078, T1550, T1562.
+
+    Returns:
+        A validated NCEOutput wrapping the generated hypotheses.
+    """
+    raw_hypotheses = generate_mock_hypotheses(
+        account_id, source_host, target_host, technique_ids
+    )
+
+    # Stamp incident_id on each hypothesis for NCEOutput consistency.
+    stamped = tuple(
+        dataclasses.replace(h, incident_id=incident_id)
+        for h in raw_hypotheses
+    )
+
+    return NCEOutput(incident_id=incident_id, hypotheses=stamped)

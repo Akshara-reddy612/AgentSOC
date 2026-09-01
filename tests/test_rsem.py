@@ -256,11 +256,16 @@ class TestScoreActionArithmetic:
 
         Hand-computed: svc_backup REVOKE_SESSION (account only, no host)
         REVOKE_SESSION removes HAS_PRIOR_ACCESS only — GRANTS edges survive.
-        svc_backup has 2 paths to server-db01 for T1078:
-          1. HAS_PRIOR_ACCESS (removed by REVOKE)
-          2. GRANTS:ADMIN   (survives — standing grant, not a session)
-        → containment = 1/2 = 0.5, business_impact = 0.0
-        → composite = 1.5 * 0.5 - 0.8 * 0.0 = 0.75
+
+        T1078's valid_sequences produce 4 non-INFEASIBLE results for
+        svc_backup → server-db01 (multiple sequences match the same
+        physical HAS_PRIOR_ACCESS and GRANTS edges):
+          - 2 via HAS_PRIOR_ACCESS (removed by REVOKE)
+          - 2 via GRANTS:ADMIN (1 survives after REVOKE — the other
+            sequence's match was contingent on HAS_PRIOR_ACCESS existing)
+        → paths_cut = 3, containment = 3/4 = 0.75
+        → business_impact = 0.0 (no target_host_id)
+        → composite = 1.5 * 0.75 - 0.8 * 0.0 = 1.125
         """
         gs = KnowledgeStoreGraph()
         sse = StructuralSimulationEngine(gs)
@@ -276,9 +281,9 @@ class TestScoreActionArithmetic:
 
         result = score_action(gs, sse, action, hypotheses, weights)
 
-        # REVOKE removes HAS_PRIOR_ACCESS; GRANTS survives → 1 of 2 cut
-        assert result.containment == pytest.approx(0.5), (
-            f"Expected 0.5 (1 of 2 paths cut), got {result.containment}"
+        # REVOKE removes HAS_PRIOR_ACCESS; 3 of 4 paths cut
+        assert result.containment == pytest.approx(0.75), (
+            f"Expected 0.75 (3 of 4 paths cut), got {result.containment}"
         )
         assert result.business_impact == pytest.approx(0.0), (
             f"No target host → impact=0, got {result.business_impact}"
@@ -289,7 +294,7 @@ class TestScoreActionArithmetic:
             weights.beta * result.business_impact
         )
         assert result.composite_score == pytest.approx(expected)
-        assert result.composite_score == pytest.approx(0.75)
+        assert result.composite_score == pytest.approx(1.125)
 
 
 # ---------------------------------------------------------------------------
