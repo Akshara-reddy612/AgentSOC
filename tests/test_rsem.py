@@ -10,7 +10,12 @@ from __future__ import annotations
 
 import pytest
 
-from perception.knowledge_graph import KnowledgeStoreGraph, host_node_id
+from perception.knowledge_graph import (
+    AccessLevel,
+    KnowledgeStoreGraph,
+    account_node_id,
+    host_node_id,
+)
 from perception.nce_contract import generate_mock_hypotheses
 from perception.rsem import (
     AGGRESSIVE_CONTAINMENT,
@@ -24,6 +29,8 @@ from perception.rsem import (
     rank_actions,
     score_action,
 )
+from perception.knowledge_store import KnowledgeFact
+from perception.source_systems import SourceSystem
 from perception.sse import StructuralSimulationEngine
 
 
@@ -522,3 +529,111 @@ class TestActionTypeDifferentiation:
         # svc_backup has HAS_PRIOR_ACCESS to server-db01 → should be cut
         assert containment > 0.0
         assert paths_cut > 0
+
+    def test_restrict_privileges_vs_quarantine_access_multi_account_host(
+        self, setup,
+    ):
+        """RESTRICT_PRIVILEGES (single account) vs QUARANTINE_ACCESS (host-wide)
+        must produce DIFFERENT containment when TWO independent accounts both
+        have GRANTS:ADMIN on the same host.
+
+        Setup:
+          - svc_backup → server-db01 via GRANTS:ADMIN (already seeded)
+          - mallory → server-db01 via GRANTS:ADMIN (added in this test)
+          - Hypotheses: svc_backup T1550, mallory T1550 (both FEASIBLE)
+
+        RESTRICT_PRIVILEGES(svc_backup): removes svc_backup's GRANTS +
+          MEMBER_OF edges, but mallory's GRANTS edge survives → only some
+          paths cut.
+        QUARANTINE_ACCESS(server-db01): removes ALL inbound GRANTS +
+          HAS_PRIOR_ACCESS + MEMBER_OF edges to the host → both accounts'
+          paths cut → strictly higher containment.
+
+        This is the test that distinguishes the two action types' scope
+        in a scenario where a single-account graph could not."""
+        gs, sse = setup
+
+        # --- Add a second GRANTS:ADMIN edge: mallory → server-db01 ---
+        from datetime import datetime, timezone
+        mallory_node = gs.get_or_create_account_node("mallory")
+        db_node = host_node_id("server-db01")
+        gs.graph.add_edge(
+            mallory_node, db_node,
+            key="GRANTS:ADMIN:test",
+            edge_type="GRANTS",
+            access_level=KnowledgeFact(
+                value=AccessLevel.ADMIN,
+                version=1,
+                confidence=1.0,
+                source=SourceSystem.KNOWLEDGE_STORE,
+                timestamp=datetime(2026, 7, 24, 12, 0, 0, tzinfo=timezone.utc),
+            ),
+        )
+        # Re-create SSE against the modified graph so it sees the new edge
+        sse = StructuralSimulationEngine(gs)
+
+        # Hypotheses: both accounts targeting server-db01 with T1550
+        # (requires ADMIN — both are FEASIBLE via their GRANTS:ADMIN edges)
+        hypotheses = (
+            generate_mock_hypotheses(
+                "svc_backup", "workstation-01", "server-db01",
+                technique_ids=["T1550"],
+            )
+            + generate_mock_hypotheses(
+                "mallory", "workstation-01", "server-db01",
+                technique_ids=["T1550"],
+            )
+        )
+
+        # Verify both paths are feasible before any action
+        total_before = 0
+        for h in hypotheses:
+            results = sse.check(
+                h.source_account, h.source_host, h.target_host, h.technique_id
+            )
+            for r in results:
+                if r.verdict.value != "INFEASIBLE":
+                    total_before += 1
+        assert total_before >= 2, (
+            f"Expected at least 2 feasible paths (one per account), "
+            f"got {total_before}"
+        )
+
+        # --- RESTRICT_PRIVILEGES: targets svc_backup only ---
+        restrict = ProposedAction(
+            action_type=ActionType.RESTRICT_PRIVILEGES,
+            target_account_id="svc_backup",
+        )
+        restrict_cont, restrict_cut, restrict_total = compute_containment(
+            gs, sse, restrict, hypotheses,
+        )
+
+        # --- QUARANTINE_ACCESS: targets server-db01 (all accounts) ---
+        quarantine = ProposedAction(
+            action_type=ActionType.QUARANTINE_ACCESS,
+            target_host_id="server-db01",
+        )
+        quarantine_cont, quarantine_cut, quarantine_total = compute_containment(
+            gs, sse, quarantine, hypotheses,
+        )
+
+        # RESTRICT should cut some but NOT all paths (mallory's survives)
+        assert restrict_cut > 0, "RESTRICT should cut at least svc_backup's path"
+        assert restrict_cut < restrict_total, (
+            f"RESTRICT should leave mallory's path intact, but cut "
+            f"{restrict_cut}/{restrict_total}"
+        )
+
+        # QUARANTINE should cut ALL paths (both accounts)
+        assert quarantine_cut == quarantine_total, (
+            f"QUARANTINE should cut all paths, but cut "
+            f"{quarantine_cut}/{quarantine_total}"
+        )
+
+        # The key assertion: containment scores are STRICTLY DIFFERENT
+        assert quarantine_cont > restrict_cont, (
+            f"QUARANTINE containment ({quarantine_cont}) must be strictly "
+            f"greater than RESTRICT containment ({restrict_cont}) when "
+            f"two independent accounts have paths to the same host — "
+            f"if they are equal, RESTRICT and QUARANTINE are aliased."
+        )
