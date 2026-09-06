@@ -1,5 +1,40 @@
 # Research Log
 
+## 2026-09-06 — Session: Phase NCE-7-SCALE — Structural Pipeline Evaluation at Scale (n=90)
+
+### What was tried:
+- **Scaled structural pipeline evaluation from n=8 to n=80 contaminated + 10 clean alerts** (10 per injection family) to produce a defensible headline number for the paper. Implemented `agent/run_nce7_scale_eval.py` with per-alert checkpointing, JSONL API audit logging, resume-from-checkpoint, dry-run mode, and reuse of existing NCE-7 results where applicable (10 reused, 80 new API calls).
+- **Root cause investigation of ALL FEASIBLE hypotheses** using direct graph inspection of `perception/sse.py`'s technique constraint table and `perception/knowledge_graph.py`'s zone-egress topology.
+- **Quantified T1071-hypothesis-generation rate per family** to explain the anomalously low `cross_field_split` defense rate (40%).
+
+### What worked:
+- **Structural defense success rate: 64/80 (80.0%)** on contaminated alerts (n=80, 10 per family). This supersedes the n=8 result (87.5%) — the smaller-sample number did not hold at scale.
+- **Per-family rates range from 40.0% (cross_field_split) to 100.0% (direct_override).** Excluding cross_field_split: 60/70 = 85.7%.
+- **Single root cause identified for ALL 16 failures:** Every one of the 16 FEASIBLE hypotheses involves T1071 (Application Layer Protocol / C2). SSE's T1071 constraint (`valid_sequences=()`, `egress_to_any=True`, `egress_ports=(443,80)`) checks only outbound web egress from the source host's zone — no access-path or privilege check. Combined with `classify_host()` placing `WKSTN-*`/`LT-*-CORP` hosts into `zone:WORKSTATION` (which has 443/80 egress to `zone:EXTERNAL`), any T1071 hypothesis on a workstation-class host is automatically FEASIBLE regardless of contamination. This explains 16/16 failures (100%).
+- **4 contaminated alerts had T1071 hypotheses but SUCCEEDED:** In all 4 cases, the target was `unknown` → `zone:UNKNOWN` (no web egress), confirming the mechanism is purely zone-egress-driven.
+- **Resume-safety worked across 2 transient API hangs** (alert #28 hung for ~14min, alert #66 hung for ~4min). Kill-and-resume restored cleanly from checkpoints with zero lost work.
+- **Clean-alert assessment at n=10:** 8/10 all-INFEASIBLE, 2/10 correctly show FEASIBLE (both T1071 — same mechanism). Still not a dedicated FP study.
+- **nce_confidence invariant re-confirmed:** grep across all evaluation and integration files shows nce_confidence appears only in diagnostic/logging contexts, never as an input to SSE feasibility or RSEM scoring.
+- **All 343 tests pass (1 deselected), zero regressions.** No locked files modified.
+
+### What failed and why:
+- **The n=8 headline number (87.5%) did not hold at scale.** The actual rate at n=80 is 80.0% — a 7.5 percentage point drop. The drop is not random variance; it is driven entirely by the T1071/network-egress limitation, which happened to not appear in 7 of the 8 original alerts simply because NCE didn't generate T1071 hypotheses for those specific alerts. At n=80, more alerts expose the T1071 pattern by chance.
+- **cross_field_split's 40% rate** is because NCE generates T1071 hypotheses for 6/10 cross_field_split alerts (60%) — the highest T1071-generation rate of any family. This is likely because cross_field_split payloads, which distribute their attack narrative across multiple fields, tend to include network/C2 references that prompt NCE to generate T1071-tagged hypotheses more often.
+
+### Key decisions:
+- **T1071 open design question flagged, not resolved:** Two valid interpretations exist — (a) intentionally correct MITRE modeling (C2 genuinely requires only outbound connectivity), or (b) an incomplete constraint needing additional preconditions (e.g., HAS_PRIOR_ACCESS). This requires a design decision before framing in the paper. `sse.py` is a locked file; no code changes made.
+- **n=8 result preserved as historical baseline** in both PROJECT_STATUS.md and this log, per the project's convention of keeping small-sample numbers visible alongside scaled-up results.
+- **80.0% reported honestly as the headline number.** The original "one graph-scope limitation" framing (Slot 8) has been replaced by the more precise and complete "T1071/network-egress limitation" framing, which explains 100% of failures through a single, well-understood mechanism.
+
+### Files created/modified:
+- **Created:**
+  - [`agent/run_nce7_scale_eval.py`](file:///C:/agentsoc/agent/run_nce7_scale_eval.py) (Full n=90 evaluation script with checkpointing, audit logging, dry-run)
+  - [`agent/nce7_scale_results.json`](file:///C:/agentsoc/agent/nce7_scale_results.json) (Full 90-alert results)
+  - [`agent/nce7_scale_api_call_log.jsonl`](file:///C:/agentsoc/agent/nce7_scale_api_call_log.jsonl) (API audit log, 80 entries)
+- **Modified:**
+  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Phase NCE-7-SCALE section, updated What's NOT Built Yet, updated Immediate Next Step)
+  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This session entry)
+
 ## 2026-09-05 — Session: Phase NCE-7 — Structural Pipeline Comparative Evaluation
 
 ### What was tried:
