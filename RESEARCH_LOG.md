@@ -1,5 +1,29 @@
 # Research Log
 
+## 2026-09-13 — Session: Knowledge Store Data Lineage Verification (Pre-Review Accuracy Check)
+
+### What was tried:
+- Verified, via direct code inspection, exactly how each layer of the pipeline interacts with the Internal Knowledge Store, ahead of the upcoming project review, since the review will require precise answers about system design and base-paper parity.
+
+### What was found:
+1. `perception/knowledge_store.py` defines `InMemoryKnowledgeStore`, a flat key-value fact repository (user privilege tiers, asset criticality/zone, topology reachability, prior access baselines), using the `KnowledgeFact` dataclass for versioned, confidence-scored, audited values.
+2. `perception/knowledge_graph.py`'s `KnowledgeStoreGraph` does NOT extend `InMemoryKnowledgeStore` -- it is a SEPARATE, parallel structure built around a `networkx.MultiDiGraph`, which only imports `InMemoryKnowledgeStore` to migrate seed data at initialization and reuses the `KnowledgeFact` dataclass for node/edge attributes. (This corrects an earlier, imprecise description of `knowledge_graph.py` as "extending" `InMemoryKnowledgeStore` -- it is architecturally parallel, not a subclass.)
+3. Data lineage through the pre-NCE Perception Layer:
+   Knowledge Store --(direct read, `contextualizer.py`)--> `ImmutableContext` (`user_role`, `asset_criticality`, `network_zone`, `historical_access`) --(transitive, `derived_context_rules.py`, ZERO direct store I/O)--> `DerivedContext` (`no_prior_access`, `cross_zone_access`, `high_criticality_target`, `privilege_escalation_risk`).
+   `derived_context_rules.py` never imports or calls the Knowledge Store directly -- its only permitted input is `ImmutableContext`, enforced by a runtime guard (`_require_immutable_context`) that raises `TypeError` if an `Evidence` object is passed instead. But because every input to its computation originated from the Knowledge Store one layer upstream, its 4 output flags are TRANSITIVELY Knowledge-Store-derived.
+4. NCE isolation is verified robust against BOTH tiers of this lineage, not just the direct one. `perception/nce_contract.py`'s `FORBIDDEN_FIELD_NAMES` frozenset explicitly lists both the 4 direct `ImmutableContext` field names AND the 4 transitive `DerivedContext` flag names -- `NCEInput.__post_init__` raises `ValueError` if any of the 8 appear in `evidence_fields`. NCE's actual input, per `perception/nce_engine.py`'s `_NCE_EVIDENCE_FIELD_NAMES`, is limited to 6 raw evidence fields: `process_name`, `command_line`, `registry_key`, `parent_process`, `file_path`, `raw_log_line`. `prompt_construction/nce_prompt_builder.py` additionally documents "NO trusted_context" as an explicit design invariant at the prompt-construction boundary. This means NCE's isolation from the Knowledge Store was designed anticipating not just direct leakage but also derivative/transitive leakage paths -- a stronger guarantee than a naive single-layer block would provide.
+5. SSE and RSEM read directly and genuinely from `KnowledgeStoreGraph` (real multi-hop graph traversal for SSE's feasibility checks; real graph cloning + before/after re-simulation for RSEM's containment scoring) -- both already verified in prior sessions, now confirmed structurally separate from the `ImmutableContext`/`DerivedContext` lineage above (SSE/RSEM operate on the graph, not on the flat key-value store or its derived contexts).
+
+### Key decisions:
+- This verification was purely for review-accuracy purposes; no code changes were made or needed.
+- Corrected an imprecise prior description: `knowledge_graph.py`'s `KnowledgeStoreGraph` is a parallel structure to `InMemoryKnowledgeStore`, not a subclass/extension of it.
+- Confirmed NCE's isolation from Knowledge-Store-derived context is enforced by three independent guards (contract-level forbidden-field check, evidence-field allowlist at input mapping, explicit no-trusted-context invariant at prompt construction), and that this isolation was deliberately designed to cover transitive derivative flags, not just direct fields -- this is presented as an architectural strength for review purposes.
+
+### Files created/modified:
+- **Modified:**
+  - [`PROJECT_STATUS.md`](file:///c:/agentsoc/PROJECT_STATUS.md) (Architecture Map: factual correction clarifying `KnowledgeStoreGraph` is a separate parallel structure to `InMemoryKnowledgeStore`, not a subclass)
+  - [`RESEARCH_LOG.md`](file:///c:/agentsoc/RESEARCH_LOG.md) (Added session entry for Knowledge Store data lineage verification)
+
 ## 2026-09-12/13 — Session: Phase NCE-8 — Clean-Alert False-Positive Assessment at Scale (n=50) + Individual Investigation
 
 ### What was tried:
