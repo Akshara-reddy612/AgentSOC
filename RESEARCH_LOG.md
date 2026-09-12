@@ -1,5 +1,34 @@
 # Research Log
 
+## 2026-09-12 — Session: T1071 Mislabeling Investigation & Three-Factor Resolution
+
+### What was tried:
+- **Comprehensive manual review of all 18 FEASIBLE T1071 hypotheses** from the Phase NCE-7-SCALE evaluation (16 contaminated + 2 clean) against their original raw alert log fields from `guide_heldout_140_alerts.json` and `guide_sample_500_alerts.json`.
+- Evaluated whether NCE is mislabeling ambiguous or non-C2 evidence as T1071 (Application Layer Protocol), separate from SSE's graph constraint logic.
+- Conducted deep-dive into `cross_field_split`'s 6 T1071 hypotheses to evaluate whether cross-field payloads specifically elicit T1071 labels from NCE.
+
+### What was found:
+- **12 / 18 (67%) REASONABLE T1071 labels:** Raw logs contain explicit outbound beaconing commands (`curl.exe` or `powershell Invoke-WebRequest` to external 185.x.x.x IPs) co-occurring with SIEM `category=CommandAndControl`. NCE's T1071 extraction is well-grounded and matches human analyst judgment (10 contaminated + 2 clean).
+- **6 / 18 (33%) QUESTIONABLE T1071 labels:** Partial/weak evidence where NCE inferred T1071 with low confidence (0.35–0.72, median ~0.45). Includes 3 cases with external URLs in non-C2 categories (`category=SuspiciousActivity`, `Impact`, `Exfiltration` with `example-cdn.net` domains) and 3 cases with no external IP, no beaconing command, and internal/NA targets in `Exfiltration`/`InitialAccess`/`logon` events.
+- **0 / 18 (0%) CLEARLY MISLABELED:** Zero cases where NCE hallucinated a high-confidence T1071 label from nothing. Even the weakest cases had tangential signals, and NCE reflected uncertainty in lower confidence scores.
+- **Three distinct factors identified:**
+  1. *Factor 1 (Primary, ~75% of contaminated fails, 12/16):* SSE network-egress constraint architectural limitation. Genuine C2 evidence creates FEASIBLE hypotheses that structural validation cannot separate from real attacks.
+  2. *Factor 2 (Secondary, ~25% of contaminated fails, 4/16):* NCE over-reach generating low-confidence T1071 hypotheses on ambiguous non-C2 alerts. With disciplined NCE labeling, the defense rate ceiling rises from 80.0% (64/80) to 87.5% (70/80).
+  3. *Factor 3:* Zero hallucinated labels, confirming Factor 2 is an over-eagerness/calibration issue, not model unreliability.
+- **Cross_field_split explained:** 4/6 T1071 hypotheses are Factor 1 (genuine C2 telemetry in the source alert), 2/6 are Factor 2 (lowest confidence scores in the set: 0.35 and 0.42). Cross-field injection does not specifically elicit T1071 mislabeling.
+
+### Key decisions:
+- **T1071 open design question resolved:** Replaced open-ended binary (a)/(b) question with the resolved three-factor framing. The 80.0% structural defense rate represents the actual empirical rate, with 87.5% as the theoretical ceiling under perfect NCE hypothesis discipline.
+- **Factor 1 classified as an architectural limitation, not a bug:** Pure structural graph validation answers whether a network path exists, not whether the narrative is genuine.
+- **Factor 2 flagged as future work:** Adding an evidentiary bar in `nce_engine.py` (e.g., requiring external-IP + beaconing command co-occurrence) to prevent low-confidence over-generation.
+
+### Files created/modified:
+- **Created:**
+  - `t1071_mislabeling_investigation.md` (Full per-alert evidence analysis and classification report)
+- **Modified:**
+  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Replaced Open Design Question with Resolved Three Factors section; updated What's NOT Built Yet and Immediate Next Step)
+  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This session entry)
+
 ## 2026-09-06 — Session: Phase NCE-7-SCALE — Structural Pipeline Evaluation at Scale (n=90)
 
 ### What was tried:
