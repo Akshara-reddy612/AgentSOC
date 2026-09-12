@@ -1,5 +1,54 @@
 # Research Log
 
+## 2026-09-12/13 — Session: Phase NCE-8 — Clean-Alert False-Positive Assessment at Scale (n=50) + Individual Investigation
+
+### What was tried:
+- **Dedicated SSE false-positive evaluation on clean (non-contaminated) alerts**, scaling the clean-alert baseline from n=10 (Phase NCE-7-SCALE) to n=60 total (n=10 existing + n=50 new).
+- Selected 50 new clean alerts from `guide_sample_500_alerts.json` via `random.Random(51)`, excluding 10 IDs already used in NCE-7/NCE-7-SCALE.
+- Full NCE → SSE → RSEM pipeline execution: 50 Gemini API calls (`gemini-3.1-flash-lite`), all successful, with per-alert checkpointing and JSONL audit logging.
+- Run completed in a single session (~7 minutes), no quota exhaustion or transient failures.
+- **Follow-up investigation:** Individual review of all 14 FEASIBLE clean alerts against their raw source evidence from `guide_sample_500_alerts.json`, applying the same three-tier classification (REASONABLE / QUESTIONABLE / UNEXPECTED) used in the contaminated-side T1071 mislabeling investigation. Specific deep-dives into the duckdns.org target case and the self-referencing WKSTN case.
+
+### What was found:
+- **14/50 (28.0%)** alerts had at least one FEASIBLE hypothesis. **ALL 14 are T1071** — identical to the contaminated-side pattern.
+- **0/50 (0.0%)** non-T1071 FEASIBLE hypotheses. SSE produces zero false positives on clean data for all non-network-egress techniques.
+- **Combined with NCE-7-SCALE (n=10):** 16/60 (26.7%) alert-level FEASIBLE rate, all T1071. Non-T1071 FP rate: 0/60 (0.0%).
+- All 14 FEASIBLE hypotheses have `path_confidence=1.0`, confirming the same zone-egress topology mechanism (workstation → external, T1071 `egress_to_any=True`).
+- 124 total hypotheses across 50 alerts (avg 2.48/alert): 14 FEASIBLE, 110 INFEASIBLE.
+
+#### Individual investigation findings (follow-up):
+- **8/14 (57%) REASONABLE:** Raw logs contain explicit beaconing commands (`curl.exe` or `Invoke-WebRequest` to external 185.x.x.x IPs) with `category=CommandAndControl`. NCE's T1071 is well-grounded — Factor 1 (clean-side mirror of the contaminated architectural limitation).
+- **6/14 (43%) QUESTIONABLE:** Non-C2 categories (`InitialAccess`, `Impact`, `Exfiltration`, `Execution`), no beaconing commands, no real external IPs. NCE inferred T1071 from tangential signals — Factor 2 (clean-side NCE over-reach).
+- **0/14 (0%) UNEXPECTED:** No cases fell outside the established T1071 pattern.
+- **Contaminated-side comparison:** Factor 2 proportion is higher on clean data (43% vs 25%), expected since clean alerts contain less genuine C2 telemetry on average.
+- **Measured vs. theoretical rate:** 14/50 (28.0%) measured; ~8/50 (16.0%) Factor-1-only theoretical floor under perfect NCE discipline. Combined: 16/60 (26.7%) measured, ~10/60 (16.7%) theoretical.
+- **DuckDNS case (alert 1382979471619):** `{N}.duckdns.org/gate.php` is a standard GUIDE dataset C2-template pattern appearing in ≥4 REASONABLE cases. NCE extracted the URL hostname instead of the command_line IP — cosmetic difference, same Factor 1 mechanism. Classified REASONABLE.
+- **Self-referencing WKSTN case (alert 566935684681):** `target_host = source_host = WKSTN-2278`. Traced to GUIDE dataset defaulting `target_host = source_host` when no distinct target exists + NCE reusing that value. Underlying alert is local file exfiltration with zero network evidence. Not an SSE bug — an NCE extraction artifact. Low confidence (0.45) + `missing_context_flags=['network_reachability']` signal NCE's uncertainty. Classified QUESTIONABLE (Factor 2).
+- **Case 13 calibration failure (alert 584115555473):** T1071 hypothesis at `nce_confidence=0.85` from `wscript.exe` + `category=Execution` with zero network indicators. Highest confidence among all QUESTIONABLE cases (all others ≤ 0.62). The single strongest evidence for prioritizing the NCE evidentiary threshold as future work — high confidence misaligned with evidence quality.
+
+### Key decisions:
+- **SSE clean-alert FP assessment marked DONE** in PROJECT_STATUS.md. This was the #1 priority from the Immediate Next Step.
+- **n=60 combined sample** is now defensible for the paper: each additional FEASIBLE alert shifts the rate by <2 percentage points (vs. 10 points at n=10).
+- **Measured/theoretical distinction adopted:** 28.0% is stated as the empirical fact; ~16.0% Factor-1-only rate is explicitly labeled as a theoretical counterfactual, not a second measurement.
+- **Case 13 elevated as a named example** in PROJECT_STATUS.md — strengthens the priority of the NCE evidentiary threshold future work.
+- **Factor 2 confirmed as a general NCE calibration issue**, not attack-specific — appears on both clean and contaminated data.
+- No code changes to perception/ modules — this was purely evaluation + investigation + documentation.
+
+### Files created/modified:
+- **Created:**
+  - [`agent/run_nce8_clean_fp_eval.py`](file:///C:/agentsoc/agent/run_nce8_clean_fp_eval.py) (Evaluation script, modeled on `run_nce7_scale_eval.py`)
+  - [`agent/nce8_clean_fp_results.json`](file:///C:/agentsoc/agent/nce8_clean_fp_results.json) (Full per-alert results, 50 entries)
+  - [`agent/nce8_clean_fp_api_call_log.jsonl`](file:///C:/agentsoc/agent/nce8_clean_fp_api_call_log.jsonl) (API audit log, 50 entries)
+  - [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md) (Full per-alert evidence review and classification, 14 cases)
+- **Modified:**
+  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Expanded Clean-Alert FP section with Factor breakdown, measured/theoretical distinction, Case 13 callout, DuckDNS/WKSTN deep-dives, nuanced summary)
+  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This session entry)
+
+### Test verification:
+- `pytest tests/ -q`: 343 passed, 1 deselected (0 failures). No regressions.
+
+---
+
 ## 2026-09-12 — Session: T1071 Mislabeling Investigation & Three-Factor Resolution
 
 ### What was tried:

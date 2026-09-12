@@ -249,14 +249,54 @@ The T1071 mislabeling investigation (18 FEASIBLE hypotheses individually reviewe
 
 The 80.0% (64/80) structural defense success rate is best understood as two layered numbers: 80.0% actual, and 87.5% (70/80) as a theoretical ceiling under perfect NCE hypothesis-generation discipline. The gap between them (7.5 percentage points) is attributable to NCE occasionally generating low-confidence technique hypotheses from weak evidence (Factor 2), a problem distinct from and smaller than the primary, architectural limitation of purely structural graph validation for network-layer techniques (Factor 1, ~75% of failures). Neither factor is a defect requiring urgent correction; Factor 1 is an honest and expected boundary of the approach, and Factor 2 is flagged as future work.
 
-### Clean-Alert False-Positive Assessment (n=10)
+### Clean-Alert False-Positive Assessment (n=60: 10 from NCE-7-SCALE + 50 from NCE-8)
 
-| Metric | Count |
-|:---|:---:|
-| All-INFEASIBLE (possible SSE FP on clean data) | 8/10 |
-| Has FEASIBLE (expected/correct behavior on clean data) | 2/10 |
+**Phase NCE-8** scaled the clean-alert evaluation from n=10 to n=50 new clean alerts (selected via `random.Random(51)` from `guide_sample_500_alerts.json`, excluding 10 IDs used in NCE-7/NCE-7-SCALE). Combined with the original n=10, the total clean sample is **n=60**.
 
-The 2 clean alerts with FEASIBLE hypotheses both involve T1071 to external IPs — the same mechanism as the contaminated failures, confirming that T1071/network-egress is a technique-level limitation, not a contamination-specific one. n=10 is improved over n=2 but still smaller than a dedicated FP study.
+| Metric | NCE-7-SCALE (n=10) | NCE-8 (n=50) | Combined (n=60) |
+|:---|:---:|:---:|:---:|
+| Alerts with ≥1 FEASIBLE hypothesis | 2/10 (20.0%) | 14/50 (28.0%) | 16/60 (26.7%) |
+| All-INFEASIBLE alerts | 8/10 (80.0%) | 36/50 (72.0%) | 44/60 (73.3%) |
+| Total hypotheses | — | 124 | — |
+| FEASIBLE hypotheses (technique) | 2 (T1071) | 14 (T1071) | 16 (all T1071) |
+| Non-T1071 FEASIBLE | 0 | 0 | **0 (0.0%)** |
+
+**Zero non-T1071 false positives across n=60.** On all non-T1071 techniques, SSE's false-positive rate on clean data is **0/60 (0.0%)**.
+
+#### Clean-Side Factor Breakdown (Individual Investigation of All 14 NCE-8 FEASIBLE Cases)
+
+Individual review of all 14 FEASIBLE clean alerts — applying the same three-tier classification (REASONABLE / QUESTIONABLE / UNEXPECTED) used in the contaminated-side T1071 mislabeling investigation — reveals that the 28.0% alert-level FEASIBLE rate is not a pure measurement of SSE's architectural limitation. Two distinct factors contribute:
+
+| Factor | Clean-side (n=14) | Contaminated-side (n=16) | Description |
+|:---|:---:|:---:|:---|
+| **Factor 1** (genuine C2 evidence + zone-egress) | 8 (57%) | 12 (75%) | Raw logs contain explicit beaconing (`curl.exe`/`Invoke-WebRequest` to external 185.x.x.x IPs) with `category=CommandAndControl`. NCE's T1071 label is well-grounded; SSE's FEASIBLE is the expected, irreducible architectural outcome. |
+| **Factor 2** (NCE over-reach, weak/no network evidence) | 6 (43%) | 4 (25%) | Non-C2 categories (`InitialAccess`, `Impact`, `Exfiltration`, `Execution`), no beaconing commands, no real external IPs. NCE inferred T1071 from tangential signals. |
+| **Factor 3** (hallucinated label) | 0 (0%) | 0 (0%) | Zero cases of NCE fabricating a T1071 label from nothing. |
+
+The presence of Factor 2 on **both** clean and contaminated data confirms it is a general NCE hypothesis-generation calibration issue, not an artifact of attack payloads specifically eliciting T1071 mislabeling. The clean-side has a higher proportion of Factor 2 (43% vs 25%), which is expected — clean alerts contain less genuine C2 telemetry on average, so a larger fraction of NCE's T1071 generation is speculative.
+
+**Measured rate vs. theoretical rate under perfect NCE discipline:**
+
+- **MEASURED (empirical fact):** 14/50 (28.0%) clean alerts had ≥1 FEASIBLE hypothesis in the NCE-8 evaluation. Combined with NCE-7-SCALE: 16/60 (26.7%). These are the rates that actually occurred.
+- **THEORETICAL (counterfactual):** If NCE never generated a T1071 hypothesis without genuine network evidence (i.e., if all Factor 2 cases were eliminated), the observed rate would fall to approximately 8/50 (16.0%) for NCE-8 alone, or ~10/60 (16.7%) combined. This is the Factor-1-only floor — the irreducible rate attributable to genuine C2-shaped telemetry in the GUIDE dataset that happens to satisfy T1071's structural preconditions. This is NOT a second empirical measurement; it is a what-if estimate illustrating the improvement the NCE evidentiary threshold (already flagged as future work) would deliver on clean data.
+
+#### Case 13 (Alert 584115555473) — Calibration Failure
+
+One clean-alert case deserves individual mention: alert 584115555473 received a T1071 hypothesis at `nce_confidence=0.85` — the highest confidence among all QUESTIONABLE cases in this evaluation — despite the underlying evidence (`wscript.exe` executing a VBS file under `category=Execution`) containing zero network indicators. Every other Factor 2 case in this evaluation carries a confidence of 0.62 or below, meaning NCE's own confidence signal correctly tracked its uncertainty in those cases. This one does not: high confidence assigned to a hypothesis with no supporting network evidence is a more concerning calibration failure than simple over-generation, and is the single strongest piece of evidence in this project for prioritizing the NCE evidentiary threshold already flagged as future work.
+
+#### DuckDNS Target Pattern
+
+The one alert where NCE extracted `6105.duckdns.org` as the target host (alert 1382979471619) is not a structurally distinct or ambiguous case. Investigation shows that `{N}.duckdns.org/gate.php` URLs are a standard component of the GUIDE dataset's `category=CommandAndControl` alert template — at least 4 of the 8 REASONABLE cases contain duckdns URLs in their `raw_log_line`. In 3 of those cases NCE extracted the numeric IP (from `command_line`) as the target; in this one case NCE extracted the URL hostname (from `raw_log_line`) instead. Both the IP and the duckdns hostname appear in the same alert. Classification: REASONABLE — same Factor 1 mechanism, cosmetically different target extraction. Full per-alert evidence in [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md).
+
+#### Self-Referencing WKSTN Target
+
+Alert 566935684681 has `target_host = source_host = WKSTN-2278` — NCE generated a T1071 hypothesis pointing at the alert's own device. Investigation traced the mechanism: the GUIDE dataset defaults `target_host = source_host` when no distinct target exists, and NCE reused that field value as a network target despite the underlying alert being a local file-exfiltration event (`category=Exfiltration`, `archive_9380.zip`) with zero network indicators. SSE then correctly confirmed that WKSTN-2278's zone has outbound web egress (which it does), producing FEASIBLE. This is not an SSE bug — SSE answered the structural question asked — but an NCE extraction artifact. Low confidence (0.45) and `missing_context_flags=['network_reachability']` both signal NCE's own uncertainty. Classification: QUESTIONABLE (Factor 2). Full analysis in [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md).
+
+#### Summary
+
+The literal claim "0/60 non-T1071 false positives" remains factually accurate and citable as-is. However, individual investigation of all 14 NCE-8 FEASIBLE cases (mirroring the rigor applied to the contaminated-side T1071 investigation) shows the 28.0% alert-level FEASIBLE rate is not a pure measurement of SSE's architectural limitation — 43% of these cases (6/14) reflect NCE hypothesis-generation over-reach (Factor 2), the same phenomenon already documented on the contaminated side. This strengthens, rather than undermines, the case for the NCE evidentiary threshold already flagged as future work: the improvement it would offer is not limited to attack scenarios.
+
+Results: [`nce8_clean_fp_results.json`](file:///C:/agentsoc/agent/nce8_clean_fp_results.json). API audit log: [`nce8_clean_fp_api_call_log.jsonl`](file:///C:/agentsoc/agent/nce8_clean_fp_api_call_log.jsonl). Script: [`run_nce8_clean_fp_eval.py`](file:///C:/agentsoc/agent/run_nce8_clean_fp_eval.py). Per-alert investigation: [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md).
 
 ### nce_confidence Invariant (Re-confirmed)
 
@@ -291,13 +331,16 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 - **Action/Playbook Layer** — Adaptive Playbook Generator, Policy/Safety Guardrails, simulated dry-run Execution Interface. Not started.
 - **Real-Time Monitoring feedback loop** (simulated). Not started.
 - **ApprovalClaimDetector False-Positive Mitigation:** Designing and implementing proximity analysis or temporal-context parsing (e.g., distinguishing current-event claims from historical references) to prevent legitimate dual-signal logs from triggering false positives on `raw_log_line`.
-- **SSE clean-alert false-positive assessment at scale:** n=10 clean alerts in NCE-7-SCALE is improved over n=2 (NCE-7) but still insufficient for a rigorous FP rate. A dedicated evaluation against a larger clean-sourced NCE output corpus is needed.
+- ~~**SSE clean-alert false-positive assessment at scale**~~ — **DONE** (Phase NCE-8). Scaled from n=10 (NCE-7-SCALE) to n=60 (n=10 + n=50 new). Result: 16/60 (26.7%) alert-level FEASIBLE rate, **all T1071**. Non-T1071 FP rate: 0/60 (0.0%). Confirms T1071 egress is a technique-specific architectural limitation, not a general FP problem.
 
 ---
 
 ## Immediate Next Step
-The paper's central research question (does structural validation catch LLM-compromised hypotheses?) is now answered with empirical data at scale: **64/80 (80.0%)** structural defense success rate across 8 injection families, with an 87.5% theoretical ceiling under disciplined NCE labeling. The remaining highest-priority work is:
+The paper's central research questions are now answered with empirical data at scale:
+- **Structural defense:** 64/80 (80.0%) success rate across 8 injection families, with 87.5% theoretical ceiling under disciplined NCE labeling.
+- **Clean-alert FP:** 0/60 (0.0%) non-T1071 false positives across 60 clean alerts (Phase NCE-8). The measured 26.7% alert-level FEASIBLE rate decomposes into Factor 1 (genuine C2 evidence, ~57%) and Factor 2 (NCE over-reach, ~43%) — same structure as the contaminated side, confirming Factor 2 is a general NCE calibration issue.
 
-1. **SSE clean-alert false-positive assessment at scale** — n=10 is better than n=2 but still not a dedicated FP study.
-2. **NCE evidentiary threshold for technique hypothesis generation (Factor 2)** — future work in `nce_engine.py` to raise theoretical defense ceiling to 87.5%.
-3. **Action/Playbook Layer** to complete the architecture.
+The remaining highest-priority work is:
+
+1. **NCE evidentiary threshold for technique hypothesis generation (Factor 2)** — future work in `nce_engine.py` to raise theoretical defense ceiling to 87.5%.
+2. **Action/Playbook Layer** to complete the architecture.
