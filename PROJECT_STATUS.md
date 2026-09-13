@@ -313,6 +313,63 @@ Results saved to [`nce7_scale_results.json`](file:///C:/agentsoc/agent/nce7_scal
 
 ---
 
+## Action/Playbook Layer — Build, Verification, and the T1071 Guardrail-Silence Finding
+
+The Action/Playbook Layer is the final pipeline stage completing the Perception → NCE → SSE → RSEM → Action/Playbook chain described in the reference paper (arXiv:2604.20134). It implements three components:
+
+1. **Adaptive Playbook Generator** (`build_playbook()`) — builds multi-step workflows pairing RSEM's top-ranked defensive action with an optional ENABLE_MFA policy step for credential-relevant techniques (T1078, T1550, T1484).
+2. **Policy and Safety Guardrails** (`evaluate_guardrails()`) — routes playbooks to AUTO_APPROVED or PENDING_ANALYST_REVIEW based on two rules: (a) a **hard floor** for the most disruptive actions (QUARANTINE_ACCESS, REVOKE_SESSION → mandatory analyst review), and (b) a **business-impact threshold** (BI > 0.35 → analyst review).
+3. **Execution Interface** (`execute_playbook_dry_run()`) — simulates approved playbooks on a deep copy of the knowledge graph, producing before/after state diffs with rollback instructions and append-only JSONL audit logging. The live graph is NEVER mutated.
+
+The layer is fully built and tested: **366/366 tests pass** (including the full existing suite + new action_playbook tests), all 12 locked files untouched, and three hand-constructed demo scenarios ([`scratch/action_playbook_demo.py`](file:///C:/agentsoc/scratch/action_playbook_demo.py)) confirm all guardrail paths:
+
+| Demo Scenario | Top Action | Target | BI | Guardrail Rule | Final Status | Dry-Run |
+|:---|:---|:---|:---:|:---|:---|:---:|
+| Scenario A (original) | RESTRICT_PRIVILEGES | acct:svc_backup | 0.00 | Auto-approved | DRY_RUN_COMPLETE | Executed |
+| Scenario B (hard floor) | REVOKE_SESSION | acct:svc_backup | 0.00 | Hard floor | PENDING_ANALYST_REVIEW | REFUSED |
+| Scenario C (threshold) | RESTRICT_PRIVILEGES | host:server-db01 | 0.75 | BI threshold | PENDING_ANALYST_REVIEW | REFUSED |
+
+**The guardrail logic demonstrably works** — the hard floor fires on REVOKE_SESSION (Scenario B), the threshold fires on BI=0.75 (Scenario C), and auto-approval occurs when neither rule triggers (Scenario A).
+
+Implementation: [`perception/action_playbook.py`](file:///C:/agentsoc/perception/action_playbook.py) (681 lines, 25KB). Design: ENABLE_MFA is added as a policy-layer action (not RSEM-ranked), appended only for credential-relevant techniques.
+
+### Real-Data Verification: The T1071 Guardrail-Silence Finding
+
+A real-data integration check ([`scratch/action_playbook_real_data_check.py`](file:///C:/agentsoc/scratch/action_playbook_real_data_check.py)) fed all 32 real FEASIBLE hypotheses from completed evaluations — 18 from [`nce7_scale_results.json`](file:///C:/agentsoc/agent/nce7_scale_results.json) (16 contaminated + 2 clean, matching the 16 structural defense failures documented above), 14 from [`nce8_clean_fp_results.json`](file:///C:/agentsoc/agent/nce8_clean_fp_results.json) (all clean) — through the full Action/Playbook pipeline (`build_playbook()` → `evaluate_guardrails()` → `execute_playbook_dry_run()`). Each FEASIBLE alert has exactly one FEASIBLE hypothesis (1:1), so 32 hypotheses = 32 alerts. **Zero exceptions, zero crashes** across all 32 cases and all target shapes (external 185.x.x.x IPs, `unknown`, duckdns.org domains, CDN domains, numeric-only strings, internal WKSTN-*/LT-* hostnames).
+
+**Finding:** All 32 real cases resolved identically:
+
+| Metric | Value |
+|:---|:---:|
+| AUTO_APPROVED | 32/32 (100%) |
+| PENDING_ANALYST_REVIEW | 0/32 (0%) |
+| Top-ranked action | MONITOR_ONLY (all 32) |
+| Business impact | 0.0000 (all 32) |
+| MFA step appended | 0/32 (correct — T1071 ∉ {T1078, T1550, T1484}) |
+| Hard floor rule fired | 0/32 |
+| BI threshold rule fired | 0/32 |
+| Graph integrity (action layer) | 0 nodes, 0 edges added |
+
+**Zero guardrail friction occurred on the real evaluation corpus.** The hard-floor and business-impact threshold rules — while correctly implemented and demonstrated working on hand-constructed scenarios (Scenarios B and C above) — never actually fire on any of the 32 real FEASIBLE cases.
+
+### Root Cause: One Architectural Property Cascading Through Three Layers
+
+This is not three separate observations — it is a single architectural property cascading identically through all three downstream layers of the pipeline. The root cause is the same property already documented as Factor 1 in "The T1071/Network-Egress Limitation" above: **T1071 targets sit outside the knowledge graph's modeled internal topology.**
+
+1. **SSE (Factor 1, already documented):** SSE cannot structurally distinguish real vs. fabricated T1071/C2 narratives because T1071's constraint checks only zone-egress topology, not access-path structure. Any hypothesis targeting an external host from a workstation-zone source is automatically FEASIBLE.
+
+2. **RSEM (new observation, same root cause):** RSEM's containment scoring has nothing to act on for T1071's typical external targets. Containment is computed as `paths_cut / paths_before` by simulating edge removal on a graph copy — but external IPs, `unknown`, duckdns.org domains, and CDN domains have **zero pre-existing edges** in the knowledge graph (they are lazily created as tier-0 UNKNOWN-class nodes with only a HOSTED_IN zone edge). With no edges to cut, `containment = 0.0` for every candidate action. The only remaining differentiator is `business_impact`: MONITOR_ONLY scores `BI=0.0` (composite=0.0) while QUARANTINE_ACCESS scores `BI=0.25` for dynamically-created tier-0 hosts (composite=−0.25). RSEM is choosing correctly — MONITOR_ONLY genuinely is the best action when there is nothing to contain — but the result is that the top-ranked action is always the least aggressive option.
+
+3. **Action/Playbook Layer (new observation, same root cause):** The guardrails gate on RSEM's output. With MONITOR_ONLY as the top action (not in the hard-floor set {QUARANTINE_ACCESS, REVOKE_SESSION}) and `BI=0.0` (well below the 0.35 threshold), neither guardrail rule triggers. The playbook is auto-approved and the dry run produces a "no graph changes" report. This is correct behavior given the inputs — but it means the guardrail layer provides zero friction for the entire T1071 technique family on real data.
+
+**This is not a bug in any layer.** SSE, RSEM, and the Action/Playbook Layer are each behaving correctly given their inputs. The finding is that a single upstream property — external targets having no internal graph representation — propagates through all three layers in the same way, producing a coherent but zero-friction outcome for an entire technique family.
+
+### Future Work: Technique-Specific Guardrail Heuristics
+
+A production system would likely want technique-specific response recommendations for external-target techniques like T1071 — e.g., automatic network-level containment (firewall block rules, DNS sinkholing, proxy blocks) that operate at the network perimeter rather than depending on internal graph edges. These actions are not currently modeled in the knowledge graph schema (which represents internal access paths, group memberships, and service dependencies, not network perimeter controls). This is flagged as future work alongside the existing NCE evidentiary threshold (Factor 2), not something to fix in the current phase.
+
+---
+
 ## Phase NCE-7: Structural Pipeline Comparative Evaluation — Historical Baseline (n=8)
 
 > **Superseded by Phase NCE-7-SCALE above.** This section is preserved as the historical baseline per this project's convention of keeping small-sample numbers visible alongside scaled-up results (same precedent as `fabricated_evidence` n=3 → n=10).
@@ -328,10 +385,11 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 - ~~**Full pipeline contamination re-evaluation**~~ — **DONE** (Phase NCE-7-SCALE). The central research question — whether SSE's independent structural check catches contaminated NCE hypotheses — has been empirically tested at scale (n=80 contaminated alerts across 8 injection families). Result: **64/80 (80.0%)** structural defense success rate. All 16 failures trace to a single mechanism: T1071's network-egress-only constraint in `sse.py`.
 - ~~**T1071 constraint design resolution**~~ — **RESOLVED** (Phase NCE-7-SCALE). The T1071 mislabeling investigation resolved the open design question: failures are driven by a primary architectural limitation of structural network-egress validation (~75%, Factor 1) plus secondary NCE over-reach on ambiguous alerts (~25%, Factor 2), with zero hallucinated technique labels (Factor 3).
 - **NCE evidentiary threshold for technique hypothesis generation (Factor 2) — not yet attempted:** Future work in `nce_engine.py` prompt engineering to require an explicit evidentiary bar (e.g., external-IP + beaconing command co-occurrence) before emitting network-layer hypotheses like T1071, which would elevate the structural defense ceiling from 80.0% to 87.5%.
-- **Action/Playbook Layer** — Adaptive Playbook Generator, Policy/Safety Guardrails, simulated dry-run Execution Interface. Not started.
+- ~~**Action/Playbook Layer**~~ — **DONE**. Adaptive Playbook Generator, Policy/Safety Guardrails, simulated dry-run Execution Interface. Built, tested (366/366), and verified against real evaluation data (32/32 real FEASIBLE cases processed with zero crashes). See "Action/Playbook Layer" section above for the T1071 Guardrail-Silence finding.
 - **Real-Time Monitoring feedback loop** (simulated). Not started.
 - **ApprovalClaimDetector False-Positive Mitigation:** Designing and implementing proximity analysis or temporal-context parsing (e.g., distinguishing current-event claims from historical references) to prevent legitimate dual-signal logs from triggering false positives on `raw_log_line`.
 - ~~**SSE clean-alert false-positive assessment at scale**~~ — **DONE** (Phase NCE-8). Scaled from n=10 (NCE-7-SCALE) to n=60 (n=10 + n=50 new). Result: 16/60 (26.7%) alert-level FEASIBLE rate, **all T1071**. Non-T1071 FP rate: 0/60 (0.0%). Confirms T1071 egress is a technique-specific architectural limitation, not a general FP problem.
+- **Technique-specific guardrail heuristics for external-target techniques (T1071):** The real-data verification showed that the current guardrail rules (hard floor + BI threshold) have zero opportunity to exercise on T1071/external-target cases because RSEM's containment scoring is structurally uninformative when targets have no internal graph edges. A production system would need network-perimeter-level response recommendations (firewall blocks, DNS sinkholing) not dependent on internal graph topology. See "Action/Playbook Layer" section above.
 
 ---
 
@@ -339,8 +397,11 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 The paper's central research questions are now answered with empirical data at scale:
 - **Structural defense:** 64/80 (80.0%) success rate across 8 injection families, with 87.5% theoretical ceiling under disciplined NCE labeling.
 - **Clean-alert FP:** 0/60 (0.0%) non-T1071 false positives across 60 clean alerts (Phase NCE-8). The measured 26.7% alert-level FEASIBLE rate decomposes into Factor 1 (genuine C2 evidence, ~57%) and Factor 2 (NCE over-reach, ~43%) — same structure as the contaminated side, confirming Factor 2 is a general NCE calibration issue.
+- **Action/Playbook Layer:** Built, tested (366/366), and verified against real evaluation data. The T1071 Guardrail-Silence finding confirms that one architectural property (external targets outside graph topology) cascades identically through SSE, RSEM, and the Action Layer — a coherent limitation, not a defect.
 
 The remaining highest-priority work is:
 
 1. **NCE evidentiary threshold for technique hypothesis generation (Factor 2)** — future work in `nce_engine.py` to raise theoretical defense ceiling to 87.5%.
-2. **Action/Playbook Layer** to complete the architecture.
+2. ~~**Action/Playbook Layer**~~ — **DONE**. Verified with real evaluation data; T1071 Guardrail-Silence finding documented.
+3. **Streamlit demo** — live interactive demonstration of the full pipeline.
+4. **Technique-specific guardrail heuristics** — network-perimeter response recommendations for external-target techniques like T1071 (future work).

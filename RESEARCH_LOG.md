@@ -1,5 +1,45 @@
 # Research Log
 
+## 2026-09-13 — Session: Action/Playbook Layer: Real-Data Verification & Guardrail-Silence Finding
+
+### What was tried:
+- **Real-data integration check** of the Action/Playbook Layer (`build_playbook()` → `evaluate_guardrails()` → `execute_playbook_dry_run()`) using all 32 real FEASIBLE hypotheses from completed evaluation runs — 18 from `nce7_scale_results.json` (16 contaminated + 2 clean, matching the 16 structural defense failures in the NCE-7-SCALE section) and 14 from `nce8_clean_fp_results.json` (all clean). Each FEASIBLE alert has exactly one FEASIBLE hypothesis (1:1), so 32 hypotheses = 32 alerts. All 32 are T1071/network-egress cases, consistent with the already-documented Factor 1/2 breakdown.
+- This was the first time the Action/Playbook Layer received hypotheses from actual completed evaluation runs, as opposed to hand-constructed test fixtures or demo scenarios. The prior session built and unit-tested the layer (366/366 tests, 3 demo scenarios confirming all guardrail paths), but every input was a hand-built `NCEHypothesis`/`ScoredAction` object — never a hypothesis reconstructed from real pipeline output.
+- Verification script: [`scratch/action_playbook_real_data_check.py`](file:///c:/agentsoc/scratch/action_playbook_real_data_check.py). Two-phase design: Phase 1 runs SSE + RSEM (which legitimately adds nodes/edges via lazy host creation), Phase 2 runs the Action/Playbook Layer and checks that it adds zero nodes/edges to the live graph.
+
+### What was found:
+1. **Zero exceptions, zero crashes** across all 32 cases. Every target shape — external 185.x.x.x IPs (19 cases), `unknown`/`N/A` strings (5), duckdns.org domains (1), example-cdn.net domains (2), numeric-only strings (1), internal WKSTN-*/LT-* hostnames (4) — handled correctly.
+2. **All 32 real cases resolved to AUTO_APPROVED with MONITOR_ONLY as the top-ranked action and BI=0.0000.** Zero guardrail friction occurred:
+   - Hard floor rule: 0/32 fired (MONITOR_ONLY is not in the hard-floor set {QUARANTINE_ACCESS, REVOKE_SESSION}).
+   - BI threshold rule: 0/32 fired (BI=0.0000, well below the 0.35 threshold).
+   - All 32 playbooks auto-approved; all 32 dry-runs completed with "no graph changes" reports.
+3. **MFA step correctly NOT appended:** 0/32 cases received an ENABLE_MFA step. T1071 is not in CREDENTIAL_RELEVANT_TECHNIQUES = {T1078, T1550, T1484}. This is the first time T1071 was exercised through `build_playbook()` — prior tests/demos always used T1550 or T1562 — confirming the technique-gating logic works on a non-credential technique.
+4. **Graph integrity confirmed:** The Action/Playbook Layer added exactly 0 nodes and 0 edges beyond what SSE/RSEM created during Phase 1 (SSE/RSEM added 61 nodes + 57 HOSTED_IN edges via lazy `get_or_create_host_node()`, which is expected upstream behavior). `execute_playbook_dry_run()` correctly operates on deep copies only.
+5. **Full pytest suite: 366 passed, 1 deselected, 0 failures.** All 12 locked files have empty git diffs. `perception/action_playbook.py` itself unmodified.
+
+### The T1071 Guardrail-Silence Finding (three-layer symmetric framing):
+
+The finding is that one architectural property — T1071 targets sitting outside the knowledge graph's modeled internal topology — cascades identically through all three downstream layers:
+
+- **SSE (Factor 1, already documented):** T1071's constraint checks only zone-egress topology, not access-path structure. Any hypothesis targeting an external host from a workstation-zone source is automatically FEASIBLE. SSE has no structural way to distinguish real vs. fabricated C2 narratives.
+- **RSEM (new):** Containment scoring computes `paths_cut / paths_before` via edge-removal simulation, but external IPs/domains have zero pre-existing edges. With containment=0.0 for all candidate actions, MONITOR_ONLY (BI=0.0, composite=0.0) beats QUARANTINE_ACCESS (BI=0.25, composite=−0.25) — RSEM correctly chooses the least-disruptive action when there is genuinely nothing to contain.
+- **Action/Playbook Layer (new):** Guardrails gate on RSEM's output. MONITOR_ONLY is not in the hard-floor set, and BI=0.0 is below the threshold. Neither rule fires. The guardrail layer provides correct but zero-friction outcomes for the entire technique family.
+
+This is not a bug in any layer — each is behaving correctly given its inputs. The finding is that the guardrail's hard-floor and BI-threshold rules, while correctly implemented and demonstrated working on hand-constructed scenarios (Scenario B: REVOKE_SESSION hard floor; Scenario C: BI=0.75 threshold trigger), have zero opportunity to exercise on the current real evaluation corpus because the upstream signal they depend on is flat for every case in this technique family. This is a coherent limitation to document, not a defect to fix.
+
+### Key decisions:
+- **Documentation-only response.** No code changes made or needed — this is a behavioral observation about correctly-functioning code, not a bug requiring a fix.
+- **Three-layer symmetric framing adopted.** The finding is documented as one root cause propagating through three layers, not three independent observations, to avoid misleading readers into thinking there are three separate problems.
+- **Future work flagged:** A production system would want technique-specific guardrail heuristics for external-target techniques (e.g., T1071 → automatic network-perimeter containment recommendations like firewall blocks / DNS sinkholing / proxy rules), which are not modeled in the current knowledge graph schema. Added to "What's NOT Built Yet" in PROJECT_STATUS.md.
+- **Existing demo scenario references preserved.** The documentation explicitly references Scenarios A/B/C from `scratch/action_playbook_demo.py` to make clear that the guardrails demonstrably work when exercised — the finding is specifically about the real corpus never exercising them, not about the logic being broken.
+
+### Files created/modified:
+- **Modified:**
+  - [`PROJECT_STATUS.md`](file:///c:/agentsoc/PROJECT_STATUS.md) (Added "Action/Playbook Layer" section with build summary + T1071 Guardrail-Silence finding; updated "What's NOT Built Yet" to mark Action/Playbook as DONE; added technique-specific guardrail heuristics future-work bullet; updated "Immediate Next Step")
+  - [`RESEARCH_LOG.md`](file:///c:/agentsoc/RESEARCH_LOG.md) (Added this session entry)
+- **Created (prior session):**
+  - [`scratch/action_playbook_real_data_check.py`](file:///c:/agentsoc/scratch/action_playbook_real_data_check.py) (Real-data verification script, 32 cases, two-phase graph integrity checking)
+
 ## 2026-09-13 — Session: Knowledge Store Data Lineage Verification (Pre-Review Accuracy Check)
 
 ### What was tried:
