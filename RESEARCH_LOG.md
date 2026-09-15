@@ -445,3 +445,13 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 - **Modified:**
   - [`risk_assessment/detectors/approval_claim_detector.py`](file:///C:/agentsoc/risk_assessment/detectors/approval_claim_detector.py) (Structural redesign: field-injection vs. narrative tiers, proximity-scoped suppression, nested-quote parsing fix, `closed as fp` keyword addition — committed as `e25e3b0`, combining what were intended as two separate commits)
   - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This entry)
+
+### n=100 Scale Validation (same-day follow-up)
+
+- Re-ran the original n=30 benign corpus against the fixed detector: 0/30 FPR (down from the 6.7%/13.3% pre-fix baseline). Both original false positives (ServiceNow, CrowdStrike) confirmed to now land in the narrative tier (0.40), below the ceiling.
+- Generated 70 new benign logs (35 dual-signal, 35 general; seed=20260915; zero overlap with original 30) via the existing LLM-based corpus generator (`agent/generate_and_eval_benign_corpus.py`, gemini-3.5-flash), saved to `agent/benign_log_corpus_scale_70.json` (original untouched).
+- Combined n=100 result: **1.0% overall FPR (1/100)**, **2.0% dual-signal FPR (1/50)**, **0.0% general FPR (0/50)**.
+- One residual false positive found at n=100 that n=30 missed -- consistent with the project's bidirectional small-sample-bias finding (an event at true rate ~2% has a ~74% chance of showing zero occurrences at n=15).
+- Root cause: the false positive (FalconSensor `analyst_notes="..."` field) uses single-level `key="value"` structure, the same syntactic shape as 2 of the 10 real fabricated_evidence attacks (`704374641116`, `1271310320953`). This is a genuine structural ambiguity between legitimate EDR/SIEM analyst-note fields and real attacks, not a detector bug. Fixing it (e.g., restricting the 0.90 tier to nested-quote structure only) would demote both real attacks below the ceiling -- a net regression, not an improvement.
+- **Decision: documented as a residual limitation, not pursued further**, consistent with how the T1071 network-egress limitation was treated (honest architectural ceiling vs. defect requiring a fix).
+- Full suite re-verified: 366 passed, 1 deselected, 0 failures.
