@@ -48,6 +48,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -321,6 +322,182 @@ def _call_gemini_nce(
 
 
 # ---------------------------------------------------------------------------
+# T1071 evidentiary threshold filter
+# ---------------------------------------------------------------------------
+
+# IPv4 regex — matches any dotted-quad IP address.
+_IPV4_RE = re.compile(
+    r"\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b"
+)
+
+# Internal/reserved IP ranges (RFC 1918, loopback, link-local).
+# Returns True if the IP is private/reserved (NOT external).
+def _is_private_ip(ip_str: str) -> bool:
+    """Check if an IPv4 address is private/reserved (not external)."""
+    try:
+        parts = [int(p) for p in ip_str.split(".")]
+    except (ValueError, AttributeError):
+        return True  # fail-safe: unparseable → treat as non-external
+    if len(parts) != 4 or any(p < 0 or p > 255 for p in parts):
+        return True
+    a, b = parts[0], parts[1]
+    # 10.0.0.0/8
+    if a == 10:
+        return True
+    # 172.16.0.0/12
+    if a == 172 and 16 <= b <= 31:
+        return True
+    # 192.168.0.0/16
+    if a == 192 and b == 168:
+        return True
+    # 127.0.0.0/8 (loopback)
+    if a == 127:
+        return True
+    # 169.254.0.0/16 (link-local)
+    if a == 169 and b == 254:
+        return True
+    return False
+
+
+def _has_external_ip(evidence_fields: dict[str, str]) -> bool:
+    """Check if any evidence field contains an external (non-private) IPv4 address."""
+    for value in evidence_fields.values():
+        for m in _IPV4_RE.finditer(value):
+            if not _is_private_ip(m.group(0)):
+                return True
+    return False
+
+
+# Known-internal hostname/domain patterns.
+_INTERNAL_HOSTNAME_PATTERNS = re.compile(
+    r"^(WKSTN-|SRV-|LT-.*-CORP$)",
+    re.IGNORECASE,
+)
+_INTERNAL_DOMAIN_SUFFIXES = (".corp.local", ".internal")
+
+# Recognizable domain pattern ending in a plausible public TLD.
+# Grounded in public TLDs seen in the corpus (duckdns.org, example-cdn.net,
+# sharepoint-files.net) plus common external TLDs (.com, .net, .org, .io, .co,
+# .info, .biz, .gov, .edu, .dev).
+# Requires at least one domain label before the TLD.
+_PUBLIC_TLDS = (
+    "com", "net", "org", "io", "co", "info", "biz", "gov", "edu", "dev",
+)
+_PUBLIC_TLD_PATTERN = "|".join(_PUBLIC_TLDS)
+
+_DOMAIN_RE = re.compile(
+    rf"\b(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]*[a-zA-Z0-9])?\.)+(?:{_PUBLIC_TLD_PATTERN})\b",
+    re.IGNORECASE,
+)
+
+
+def _has_non_internal_domain(evidence_fields: dict[str, str]) -> bool:
+    """Check if any evidence field contains a non-internal domain/hostname."""
+    for value in evidence_fields.values():
+        for m in _DOMAIN_RE.finditer(value):
+            candidate = m.group(0)
+            # Skip if it's a pure IPv4 address
+            if _IPV4_RE.fullmatch(candidate):
+                continue
+            # Skip known-internal hostname patterns
+            if _INTERNAL_HOSTNAME_PATTERNS.match(candidate):
+                continue
+            # Skip known-internal domain suffixes
+            if any(candidate.lower().endswith(s) for s in _INTERNAL_DOMAIN_SUFFIXES):
+                continue
+            # Found a non-internal domain
+            return True
+    return False
+
+
+# Beaconing/C2 command patterns — case-insensitive literal fragments.
+_BEACONING_PATTERNS = re.compile(
+    r"(?:"
+    r"\bcurl\b"
+    r"|\bwget\b"
+    r"|Invoke-WebRequest"
+    r"|Invoke-RestMethod"
+    r"|\/beacon"
+    r"|\/checkin"
+    r"|\bPOST\b"
+    r"|category=CommandAndControl"
+    r")",
+    re.IGNORECASE,
+)
+
+
+def _has_beaconing_command(evidence_fields: dict[str, str]) -> bool:
+    """Check if any evidence field contains a beaconing/C2 command pattern."""
+    for value in evidence_fields.values():
+        if _BEACONING_PATTERNS.search(value):
+            return True
+    return False
+
+
+def _apply_t1071_evidentiary_filter(
+    hypotheses: list[NCEHypothesis],
+    evidence_fields: dict[str, str],
+) -> tuple[list[NCEHypothesis], list[str]]:
+    """
+    Apply the T1071 evidentiary threshold filter.
+
+    A T1071 hypothesis is DROPPED only if ALL of the following are true
+    across all evidence fields:
+      (a) No external IP found
+      (b) No non-internal domain/hostname found
+      (c) No beaconing/C2 command pattern found
+
+    If ANY of (a), (b), or (c) is satisfied, the hypothesis PASSES.
+    Non-T1071 hypotheses always pass through unfiltered.
+
+    Parameters
+    ----------
+    hypotheses : list[NCEHypothesis]
+        Validated hypotheses from the LLM response.
+    evidence_fields : dict[str, str]
+        The 6 allowed evidence fields from NCEInput.
+
+    Returns
+    -------
+    tuple[list[NCEHypothesis], list[str]]
+        (surviving_hypotheses, drop_reasons)
+    """
+    # Pre-compute evidence signals once (shared across all T1071 hypotheses)
+    has_ext_ip = _has_external_ip(evidence_fields)
+    has_domain = _has_non_internal_domain(evidence_fields)
+    has_beacon = _has_beaconing_command(evidence_fields)
+
+    t1071_passes = has_ext_ip or has_domain or has_beacon
+
+    surviving: list[NCEHypothesis] = []
+    drop_reasons: list[str] = []
+
+    for h in hypotheses:
+        if h.technique_id != "T1071":
+            surviving.append(h)
+            continue
+
+        if t1071_passes:
+            surviving.append(h)
+        else:
+            reason = (
+                f"T1071 evidentiary threshold not met: no external IP, "
+                f"non-internal domain, or beaconing command found in "
+                f"evidence fields"
+            )
+            drop_reasons.append(reason)
+            logger.warning(
+                "[NCE] Dropping T1071 hypothesis (technique_id=%s, "
+                "nce_confidence=%.2f): %s",
+                h.technique_id,
+                h.nce_confidence,
+                reason,
+            )
+
+    return surviving, drop_reasons
+
+
+# ---------------------------------------------------------------------------
 # Public API — generate_hypotheses
 # ---------------------------------------------------------------------------
 
@@ -452,6 +629,20 @@ def generate_hypotheses(
             "[NCE] Dropped %d hypothesis(es) from LLM response: %s",
             len(drop_reasons),
             "; ".join(drop_reasons),
+        )
+
+    # --- Step 4b: T1071 evidentiary threshold filter ---
+    # Drop T1071 hypotheses that lack external IP, non-internal domain,
+    # AND beaconing/C2 command evidence.  Non-T1071 hypotheses pass through.
+    valid_hypotheses, evidentiary_drops = _apply_t1071_evidentiary_filter(
+        valid_hypotheses, nce_input.evidence_fields
+    )
+    if evidentiary_drops:
+        drop_reasons.extend(evidentiary_drops)
+        logger.info(
+            "[NCE] T1071 evidentiary filter dropped %d hypothesis(es): %s",
+            len(evidentiary_drops),
+            "; ".join(evidentiary_drops),
         )
 
     # --- Step 5: Handle zero valid hypotheses ---

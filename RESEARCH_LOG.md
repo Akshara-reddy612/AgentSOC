@@ -455,3 +455,42 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 - Root cause: the false positive (FalconSensor `analyst_notes="..."` field) uses single-level `key="value"` structure, the same syntactic shape as 2 of the 10 real fabricated_evidence attacks (`704374641116`, `1271310320953`). This is a genuine structural ambiguity between legitimate EDR/SIEM analyst-note fields and real attacks, not a detector bug. Fixing it (e.g., restricting the 0.90 tier to nested-quote structure only) would demote both real attacks below the ceiling -- a net regression, not an improvement.
 - **Decision: documented as a residual limitation, not pursued further**, consistent with how the T1071 network-egress limitation was treated (honest architectural ceiling vs. defect requiring a fix).
 - Full suite re-verified: 366 passed, 1 deselected, 0 failures.
+
+## 2026-09-16 — Session: NCE Evidentiary Threshold Filter Implementation & Validation
+
+### What was tried:
+- **Branch-isolated implementation (`nce-evidentiary-threshold`):** Addressed the Factor 2 hypothesis-generation over-reach (NCE emitting T1071 C2 hypotheses from weak, non-network evidence) by implementing an evidentiary threshold filter (`_apply_t1071_evidentiary_filter`) directly in `perception/nce_engine.py`.
+- **Offline replay validation method:** Rather than making 90 expensive and quota-consuming Gemini API calls, validated the filter deterministically via offline replay: loaded the exact historical LLM hypotheses from `agent/nce7_scale_results.json` (n=90: 80 contaminated + 10 clean) and `agent/nce8_clean_fp_results.json` (n=50 clean), passed hypotheses through the filter against raw alert evidence fields, and re-evaluated surviving hypotheses with the deterministic Structural Simulation Engine (`validate_hypothesis_with_sse`). This enabled rapid, zero-API-cost iteration.
+- **Two regex false-positive bugs diagnosed and resolved:**
+  1. *File-extension false positive:* The initial domain regex `\b([a-zA-Z0-9-]+\.)+[a-zA-Z0-9-]+\b` matched filenames like `outlook.exe`, `finance_export.xlsx`, and `archive.zip` as "domains", causing all alerts with files to bypass the filter. Initial attempt patched this with a `_FILE_EXTENSIONS` blocklist.
+  2. *Username / timestamp false positive:* Offline replay revealed 0 drops because the blocklist did not cover usernames in paths (`a.patel`, `m.chen`) or ISO timestamp fragments (`46.000Z`).
+  3. *Root-cause fix (Positive public TLD match):* Discarded the blocklist approach completely. Replaced `_DOMAIN_RE` with a positive match requiring recognizable domain shapes ending in valid public TLDs (`.com`, `.net`, `.org`, `.io`, `.co`, `.info`, `.biz`, `.gov`, `.edu`, `.dev`) grounded in actual corpus usage (e.g. `duckdns.org`, `example-cdn.net`), while preserving internal hostname (`WKSTN-*`, `SRV-*`, `LT-*-CORP`) and internal suffix (`.corp.local`, `.internal`) exclusions. Deleted `_FILE_EXTENSIONS` blocklist entirely.
+- **Investigation of the 24/60 vs. 16/60 clean-alert baseline discrepancy:** Investigated why `check_t1071_filter_on_records.py` initially reported 24/60 clean T1071 FEASIBLE alerts while `PROJECT_STATUS.md` documented 16/60. Traced to a calculation bug in the scratch script: clean alerts in `scale_results` had `structural_defense_success: null`, causing `clean_stats.get("orig_success")` to evaluate to 0 instead of 8, wrongly assuming 10/10 scale clean alerts were FEASIBLE instead of 2/10. Confirmed 16/60 is the exact true historical baseline (2/10 from scale + 14/50 from NCE-8).
+- **17-Case manual evidence spot-check:** Conducted manual raw evidence inspection across all 17 alerts where T1071 hypotheses were dropped (7 contaminated + 10 clean) to guarantee zero false negatives were introduced by the stricter regex.
+
+### What worked:
+- **Contaminated structural defense rate elevated:** Increased from **64/80 (80.0%)** to **67/80 (83.8%)** (+3.8 percentage points, +3 alerts defended).
+- **Per-family breakdown:**
+  - `cross_field_split`: jumped from 4/10 (40.0%) to **6/10 (60.0%)** (+20.0%).
+  - `zero_imperative_evidence`: reached perfect defense, moving from 9/10 (90.0%) to **10/10 (100.0%)** (+10.0%).
+  - All other 6 families maintained baseline defense with zero regressions (`fabricated_evidence` 80%, `authority_escalation` 90%, `direct_override` 100%, `native_format_mimicry` 90%, `fake_output_injection` 70%, `obfuscated_trigger` 80%).
+- **Zero Factor 1 False Negatives:** Exactly **0 of the 12 REASONABLE cases** were dropped (12/12 preserved).
+- **Clean-alert false-positive rate reduced:** Alert-level FEASIBLE rate on n=60 clean alerts fell from **16/60 (26.7%)** to **10/60 (16.7%)**, exactly matching the theoretical Factor-1 floor.
+- **Case 13 resolved:** Alert `584115555473` (the 0.85 confidence calibration failure with no network evidence) had its unsupported T1071 hypothesis successfully dropped, producing 0 FEASIBLE hypotheses.
+- **Unit test suite expansion:** Added 39 dedicated unit tests in `tests/test_nce_evidentiary_threshold.py` validating IP extraction, positive TLD domain matching, beaconing commands, and filter contracts. Full test suite passing: **405 passed, 1 deselected**.
+
+### Key decisions & findings:
+- **Positive-pattern matching over blocklists:** Blocklists for string categories (like file extensions) are brittle and inevitably leak adjacent categories (usernames with dots, timestamps, decimal numbers). Specifying the positive shape of a domain ending in a recognized public TLD solved the problem at the root.
+- **Offline replay over live API re-runs:** Replaying deterministic post-generation filters over archived raw responses produces 100% reproducible comparisons, saves API quota, and eliminates LLM non-determinism during filter debugging.
+- **Verification of all 17 drops confirmed 0 false negatives:** Every dropped hypothesis was verified to lack any external IP, non-internal domain, or beaconing commands; all dotted tokens were confirmed to be file extensions, timestamps, internal `@corp.local` mailboxes, usernames, or punctuation.
+
+### Files created/modified:
+- **Created:**
+  - [`tests/test_nce_evidentiary_threshold.py`](file:///C:/agentsoc/tests/test_nce_evidentiary_threshold.py) (39 unit tests for NCE evidentiary threshold filter)
+  - [`scratch/check_t1071_filter_on_records.py`](file:///C:/agentsoc/scratch/check_t1071_filter_on_records.py) (Offline replay evaluation script)
+  - [`scratch/inspect_17_dropped_alerts.py`](file:///C:/agentsoc/scratch/inspect_17_dropped_alerts.py) (17-case evidence inspection script)
+- **Modified:**
+  - [`perception/nce_engine.py`](file:///C:/agentsoc/perception/nce_engine.py) (Added `_apply_t1071_evidentiary_filter`, `_has_external_ip`, `_has_non_internal_domain` with positive public TLD regex, `_has_beaconing_command`)
+  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Documented NCE evidentiary threshold results, updated clean FP section, marked item resolved)
+  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This entry)
+

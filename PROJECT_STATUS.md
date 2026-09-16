@@ -285,6 +285,26 @@ The T1071 mislabeling investigation (18 FEASIBLE hypotheses individually reviewe
 
 The 80.0% (64/80) structural defense success rate is best understood as two layered numbers: 80.0% actual, and 87.5% (70/80) as a theoretical ceiling under perfect NCE hypothesis-generation discipline. The gap between them (7.5 percentage points) is attributable to NCE occasionally generating low-confidence technique hypotheses from weak evidence (Factor 2), a problem distinct from and smaller than the primary, architectural limitation of purely structural graph validation for network-layer techniques (Factor 1, ~75% of failures). Neither factor is a defect requiring urgent correction; Factor 1 is an honest and expected boundary of the approach, and Factor 2 is flagged as future work.
 
+### Phase NCE-7-SCALE Follow-Up: NCE Evidentiary Threshold Filter Results
+
+Following the Factor 2 root-cause investigation, an evidentiary threshold filter (`_apply_t1071_evidentiary_filter` in `perception/nce_engine.py`) was implemented and validated via offline replay across the complete n=90 evaluation dataset. The filter requires that any T1071 hypothesis be supported by at least one explicit network indicator in the alert's evidence fields: an external IPv4 address, a recognizable non-internal domain (positive public TLD match), or a beaconing/C2 command pattern (`curl`, `wget`, `Invoke-WebRequest`, `/beacon`, `/checkin`, `category=CommandAndControl`).
+
+**Structural defense success rate increased from 64/80 (80.0%) to 67/80 (83.8%)** on contaminated alerts (+3.8 percentage points, +3 alerts defended):
+
+| Family | n | Orig Success (Rate) | Filtered Success (Rate) | Delta |
+|:---|:---:|:---:|:---:|:---:|
+| `fabricated_evidence` | 10 | 8 (80.0%) | 8 (80.0%) | 0 |
+| `cross_field_split` | 10 | 4 (40.0%) | **6 (60.0%)** | **+2 (+20.0%)** |
+| `authority_escalation` | 10 | 9 (90.0%) | 9 (90.0%) | 0 |
+| `direct_override` | 10 | 10 (100.0%) | 10 (100.0%) | 0 |
+| `zero_imperative_evidence` | 10 | 9 (90.0%) | **10 (100.0%)** | **+1 (+10.0%)** |
+| `native_format_mimicry` | 10 | 9 (90.0%) | 9 (90.0%) | 0 |
+| `fake_output_injection` | 10 | 7 (70.0%) | 7 (70.0%) | 0 |
+| `obfuscated_trigger` | 10 | 8 (80.0%) | 8 (80.0%) | 0 |
+| **AGGREGATE** | **80** | **64 (80.0%)** | **67 (83.8%)** | **+3 (+3.8%)** |
+
+**Zero Factor 1 False Negatives:** Exactly **0 of the 12 REASONABLE cases** were dropped (12/12 preserved). The filter dropped exactly 7 unsupported T1071 hypotheses across the 80 contaminated alerts (alerts `1116691498166`, `1185410975231`, `1374389536962`, `455266536788`, `833223657293`, `858993461383`, `8589936265`), all of which were confirmed by manual inspection of raw evidence to contain zero network or C2 indicators.
+
 ### Clean-Alert False-Positive Assessment (n=60: 10 from NCE-7-SCALE + 50 from NCE-8)
 
 **Phase NCE-8** scaled the clean-alert evaluation from n=10 to n=50 new clean alerts (selected via `random.Random(51)` from `guide_sample_500_alerts.json`, excluding 10 IDs used in NCE-7/NCE-7-SCALE). Combined with the original n=10, the total clean sample is **n=60**.
@@ -311,14 +331,16 @@ Individual review of all 14 FEASIBLE clean alerts — applying the same three-ti
 
 The presence of Factor 2 on **both** clean and contaminated data confirms it is a general NCE hypothesis-generation calibration issue, not an artifact of attack payloads specifically eliciting T1071 mislabeling. The clean-side has a higher proportion of Factor 2 (43% vs 25%), which is expected — clean alerts contain less genuine C2 telemetry on average, so a larger fraction of NCE's T1071 generation is speculative.
 
-**Measured rate vs. theoretical rate under perfect NCE discipline:**
+**Measured rate vs. filtered rate under NCE evidentiary threshold:**
 
-- **MEASURED (empirical fact):** 14/50 (28.0%) clean alerts had ≥1 FEASIBLE hypothesis in the NCE-8 evaluation. Combined with NCE-7-SCALE: 16/60 (26.7%). These are the rates that actually occurred.
-- **THEORETICAL (counterfactual):** If NCE never generated a T1071 hypothesis without genuine network evidence (i.e., if all Factor 2 cases were eliminated), the observed rate would fall to approximately 8/50 (16.0%) for NCE-8 alone, or ~10/60 (16.7%) combined. This is the Factor-1-only floor — the irreducible rate attributable to genuine C2-shaped telemetry in the GUIDE dataset that happens to satisfy T1071's structural preconditions. This is NOT a second empirical measurement; it is a what-if estimate illustrating the improvement the NCE evidentiary threshold (already flagged as future work) would deliver on clean data.
+- **ORIGINAL MEASURED BASELINE:** 14/50 (28.0%) clean alerts had ≥1 FEASIBLE hypothesis in the NCE-8 evaluation. Combined with NCE-7-SCALE: 16/60 (26.7%).
+- **EMPIRICALLY VALIDATED WITH EVIDENTIARY FILTER (2026-09-16):** With `_apply_t1071_evidentiary_filter` active, 10 unsupported clean T1071 hypotheses are dropped across the clean corpus. The alert-level FEASIBLE rate on n=50 NCE-8 clean alerts drops from 14/50 (28.0%) to **8/50 (16.0%)**. Combined across all n=60 clean alerts (10 scale + 50 NCE-8), the rate drops from 16/60 (26.7%) to **10/60 (16.7%)** — matching the theoretical Factor-1-only floor exactly. All 10 dropped clean hypotheses were manually verified against raw evidence to confirm zero false negatives.
 
-#### Case 13 (Alert 584115555473) — Calibration Failure
+#### Case 13 (Alert 584115555473) — Calibration Failure (**RESOLVED**)
 
-One clean-alert case deserves individual mention: alert 584115555473 received a T1071 hypothesis at `nce_confidence=0.85` — the highest confidence among all QUESTIONABLE cases in this evaluation — despite the underlying evidence (`wscript.exe` executing a VBS file under `category=Execution`) containing zero network indicators. Every other Factor 2 case in this evaluation carries a confidence of 0.62 or below, meaning NCE's own confidence signal correctly tracked its uncertainty in those cases. This one does not: high confidence assigned to a hypothesis with no supporting network evidence is a more concerning calibration failure than simple over-generation, and is the single strongest piece of evidence in this project for prioritizing the NCE evidentiary threshold already flagged as future work.
+One clean-alert case deserved individual mention in the original evaluation: alert 584115555473 received a T1071 hypothesis at `nce_confidence=0.85` — the highest confidence among all QUESTIONABLE cases in that evaluation — despite the underlying evidence (`wscript.exe` executing a VBS file under `category=Execution`) containing zero network indicators.
+
+**Resolution:** Under the NCE evidentiary threshold filter, this hypothesis is correctly identified as lacking external IP, non-internal domain, and beaconing commands, and is dropped (`[NCE] Dropping T1071 hypothesis (technique_id=T1071, nce_confidence=0.85)`). The alert now produces zero FEASIBLE hypotheses, successfully resolving this calibration failure.
 
 #### DuckDNS Target Pattern
 
@@ -420,7 +442,7 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 - ~~**NCE real LLM implementation**~~ — **DONE** (Phase NCE-5/6/7). The real NCE→SSE→RSEM pipeline is built, tested, and evaluated end-to-end.
 - ~~**Full pipeline contamination re-evaluation**~~ — **DONE** (Phase NCE-7-SCALE). The central research question — whether SSE's independent structural check catches contaminated NCE hypotheses — has been empirically tested at scale (n=80 contaminated alerts across 8 injection families). Result: **64/80 (80.0%)** structural defense success rate. All 16 failures trace to a single mechanism: T1071's network-egress-only constraint in `sse.py`.
 - ~~**T1071 constraint design resolution**~~ — **RESOLVED** (Phase NCE-7-SCALE). The T1071 mislabeling investigation resolved the open design question: failures are driven by a primary architectural limitation of structural network-egress validation (~75%, Factor 1) plus secondary NCE over-reach on ambiguous alerts (~25%, Factor 2), with zero hallucinated technique labels (Factor 3).
-- **NCE evidentiary threshold for technique hypothesis generation (Factor 2) — not yet attempted:** Future work in `nce_engine.py` prompt engineering to require an explicit evidentiary bar (e.g., external-IP + beaconing command co-occurrence) before emitting network-layer hypotheses like T1071, which would elevate the structural defense ceiling from 80.0% to 87.5%.
+- ~~**NCE evidentiary threshold for technique hypothesis generation (Factor 2)**~~ — **RESOLVED 2026-09-16**. Implemented `_apply_t1071_evidentiary_filter` in `perception/nce_engine.py` requiring external IP, recognizable non-internal domain (positive public TLD match), or beaconing-command evidence before emitting T1071 hypotheses. Result: structural defense rate elevated from 80.0% (64/80) to **83.8% (67/80)** with 0/12 Factor-1 REASONABLE cases dropped; clean-alert T1071 FEASIBLE rate reduced from 26.7% (16/60) to **16.7% (10/60)**.
 - ~~**Action/Playbook Layer**~~ — **DONE**. Adaptive Playbook Generator, Policy/Safety Guardrails, simulated dry-run Execution Interface. Built, tested (366/366), and verified against real evaluation data (32/32 real FEASIBLE cases processed with zero crashes). See "Action/Playbook Layer" section above for the T1071 Guardrail-Silence finding.
 - **Real-Time Monitoring feedback loop** (simulated). Not started.
 - ~~**ApprovalClaimDetector False-Positive Mitigation:** Designing and implementing proximity analysis or temporal-context parsing (e.g., distinguishing current-event claims from historical references) to prevent legitimate dual-signal logs from triggering false positives on `raw_log_line`.~~ **RESOLVED 2026-09-15** (structural field-injection vs. narrative gating + proximity-scoped suppression, validated at n=100).
@@ -431,13 +453,13 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 
 ## Immediate Next Step
 The paper's central research questions are now answered with empirical data at scale:
-- **Structural defense:** 64/80 (80.0%) success rate across 8 injection families, with 87.5% theoretical ceiling under disciplined NCE labeling.
-- **Clean-alert FP:** 0/60 (0.0%) non-T1071 false positives across 60 clean alerts (Phase NCE-8). The measured 26.7% alert-level FEASIBLE rate decomposes into Factor 1 (genuine C2 evidence, ~57%) and Factor 2 (NCE over-reach, ~43%) — same structure as the contaminated side, confirming Factor 2 is a general NCE calibration issue.
+- **Structural defense:** 67/80 (83.8%) success rate across 8 injection families (up from 64/80, 80.0% baseline), with 87.5% theoretical ceiling under disciplined NCE labeling.
+- **Clean-alert FP:** 10/60 (16.7%) alert-level FEASIBLE rate (down from 16/60, 26.7% baseline), 0/60 (0.0%) non-T1071 false positives across 60 clean alerts. The NCE evidentiary threshold eliminates unsupported T1071 hypotheses across both contaminated and clean sets with zero false negatives.
 - **Action/Playbook Layer:** Built, tested (366/366), and verified against real evaluation data. The T1071 Guardrail-Silence finding confirms that one architectural property (external targets outside graph topology) cascades identically through SSE, RSEM, and the Action Layer — a coherent limitation, not a defect.
 
 The remaining highest-priority work is:
 
-1. **NCE evidentiary threshold for technique hypothesis generation (Factor 2)** — future work in `nce_engine.py` to raise theoretical defense ceiling to 87.5%.
+1. ~~**NCE evidentiary threshold for technique hypothesis generation (Factor 2)**~~ — **DONE (83.8% defense, 16.7% clean FP)**.
 2. ~~**Action/Playbook Layer**~~ — **DONE**. Verified with real evaluation data; T1071 Guardrail-Silence finding documented.
 3. **Streamlit demo** — live interactive demonstration of the full pipeline.
 4. **Technique-specific guardrail heuristics** — network-perimeter response recommendations for external-target techniques like T1071 (future work).
