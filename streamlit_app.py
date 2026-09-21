@@ -1361,30 +1361,38 @@ def main() -> None:
     # -----------------------------------------------------------------
     render_header(st)
 
-    # Load scenario data
-    try:
-        scenario_data = load_scenario(scenario_key)
-    except Exception as e:
-        st.error(f"Failed to load scenario: {e}")
-        return
+    # Tabs: Pipeline Review Demo (existing) vs Live Monitoring (new)
+    tab_review, tab_monitor = st.tabs(["🔬 Pipeline Review Demo", "📡 Live Monitoring"])
 
-    # Scenario description
-    st.markdown(f"### {scenario_data['name']}")
-    st.markdown(scenario_data["description"])
-    st.markdown("---")
+    with tab_review:
+        # Load scenario data
+        try:
+            scenario_data = load_scenario(scenario_key)
+        except Exception as e:
+            st.error(f"Failed to load scenario: {e}")
+            return
 
-    # Render all 6 pipeline stages
-    render_raw_alert(st, scenario_data)
-    render_nce_hypotheses(st, scenario_data)
-    render_sse_validation(st, scenario_data)
-    render_rsem_ranking(st, scenario_data)
-    render_playbook_guardrails(st, scenario_data)
-    render_execution(st, scenario_data)
-
-    # Live Mode panel (if enabled)
-    if live_mode:
+        # Scenario description
+        st.markdown(f"### {scenario_data['name']}")
+        st.markdown(scenario_data["description"])
         st.markdown("---")
-        render_live_mode(st)
+
+        # Render all 6 pipeline stages
+        render_raw_alert(st, scenario_data)
+        render_nce_hypotheses(st, scenario_data)
+        render_sse_validation(st, scenario_data)
+        render_rsem_ranking(st, scenario_data)
+        render_playbook_guardrails(st, scenario_data)
+        render_execution(st, scenario_data)
+
+        # Live Mode panel (if enabled)
+        if live_mode:
+            st.markdown("---")
+            render_live_mode(st)
+
+    with tab_monitor:
+        from monitoring.dashboard import render_live_monitoring_tab
+        render_live_monitoring_tab(st)
 
     # Footer
     st.markdown("---")
