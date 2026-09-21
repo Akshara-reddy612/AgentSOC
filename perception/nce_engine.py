@@ -505,6 +505,7 @@ def generate_hypotheses(
     nce_input: NCEInput,
     model: str = "gemini-3.1-flash-lite",
     max_retries: int = 1,
+    apply_evidentiary_filter: bool = True,
 ) -> NCECallResult:
     """
     Generate competing attack-narrative hypotheses for an incident.
@@ -522,6 +523,9 @@ def generate_hypotheses(
         How many times to retry on JSON parse failure (not on schema
         validation failures — those are normal operation where invalid
         hypotheses get filtered out). Default: 1 (so 2 total attempts).
+    apply_evidentiary_filter : bool
+        Whether to apply the T1071 evidentiary threshold filter (Step 4b).
+        Default: True. Set False to evaluate pre-filter baseline hypotheses.
 
     Returns
     -------
@@ -634,16 +638,17 @@ def generate_hypotheses(
     # --- Step 4b: T1071 evidentiary threshold filter ---
     # Drop T1071 hypotheses that lack external IP, non-internal domain,
     # AND beaconing/C2 command evidence.  Non-T1071 hypotheses pass through.
-    valid_hypotheses, evidentiary_drops = _apply_t1071_evidentiary_filter(
-        valid_hypotheses, nce_input.evidence_fields
-    )
-    if evidentiary_drops:
-        drop_reasons.extend(evidentiary_drops)
-        logger.info(
-            "[NCE] T1071 evidentiary filter dropped %d hypothesis(es): %s",
-            len(evidentiary_drops),
-            "; ".join(evidentiary_drops),
+    if apply_evidentiary_filter:
+        valid_hypotheses, evidentiary_drops = _apply_t1071_evidentiary_filter(
+            valid_hypotheses, nce_input.evidence_fields
         )
+        if evidentiary_drops:
+            drop_reasons.extend(evidentiary_drops)
+            logger.info(
+                "[NCE] T1071 evidentiary filter dropped %d hypothesis(es): %s",
+                len(evidentiary_drops),
+                "; ".join(evidentiary_drops),
+            )
 
     # --- Step 5: Handle zero valid hypotheses ---
     if not valid_hypotheses:
