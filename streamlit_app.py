@@ -798,10 +798,18 @@ def render_raw_alert(st, data: dict) -> None:
             st.warning("Raw alert data not available for this scenario.")
             return
 
+        scenario_type = data.get("scenario_type")
         is_contaminated = data.get("is_contaminated", False)
         injection_cat = data.get("injection_category")
 
-        if is_contaminated:
+        if scenario_type == "live":
+            st.markdown("""
+            <div class="callout insight">
+                <strong>⚡ Live Alert</strong> — Real alert processed through
+                the live pipeline.  No ground-truth label exists for live data.
+            </div>
+            """, unsafe_allow_html=True)
+        elif is_contaminated:
             st.markdown(f"""
             <div class="callout danger">
                 <strong>⚠️ Contaminated Alert</strong> — Injection category:
@@ -1198,15 +1206,40 @@ def render_live_mode(st) -> None:
         with st.spinner("Running pipeline... (this may take 5-15 seconds)"):
             try:
                 result = _run_live_pipeline(alert_dict)
-                st.success("Pipeline completed!")
-                _render_live_result(st, result)
+                if "error" in result and not result.get("nce_hypotheses"):
+                    st.error(result["error"])
+                else:
+                    st.success("Pipeline completed!")
+                    render_raw_alert(st, result)
+                    _render_live_explanation(st, "raw_alert", result)
+
+                    render_nce_hypotheses(st, result)
+                    _render_live_explanation(st, "nce", result)
+
+                    render_sse_validation(st, result)
+                    _render_live_explanation(st, "sse", result)
+
+                    render_rsem_ranking(st, result)
+                    _render_live_explanation(st, "rsem", result)
+
+                    render_playbook_guardrails(st, result)
+                    _render_live_explanation(st, "playbook", result)
+
+                    render_execution(st, result)
+                    _render_live_explanation(st, "execution", result)
             except Exception as e:
                 st.error(f"Pipeline error: {e}")
 
 
 def _run_live_pipeline(alert_dict: dict) -> dict:
     """Run a new alert through the full live pipeline."""
+    from perception.action_playbook import (
+        build_playbook,
+        evaluate_guardrails,
+        execute_playbook_dry_run,
+    )
     from perception.knowledge_graph import KnowledgeStoreGraph
+    from perception.nce_contract import HypothesisStatus
     from perception.nce_engine import alert_to_nce_input, generate_hypotheses
     from perception.nce_rsem_integration import rank_validated_hypotheses
     from perception.nce_sse_integration import validate_hypothesis_with_sse
@@ -1234,31 +1267,112 @@ def _run_live_pipeline(alert_dict: dict) -> dict:
         for h in nce_result.output.hypotheses
     ]
 
-    # RSEM
-    candidate_actions = [
-        ProposedAction(action_type=ActionType.REVOKE_SESSION,
-                       target_account_id=nce_result.output.hypotheses[0].source_account),
-        ProposedAction(action_type=ActionType.RESTRICT_PRIVILEGES,
-                       target_account_id=nce_result.output.hypotheses[0].source_account),
-        ProposedAction(action_type=ActionType.QUARANTINE_ACCESS,
-                       target_host_id=nce_result.output.hypotheses[0].target_host),
-        ProposedAction(action_type=ActionType.MONITOR_ONLY,
-                       target_account_id=nce_result.output.hypotheses[0].source_account),
+    # RSEM - Candidate actions built from feasible hypotheses only
+    feasible_validated = [
+        v for v in validated_list
+        if v.hypothesis.status == HypothesisStatus.FEASIBLE
     ]
-    pipeline_result = rank_validated_hypotheses(
-        validated_list, kg, sse, candidate_actions,
-    )
+
+    if feasible_validated:
+        top_feasible = feasible_validated[0].hypothesis
+        candidate_actions = [
+            ProposedAction(action_type=ActionType.REVOKE_SESSION,
+                           target_account_id=top_feasible.source_account),
+            ProposedAction(action_type=ActionType.RESTRICT_PRIVILEGES,
+                           target_account_id=top_feasible.source_account),
+            ProposedAction(action_type=ActionType.QUARANTINE_ACCESS,
+                           target_host_id=top_feasible.target_host),
+            ProposedAction(action_type=ActionType.MONITOR_ONLY,
+                           target_account_id=top_feasible.source_account),
+        ]
+        pipeline_result = rank_validated_hypotheses(
+            validated_list, kg, sse, candidate_actions,
+        )
+    else:
+        candidate_actions = []
+        pipeline_result = rank_validated_hypotheses(
+            validated_list, kg, sse, candidate_actions,
+        )
+
+    # Serialize RSEM results
+    rsem_results = []
+    for rh in pipeline_result.ranked:
+        hyp = rh.validated.hypothesis
+        ranked_actions_data = []
+        for sa in rh.ranked_actions:
+            target_parts = []
+            if sa.action.target_account_id:
+                target_parts.append(f"account={sa.action.target_account_id}")
+            if sa.action.target_host_id:
+                target_parts.append(f"host={sa.action.target_host_id}")
+            ranked_actions_data.append({
+                "action_type": sa.action.action_type.value,
+                "containment": sa.containment,
+                "business_impact": sa.business_impact,
+                "composite": sa.composite_score,
+                "target": ", ".join(target_parts) if target_parts else "—",
+                "target_account": sa.action.target_account_id,
+                "target_host": sa.action.target_host_id,
+            })
+        rsem_results.append({
+            "technique_id": hyp.technique_id,
+            "source_account": hyp.source_account,
+            "source_host": hyp.source_host,
+            "target_host": hyp.target_host,
+            "ranked_actions": ranked_actions_data,
+        })
+
+    reached_rsem = len(pipeline_result.ranked) > 0
+
+    # Playbook layer (guard against pipeline_result.ranked being empty)
+    playbook_data = None
+    if pipeline_result.ranked:
+        playbook = build_playbook(pipeline_result.ranked[0], kg)
+        playbook = evaluate_guardrails(playbook)
+        playbook = execute_playbook_dry_run(playbook, kg)
+
+        steps_data = []
+        for step in playbook.steps:
+            target_parts = []
+            if step.action.action.target_account_id:
+                target_parts.append(f"account={step.action.action.target_account_id}")
+            if step.action.action.target_host_id:
+                target_parts.append(f"host={step.action.action.target_host_id}")
+
+            steps_data.append({
+                "step_number": step.step_number,
+                "action_type": step.action.action.action_type.value,
+                "is_policy_action": step.is_policy_action,
+                "status": step.status.value,
+                "containment": step.action.containment,
+                "business_impact": step.action.business_impact,
+                "composite_score": step.action.composite_score,
+                "target": ", ".join(target_parts) if target_parts else "—",
+            })
+
+        playbook_data = {
+            "steps": steps_data,
+            "overall_status": playbook.overall_status.value,
+            "guardrail_decision_reason": playbook.guardrail_decision_reason,
+            "dry_run_report": playbook.dry_run_report,
+        }
 
     # Format results
     nce_hyps = []
     for h in nce_result.output.hypotheses:
+        missing_flags = [
+            f.value if hasattr(f, "value") else str(f)
+            for f in (h.missing_context_flags or [])
+        ]
+        evidence_refs = [str(r) for r in (h.supporting_evidence_refs or [])]
         nce_hyps.append({
             "technique_id": h.technique_id,
             "source_account": h.source_account,
             "source_host": h.source_host,
             "target_host": h.target_host,
             "nce_confidence": h.nce_confidence,
-            "supporting_evidence_refs": h.supporting_evidence_refs,
+            "supporting_evidence_refs": evidence_refs,
+            "missing_context_flags": missing_flags,
         })
 
     sse_data = []
@@ -1272,6 +1386,11 @@ def _run_live_pipeline(alert_dict: dict) -> dict:
         })
 
     return {
+        "scenario_type": "live",
+        "raw_alert": alert_dict,
+        "is_contaminated": None,
+        "injection_category": None,
+        "hijack_data": None,
         "nce_hypotheses": nce_hyps,
         "nce_raw_response": nce_result.raw_response,
         "sse_results": sse_data,
@@ -1279,27 +1398,208 @@ def _run_live_pipeline(alert_dict: dict) -> dict:
                                   if v.best_sse_verdict.value != "INFEASIBLE"),
         "sse_infeasible_count": sum(1 for v in validated_list
                                     if v.best_sse_verdict.value == "INFEASIBLE"),
+        "reached_rsem": reached_rsem,
+        "rsem_results": rsem_results,
+        "playbook": playbook_data,
     }
 
 
-def _render_live_result(st, result: dict) -> None:
-    """Render live pipeline results inline."""
-    if "error" in result:
-        st.error(result["error"])
-        return
+def _render_live_explanation(st, stage: str, data: dict) -> None:
+    """Generate deterministic, template-based plain-English explanation for live alerts."""
+    if stage == "raw_alert":
+        raw = data.get("raw_alert", {})
+        alert_id = raw.get("alert_id", "Unknown")
+        src_sys = raw.get("source_system", "SIEM/EDR")
+        n_fields = len(raw)
+        st.info(
+            f"💡 **Plain-English Explanation (Stage 1 — Raw Alert):**\n\n"
+            f"Alert **{alert_id}** was ingested from **{src_sys}** ({n_fields} structured fields). "
+            f"Unlike curated evaluation alerts, live alerts carry **no ground truth** — free-text "
+            f"telemetry fields may contain legitimate administrative activity or malicious prompt injection. "
+            f"AgentSOC isolates these raw fields from the immutable Knowledge Graph so untrusted SIEM inputs "
+            f"cannot manipulate downstream defense logic."
+        )
 
-    st.markdown("#### NCE Hypotheses")
-    st.json(result.get("nce_hypotheses", []))
+    elif stage == "nce":
+        hyps = data.get("nce_hypotheses", [])
+        if not hyps:
+            st.info("💡 **Plain-English Explanation (Stage 2 — NCE):** No hypotheses were generated.")
+            return
+        lines = []
+        for i, h in enumerate(hyps):
+            t = h.get("technique_id", "?")
+            c = h.get("nce_confidence", 0.0)
+            refs = ", ".join(h.get("supporting_evidence_refs", [])) or "none"
+            lines.append(f"• **Hypothesis {i+1} ({t}):** NCE confidence **{c:.2f}**, grounded in `{refs}`.")
+        summary = "\n".join(lines)
+        st.info(
+            f"💡 **Plain-English Explanation (Stage 2 — NCE Hypothesis Generation):**\n\n"
+            f"The Neural Correlation Engine proposed **{len(hyps)} candidate hypothesis(es)** based solely on unverified alert fields:\n\n"
+            f"{summary}\n\n"
+            f"**Architectural Guarantee:** NCE confidence scores are **advisory only**. The LLM operates in an isolated sandbox "
+            f"without access to topological privileges or network segmentation. Every hypothesis must undergo deterministic graph validation in Stage 3."
+        )
 
-    st.markdown("#### SSE Validation")
-    for sse_r in result.get("sse_results", []):
-        verdict = sse_r.get("sse_verdict", "?")
-        badge = "infeasible" if verdict == "INFEASIBLE" else "feasible"
-        st.markdown(f"""
-        <span class="stage-badge {badge}">{verdict}</span>
-        **{sse_r.get('technique_id')}** —
-        path_confidence: `{sse_r.get('path_confidence', 0):.2f}`
-        """, unsafe_allow_html=True)
+    elif stage == "sse":
+        sse_results = data.get("sse_results", [])
+        feas_count = data.get("sse_feasible_count", 0)
+
+        hyp_details = []
+        for r in sse_results:
+            tech = r.get("technique_id", "?")
+            verdict = r.get("sse_verdict", "?")
+            conf = r.get("path_confidence", 0.0)
+
+            if verdict == "FEASIBLE":
+                hyp_details.append(
+                    f"• **{tech} → FEASIBLE** (path confidence: **{conf:.2f}**): A structurally complete attack path "
+                    f"exists in the Knowledge Graph with high confidence (>= 0.50)."
+                )
+            elif verdict == "CONDITIONALLY_FEASIBLE":
+                hyp_details.append(
+                    f"• **{tech} → CONDITIONALLY_FEASIBLE** (path confidence: **{conf:.2f}**): A structurally complete attack path "
+                    f"exists in the Knowledge Graph, but confidence is below the 0.50 threshold (e.g., low-confidence or heuristic link). "
+                    f"It is treated as structurally viable and advanced to RSEM for risk scoring."
+                )
+            else:
+                hyp_details.append(
+                    f"• **{tech} → INFEASIBLE** (path confidence: **{conf:.2f}**): No valid topological access path exists "
+                    f"in the Knowledge Graph. This hypothesis cannot execute in the enterprise environment and is dropped."
+                )
+
+        has_t1071_feasible = any(
+            r.get("technique_id") == "T1071" and r.get("sse_verdict") in ("FEASIBLE", "CONDITIONALLY_FEASIBLE")
+            for r in sse_results
+        )
+        t1071_note = ""
+        if has_t1071_feasible:
+            t1071_note = (
+                f"\n\n⚠️ **Architectural Note (T1071 / Network-Egress):** T1071 evaluates zone-egress topology. "
+                f"Because outbound traffic from a workstation to the internet is topologically permitted, "
+                f"T1071 is marked FEASIBLE regardless of whether the traffic is malicious C2 or benign browsing. "
+                f"This reflects the documented structural defense boundary."
+            )
+
+        detail_str = "\n".join(hyp_details)
+        if feas_count == 0:
+            conclusion = "**Verdict:** All hypotheses are INFEASIBLE. The pipeline safely terminates here — no risk to score."
+        else:
+            conclusion = f"**Verdict:** {feas_count} hypothesis(es) proved structurally viable and proceed to Stage 4 (RSEM)."
+
+        st.info(
+            f"💡 **Plain-English Explanation (Stage 3 — SSE Structural Validation):**\n\n"
+            f"{detail_str}\n\n"
+            f"{conclusion}{t1071_note}"
+        )
+
+    elif stage == "rsem":
+        reached = data.get("reached_rsem", False)
+        rsem_results = data.get("rsem_results", [])
+        if not reached or not rsem_results:
+            st.info(
+                "💡 **Plain-English Explanation (Stage 4 — RSEM Risk Scoring):**\n\n"
+                "RSEM was not reached because all hypotheses were found **INFEASIBLE** by SSE. "
+                "Ranking defensive actions against impossible attack paths is avoided by design."
+            )
+            return
+
+        lines = []
+        for rh in rsem_results:
+            tech = rh.get("technique_id", "?")
+            actions = rh.get("ranked_actions", [])
+            if actions:
+                top = actions[0]
+                lines.append(
+                    f"• For **{tech}**, top-ranked action is **{top.get('action_type')}** (target: `{top.get('target')}`) "
+                    f"with containment = **{top.get('containment', 0):.4f}**, business impact = **{top.get('business_impact', 0):.4f}**, "
+                    f"and composite score = **{top.get('composite', 0):.4f}**."
+                )
+                if len(actions) > 1:
+                    other_strs = [
+                        f"{a.get('action_type')} (containment={a.get('containment', 0):.4f}, BI={a.get('business_impact', 0):.4f}, score={a.get('composite', 0):.4f})"
+                        for a in actions[1:]
+                    ]
+                    lines.append(f"  *Other candidate actions scored:* {'; '.join(other_strs)}.")
+        summary = "\n".join(lines)
+        st.info(
+            f"💡 **Plain-English Explanation (Stage 4 — RSEM Risk Scoring):**\n\n"
+            f"RSEM scored candidate response actions by balancing graph containment against operational business impact:\n\n"
+            f"{summary}\n\n"
+            f"The top-ranked action proceeds to Stage 5 for playbook generation and safety guardrail evaluation."
+        )
+
+    elif stage == "playbook":
+        playbook = data.get("playbook")
+        if not playbook:
+            st.info(
+                "💡 **Plain-English Explanation (Stage 5 — Playbook & Guardrails):**\n\n"
+                "No playbook was generated because no hypotheses survived SSE structural validation."
+            )
+            return
+
+        overall_status = playbook.get("overall_status", "?")
+        reason = playbook.get("guardrail_decision_reason", "")
+        steps = playbook.get("steps", [])
+        top_step = steps[0] if steps else {}
+        top_action = top_step.get("action_type", "")
+        top_containment = top_step.get("containment", 0.0)
+
+        if (
+            top_action == "MONITOR_ONLY"
+            and top_containment == 0.0
+            and overall_status == "AUTO_APPROVED"
+        ):
+            st.info(
+                f"💡 **Plain-English Explanation (Stage 5 — Playbook & Guardrails):**\n\n"
+                f"Playbook status: **`{overall_status}`**\n\n"
+                f"⚠️ **Guardrail-Silence finding:** **No guardrail rule fires — this technique's containment is architecturally zero (see Guardrail-Silence finding)**. "
+                f"Because the top-ranked action is **MONITOR_ONLY** with containment = **0.0000** and business impact = **0.0000**, "
+                f"it triggers neither disruptive action guardrails nor high-impact blocks. It is marked `AUTO_APPROVED` because "
+                f"passive monitoring causes zero business disruption, not because active mitigation occurred."
+            )
+        elif overall_status == "PENDING_ANALYST_REVIEW":
+            st.info(
+                f"💡 **Plain-English Explanation (Stage 5 — Playbook & Guardrails):**\n\n"
+                f"Playbook status: **`{overall_status}`**\n\n"
+                f"🛡️ **Automated Execution Refused:** The safety guardrail layer blocked automatic execution: `{reason}`. "
+                f"High-impact containment or restricted actions (such as privileged credential revocation) require mandatory human review."
+            )
+        else:
+            st.info(
+                f"💡 **Plain-English Explanation (Stage 5 — Playbook & Guardrails):**\n\n"
+                f"Playbook status: **`{overall_status}`**\n\n"
+                f"✅ **Guardrail Cleared:** The recommended action passed all automated guardrail safety checks: `{reason}`. "
+                f"The action proceeds to dry-run execution."
+            )
+
+    elif stage == "execution":
+        playbook = data.get("playbook")
+        if not playbook:
+            st.info(
+                "💡 **Plain-English Explanation (Stage 6 — Execution Interface):**\n\n"
+                "Execution not applicable — no playbook was generated."
+            )
+            return
+
+        status = playbook.get("overall_status", "?")
+        if status in ("AUTO_APPROVED", "DRY_RUN_COMPLETE"):
+            st.info(
+                f"💡 **Plain-English Explanation (Stage 6 — Execution Interface / Dry-Run):**\n\n"
+                f"The playbook completed a **safe dry-run** execution. The simulation ran on an isolated deep copy "
+                f"of the Knowledge Graph — the live production environment and authoritative knowledge store were **never mutated**. "
+                f"A deterministic before/after state diff and automated rollback recipe have been generated."
+            )
+        elif status == "PENDING_ANALYST_REVIEW":
+            st.info(
+                f"💡 **Plain-English Explanation (Stage 6 — Execution Interface / Dry-Run):**\n\n"
+                f"Execution was **safely refused** by the guardrail layer. No simulated state modifications were executed. "
+                f"The case has been routed to the SOC analyst review queue with full telemetry, evidence refs, and risk scores."
+            )
+        else:
+            st.info(
+                f"💡 **Plain-English Explanation (Stage 6 — Execution Interface):**\n\n"
+                f"Execution status: **`{status}`**."
+            )
 
 
 # =========================================================================
