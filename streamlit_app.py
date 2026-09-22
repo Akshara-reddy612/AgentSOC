@@ -1220,9 +1220,9 @@ def _run_live_pipeline(alert_dict: dict) -> dict:
     nce_input = alert_to_nce_input(alert_dict)
     nce_result = generate_hypotheses(nce_input)
 
-    if not nce_result.success or not nce_result.hypotheses:
+    if not nce_result.success or nce_result.output is None or not nce_result.output.hypotheses:
         return {
-            "error": f"NCE failed: {nce_result.failure_reason}",
+            "error": f"NCE failed: {nce_result.error}",
             "nce_raw_response": nce_result.raw_response,
         }
 
@@ -1231,19 +1231,19 @@ def _run_live_pipeline(alert_dict: dict) -> dict:
     sse = StructuralSimulationEngine(kg)
     validated_list = [
         validate_hypothesis_with_sse(h, sse)
-        for h in nce_result.hypotheses
+        for h in nce_result.output.hypotheses
     ]
 
     # RSEM
     candidate_actions = [
         ProposedAction(action_type=ActionType.REVOKE_SESSION,
-                       target_account_id=nce_result.hypotheses[0].source_account),
+                       target_account_id=nce_result.output.hypotheses[0].source_account),
         ProposedAction(action_type=ActionType.RESTRICT_PRIVILEGES,
-                       target_account_id=nce_result.hypotheses[0].source_account),
+                       target_account_id=nce_result.output.hypotheses[0].source_account),
         ProposedAction(action_type=ActionType.QUARANTINE_ACCESS,
-                       target_host_id=nce_result.hypotheses[0].target_host),
+                       target_host_id=nce_result.output.hypotheses[0].target_host),
         ProposedAction(action_type=ActionType.MONITOR_ONLY,
-                       target_account_id=nce_result.hypotheses[0].source_account),
+                       target_account_id=nce_result.output.hypotheses[0].source_account),
     ]
     pipeline_result = rank_validated_hypotheses(
         validated_list, kg, sse, candidate_actions,
@@ -1251,7 +1251,7 @@ def _run_live_pipeline(alert_dict: dict) -> dict:
 
     # Format results
     nce_hyps = []
-    for h in nce_result.hypotheses:
+    for h in nce_result.output.hypotheses:
         nce_hyps.append({
             "technique_id": h.technique_id,
             "source_account": h.source_account,
