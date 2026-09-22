@@ -755,8 +755,8 @@ def render_header(st) -> None:
         <p class="subtitle">Securing Autonomous Defense: Mitigating Log-Contamination Vulnerabilities in Agentic SOC Frameworks</p>
         <div class="metric-row">
             <div class="metric-card defense">
-                <p class="metric-value">80.0%</p>
-                <p class="metric-label">Structural Defense Rate<br>64/80 contaminated attacks blocked</p>
+                <p class="metric-value">85.2%</p>
+                <p class="metric-label">Structural Defense Rate<br>341/400 contaminated attacks blocked</p>
             </div>
             <div class="metric-card fp">
                 <p class="metric-value">0.0%</p>
@@ -1398,9 +1398,9 @@ def main() -> None:
     st.markdown("---")
     st.markdown("""
     <div style="text-align:center; color:#666; font-size:0.8rem; padding:16px 0;">
-        AgentSOC 2.0 — Structural Defense Rate: 64/80 (80.0%) |
+        AgentSOC 2.0 — Structural Defense Rate: 341/400 (85.2%) |
         Clean-Alert FP: 0/60 non-T1071 (0.0%) |
-        Full Pipeline: 366/366 tests passing
+        Full Pipeline: 429/429 tests passing
     </div>
     """, unsafe_allow_html=True)
 
