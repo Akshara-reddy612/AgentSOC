@@ -435,9 +435,9 @@ class StructuralSimulationEngine:
             )]
 
         # --- Resolve nodes (lazy creation) ---
-        acct_node = self._graph_store.get_or_create_account_node(account_id)
-        src_node = self._graph_store.get_or_create_host_node(source_host_id)
-        tgt_node = self._graph_store.get_or_create_host_node(target_host_id)
+        acct_node = account_node_id(account_id)
+        src_node = host_node_id(source_host_id)
+        tgt_node = host_node_id(target_host_id)
 
         results: list[PathResult] = []
 
@@ -569,11 +569,22 @@ class StructuralSimulationEngine:
         Returns (found, confidence, description).
         """
         g = self._graph_store.graph
-        src_zone = self._graph_store.get_host_zone(src_host_node)
-        tgt_zone = self._graph_store.get_host_zone(tgt_host_node)
+        from perception.knowledge_graph import classify_host, _HOST_CLASS_DEFAULTS, HostClass, zone_node_id
 
-        if src_zone is None:
-            return (False, 0.0, "")
+        src_zone = self._graph_store.get_host_zone(src_host_node)
+        if not src_zone:
+            # Fall back to classification default without mutating the graph
+            hostname = src_host_node.replace("host:", "")
+            hclass, _ = classify_host(hostname)
+            zstr = _HOST_CLASS_DEFAULTS.get(hclass, _HOST_CLASS_DEFAULTS[HostClass.UNKNOWN])["zone_id"]
+            src_zone = zone_node_id(zstr)
+
+        tgt_zone = self._graph_store.get_host_zone(tgt_host_node)
+        if not tgt_zone:
+            hostname = tgt_host_node.replace("host:", "")
+            hclass, _ = classify_host(hostname)
+            zstr = _HOST_CLASS_DEFAULTS.get(hclass, _HOST_CLASS_DEFAULTS[HostClass.UNKNOWN])["zone_id"]
+            tgt_zone = zone_node_id(zstr)
 
         if not to_any and tgt_zone is None:
             return (False, 0.0, "")
