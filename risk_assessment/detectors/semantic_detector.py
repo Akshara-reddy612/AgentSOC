@@ -57,6 +57,8 @@ logger = logging.getLogger(__name__)
 
 # Suppress symlink warning from huggingface_hub on Windows (cosmetic only)
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
 
 # ---------------------------------------------------------------------------
 # Module-level singleton: model + pre-computed exemplar embeddings
