@@ -22,7 +22,10 @@ from __future__ import annotations
 import queue
 import threading
 import time
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 from monitoring.models import EventRecord, EventStatus
 from monitoring.pipeline_adapter import MonitoringPipelineAdapter
@@ -127,11 +130,16 @@ class MonitoringWorker:
 
         while not self._stop_event.is_set():
             self.state.set_queue_depth(self.queue.qsize())
+            with open("worker_debug.txt", "a") as f:
+                f.write(f"Looping, queue depth: {self.queue.qsize()}\n")
             try:
                 item = self.queue.get(timeout=0.5)
             except queue.Empty:
                 continue
 
+            with open("worker_debug.txt", "a") as f:
+                f.write(f"Got item from queue!\n")
+            
             alert_dict, record = item
             record.status = EventStatus.PROCESSING
             record.processing_started_at = time.time()
