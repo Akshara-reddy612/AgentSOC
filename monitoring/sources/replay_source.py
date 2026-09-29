@@ -24,12 +24,18 @@ class ReplaySource:
 
     def __init__(
         self,
-        alerts: Sequence[dict],
+        alerts: Sequence[dict] | None = None,
         worker: MonitoringWorker | None = None,
         delay_s: float = 2.0,
         loop: bool = False,
     ) -> None:
-        self.alerts: list[dict] = list(alerts)
+        self._is_dynamic = alerts is None
+        if self._is_dynamic:
+            from monitoring.demo_pool import get_random_demo_alerts
+            self.alerts = get_random_demo_alerts(5)
+        else:
+            self.alerts: list[dict] = list(alerts)
+            
         self.worker: MonitoringWorker = worker if worker is not None else get_monitoring_worker()
         self.delay_s: float = delay_s
         self.loop: bool = loop
@@ -43,6 +49,9 @@ class ReplaySource:
 
     def reset(self) -> None:
         """Reset replay position back to start."""
+        if self._is_dynamic:
+            from monitoring.demo_pool import get_random_demo_alerts
+            self.alerts = get_random_demo_alerts(5)
         self._current_index = 0
 
     def start(self) -> None:
@@ -144,7 +153,6 @@ def get_replay_source(
     if _REPLAY_SINGLETON is None:
         with _REPLAY_LOCK:
             if _REPLAY_SINGLETON is None:
-                from monitoring.demo_alerts import CURATED_DEMO_ALERTS
-                alert_list = list(alerts) if alerts is not None else CURATED_DEMO_ALERTS
-                _REPLAY_SINGLETON = ReplaySource(alerts=alert_list, delay_s=delay_s, loop=loop)
+                # If alerts is None, we pass None to ReplaySource so it handles dynamic updates
+                _REPLAY_SINGLETON = ReplaySource(alerts=alerts, delay_s=delay_s, loop=loop)
     return _REPLAY_SINGLETON

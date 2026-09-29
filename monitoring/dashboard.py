@@ -130,7 +130,7 @@ def render_live_monitoring_tab(st_param: Any = None) -> None:
         st.metric("Processed (OK)", f"{metrics.total_processed}")
     with m_col3:
         st.metric("Structural Defense Rate", f"{metrics.defense_rate:.1%}")
-        st.caption("*(5-alert illustrative demo. See 'Pipeline Review Demo' tab for the 85.0-86.0% headline result)*")
+        st.caption("*(5 random alerts per replay, drawn from the 460-alert evaluation corpus; rate varies by draw -- see 'Pipeline Review Demo' tab for the 85.0-86.0% headline result across all 460)*")
     with m_col4:
         st.metric("Analyst Reviews", f"{metrics.analyst_review}")
     with m_col5:

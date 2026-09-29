@@ -46,8 +46,9 @@ from risk_assessment.integration import attach_risk_metadata
 # ---------------------------------------------------------------------------
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
-_NCE7_PATH = _PROJECT_ROOT / "agent" / "nce7_comparative_results.json"
+_NCE7_PATH = _PROJECT_ROOT / "agent" / "nce7_scale_results.json"
 _NCE8_PATH = _PROJECT_ROOT / "agent" / "nce8_clean_fp_results.json"
+_NCE50_PATH = _PROJECT_ROOT / "agent" / "nce_n50_scaleup_results_runA.json"
 
 # Cache: alert_id (str) → record dict from the results file.
 # Populated lazily once on first call to _load_nce_cache().
@@ -68,7 +69,7 @@ def _load_nce_cache() -> dict[str, dict]:
     cache: dict[str, dict] = {}
     loaded_any = False
 
-    for path in (_NCE7_PATH, _NCE8_PATH):
+    for path in (_NCE7_PATH, _NCE8_PATH, _NCE50_PATH):
         if not path.exists():
             continue
         try:
@@ -88,7 +89,7 @@ def _load_nce_cache() -> dict[str, dict]:
 
     if not loaded_any:
         raise RuntimeError(
-            f"NCE cache files not found or unreadable: {_NCE7_PATH}, {_NCE8_PATH}"
+            f"NCE cache files not found or unreadable: {_NCE7_PATH}, {_NCE8_PATH}, {_NCE50_PATH}"
         )
 
     _NCE_CACHE = cache
