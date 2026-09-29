@@ -61,6 +61,11 @@ class MonitoringWorker:
         if self._running and self._thread is not None and self._thread.is_alive():
             return
 
+        try:
+            self.adapter.warmup()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("MonitoringWorker pre-warm encounter error: %s", exc)
+
         self._stop_event.clear()
         self._running = True
         self._thread = threading.Thread(
@@ -122,12 +127,6 @@ class MonitoringWorker:
 
     def _worker_loop(self) -> None:
         """Main loop executed by the worker thread."""
-        # Pre-warm ERA pipeline once on worker startup before processing queue items
-        try:
-            self.adapter.warmup()
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("MonitoringWorker pre-warm encounter error: %s", exc)
-
         while not self._stop_event.is_set():
             self.state.set_queue_depth(self.queue.qsize())
             try:
