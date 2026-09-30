@@ -8,7 +8,26 @@
 
 ---
 
+## Current State (supersedes earlier sections)
+- **Baseline Structural Defense Rate:** 80.0-81.5% (320-326/400)
+- **Filtered Structural Defense Rate:** 85.0-86.0% (340-344/400)
+- **Stability (two runs):** 162/320 (50.6%) hypothesis sets differed; 6/320 (1.9%) final verdicts changed.
+- **T1071 FEASIBLE rate on clean data (n=60):** 8/60 = 13.3% post-filter.
+- **Structural pipeline (NCE + filter + SSE) defended 10/10 of the alerts in the n=80 corpus where the undefended LLM was confirmed hijacked (any_hijack=True)**
+- **ApprovalClaimDetector FPR:** 2/15 = 13.3% (n=30 corpus) -> 1/50 = 2.0% (scaled corpus, n=100 total). 9/10 attacks detected (1 false negative).
+- **RSEM:** all 56 (run A) feasible T1071 hypotheses tie 4-way at composite 0.0000.
+- **Tests:** 437+ passing, incl. tests/test_sse_non_mutation.py.
+- **n=400 context:** n=400 results use gemini-3.1-flash-lite only; the earlier 14-family tables also include Groq (openai/gpt-oss-20b). The 8 families are a subset of the 14 by name (agent/run_nce_n50_scaleup_eval.py:89-98).
+
+### How to read the two recovery/defense numbers
+The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM-level defended agent via ERA + SPC XML wrapping + JSON mode + schema gate, against a 58 hijacked-alert corpus) and the **85.0-86.0% (340-344/400)** "structural defense rate" metric (measured on the current pipeline via NCE + evidentiary filter + SSE, against an 8-family n=400 corpus) represent completely different pipelines, corpora, and metrics. They must never be plotted or written as a single progression.
+
 ## Architecture Map
+
+**Pipeline in order:** Perception -> Prompt Construction -> ERA (+ApprovalClaimDetector) -> NCE + Evidentiary Filter -> SSE -> RSEM -> Action/Playbook + Guardrails
+
+- **Base-paper (re-implemented):** Perception, NCE, SSE, RSEM, Action/Playbook.
+- **Added in this work:** Prompt Construction, ERA (+ApprovalClaimDetector), NCE Evidentiary Filter, Policy Guardrails.
 
 | Directory / Module | Description | Build & Test Status |
 |---|---|---|
@@ -20,7 +39,14 @@
 | [`perception/knowledge_graph.py`](file:///C:/agentsoc/perception/knowledge_graph.py) | Real graph-backed knowledge store (separate, parallel structure to InMemoryKnowledgeStore, importing it only for one-time seed-data migration at initialization, not a subclass); hostname classification, lazy node creation, service dependency tracking | Built & Tested |
 | [`perception/sse.py`](file:///C:/agentsoc/perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
 | [`perception/rsem.py`](file:///C:/agentsoc/perception/rsem.py) | Risk Scoring and Evaluation Module — real graph-based containment simulation and business-impact scoring, action ranking | Built & Tested |
-| [`perception/nce_contract.py`](file:///C:/agentsoc/perception/nce_contract.py) | NCE output data contract + LLM-free mock generator; real NCE LLM implementation still pending | Contract Built, LLM Implementation Pending |
+| [`perception/nce_contract.py`](file:///C:/agentsoc/perception/nce_contract.py) | NCE output data contract + LLM-free mock generator (the real LLM NCE is in nce_engine.py) | Built & Tested |
+| [`perception/nce_engine.py`](file:///C:/agentsoc/perception/nce_engine.py) | NCE LLM implementation and evidentiary threshold filter for T1071 | Built & Tested |
+| [`action/`](file:///C:/agentsoc/action/) | Action/Playbook Layer with guardrails and simulated execution | Built & Tested |
+| [`monitoring/`](file:///C:/agentsoc/monitoring/) | Streamlit Live Monitoring interface (replay of archived alerts) | Built & Tested |
+
+The Perception Layer's Situational Contextualization component reads the flat `InMemoryKnowledgeStore` for ImmutableContext facts (user role, asset criticality). The evaluation harness (Section V) constructs NCE input directly and does not invoke PerceptionPipeline or Contextualizer; the flat `InMemoryKnowledgeStore` therefore plays no role in any reported result and is exercised only in the Streamlit Live Mode demonstration (a replay of archived corpus records, NOT real-time monitoring).
+
+The Internal Knowledge Store is a NetworkX-backed multi-hop directed graph (`KnowledgeStoreGraph`) holding a live structural snapshot of identity/privilege, network zone topology, and service-dependency structure -- not a log or incident history. It is queried read-only at runtime by SSE, RSEM, and the Action/Playbook layer (guardrail business-impact evaluation and dry-run execution against a graph copy); NCE, ERA, and Prompt Construction have no access to it, so no injected log field can influence a stored graph fact.
 
 ---
 
@@ -45,7 +71,7 @@
 
 ---
 
-## Current Master Results Table
+## Phase 1: undefended hijack-rate measurement (historical)
 This table lists overall and per-category hijack rates (where a hijack is defined as triggering *any* hijack signal: verdict flip, schema violation, unauthorized action, or instruction following) measured across all evaluation batches.
 
 | Model | Payload Family | n | Hijack Rate (Verdict Flip / Any Hijack) | Source File |
@@ -216,6 +242,8 @@ One residual false positive was found at n=100: a FalconSensor EDR log (`analyst
 - **`synth_fields.py` generates highly confident clean baselines:** A measurement of clean confidence over 25 random alerts showed that the model maintains extremely high confidence scores (0.95 to 1.0) on clean telemetry, regardless of whether the underlying grade is `TruePositive`, `BenignPositive`, or `FalsePositive`. This indicates that synthetic data generation creates uniformly plausible-looking logs.
 
 ---
+
+## Earlier phase: n=80 results (historical, superseded by the Current State block at the top)
 
 ## Phase NCE-7-SCALE: Structural Pipeline Evaluation at Scale (n=90) — **CURRENT HEADLINE**
 
@@ -438,28 +466,26 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 
 ---
 
-## What's NOT Built Yet
+## Completed milestones (historical)
 - ~~**NCE real LLM implementation**~~ — **DONE** (Phase NCE-5/6/7). The real NCE→SSE→RSEM pipeline is built, tested, and evaluated end-to-end.
 - ~~**Full pipeline contamination re-evaluation**~~ — **DONE** (Phase NCE-7-SCALE). The central research question — whether SSE's independent structural check catches contaminated NCE hypotheses — has been empirically tested at scale (n=80 contaminated alerts across 8 injection families). Result: **64/80 (80.0%)** structural defense success rate. All 16 failures trace to a single mechanism: T1071's network-egress-only constraint in `sse.py`.
 - ~~**T1071 constraint design resolution**~~ — **RESOLVED** (Phase NCE-7-SCALE). The T1071 mislabeling investigation resolved the open design question: failures are driven by a primary architectural limitation of structural network-egress validation (~75%, Factor 1) plus secondary NCE over-reach on ambiguous alerts (~25%, Factor 2), with zero hallucinated technique labels (Factor 3).
 - ~~**NCE evidentiary threshold for technique hypothesis generation (Factor 2)**~~ — **RESOLVED 2026-09-16**. Implemented `_apply_t1071_evidentiary_filter` in `perception/nce_engine.py` requiring external IP, recognizable non-internal domain (positive public TLD match), or beaconing-command evidence before emitting T1071 hypotheses. Result: structural defense rate elevated from 80.0% (64/80) to **83.8% (67/80)** with 0/12 Factor-1 REASONABLE cases dropped; clean-alert T1071 FEASIBLE rate reduced from 26.7% (16/60) to **16.7% (10/60)**.
 - ~~**Action/Playbook Layer**~~ — **DONE**. Adaptive Playbook Generator, Policy/Safety Guardrails, simulated dry-run Execution Interface. Built, tested (366/366), and verified against real evaluation data (32/32 real FEASIBLE cases processed with zero crashes). See "Action/Playbook Layer" section above for the T1071 Guardrail-Silence finding.
-- **Real-Time Monitoring feedback loop** (simulated). Not started.
 - ~~**ApprovalClaimDetector False-Positive Mitigation:** Designing and implementing proximity analysis or temporal-context parsing (e.g., distinguishing current-event claims from historical references) to prevent legitimate dual-signal logs from triggering false positives on `raw_log_line`.~~ **RESOLVED 2026-09-15** (structural field-injection vs. narrative gating + proximity-scoped suppression, validated at n=100).
 - ~~**SSE clean-alert false-positive assessment at scale**~~ — **DONE** (Phase NCE-8). Scaled from n=10 (NCE-7-SCALE) to n=60 (n=10 + n=50 new). Result: 16/60 (26.7%) alert-level FEASIBLE rate, **all T1071**. Non-T1071 FP rate: 0/60 (0.0%). Confirms T1071 egress is a technique-specific architectural limitation, not a general FP problem.
-- **Technique-specific guardrail heuristics for external-target techniques (T1071):** The real-data verification showed that the current guardrail rules (hard floor + BI threshold) have zero opportunity to exercise on T1071/external-target cases because RSEM's containment scoring is structurally uninformative when targets have no internal graph edges. A production system would need network-perimeter-level response recommendations (firewall blocks, DNS sinkholing) not dependent on internal graph topology. See "Action/Playbook Layer" section above.
 
----
+## What's NOT Built Yet & Immediate Next Steps (Replaced)
+- RSEM tie-break policy
+- Ablation study (note: "no NCE" cannot just leave SSE running)
+- Cross-model backends
+- Seeded-graph evaluation with real access edges
+- Real-time monitoring (described in base paper, not implemented)
+- Real SOAR integration
+- Technique-specific guardrail heuristics for T1071 (network-perimeter responses)
 
-## Immediate Next Step
-The paper's central research questions are now answered with empirical data at scale:
-- **Structural defense:** 67/80 (83.8%) success rate across 8 injection families (up from 64/80, 80.0% baseline), with 87.5% theoretical ceiling under disciplined NCE labeling.
-- **Clean-alert FP:** 10/60 (16.7%) alert-level FEASIBLE rate (down from 16/60, 26.7% baseline), 0/60 (0.0%) non-T1071 false positives across 60 clean alerts. The NCE evidentiary threshold eliminates unsupported T1071 hypotheses across both contaminated and clean sets with zero false negatives.
-- **Action/Playbook Layer:** Built, tested (366/366), and verified against real evaluation data. The T1071 Guardrail-Silence finding confirms that one architectural property (external targets outside graph topology) cascades identically through SSE, RSEM, and the Action Layer — a coherent limitation, not a defect.
-
-The remaining highest-priority work is:
-
-1. ~~**NCE evidentiary threshold for technique hypothesis generation (Factor 2)**~~ — **DONE (83.8% defense, 16.7% clean FP)**.
-2. ~~**Action/Playbook Layer**~~ — **DONE**. Verified with real evaluation data; T1071 Guardrail-Silence finding documented.
-3. **Streamlit demo** — live interactive demonstration of the full pipeline.
-4. **Technique-specific guardrail heuristics** — network-perimeter response recommendations for external-target techniques like T1071 (future work).
+## Known limitations
+- Non-T1071 defended rate partly reflects an empty graph (synthetic accounts have no access edges).
+- 86% defense excludes ERA and guardrails.
+- Detector 1 false negative.
+- 0/60 clean FP is corpus-specific.

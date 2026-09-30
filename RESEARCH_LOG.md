@@ -494,3 +494,57 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
   - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Documented NCE evidentiary threshold results, updated clean FP section, marked item resolved)
   - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This entry)
 
+## 2026-09-15 — Session: Detector FPR Scale-up & Nested-Quote Bug Fix
+### What was tried
+- Scaled ApprovalClaimDetector to n=100 benign logs to measure FPR.
+- Fixed the nested-quote bug where the original regex stopped at the first inner quote, misclassifying real field-injection attacks (like `OUTER_KEY="inner_key=VALUE""`) as narrative.
+### What worked
+- Implemented `_NESTED_FIELD_ASSIGNMENT_PATTERN` to capture malformed nested-quote shapes.
+- Achieved 1.0% overall FPR (1/100) and 2.0% dual-signal FPR (1/50).
+### What failed
+- Single-level `key="value"` structure remains ambiguous between legitimate EDR/SIEM analyst-note fields and real attacks (e.g., FalconSensor log). This single-level ambiguity (not nested-quote) is the accepted limitation.
+### Key decisions & findings
+- Single-level field-assignment ambiguity documented as a known limitation.
+### Files created/modified
+- `risk_assessment/detectors/approval_claim_detector.py` (c13d019, e25e3b0)
+- `PROJECT_STATUS.md`
+
+## 2026-09-16 — Session: Evidentiary-filter domain-regex bug
+### What was tried
+- Fix regex matching `outlook.exe`, `archive.zip`, and usernames as domains in the T1071 filter.
+### What worked
+- Implemented positive public TLD match instead of blocklisting.
+### What failed
+- Initial `_FILE_EXTENSIONS` blocklist approach failed because it leaked usernames (e.g., `a.patel`) and ISO timestamp fragments (`46.000Z`).
+### Key decisions & findings
+- Positive-pattern matching is more robust than blocklists.
+### Files created/modified
+- `perception/nce_engine.py` (5e56155)
+
+## 2026-09-28 — Session: SSE non-mutation bug
+### What was tried
+- Addressed bug where the live graph mutated from 20 to 326 nodes during SSE evaluation.
+### What worked
+- Enforced strict read-only graph traversal (nodes/edges are no longer permanently added during dry runs). Added regression test.
+### What failed
+- Prior to fix, `SSE.check()` was calling `get_or_create_host_node`, inadvertently mutating the global `KnowledgeStoreGraph`.
+### Key decisions & findings
+- Graph state isolation is critical for order-independent evaluation.
+### Files created/modified
+- `perception/sse.py`, `tests/test_sse_non_mutation.py` (fc0f089)
+
+## 2026-09-29 — Session: Merge arithmetic, NCE replication, Live Monitoring bugs
+### What was tried
+- Re-calculated aggregate defense metrics for the paper, replicated NCE at scale, and fixed Live Monitoring demo replay.
+### What worked
+- Corrected n=400 aggregate values in the paper to 344/340 (341/337 were an arithmetic error during merge).
+- Replicated NCE hypothesis generation on the full 320-alert scale-up slice (Run A vs Run B).
+- Updated Live Monitoring to sample from the 460-alert cache dynamically instead of using a fixed demo set.
+### What failed
+- Live Monitoring worker threads crashed due to a missing `logging` import and PyTorch/Tokenizer initialization deadlocks. Fixed by pre-warming pipeline in main thread.
+### Key decisions & findings
+- Stability finding: 50.6% (162/320) of NCE hypothesis sets differed across two runs, but only 1.9% (6/320) of final defense verdicts changed.
+### Files created/modified
+- `streamlit_app.py`, `monitoring/worker.py` (39eec7f, 1e6e464, 7032f21, e901043)
+- `agentsoc2_paper_corrected.tex` (1a5105e, f7b4734)
+
