@@ -135,6 +135,8 @@ def validate_hypothesis_with_sse(
         source_host_id=hypothesis.source_host,
         target_host_id=hypothesis.target_host,
         technique_id=hypothesis.technique_id,
+        # 2026-10-11 (Phase 3): trusted destination telemetry, if attached.
+        trusted_destination=getattr(hypothesis, "trusted_destination", None),
     )
 
     # --- Determine best verdict ---

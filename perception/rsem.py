@@ -90,6 +90,7 @@ class ActionType(Enum):
     # Added 2026-10-10 (Phase 2 step 2.5): cut the target host's internet
     # egress (proxy/firewall block).  The only action that can contain T1071.
     BLOCK_EGRESS = "BLOCK_EGRESS"
+    BLOCK_DESTINATION = "BLOCK_DESTINATION"   # proxy/firewall block of one external destination (2026-10-11)
 
 
 # ---------------------------------------------------------------------------
@@ -229,6 +230,7 @@ def _count_feasible_paths(
             hyp.source_host,
             hyp.target_host,
             hyp.technique_id,
+            trusted_destination=getattr(hyp, "trusted_destination", None),
         )
         for r in results:
             if r.verdict != SSEVerdict.INFEASIBLE:
@@ -283,6 +285,18 @@ def _apply_action(graph: "nx.MultiDiGraph", action: ProposedAction) -> None:
             if h not in graph:
                 graph.add_node(h, node_type="HostNode", host_id=action.target_host_id.lower())
             graph.nodes[h]["egress_blocked"] = True
+
+    elif action.action_type == ActionType.BLOCK_DESTINATION:
+        # Block one external destination (target_host_id carries the address)
+        # on this COPY; SSE's T1071 check treats a blocked destination as
+        # INFEASIBLE.  Unlisted destinations get a node on the copy only.
+        from perception.knowledge_graph import _fact, destination_node_id
+        if action.target_host_id:
+            d = destination_node_id(action.target_host_id)
+            if d not in graph:
+                graph.add_node(d, node_type="ExternalDestination", address=action.target_host_id,
+                               reputation=_fact("unknown", 1.0), source="not_listed")
+            graph.nodes[d]["blocked"] = True
 
 
 def _remove_edges_by_type(
@@ -378,6 +392,11 @@ def _reduce_grants_confidence(
 # compute_business_impact
 # ---------------------------------------------------------------------------
 
+# Business impact of BLOCK_DESTINATION by destination reputation (2026-10-11).
+_DESTINATION_BLOCK_IMPACT = {"known_bad": 0.0, "blocked": 0.0, "unknown": 0.1,
+                             "sanctioned": 0.5, "internal": 1.0}
+
+
 def compute_business_impact(
     graph_store: KnowledgeStoreGraph,
     action: ProposedAction,
@@ -396,6 +415,12 @@ def compute_business_impact(
 
         business_impact = clamp(impact_base + blast_radius, 0.0, 1.0)
     """
+    if action.action_type == ActionType.BLOCK_DESTINATION:
+        # Impact of blocking one external destination depends on what it is:
+        # a sanctioned business service hurts, an unlisted one barely does.
+        rep, _, _ = graph_store.get_destination_reputation(action.target_host_id or "")
+        return _DESTINATION_BLOCK_IMPACT.get(rep, 0.1)
+
     # Resolve target host
     target_host = None
     if action.target_host_id:

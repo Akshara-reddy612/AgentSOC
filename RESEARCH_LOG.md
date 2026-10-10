@@ -882,3 +882,22 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `corpus/__init__.py`, `corpus/evidence.py`, `corpus/payloads.py`, `corpus/build_v2.py`, `GUIDE_Dataset/processed/v2/guide_v2_dev.json`, `guide_v2_heldout.json`, `tests/test_corpus_v2.py`
 - Modified: `perception/nce_engine.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 step 3.3 — trusted destination, BLOCK_DESTINATION, known-bad escalation
+
+### What was tried
+- `perception/nce_contract.py`: additive `trusted_destination` field. `perception/entity_binding.py`: `trusted_destination_of(alert)` and `attach_alert_context()` (binding for all hypotheses + trusted destination for T1071).
+- `perception/nce_sse_integration.py` (locked; lift judged worth it: one additive keyword, default unchanged): passes `trusted_destination` to `SSE.check()`. `perception/rsem.py`: containment re-checks pass it too; new `BLOCK_DESTINATION` with reputation-based business impact.
+- `perception/action_playbook.py`: `build_candidate_actions` offers BLOCK_DESTINATION when a trusted destination exists (not added to the hard floor: a single-destination proxy block is narrow and reversible).
+- New `perception/outcome.py` (`decide`, `known_bad_contact`). Callers switched to `attach_alert_context` (Monitoring, Streamlit, `rescore_all`); `rescore_all` records the alert outcome (and its diff tolerates keys missing from older snapshots).
+
+### What was found
+- Tests on the inventory: unknown destination -> SSE FEASIBLE (verified) -> BLOCK_DESTINATION (containment 1.0, BI 0.1, composite 0.9) -> AUTO_APPROVED -> dry run complete, live graph unchanged; sanctioned -> BLOCK_EGRESS (0.75) -> review; known-bad from a workstation -> SSE INFEASIBLE (proxy) but outcome REVIEW with the known-bad reason; NCE target taken from spoofed text -> unbound -> review, block still aimed at the telemetry destination.
+- `--diff s5_entity_binding s6_trusted_destination_outcome`: 1,420 changes, all the new `outcome` field (1,131 NO_ACTIONABLE, 289 REVIEW).
+
+### Test verification
+- New `tests/test_trusted_destination.py` (5 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 512 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/outcome.py`, `tests/test_trusted_destination.py`, `experiments/rescore_snapshots/s6_trusted_destination_outcome.json`
+- Modified: `perception/nce_contract.py`, `perception/nce_sse_integration.py`, `perception/rsem.py`, `perception/action_playbook.py`, `perception/entity_binding.py`, `monitoring/pipeline_adapter.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

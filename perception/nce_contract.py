@@ -147,6 +147,11 @@ class NCEHypothesis:
     # named entity matches them, "partial" when some are unknown/unverifiable,
     # "unbound" when the hypothesis names an entity the alert does not contain.
     entity_binding: str | None = None
+    # Added 2026-10-11 (Phase 3 step 3.3).  The alert's TRUSTED destination
+    # telemetry (destination_domain or destination_ip), attached to T1071
+    # hypotheses after NCE by entity_binding.attach_alert_context — never from
+    # LLM output or log text.  Passed to SSE (and to RSEM's containment checks).
+    trusted_destination: str | None = None
 
     def __post_init__(self) -> None:
         if self.entity_binding not in (None, "bound", "partial", "unbound"):
