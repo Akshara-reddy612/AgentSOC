@@ -11,6 +11,9 @@ Key features:
   - Dynamic round-robin key rotation across all 5 GEMINI_API_KEYS
   - Per-alert incremental checkpointing to agent/nce_n50_scaleup_results.json
   - Safe resume: skips any alert_id already completed
+  - NCE failures are stored with nce_error and structural_defense_* = None,
+    excluded from the tallies, and retried on resume (fixed 2026-10-10; before
+    that a failure counted as a defense success — 0 failures in runs A/B)
   - JSONL API audit logging to agent/nce_n50_scaleup_api_call_log.jsonl
   - Dual SSE evaluation: captures both pre-filter baseline (apply_evidentiary_filter=False)
     and post-filter (_apply_t1071_evidentiary_filter) from the exact same LLM call.
@@ -245,7 +248,7 @@ def run_eval(max_new: int | None = None):
     sse = StructuralSimulationEngine(gs)
 
     total_count = len(alerts)
-    completed_count = len(results_by_id)
+    completed_count = sum(1 for r in results_by_id.values() if r.get("sse_results") is not None)
     api_calls_made = 0
     newly_processed = 0
 
@@ -307,9 +310,16 @@ def run_eval(max_new: int | None = None):
             baseline_hyps = list(call_result.output.hypotheses)
             p(f"  NCE Baseline: {len(baseline_hyps)} hypotheses generated")
         else:
-            baseline_hyps = []
+            # An NCE failure is not a defense success: record it unscored (no
+            # sse_results, so resume retries it) and leave the tallies alone.
             p(f"  NCE Baseline: FAILED / Empty — {call_result.error}")
             record["nce_error"] = call_result.error
+            record["structural_defense_orig"] = None
+            record["structural_defense_success"] = None
+            record["reached_rsem"] = False
+            results_by_id[aid] = record
+            _save_incremental(results_by_id)
+            continue
 
         # Step 2: SSE on Baseline Hypotheses
         validated_orig = []

@@ -803,3 +803,20 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `tests/test_block_egress_and_guardrails.py`, `experiments/rescore_snapshots/s4_block_egress_guardrails.json`
 - Modified: `perception/rsem.py`, `perception/action_playbook.py`, `monitoring/pipeline_adapter.py`, `monitoring/demo_alerts.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-10 — Session: Phase 2 step 2.6 — NCE failure no longer scores as defense success
+
+### What was tried
+- `agent/run_nce_n50_scaleup_eval.py`: on NCE failure the record is saved with `nce_error`, `structural_defense_orig` / `structural_defense_success` = None and no `sse_results`, then the loop continues — so it is excluded from the running tallies and retried on resume. `completed_count` at start counts only scored records.
+- New `tests/test_scaleup_harness_nce_failure.py` (2 tests, NCE mocked, all paths redirected to `tmp_path`). Both fail on the old code and pass on the new.
+
+### What was found
+- Before: a failure gave 0 hypotheses → 0 FEASIBLE → `structural_defense_success=True`. Runs A and B contain 0 `nce_error` records (320/320 each), so no published number was affected.
+- Audit of siblings: `run_nce7_scale_eval.py` already guards with `n_hyps > 0`; `run_paired_clean_eval*.py` records errors and `analyze_paired*.py` / `filter_sensitivity.py` exclude `nce_error` records. No other change needed.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 486 passed, 1 deselected.
+
+### Files created/modified
+- Created: `tests/test_scaleup_harness_nce_failure.py`
+- Modified: `agent/run_nce_n50_scaleup_eval.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
