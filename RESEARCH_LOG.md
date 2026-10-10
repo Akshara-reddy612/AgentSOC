@@ -820,3 +820,25 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `tests/test_scaleup_harness_nce_failure.py`
 - Modified: `agent/run_nce_n50_scaleup_eval.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-10 — Session: Phase 2 step 2.7 — entity binding
+
+### What was tried
+- New `perception/entity_binding.py`: `bind_entities(hypothesis, alert)` labels each named entity bound / bound_other_role / unknown / unverifiable / unbound against the alert's structured entity fields (accounts normalised for `DOMAIN\user` and `user@domain`, hosts for `.corp.local`/`.local`/`.internal`; T1071 targets compared only with destination_ip/destination_domain, `unverifiable` when external and no such field exists). `label_entity_binding()` sets the summary on each hypothesis.
+- `perception/nce_contract.py` (locked, lifted; additive): `NCEHypothesis.entity_binding: str | None` validated to None/bound/partial/unbound. NCE never sets it — it has no access to the structured fields by design.
+- `perception/action_playbook.py`: `_review_reasons` adds "names an entity not present in the alert's structured fields (possible identity steering)".
+- Wiring: `monitoring/pipeline_adapter.py` labels grounding + binding after NCE (the cache path previously had no grounding label); `streamlit_app.py` `_run_downstream` labels binding when a raw alert exists and Stage 2 shows grounding and binding; `experiments/rescore_all.py` records `entity_binding` and the final `guardrail_status` per feasible hypothesis.
+- New `tests/test_entity_binding.py` (10 tests), including an injected `svc_backup`/`workstation-01`/`server-db01` hypothesis (FEASIBLE in the seeded graph) that auto-approves with RESTRICT alone unless labelled unbound.
+
+### What was found
+- Survey of contaminated run A before wiring: source_account 735 bound / 2 unknown; source_host 541 bound / 196 unknown; target_host 522 bound / 168 unknown / 41 unverifiable (T1071 external) / 6 unbound (4 T1078 with an external IP as target, 2 T1071 with numeric targets such as `66859`). The 18 accounts that differed only by `@domain` bind after normalisation.
+- `--diff s4_block_egress_guardrails s5_entity_binding`: 3,626 changes, all new fields (`entity_binding`, `guardrail_status`); 0 changes to SSE verdicts, RSEM tops or alert outcomes.
+- Unbound hypotheses per run: clean A 12, clean B 7, contaminated A 6, contaminated B 2, nce7 0, nce8 1. No clean/contaminated gap, as expected: the corpus has no identity-steering payloads. Feasible hypotheses (all T1071): 289, all PENDING_ANALYST_REVIEW; binding 39 bound / 238 partial / 12 unbound.
+- Streamlit scenarios 1-7 and the 5 Monitoring demo alerts: outcomes unchanged; binding shown for replay scenarios.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 496 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/entity_binding.py`, `tests/test_entity_binding.py`, `experiments/rescore_snapshots/s5_entity_binding.json`
+- Modified: `perception/nce_contract.py`, `perception/action_playbook.py`, `monitoring/pipeline_adapter.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md` (docs committed separately in the next commit)
