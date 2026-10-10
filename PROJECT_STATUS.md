@@ -12,7 +12,7 @@
 - **Baseline Structural Defense Rate:** 80.0-81.5% (320-326/400)
 - **Filtered Structural Defense Rate:** 85.0-86.0% (340-344/400)
 - **Stability (two runs):** 162/320 (50.6%) hypothesis sets differed; 6/320 (1.9%) final verdicts changed.
-- **T1071 FEASIBLE rate on clean data (n=60):** 8/60 = 13.3% post-filter.
+- **T1071 FEASIBLE rate on clean data (n=60):** 10/60 = 16.7% post-filter.
 - **Structural pipeline (NCE + filter + SSE) defended 10/10 of the alerts in the n=80 corpus where the undefended LLM was confirmed hijacked (any_hijack=True)**
 - **ApprovalClaimDetector FPR:** 2/15 = 13.3% (n=30 corpus) -> 1/50 = 2.0% (scaled corpus, n=100 total). 9/10 attacks detected (1 false negative).
 - **RSEM:** all 56 (run A) feasible T1071 hypotheses tie 4-way at composite 0.0000.
@@ -466,6 +466,25 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 
 ---
 
+
+## Experiment 1: Paired Clean-vs-Contaminated Evaluation
+
+A paired evaluation on 320 contaminated alerts and their 320 clean twins found that clean alerts (no payload) reach the same no-actionable rate as contaminated alerts, so the headline rate is not an attack-blocking rate.
+- **Run B Metric Corrected:** The canonical Run B result is 273/320. An earlier 274 re-score occurred because the script inadvertently scored the contaminated run against the clean corpus evidence. The corrected regression reproduces all four runs exactly (clean A 275, clean B 276, contaminated A 277, contaminated B 273 of 320). The combined total remains 340/400.
+- **Filter Lift & Vulnerability:** 15 contaminated alerts (all `fake_output_injection`) pass the beacon predicate only through lowercase "post" in `"stage":"post-triage"`; their clean twins have 0 such matches; 0 of 43 surviving failures in run A and 1 of 47 in run B (alert 962072675970) pass the filter only through that match. The filter's lift does not depend on it: removing the beacon predicate entirely (V4) changes no verdict in clean A, clean B or contaminated A, and changes one alert each in contaminated B (962072675970, 273 -> 274/320) and the 80-alert n=80 slice (824633724927, 67 -> 68/80). Under a case-sensitive POST (V1) the combined totals would be run A 277 + 68 = 345/400 (86.25%) and run B 274 + 68 = 342/400 (85.5%), so the reported 85.0-86.0% (340-344/400) is for the filter as it ran. (Alert 824633724927 also appears in `t1071_mislabeling_investigation.md` as a QUESTIONABLE T1071 case: `| 14 | 824633724927 | fake_output_injection | raw_log_line has category=Exfiltration, target=WKSTN-9431 (internal host, not external IP) | No external IP anywhere. No beaconing command. command_line is svc_2558.exe. NCE tagged T1071 with target=WKSTN-9431 and conf=0.48 based solely on raw_log_line reference. | 0.48 | **QUESTIONABLE** |`). The beacon predicate is redundant on this corpus because every clean beacon match also contains an external IP (33/33).
+- **Verdict Stability:** Wilson 95% intervals for no-actionable counts pre- and post-filter:
+  - Clean A pre-filter no-actionable: 250/320 = 0.7812 [0.7328, 0.8231]
+  - Clean A post-filter no-actionable: 275/320 = 0.8594 [0.8170, 0.8932]
+  - Clean B pre-filter no-actionable: 254/320 = 0.7937 [0.7461, 0.8345]
+  - Clean B post-filter no-actionable: 276/320 = 0.8625 [0.8204, 0.8960]
+  - Contam A pre-filter no-actionable: 262/320 = 0.8187 [0.7728, 0.8571]
+  - Contam A post-filter no-actionable: 277/320 = 0.8656 [0.8239, 0.8987]
+  - Contam B pre-filter no-actionable: 256/320 = 0.8000 [0.7527, 0.8402]
+  - Contam B post-filter no-actionable: 273/320 = 0.8531 [0.8102, 0.8877]
+  Final verdicts changed on only 3/320 (Clean A vs B) and 6/320 (Contam A vs B), or 2 to 6/320 across conditions. Technique sets differ 53.1% (clean vs clean) and 43.4% (contam vs contam). Because the headline "defense success" rate equals the clean-alert rate on the exact same metric, the supported claim is verdict stability under LLM noise.
+- **T1071 Confidence Comparison:** Exploratory and inconclusive. Clean A vs B 25 lower / 16 higher (p=0.2110); Contaminated A vs B 14/14 (p=1.0000); cross-condition 25/4 (p=0.0001), 31/13 (p=0.0096), 26/8 (p=0.0029), 24/13 (p=0.0989). Emission asymmetry p-values were 0.0649, 0.2912, 0.0725, 0.3489 across conditions and 1.0000 within clean. Since runs differ in harness, day and process model, and six comparisons were made, no payload effect is claimed.
+- **V4 Filter Sensitivity (No Beacon Predicate):** Removing the beacon predicate entirely yields post-filter no-actionable counts: Clean A 275/320 (Lift: +25), Clean B 276/320 (Lift: +22), Contam A 277/320 (Lift: +15), Contam B 274/320 (Lift: +18), nce7 Contam 68/80 (Lift: +4).
+
 ## Completed milestones (historical)
 - ~~**NCE real LLM implementation**~~ — **DONE** (Phase NCE-5/6/7). The real NCE→SSE→RSEM pipeline is built, tested, and evaluated end-to-end.
 - ~~**Full pipeline contamination re-evaluation**~~ — **DONE** (Phase NCE-7-SCALE). The central research question — whether SSE's independent structural check catches contaminated NCE hypotheses — has been empirically tested at scale (n=80 contaminated alerts across 8 injection families). Result: **64/80 (80.0%)** structural defense success rate. All 16 failures trace to a single mechanism: T1071's network-egress-only constraint in `sse.py`.
@@ -476,16 +495,19 @@ Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce
 - ~~**SSE clean-alert false-positive assessment at scale**~~ — **DONE** (Phase NCE-8). Scaled from n=10 (NCE-7-SCALE) to n=60 (n=10 + n=50 new). Result: 16/60 (26.7%) alert-level FEASIBLE rate, **all T1071**. Non-T1071 FP rate: 0/60 (0.0%). Confirms T1071 egress is a technique-specific architectural limitation, not a general FP problem.
 
 ## What's NOT Built Yet & Immediate Next Steps (Replaced)
-- RSEM tie-break policy
-- Ablation study (note: "no NCE" cannot just leave SSE running)
-- Cross-model backends
-- Seeded-graph evaluation with real access edges
-- Real-time monitoring (described in base paper, not implemented)
-- Real SOAR integration
-- Technique-specific guardrail heuristics for T1071 (network-perimeter responses)
+- RSEM tie-break policy (required fix: all 56 run-A T1071 hypotheses tie 4-way at 0.0000).
+- Experiment 2: Alert-grounded authorization table, independent oracle, entity binding.
+- Experiment 3: Identity steering evaluation.
+- Groq paired run.
+- Ablation study (note: "no NCE" cannot just leave SSE running).
+- Technique-specific guardrail heuristics for T1071 (network-perimeter responses).
+- Real-time monitoring / Real SOAR integration.
 
 ## Known limitations
-- Non-T1071 defended rate partly reflects an empty graph (synthetic accounts have no access edges).
-- 86% defense excludes ERA and guardrails.
+- "No actionable hypothesis" counts as a defense success, which means a suppression payload designed to intentionally cause an INFEASIBLE verdict would technically succeed by triggering this exact outcome.
+- The T1071 FEASIBLE rate represents a base-rate property of how GUIDE alerts describe network activity, not a contamination-specific effect. The 85.0-86.0% "defense success" metric must carry the clean-baseline qualification.
+- 0/704 (Run A) and 0/706 (Run B) post-filter hypotheses named a host that exists in the default seeded graph. The 0% clean non-T1071 FP rate holds because synthetic GUIDE accounts lack standing access-granting edges; it has not been verified on an identity/topology graph with real access grants. NCE does not receive source_user/source_host/target_host and no code compares hypothesis entities to them; SSE T1071 uses egress_to_any=True and accepts internal 443/80 EGRESS edges including the WORKSTATION->WORKSTATION self-loop.
+- The T1071 evidentiary filter reads attacker-controlled fields, and no "filter-aware" payload has been tested.
+- 86% defense excludes ERA and guardrails; the ApprovalClaimDetector (9/10 detected, 1/50 false positives) is evaluated separately.
+- 0/60 clean non-T1071 FP is corpus-specific.
 - Detector 1 false negative.
-- 0/60 clean FP is corpus-specific.
