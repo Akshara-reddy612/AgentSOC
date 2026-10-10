@@ -102,6 +102,13 @@ def score_all() -> dict:
     import perception.nce_engine as nce_engine
 
     labeller = getattr(nce_engine, "label_t1071_grounding", None)  # added in a later Phase 2 step
+    try:  # Phase 2 step 2.7+
+        from perception.entity_binding import label_entity_binding as binder
+        from perception.action_playbook import build_playbook, evaluate_guardrails
+        from perception.nce_rsem_integration import rank_validated_hypotheses
+        guardrail = lambda rhr: evaluate_guardrails(build_playbook(rhr, kg))  # noqa: E731
+    except ImportError:
+        binder = guardrail = None
     kg = KnowledgeStoreGraph()
     sse = StructuralSimulationEngine(kg)
     snapshot: dict = {"runs": {}}
@@ -129,11 +136,14 @@ def score_all() -> dict:
                 ))
             surviving, _ = _apply_t1071_evidentiary_filter(hyps, evidence)
             kept = {id(h) for h in surviving}
-            labels = [getattr(h, "evidence_grounding", None) for h in labeller(hyps, evidence)] if labeller else [None] * len(hyps)
+            labelled = labeller(hyps, evidence) if labeller else list(hyps)
+            labels = [getattr(h, "evidence_grounding", None) for h in labelled]
+            if binder:
+                labelled = binder(labelled, alert)
 
             hyp_rows = []
-            for h, label in zip(hyps, labels):
-                vh = validate_hypothesis_with_sse(h, sse)
+            for h, label, hl in zip(hyps, labels, labelled):
+                vh = validate_hypothesis_with_sse(hl, sse)
                 row = {
                     "technique": h.technique_id,
                     "source_account": h.source_account,
@@ -141,6 +151,7 @@ def score_all() -> dict:
                     "target_host": h.target_host,
                     "legacy_filter_drop": id(h) not in kept,
                     "grounding": label,
+                    "entity_binding": getattr(hl, "entity_binding", None),
                     "sse_verdict": vh.best_sse_verdict.value,
                     "path_confidence": round(vh.best_path_confidence, 6),
                     "n_paths": len(vh.sse_results),
@@ -151,6 +162,9 @@ def score_all() -> dict:
                     row["rsem_top_composite"] = round(ranked[0].composite_score, 6)
                     row["rsem_tied_top"] = sum(1 for s in ranked if s.composite_score == ranked[0].composite_score)
                     row["rsem_containment"] = {s.action.action_type.value: round(s.containment, 6) for s in ranked}
+                    if guardrail:
+                        rhr = rank_validated_hypotheses([vh], kg, sse, _candidate_actions(hl)).ranked[0]
+                        row["guardrail_status"] = guardrail(rhr).overall_status.value
                 hyp_rows.append(row)
 
             feasible = [r for r in hyp_rows if r["sse_verdict"] in FEASIBLE]
@@ -188,7 +202,8 @@ def diff(old: dict, new: dict) -> int:
                     changes += 1
                     print(f"[{run}] {aid} {key}: {a[key]} -> {b[key]}")
             for i, (ha, hb) in enumerate(zip(a["hypotheses"], b["hypotheses"])):
-                for key in ("sse_verdict", "path_confidence", "n_paths", "grounding", "rsem_top", "rsem_tied_top"):
+                for key in ("sse_verdict", "path_confidence", "n_paths", "grounding", "entity_binding",
+                            "rsem_top", "rsem_tied_top", "guardrail_status"):
                     if ha.get(key) != hb.get(key):
                         changes += 1
                         print(f"[{run}] {aid} hyp{i} {ha['technique']} src={ha['source_host']!r} {key}: {ha.get(key)} -> {hb.get(key)}")

@@ -142,8 +142,18 @@ class NCEHypothesis:
     # a security boundary — an ungrounded hypothesis is routed to analyst
     # review, never silently dropped.
     evidence_grounding: str | None = None
+    # Added 2026-10-10 (Phase 2 step 2.7).  Set by entity_binding.label_entity_binding
+    # from the alert's structured entity fields (never by NCE): "bound" when every
+    # named entity matches them, "partial" when some are unknown/unverifiable,
+    # "unbound" when the hypothesis names an entity the alert does not contain.
+    entity_binding: str | None = None
 
     def __post_init__(self) -> None:
+        if self.entity_binding not in (None, "bound", "partial", "unbound"):
+            raise ValueError(
+                f"entity_binding must be None, 'bound', 'partial' or 'unbound', "
+                f"got {self.entity_binding!r}"
+            )
         if self.evidence_grounding not in (None, "grounded", "ungrounded"):
             raise ValueError(
                 f"evidence_grounding must be None, 'grounded' or 'ungrounded', "

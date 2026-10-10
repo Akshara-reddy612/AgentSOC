@@ -416,6 +416,14 @@ class MonitoringPipelineAdapter:
                 f"cached={len(hypotheses)} hypotheses",
             )
 
+        # Labels computed outside NCE (2026-10-10): T1071 evidence grounding
+        # (idempotent for live output; cached output was never labelled) and
+        # entity binding against the alert's structured entity fields.
+        from perception.entity_binding import label_entity_binding
+        from perception.nce_engine import _NCE_EVIDENCE_FIELD_NAMES, label_t1071_grounding
+        evidence = {f: str(alert[f]) for f in _NCE_EVIDENCE_FIELD_NAMES if alert.get(f) is not None}
+        hypotheses = label_entity_binding(label_t1071_grounding(hypotheses, evidence), alert)
+
         record.nce_hypothesis_count = len(hypotheses)
         record.nce_techniques = [h.technique_id for h in hypotheses]
 

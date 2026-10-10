@@ -794,6 +794,10 @@ def render_nce_hypotheses(st, data: dict) -> None:
                     st.markdown(f"- **Missing Context:** `{', '.join(flags)}`")
                 else:
                     st.markdown("- **Missing Context:** *(none flagged)*")
+                if hyp.get("evidence_grounding"):
+                    st.markdown(f"- **T1071 Grounding:** `{hyp['evidence_grounding']}`")
+                if hyp.get("entity_binding"):
+                    st.markdown(f"- **Entity Binding:** `{hyp['entity_binding']}` *(vs alert's structured fields)*")
 
             if i < len(hypotheses) - 1:
                 st.divider()
@@ -1156,6 +1160,10 @@ def _run_downstream(
     from perception.nce_rsem_integration import rank_validated_hypotheses
     from perception.nce_sse_integration import validate_hypothesis_with_sse
     from perception.rsem import StructuralSimulationEngine
+    from perception.entity_binding import label_entity_binding
+
+    if raw_alert:
+        hypotheses = label_entity_binding(hypotheses, raw_alert)
 
     # SSE
     kg = KnowledgeStoreGraph()
@@ -1266,6 +1274,7 @@ def _run_downstream(
             "supporting_evidence_refs": evidence_refs,
             "missing_context_flags": missing_flags,
             "evidence_grounding": h.evidence_grounding,
+            "entity_binding": h.entity_binding,
         })
 
     sse_data = []

@@ -323,7 +323,9 @@ def _review_reasons(playbook: Playbook) -> list[str]:
       - SSE could only return CONDITIONALLY_FEASIBLE (e.g. unresolved source
         host or low-confidence path);
       - RSEM's top composite score is tied with another action type, so the
-        "choice" would otherwise be decided by candidate-list order.
+        "choice" would otherwise be decided by candidate-list order;
+      - (step 2.7) the hypothesis names an entity absent from the alert's
+        structured entity fields (entity_binding == "unbound").
     """
     from perception.sse import SSEVerdict
 
@@ -331,6 +333,8 @@ def _review_reasons(playbook: Playbook) -> list[str]:
     vh = playbook.hypothesis.validated
     if vh.hypothesis.evidence_grounding == "ungrounded":
         reasons.append("Hypothesis is an ungrounded T1071 (no network indicator in the evidence).")
+    if vh.hypothesis.entity_binding == "unbound":
+        reasons.append("Hypothesis names an entity not present in the alert's structured fields (possible identity steering).")
     if vh.best_sse_verdict == SSEVerdict.CONDITIONALLY_FEASIBLE:
         reasons.append("SSE verdict is CONDITIONALLY_FEASIBLE (unresolved host or low-confidence path).")
     ranked = playbook.hypothesis.ranked_actions
@@ -363,8 +367,8 @@ def evaluate_guardrails(playbook: Playbook) -> Playbook:
        PENDING_ANALYST_REVIEW.
 
     3. REVIEW REASONS (added 2026-10-10): ungrounded T1071 hypothesis,
-       CONDITIONALLY_FEASIBLE SSE verdict, or a tie at the top of RSEM's
-       ranking -> PENDING_ANALYST_REVIEW.
+       unbound entity, CONDITIONALLY_FEASIBLE SSE verdict, or a tie at the
+       top of RSEM's ranking -> PENDING_ANALYST_REVIEW.
 
     4. Otherwise: AUTO_APPROVED.
 
