@@ -233,6 +233,11 @@ def service_node_id(service_id: str) -> str:
     return f"service:{service_id.lower()}"
 
 
+def destination_node_id(address: str) -> str:
+    """Canonical graph node ID for an external destination (IP or domain)."""
+    return f"dest:{address.strip().lower()}"
+
+
 # ---------------------------------------------------------------------------
 # KnowledgeStoreGraph
 # ---------------------------------------------------------------------------
@@ -257,6 +262,7 @@ class KnowledgeStoreGraph:
         self._graph = nx.MultiDiGraph()
         self._seed_from_store()
         self._seed_additional_topology()
+        self._seed_network_model()
 
     @property
     def graph(self) -> nx.MultiDiGraph:
@@ -348,6 +354,39 @@ class KnowledgeStoreGraph:
         )
 
         return node_id
+
+    # ------------------------------------------------------------------
+    # Synthetic enterprise network model accessors (added 2026-10-10)
+    # ------------------------------------------------------------------
+
+    def get_zone_egress_policy(self, zone_node: str) -> dict:
+        """Return the zone's internet egress policy (mode none if unknown)."""
+        if zone_node in self._graph:
+            fact = self._graph.nodes[zone_node].get("egress_policy")
+            if isinstance(fact, KnowledgeFact):
+                return fact.value
+        return {"mode": "none"}
+
+    def get_destination_reputation(self, address: str) -> tuple[str, float, str]:
+        """
+        Return (reputation, confidence, source) for an external destination.
+
+        Read-only.  Internal addresses -> ("internal", 1.0, "address_rules");
+        addresses absent from the allow-list / threat-intel tables ->
+        ("unknown", 1.0, "not_listed").
+        """
+        from perception.network_model import INTERNAL, UNKNOWN, is_internal_address
+
+        if is_internal_address(address):
+            return (INTERNAL, 1.0, "address_rules")
+        node = destination_node_id(address)
+        if node in self._graph:
+            data = self._graph.nodes[node]
+            rep = data["reputation"]
+            if data.get("blocked"):
+                return ("blocked", 1.0, "response_action")
+            return (rep.value, rep.confidence, data.get("source", ""))
+        return (UNKNOWN, 1.0, "not_listed")
 
     def get_host_zone(self, host_node_id_str: str) -> str | None:
         """Return the zone node ID for a host, or None if not found."""
@@ -718,3 +757,33 @@ class KnowledgeStoreGraph:
             edge_type="GRANTS",
             access_level=_fact(AccessLevel.ADMIN, 0.3),
         )
+
+    def _seed_network_model(self) -> None:
+        """
+        Seed the SYNTHETIC enterprise network model (perception/network_model.py):
+        per-zone internet egress policy on every zone node, and external
+        destination nodes (sanctioned allow-list + known-bad threat intel)
+        HOSTED_IN zone:EXTERNAL.  Added 2026-10-10 (Phase 2 step 2.3).
+        """
+        from perception.network_model import SYNTHETIC_DESTINATIONS, ZONE_EGRESS_POLICY
+
+        for zone_id, policy in ZONE_EGRESS_POLICY.items():
+            zn = zone_node_id(zone_id)
+            if zn not in self._graph:
+                self._graph.add_node(zn, node_type="ZoneNode", zone_id=zone_id,
+                                     security_zone=zone_id)
+            self._graph.nodes[zn]["egress_policy"] = _fact(dict(policy), 1.0)
+
+        ext = zone_node_id("EXTERNAL")
+        for d in SYNTHETIC_DESTINATIONS:
+            node = destination_node_id(d["address"])
+            self._graph.add_node(
+                node,
+                node_type="ExternalDestination",
+                address=d["address"],
+                kind=d["kind"],
+                reputation=_fact(d["reputation"], d["confidence"]),
+                source=d["source"],
+                synthetic=True,
+            )
+            self._graph.add_edge(node, ext, key="HOSTED_IN", edge_type="HOSTED_IN")

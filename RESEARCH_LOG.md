@@ -745,3 +745,23 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/rescore_all.py`, `experiments/rescore_snapshots/s0_baseline.json`, `s1_sse_dedup.json`, `tests/test_sse_no_duplicate_paths.py`
 - Modified: `perception/sse.py`, `tests/test_rsem.py`, `tests/test_rsem_seeded_scenarios.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-10 — Session: Phase 2 step 2.3 — synthetic enterprise network model and new T1071 rule
+
+### What was tried
+- New `perception/network_model.py` (not locked): SYNTHETIC trusted network context, deterministic (`random.Random(71)`; seed 71 verified unused), using only RFC 5737 documentation IPs (192.0.2.0/24, 198.51.100.0/24, 203.0.113.0/24) and the RFC 2606 `.example` TLD. 20 sanctioned destinations (allow-list) and 20 known-bad destinations (threat intel, confidence 0.70-0.95); per-zone egress policy: WORKSTATION proxy (denies known-bad), DMZ allow-list (sanctioned only), WEB / DATABASE / MANAGEMENT / UNKNOWN no internet.
+- `perception/knowledge_graph.py` (locked, lifted): `_seed_network_model()` adds `egress_policy` facts to zone nodes and `ExternalDestination` nodes (HOSTED_IN zone:EXTERNAL, `synthetic=True`); new read-only accessors `get_zone_egress_policy()`, `get_destination_reputation()`, helper `destination_node_id()`. Graph: 60 nodes / 78 edges (was 20 / 38).
+- `perception/sse.py` (locked, lifted): T1071 handled by new `_check_internet_c2()`; `PathResult` gains optional `destination_status` / `destination_reputation`; `check()` gains optional `trusted_destination` (also passed through the Evidence guard). Old `_check_egress` untouched for other techniques.
+
+### What was found
+- Smoke test: workstation/laptop -> FEASIBLE (destination unverified); SRV-FILE (WEB) and DATABASE -> INFEASIBLE (no internet route); `unknown`/empty -> CONDITIONALLY_FEASIBLE (review); DMZ -> sanctioned only; WORKSTATION -> known-bad blocked by proxy; internal destination -> INFEASIBLE. Graph not mutated by `check()`.
+- `python -m experiments.rescore_all --diff s1_sse_dedup s2_network_model`: 1,123 changed fields, all explained by two causes — 96 T1071 hypotheses from SRV-FILE hosts FEASIBLE -> INFEASIBLE and 95 T1071 hypotheses from unresolved source hosts INFEASIBLE -> CONDITIONALLY_FEASIBLE — plus their consequent confidence/path/RSEM fields. 0 non-T1071 changes.
+- Interim legacy-filter no-actionable counts: clean A 291, clean B 292, contaminated A 290, contaminated B 290 (of 320), nce7 80/90, nce8 43/50.
+- Design point recorded for Phase 3: a blocked C2 attempt to a known-bad destination is structurally INFEASIBLE but must still escalate (compromised host); needs the outcome layer once trusted destination fields exist.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 471 passed, 1 deselected (no existing test asserted the old permissive rule beyond workstation sources).
+
+### Files created/modified
+- Created: `perception/network_model.py`, `experiments/rescore_snapshots/s2_network_model.json`
+- Modified: `perception/knowledge_graph.py`, `perception/sse.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
