@@ -109,7 +109,7 @@ def score_all() -> dict:
             from perception.entity_binding import label_entity_binding as binder
         from perception.action_playbook import build_playbook, evaluate_guardrails
         from perception.nce_rsem_integration import rank_validated_hypotheses
-        guardrail = lambda rhr: evaluate_guardrails(build_playbook(rhr, kg))  # noqa: E731
+        guardrail = lambda rhr: evaluate_guardrails(build_playbook(rhr, kg), kg)  # noqa: E731
     except ImportError:
         binder = guardrail = None
     try:

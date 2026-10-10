@@ -41,7 +41,7 @@ def run_downstream(hypotheses: list[NCEHypothesis], alert: dict,
         }
         if vh.best_sse_verdict != SSEVerdict.INFEASIBLE:
             rhr = rank_validated_hypotheses([vh], kg, sse, build_candidate_actions(h)).ranked[0]
-            pb = evaluate_guardrails(build_playbook(rhr, kg))
+            pb = evaluate_guardrails(build_playbook(rhr, kg), kg)
             top = rhr.ranked_actions[0]
             row.update({
                 "top_action": top.action.action_type.value,

@@ -920,3 +920,24 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/defended_pipeline.py`, `experiments/attack_metrics.py`, `agent/run_v2_eval.py`, `tests/test_attack_metrics.py`
 - Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Phase 4 step 4.0 — expected-activity (baseline) rule
+
+### Decision
+- User approved option (a): a feasible path made only of the account's normal access is expected activity — logged at low priority, not acted on, escalated only by other signals. Rejected: requiring a baseline deviation for T1078 (would make the stolen-credentials-on-victim's-device case INFEASIBLE and make SSE report something false) and keeping all-to-review (~97% of clean alerts).
+
+### What was tried
+- New `perception/baseline.py` (`baseline_only`, `privileged_context`). `perception/action_playbook.py`: status `LOGGED_EXPECTED_ACTIVITY`; `evaluate_guardrails(playbook, graph_store=None)` applies the baseline rule first and adds the privileged-account/critical-host review reason when `graph_store` is given. `perception/outcome.py`: `LOW_PRIORITY`. Callers pass the graph (Monitoring, Streamlit `_run_downstream`, `defended_pipeline`, `rescore_all`). `experiments/attack_metrics.py`: suppression counts LOW_PRIORITY as not responded.
+- First pass showed 22 privileged-account T1078 hypotheses auto-approved (RESTRICT_PRIVILEGES, BI below threshold) — contrary to the agreed design; fixed with the privileged review reason.
+
+### What was found
+- mock-oracle dev clean: REVIEW 245, AUTO_APPROVED 178, LOW_PRIORITY 75, NO_ACTIONABLE 2 (before: 483 / 15 / - / 2). Held-out: 266 / 168 / 62 / 4. Per hypothesis (dev clean): T1078 logged 475, T1078 privileged review 23, T1071 BLOCK_DESTINATION auto 178, BLOCK_EGRESS review 128, BLOCK_DESTINATION review 10, T1071 INFEASIBLE (known-bad, escalated) 101.
+- mock-hijacked dev suppression given clean response: authority_escalation 88.1%, fabricated_evidence 83.7%, fake_output_injection 81.0%, cross_field_split 78.0%, native_format_mimicry 73.8%, obfuscated_trigger 71.4%, direct_override 70.5%, zero_imperative_evidence 67.4%, destination_spoof 0%; identity_steering executed 0, gated 20, induced response 2.
+- Stored-run re-score: 0 changes (snapshot identical, not kept).
+
+### Test verification
+- New `tests/test_baseline_expected_activity.py` (6 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 522 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/baseline.py`, `tests/test_baseline_expected_activity.py`
+- Modified: `perception/action_playbook.py`, `perception/outcome.py`, `perception/defended_pipeline.py`, `monitoring/pipeline_adapter.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `experiments/attack_metrics.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

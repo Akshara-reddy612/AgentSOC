@@ -542,7 +542,7 @@ class MonitoringPipelineAdapter:
 
             top_ranked = pipeline_result.ranked[0]
             playbook = build_playbook(top_ranked, kg)
-            playbook = evaluate_guardrails(playbook)
+            playbook = evaluate_guardrails(playbook, kg)
 
             guardrail_status = playbook.overall_status.value
             record.guardrail_reason = playbook.guardrail_decision_reason or ""

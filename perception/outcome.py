@@ -4,6 +4,8 @@ perception/outcome.py
 Alert-level outcome of the defended pipeline (Phase 3 step 3.3, 2026-10-11).
 
     AUTO_APPROVED  - at least one playbook was auto-approved and none needs review
+    LOW_PRIORITY   - feasible hypotheses exist but all are the accounts' normal
+                     access (logged expected activity; Phase 4 step 4.0)
     REVIEW         - an analyst must look (any playbook pending review, or an
                      alert-level escalation rule fired)
     NO_ACTIONABLE  - no feasible hypothesis and no escalation rule fired
@@ -24,6 +26,7 @@ from perception.network_model import KNOWN_BAD
 AUTO_APPROVED = "AUTO_APPROVED"
 REVIEW = "REVIEW"
 NO_ACTIONABLE = "NO_ACTIONABLE"
+LOW_PRIORITY = "LOW_PRIORITY"
 
 _REVIEW_STATUSES = {"PENDING_ANALYST_REVIEW", "REJECTED_BY_GUARDRAIL", "DRY_RUN_FAILED"}
 _APPROVED_STATUSES = {"AUTO_APPROVED", "DRY_RUN_COMPLETE"}
@@ -59,4 +62,6 @@ def decide(alert: dict, playbook_statuses: list[str], kg: KnowledgeStoreGraph) -
         return AlertOutcome(REVIEW, reasons)
     if any(s in _APPROVED_STATUSES for s in playbook_statuses):
         return AlertOutcome(AUTO_APPROVED, ["Playbook auto-approved by guardrails."])
+    if "LOGGED_EXPECTED_ACTIVITY" in playbook_statuses:
+        return AlertOutcome(LOW_PRIORITY, ["Only expected (baseline) activity is feasible; logged."])
     return AlertOutcome(NO_ACTIONABLE, ["No structurally feasible hypothesis."])

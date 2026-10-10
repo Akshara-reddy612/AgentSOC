@@ -1228,7 +1228,7 @@ def _run_downstream(
     playbook_data = None
     if pipeline_result.ranked:
         playbook = build_playbook(pipeline_result.ranked[0], kg)
-        playbook = evaluate_guardrails(playbook)
+        playbook = evaluate_guardrails(playbook, kg)
         playbook = execute_playbook_dry_run(playbook, kg)
 
         steps_data = []
