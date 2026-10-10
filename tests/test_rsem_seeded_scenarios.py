@@ -97,12 +97,17 @@ def test_t1078_valid_accounts_seeded(base_kg: KnowledgeStoreGraph, audit_log_pat
     # Assert top action strictly beats MONITOR_ONLY
     assert top_action.composite_score > monitor_action.composite_score
     assert top_action.containment > 0.0
-    assert top_action.action.action_type in (ActionType.REVOKE_SESSION, ActionType.RESTRICT_PRIVILEGES)
+    # alice has two distinct paths to workstation-01 (HAS_PRIOR_ACCESS and
+    # GRANTS:READ). QUARANTINE cuts both: 1.0 - BI 0.25 = 0.75; REVOKE and
+    # RESTRICT each cut one: 0.5. (Before the 2026-10-10 SSE de-duplication,
+    # duplicate paths made REVOKE/RESTRICT appear to cut 3 of 4 = 0.75.)
+    assert top_action.action.action_type == ActionType.QUARANTINE_ACCESS
+    assert top_action.containment == 1.0
 
     # 3. Guardrail outcome
     playbook = build_playbook(ranked_hyp, base_kg)
     guarded = evaluate_guardrails(playbook)
-    # REVOKE_SESSION is in the hard-floor review set
+    # QUARANTINE_ACCESS is in the hard-floor review set
     assert guarded.overall_status == PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
     assert "hard floor rule" in guarded.guardrail_decision_reason.lower()
 

@@ -727,3 +727,21 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - `PROJECT_STATUS.md` (Checkpoint and rollback section), `RESEARCH_LOG.md` (this entry)
+
+## 2026-10-10 — Session: Phase 2 step 2.1-2.2 — regression tool and SSE path de-duplication
+
+### What was tried
+- **2.1** New `experiments/rescore_all.py`: re-scores every stored run offline from the archived pre-filter hypotheses with the current code (legacy T1071 filter, SSE, RSEM with the harness's MONITOR_ONLY-first candidate set) and writes a per-alert, per-hypothesis snapshot; `--diff` lists every change. Inputs mirror what each run actually saw (clean runs: `guide_sample_500_alerts.json` last-row-wins; nce7/nce8 clean alerts: the non-contaminated row for duplicated ids).
+- **2.2** `perception/sse.py` (locked file, lock lifted for Phase 2): `_find_access_paths` now visits each node path once. `nx.all_simple_paths` yields a node path once per parallel edge on a MultiDiGraph, and the edge-combination product already covers parallel edges, so every path was reported twice.
+
+### What was found
+- Baseline snapshot `s0_baseline` reproduces all published numbers: clean A 250/275, clean B 254/276, contaminated A 262/277, contaminated B 256/273, nce7 72/75 (64/67 contaminated + 8 clean), nce8 36/42.
+- After 2.2: svc_backup→server-db01 T1078 returns 2 paths (was 4), T1550 1 (was 2). `--diff s0_baseline s1_sse_dedup`: **0 changes** on the 1,420 stored alerts.
+- Two tests encoded the artifact and were corrected: `test_rsem.py::test_composite_score_formula` (containment 0.5 / composite 0.75, was 0.75 / 1.125) and `test_rsem_seeded_scenarios.py::test_t1078_valid_accounts_seeded` (alice has two distinct paths; QUARANTINE_ACCESS cuts both, 1.0 − BI 0.25 = 0.75, and now correctly outranks REVOKE/RESTRICT at 0.5; guardrail outcome unchanged, still hard-floor review). New `tests/test_sse_no_duplicate_paths.py`.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests -q`: 440 passed, 1 deselected. `experiments`: 31 passed.
+
+### Files created/modified
+- Created: `experiments/rescore_all.py`, `experiments/rescore_snapshots/s0_baseline.json`, `s1_sse_dedup.json`, `tests/test_sse_no_duplicate_paths.py`
+- Modified: `perception/sse.py`, `tests/test_rsem.py`, `tests/test_rsem_seeded_scenarios.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

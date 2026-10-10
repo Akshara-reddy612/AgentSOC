@@ -514,12 +514,21 @@ class StructuralSimulationEngine:
             if seq_len == 0:
                 continue
 
+            # On a MultiDiGraph, all_simple_paths yields the same node path
+            # once per parallel edge; the edge-combination product below
+            # already covers parallel edges, so visit each node path once.
+            # (Fixed 2026-10-10: duplicates inflated RSEM containment.)
+            seen_node_paths: set[tuple[str, ...]] = set()
             try:
                 for node_path in nx.all_simple_paths(
                     g, acct_node, tgt_node, cutoff=min(seq_len, 4)
                 ):
                     if len(node_path) - 1 != seq_len:
                         continue  # Wrong number of edges
+                    path_key = tuple(node_path)
+                    if path_key in seen_node_paths:
+                        continue
+                    seen_node_paths.add(path_key)
 
                     # Collect all edge options between consecutive nodes
                     edge_options: list[list[tuple[str, dict[str, Any]]]] = []
