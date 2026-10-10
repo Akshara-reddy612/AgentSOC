@@ -842,3 +842,23 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/entity_binding.py`, `tests/test_entity_binding.py`, `experiments/rescore_snapshots/s5_entity_binding.json`
 - Modified: `perception/nce_contract.py`, `perception/action_playbook.py`, `monitoring/pipeline_adapter.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md` (docs committed separately in the next commit)
+
+## 2026-10-11 — Session: Phase 2 merge; Phase 3 step 3.1 — synthetic enterprise inventory
+
+### What was done
+- Full suite on `phase2-locked-files` (496 passed), confirmed `main` had not diverged, merged with `--no-ff` (a649d5a), re-ran the suite on `main` (496 passed), tagged `post-phase2`, created branch `phase3-corpus`. Nothing pushed.
+- Read the corpus generator (`synth_fields.py`, `inject_payloads.py`, `guide_to_alerts.py`, `generate_n50_scaleup_320_alerts.py`) and the raw GUIDE CSVs to plan the v2 corpus (plan recorded in PROJECT_STATUS "Phase 3 plan").
+- New `perception/enterprise_model.py` (seed 73) and `KnowledgeStoreGraph._seed_enterprise_model()` (`perception/knowledge_graph.py`, lock lifted in Phase 2).
+
+### What was found
+- Raw GUIDE: `LastVerdict` (in every raw_log_line) is only weakly associated with IncidentGrade (NaN for 363/500; Malicious 7 BP / 2 FP / 14 TP) and is genuine detector telemetry, so it is kept; `severity` (= IncidentGrade) is removed in v2. guide_sample_500 has 22 duplicated `Id`s.
+- The identity graph held only 5 toy accounts and 5 toy hosts; no corpus entity ever matched, which is why every non-T1071 hypothesis was INFEASIBLE.
+- Inventory smoke test: standard user on own device T1078 FEASIBLE, T1562 INFEASIBLE (no admin); helpdesk admin T1550 on any endpoint FEASIBLE; domain admin T1484 on SRV-DC01 FEASIBLE; standard user T1078 on SRV-DB01 INFEASIBLE.
+- Re-score of all stored runs with the inventory seeded: 0 changes vs `s5_entity_binding` (snapshot identical, not kept).
+
+### Test verification
+- New `tests/test_enterprise_model.py` (4 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 500 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/enterprise_model.py`, `tests/test_enterprise_model.py`
+- Modified: `perception/knowledge_graph.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
