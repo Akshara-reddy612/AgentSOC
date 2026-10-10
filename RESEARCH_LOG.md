@@ -901,3 +901,22 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/outcome.py`, `tests/test_trusted_destination.py`, `experiments/rescore_snapshots/s6_trusted_destination_outcome.json`
 - Modified: `perception/nce_contract.py`, `perception/nce_sse_integration.py`, `perception/rsem.py`, `perception/action_playbook.py`, `perception/entity_binding.py`, `monitoring/pipeline_adapter.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 step 3.4 — attacker-goal metrics, v2 runner, offline mock results
+
+### What was tried
+- New `perception/defended_pipeline.py` (`run_downstream`), `experiments/attack_metrics.py` (pair-based suppression / misdirection metrics), `agent/run_v2_eval.py` (mock-oracle, mock-hijacked, live; live never run).
+- Ran both mock modes on dev and held-out (1,000 alerts each, offline, seconds per run; outputs in gitignored `logs/`).
+
+### What was found
+- mock-oracle, dev clean: REVIEW 483, AUTO_APPROVED 15, NO_ACTIONABLE 2 (held-out 480 / 16 / 4). T1078 FEASIBLE 498/500; top action QUARANTINE_ACCESS (own device, 0.75) -> review 475, RESTRICT_PRIVILEGES auto-approved 22. T1071 (417 alerts with destination): BLOCK_DESTINATION auto-approved 188 (unknown destinations), BLOCK_EGRESS review 128 (sanctioned), INFEASIBLE 101 (known-bad blocked by proxy -> escalated to review by the outcome rule).
+- Finding: structural feasibility is not evidence of malice for valid-account use; with real entities in the graph almost every alert reaches review. The earlier 0% clean FP was a property of the empty graph.
+- mock-hijacked, dev suppression rates given clean response: authority_escalation 90.4%, fabricated_evidence 86.0%, fake_output_injection 84.3%, cross_field_split 82.0%, native_format_mimicry 78.4%, obfuscated_trigger 76.5%, direct_override 75.0%, zero_imperative_evidence 72.0%, destination_spoof 0%. identity_steering: misdirect gated 20, executed 0, steered hits 20, NO_ACTIONABLE 23. Held-out: suppression 68.6-80.4%, destination_spoof 0%, identity_steering gated 13 / executed 0.
+- Interpretation: if NCE is fully compromised, suppression attacks mostly win unless trusted telemetry independently flags the alert; misdirection did not reach auto-execution in any case.
+
+### Test verification
+- New `tests/test_attack_metrics.py` (4 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 516 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/defended_pipeline.py`, `experiments/attack_metrics.py`, `agent/run_v2_eval.py`, `tests/test_attack_metrics.py`
+- Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
