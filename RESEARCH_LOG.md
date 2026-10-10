@@ -961,3 +961,15 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `agent/v2_results/v2_dev_live_results.json`, `tests/test_v2_parallel_runner.py`
 - Modified: `agent/run_v2_eval.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: fix — API call log lost lines under parallel appends
+
+### What was found
+- After merging step 4.1, `tests/test_v2_parallel_runner.py` failed intermittently on `main` (log lines 14 vs 15 calls). Cause: `experiments/run_paired_clean_eval_B_parallel._log_api_call` appends from several worker threads without a lock; on Windows a concurrent append lost a line (8 failures in 30 repeats). Its docstring claimed "thread-safe via GIL", which is wrong.
+- Experiment 1 Run B (the only run that used it in parallel) is complete: 320 log lines, 320 results, no missing ids (its 5 s per-worker spacing made collisions unlikely).
+
+### What was changed
+- Module-level `_API_LOG_LOCK` around the append; docstring corrected. 0 failures in 40 repeats afterwards. `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 523 passed, 1 deselected.
+
+### Files modified
+- `experiments/run_paired_clean_eval_B_parallel.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
