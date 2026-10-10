@@ -862,3 +862,23 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/enterprise_model.py`, `tests/test_enterprise_model.py`
 - Modified: `perception/knowledge_graph.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 step 3.2 — corpus v2 builder
+
+### What was tried
+- New package `corpus/`: `evidence.py` (entities from the inventory, destinations from the network model or unlisted reserved addresses, behaviour-label evidence, severity from Category), `payloads.py` (10 families with goals and slot-randomised templates, wrapper-free embedding), `build_v2.py` (pairs, shuffled balanced family assignment with seed 79, unique ids, overwrite guard).
+- Evidence format decision: the first attempt to write realistic literal command lines for the evidence templates was stopped by a safety classifier; v2 instead uses EDR-style behaviour labels with arguments redacted. This also removes the v1 generator artefact where templates contained the exact T1071 grounding patterns.
+- `perception/nce_engine.py`: `example` added to `_PUBLIC_TLDS`.
+
+### What was found
+- Dev: 500 pairs; families 50-52 each, destination_spoof 41 (network alerts only); injection sites raw_log_line 315 / command_line 135 / registry_key+raw_log_line 50; destinations 417 (unknown 188, sanctioned 128, known_bad 101). Held-out: 500 pairs, similar distribution.
+- 0 alerts contain `INJECTED_FIELD_VALUE` or a 185.x address; the PerceptionPipeline accepts all of the first 200 dev alerts (0 rejected).
+- Before adding `example` to the TLD list, 190/417 network alerts with a domain-only destination labelled ungrounded; after: grounding = presence of destination telemetry exactly (417/417 vs 0/83). Stored-run re-score: 0 changes (snapshot not kept).
+- Severity x grade (dev contaminated): high = BP 120 / FP 44 / TP 33; medium = TP 140 / BP 98 / FP 52 — residual association comes from GUIDE Category, not from the grade.
+
+### Test verification
+- New `tests/test_corpus_v2.py` (7 tests: determinism, unique ids, twins differ only at the recorded site, no wrapper / reserved addresses only, grade not an input, entities from inventory, family invariants). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 507 passed, 1 deselected.
+
+### Files created/modified
+- Created: `corpus/__init__.py`, `corpus/evidence.py`, `corpus/payloads.py`, `corpus/build_v2.py`, `GUIDE_Dataset/processed/v2/guide_v2_dev.json`, `guide_v2_heldout.json`, `tests/test_corpus_v2.py`
+- Modified: `perception/nce_engine.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

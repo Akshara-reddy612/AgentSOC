@@ -380,8 +380,10 @@ _INTERNAL_DOMAIN_SUFFIXES = (".corp.local", ".internal")
 # sharepoint-files.net) plus common external TLDs (.com, .net, .org, .io, .co,
 # .info, .biz, .gov, .edu, .dev).
 # Requires at least one domain label before the TLD.
+# "example" added 2026-10-11 (Phase 3): the synthetic network model and corpus
+# v2 use the reserved `.example` TLD (RFC 2606) in place of public domains.
 _PUBLIC_TLDS = (
-    "com", "net", "org", "io", "co", "info", "biz", "gov", "edu", "dev",
+    "com", "net", "org", "io", "co", "info", "biz", "gov", "edu", "dev", "example",
 )
 _PUBLIC_TLD_PATTERN = "|".join(_PUBLIC_TLDS)
 
