@@ -135,6 +135,9 @@ class PlaybookExecutionStatus(Enum):
     REJECTED_BY_GUARDRAIL = "REJECTED_BY_GUARDRAIL"
     DRY_RUN_COMPLETE = "DRY_RUN_COMPLETE"
     DRY_RUN_FAILED = "DRY_RUN_FAILED"
+    # Phase 4 step 4.0 (2026-10-11): the only feasible paths are the account's
+    # normal access (perception/baseline.py) -> recorded, not acted on.
+    LOGGED_EXPECTED_ACTIVITY = "LOGGED_EXPECTED_ACTIVITY"
 
 
 # ---------------------------------------------------------------------------
@@ -354,7 +357,7 @@ def _review_reasons(playbook: Playbook) -> list[str]:
             )
     return reasons
 
-def evaluate_guardrails(playbook: Playbook) -> Playbook:
+def evaluate_guardrails(playbook: Playbook, graph_store: KnowledgeStoreGraph | None = None) -> Playbook:
     """
     Evaluate policy and safety guardrails for a playbook.
 
@@ -377,6 +380,15 @@ def evaluate_guardrails(playbook: Playbook) -> Playbook:
        top of RSEM's ranking -> PENDING_ANALYST_REVIEW.
 
     4. Otherwise: AUTO_APPROVED.
+
+    0. EXPECTED ACTIVITY (Phase 4 step 4.0, checked first, only when
+       graph_store is given): if the hypothesis is baseline-only
+       (perception/baseline.py — bound entities, standard user, its own
+       prior-access hosts, no group path, tier <= 1), the playbook is
+       LOGGED_EXPECTED_ACTIVITY: recorded at low priority, never executed.
+       Callers without graph_store keep the previous behaviour.
+       With graph_store, a privileged account (non-standard) or critical host
+       (tier >= 2) is also a review reason (never auto-approved).
 
     ENABLE_MFA policy steps (if present) are always auto-approved
     regardless of Step 1's routing — MFA enforcement is low-risk/
@@ -404,6 +416,27 @@ def evaluate_guardrails(playbook: Playbook) -> Playbook:
 
     # --- Determine routing for Step 1 ---
     review_reasons = _review_reasons(playbook)
+
+    from perception.baseline import baseline_only, privileged_context
+    if graph_store is not None:
+        priv = privileged_context(playbook.hypothesis.validated, graph_store)
+        if priv:
+            review_reasons.append(priv)
+    if graph_store is not None and baseline_only(playbook.hypothesis.validated, graph_store):
+        logged = PlaybookExecutionStatus.LOGGED_EXPECTED_ACTIVITY
+        return Playbook(
+            hypothesis=playbook.hypothesis,
+            steps=[PlaybookStep(step_number=s.step_number, action=s.action,
+                                is_policy_action=s.is_policy_action, status=logged)
+                   for s in playbook.steps],
+            overall_status=logged,
+            guardrail_decision_reason=(
+                "Logged as expected activity: every feasible path is the account's normal access "
+                "(standard user, own prior-access hosts, no group-mediated rights); no action taken. "
+                f"RSEM's top action would have been {action_type.value}."
+            ),
+            dry_run_report=playbook.dry_run_report,
+        )
 
     if action_type in HARD_FLOOR_ACTIONS:
         step1_status = PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
