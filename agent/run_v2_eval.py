@@ -22,7 +22,10 @@ NCE modes:
                  quota; needs GEMINI_API_KEYS).  Must be requested explicitly.
 
 Output: mock modes -> logs/v2_<set>_<mode>_results.json (gitignored);
-live -> agent/v2_results/v2_<set>_live_results.json.
+live -> agent/v2_results/v2_<set>_live_results.json (+ _api_log.jsonl in parallel mode).
+--workers N (live): N threads, each starting on its own key, every call in a
+child process with a 60 s hard timeout, 3 attempts with backoff + key rotation
+(helpers reused from experiments/run_paired_clean_eval_B_parallel.py).
 An existing output file is resumed (records kept); --allow-overwrite starts fresh.
 Resume: alerts with a stored outcome are skipped; NCE failures are stored
 unscored (nce_error, no outcome) and retried on the next run.
@@ -80,12 +83,85 @@ def mock_hijacked(alert: dict) -> list[NCEHypothesis]:
     return []  # suppression families: NCE fully talked out of any hypothesis
 
 
-def live_nce(alert: dict) -> tuple[list[NCEHypothesis] | None, str | None, str | None]:
+def live_nce(alert: dict) -> tuple[list[NCEHypothesis] | None, str | None, str | None, int]:
     from perception.nce_engine import alert_to_nce_input, generate_hypotheses
     res = generate_hypotheses(alert_to_nce_input(_public(alert)), apply_evidentiary_filter=True)
     if res.success and res.output is not None:
-        return list(res.output.hypotheses), None, res.raw_response
-    return None, res.error or "NCE failed", res.raw_response
+        return list(res.output.hypotheses), None, res.raw_response, res.api_call_count
+    return None, res.error or "NCE failed", res.raw_response, res.api_call_count
+
+
+CALL_TIMEOUT_S = 60
+MAX_ATTEMPTS = 3
+RETRY_BACKOFF = [5, 10, 20]
+MODEL = "gemini-3.1-flash-lite"
+
+
+def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path) -> None:
+    """
+    One thread per worker, each starting on its own key; every NCE call runs in
+    a child process with a hard timeout.  Reuses the tested helpers of the
+    Experiment 1 parallel harness (experiments/run_paired_clean_eval_B_parallel.py).
+    On failure a worker retries with backoff and rotates to the next key.
+    Records are finished and written by the main thread only.
+    """
+    import queue
+    import threading
+    from agent.key_pool import load_gemini_pool
+    from experiments.run_paired_clean_eval_B_parallel import _call_with_timeout, _log_api_call
+
+    keys = load_gemini_pool().keys
+    if not keys:
+        raise SystemExit("No GEMINI_API_KEYS configured")
+    work: queue.Queue = queue.Queue()
+    for a in todo:
+        work.put(a)
+    results: queue.Queue = queue.Queue()
+
+    def worker(wid: int) -> None:
+        k = wid % len(keys)
+        last = 0.0
+        while True:
+            try:
+                alert = work.get_nowait()
+            except queue.Empty:
+                return
+            res, err = None, None
+            for attempt in range(MAX_ATTEMPTS):
+                wait = LIVE_DELAY_S - (time.time() - last)
+                if wait > 0:
+                    time.sleep(wait)
+                t0 = last = time.time()
+                try:
+                    out, last4 = _call_with_timeout(live_nce, alert, active_key=keys[k], all_keys=keys,
+                                                    timeout=CALL_TIMEOUT_S)
+                    _log_api_call(api_log, alert_id=alert["alert_id"], model=MODEL, key_index=k,
+                                  child_key_last4=last4, success=out[0] is not None, api_call_count=out[3],
+                                  error=out[1], wall_clock_s=round(time.time() - t0, 2))
+                    res = out
+                    if out[0] is not None:
+                        break
+                    err = out[1]
+                except Exception as exc:  # noqa: BLE001  (timeout or child failure)
+                    err = f"{type(exc).__name__}: {exc}"
+                    _log_api_call(api_log, alert_id=alert["alert_id"], model=MODEL, key_index=k,
+                                  child_key_last4="", success=False, api_call_count=0, error=err,
+                                  wall_clock_s=round(time.time() - t0, 2))
+                if attempt < MAX_ATTEMPTS - 1:
+                    k = (k + 1) % len(keys)
+                    time.sleep(RETRY_BACKOFF[attempt])
+            results.put((alert["alert_id"], res if res is not None else (None, err, None, 0)))
+
+    threads = [threading.Thread(target=worker, args=(i,), daemon=True) for i in range(workers)]
+    for t in threads:
+        t.start()
+    for n in range(1, len(todo) + 1):
+        aid, res = results.get()
+        finish_live(aid, res)
+        if n % 20 == 0 or n == len(todo):
+            print(f"  {n}/{len(todo)} done", flush=True)
+    for t in threads:
+        t.join()
 
 
 def main() -> None:
@@ -93,6 +169,8 @@ def main() -> None:
     ap.add_argument("--nce", required=True, choices=["mock-oracle", "mock-hijacked", "live"])
     ap.add_argument("--set", default="dev", choices=["dev", "heldout"])
     ap.add_argument("--limit", type=int, default=None, help="process at most N new alerts")
+    ap.add_argument("--workers", type=int, default=1,
+                    help="live only: parallel NCE workers (one per key; per-call timeout, retries)")
     ap.add_argument("--out", default=None)
     ap.add_argument("--allow-overwrite", action="store_true")
     args = ap.parse_args()
@@ -109,35 +187,40 @@ def main() -> None:
     done: dict[str, dict] = {}
     if out.exists() and not args.allow_overwrite:   # resume; stored records are never discarded
         done = {r["alert_id"]: r for r in json.loads(out.read_text(encoding="utf-8"))}
+    todo = [a for a in alerts if not (a["alert_id"] in done and "outcome" in done[a["alert_id"]])]
+    if args.limit is not None:
+        todo = todo[: args.limit]
+    by_id = {a["alert_id"]: a for a in todo}
+    from experiments.run_paired_clean_eval_B_parallel import _atomic_checkpoint_write
     kg = KnowledgeStoreGraph()
-    new = 0
-    for alert in alerts:
-        aid = alert["alert_id"]
-        if aid in done and "outcome" in done[aid]:
-            continue
-        if args.limit is not None and new >= args.limit:
-            break
-        rec = {"alert_id": aid, "pair_id": alert["_pair_id"], "variant": alert["_variant"], "nce_mode": args.nce}
-        if args.nce == "live":
-            hyps, err, raw = live_nce(alert)
-            rec["nce_raw_response"] = raw
-            if hyps is None:
-                rec["nce_error"] = err
-                done[aid] = rec
-                out.write_text(json.dumps(list(done.values()), indent=1), encoding="utf-8")
-                new += 1
-                time.sleep(LIVE_DELAY_S)
-                continue
+
+    def base(alert: dict) -> dict:
+        return {"alert_id": alert["alert_id"], "pair_id": alert["_pair_id"],
+                "variant": alert["_variant"], "nce_mode": args.nce}
+
+    def finish_live(aid: str, result) -> None:
+        hyps, err, raw, n_calls = result
+        alert = by_id[aid]
+        rec = base(alert) | {"nce_raw_response": raw, "nce_api_calls": n_calls}
+        if hyps is None:
+            rec["nce_error"] = err          # stored unscored; retried on the next run
         else:
-            hyps = mock_oracle(alert) if args.nce == "mock-oracle" else mock_hijacked(alert)
-        rec.update(run_downstream(hyps, _public(alert), kg))
+            rec.update(run_downstream(hyps, _public(alert), kg))
         done[aid] = rec
-        new += 1
-        if args.nce == "live":
-            out.write_text(json.dumps(list(done.values()), indent=1), encoding="utf-8")
+        _atomic_checkpoint_write(done, out)
+
+    if args.nce != "live":
+        for alert in todo:
+            hyps = mock_oracle(alert) if args.nce == "mock-oracle" else mock_hijacked(alert)
+            done[alert["alert_id"]] = base(alert) | run_downstream(hyps, _public(alert), kg)
+        out.write_text(json.dumps(list(done.values()), indent=1), encoding="utf-8")
+    elif args.workers <= 1:
+        for alert in todo:
+            finish_live(alert["alert_id"], live_nce(alert))
             time.sleep(LIVE_DELAY_S)
-    out.write_text(json.dumps(list(done.values()), indent=1), encoding="utf-8")
-    print(f"{new} new alerts processed; {len(done)} stored -> {out}")
+    else:
+        _run_parallel(todo, args.workers, finish_live, out.with_name(out.stem.replace("_results", "") + "_api_log.jsonl"))
+    print(f"{len(todo)} new alerts processed; {len(done)} stored -> {out}")
 
 
 if __name__ == "__main__":
