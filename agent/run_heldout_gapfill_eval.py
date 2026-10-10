@@ -178,6 +178,10 @@ def _run_smoke_test(gemini_pool, groq_pool, gap_list, alerts_dict) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    # Refuse to clobber committed results unless --allow-overwrite is passed.
+    from agent.run_guard import confirm_overwrite
+    confirm_overwrite(RESULTS_JSON)
+
     p("=" * 90)
     p("run_heldout_gapfill_eval.py -- Held-Out Undefended Gap-Fill")
     p("=" * 90)

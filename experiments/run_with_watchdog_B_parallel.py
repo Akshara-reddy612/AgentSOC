@@ -19,11 +19,22 @@ import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-RESULTS_JSON = PROJECT_ROOT / "experiments" / "paired_clean_results_B.json"
-STATUS_FILE  = PROJECT_ROOT / "experiments" / "WATCHDOG_STATUS_B_parallel.txt"
+# Overridable via environment so tests can supervise experiments.fake_harness
+# against a temporary checkpoint without editing this file.
+RESULTS_JSON = Path(os.environ.get(
+    "WATCHDOG_RESULTS_JSON",
+    PROJECT_ROOT / "experiments" / "paired_clean_results_B.json",
+))
+STATUS_FILE = Path(os.environ.get(
+    "WATCHDOG_STATUS_FILE",
+    PROJECT_ROOT / "experiments" / "WATCHDOG_STATUS_B_parallel.txt",
+))
+HARNESS_MODULE = os.environ.get(
+    "WATCHDOG_HARNESS_MODULE", "experiments.run_paired_clean_eval_B_parallel"
+)
 
 STALL_TIMEOUT_S = int(os.environ.get("STALL_TIMEOUT_S", 360))   # seconds without a new checkpoint write
-MAX_RESTARTS    = 5
+MAX_RESTARTS    = int(os.environ.get("WATCHDOG_MAX_RESTARTS", 5))
 POLL_INTERVAL_S = int(os.environ.get("POLL_INTERVAL_S", 15))    # how often to check mtime
 
 
@@ -73,7 +84,7 @@ def _kill_tree(pid: int) -> None:
 
 def main() -> None:
     python = sys.executable
-    cmd = [python, "-m", "experiments.fake_harness"]
+    cmd = [python, "-m", HARNESS_MODULE]
 
     restarts = 0
     _log(f"Watchdog started. Max restarts={MAX_RESTARTS}, stall_timeout={STALL_TIMEOUT_S}s, "
@@ -106,8 +117,11 @@ def main() -> None:
                         _log(f"Eval completed: {count_after}/320. Exit code {ret}.")
                         return
                     elif ret == 0:
-                        _log(f"Eval exited cleanly with {count_after}/320.")
-                        return
+                        # Exit 0 without a full checkpoint is NOT success —
+                        # treat it as a crash so it is restarted and logged.
+                        _log(f"Eval exited with code 0 but only {count_after}/320 "
+                             f"results - treating as failure.")
+                        break
                     else:
                         _log(f"Eval crashed (exit {ret}). "
                              f"Results so far: {count_after}/320.")

@@ -1,71 +1,57 @@
+"""
+experiments/test_watchdog.py
+
+Manual (slow, Windows-only) check of the watchdog's stall-kill and restart
+behaviour.  Not collected as a pytest test: run with
+
+    python -m experiments.test_watchdog
+
+Uses environment overrides to supervise experiments.fake_harness against a
+temporary checkpoint.  It never edits source files and never touches the
+real paired_clean_results_B.json.
+"""
+from __future__ import annotations
+
 import os
 import subprocess
+import sys
+import tempfile
 import time
 from pathlib import Path
 
-def run_test(name, env):
-    print(f"\n=== TEST: {name} ===")
-    
-    # We patch run_with_watchdog_B_parallel.py temporarily so it uses fake_harness
-    wd_path = Path("experiments/run_with_watchdog_B_parallel.py")
-    orig_wd = wd_path.read_text(encoding="utf-8")
-    
-    patched_wd = orig_wd.replace(
-        'cmd = [python, "-m", "experiments.run_paired_clean_eval_B_parallel"]',
-        'cmd = [python, "-m", "experiments.fake_harness"]'
-    )
-    wd_path.write_text(patched_wd, encoding="utf-8")
-    
-    try:
-        proc = subprocess.Popen(
-            [sys.executable, str(wd_path)],
-            env={**os.environ, **env},
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True
-        )
-        
-        # for hanging tests we wait and see what happens, we also print processes
-        out = ""
-        while True:
-            line = proc.stdout.readline()
-            if not line:
-                break
-            print(line, end='')
-            out += line
-            
-            if "Killing tree PID" in line or "taskkill stdout" in line:
-                # check processes
-                print("Checking processes...")
-                try:
-                    p = subprocess.run(["powershell", "-Command", "Get-Process python* | Select-Object Id, ProcessName"], capture_output=True, text=True)
-                    print(p.stdout)
-                except Exception as e:
-                    print("Error getting processes", e)
-        proc.wait()
-    finally:
-        wd_path.write_text(orig_wd, encoding="utf-8")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-import sys
-if __name__ == '__main__':
-    # Test (a) and (b) combined if we fake an old mtime.
-    # We can fake old mtime by just ensuring RESULTS_JSON is touched long ago.
-    # Actually wait, test (a): a checkpoint older than the timeout at launch does NOT trigger a kill during the first part of the run.
-    results_json = Path("experiments/paired_clean_results_B.json")
-    if results_json.exists():
-        t = time.time() - 1000 # very old
-        os.utime(results_json, (t, t))
-    
-    # Test (a) and (b): hung harness with child
-    run_test("hung_with_child", {
-        "FAKE_HARNESS_MODE": "hang_with_child",
+
+def _run_case(name: str, extra_env: dict, workdir: Path) -> None:
+    print(f"\n=== CASE: {name} ===", flush=True)
+    results = workdir / f"{name}_results.json"
+    results.write_text("[]", encoding="utf-8")
+    old = time.time() - 1000  # stale checkpoint at launch must not trigger an immediate kill
+    os.utime(results, (old, old))
+    env = {
+        **os.environ,
+        "WATCHDOG_HARNESS_MODULE": "experiments.fake_harness",
+        "WATCHDOG_RESULTS_JSON": str(results),
+        "WATCHDOG_STATUS_FILE": str(workdir / f"{name}_status.txt"),
+        "WATCHDOG_MAX_RESTARTS": "1",
         "STALL_TIMEOUT_S": "5",
-        "POLL_INTERVAL_S": "2"
-    })
-    
-    # Test (c): exit code 3
-    run_test("exit_3", {
-        "FAKE_HARNESS_MODE": "exit_3",
-        "STALL_TIMEOUT_S": "5",
-        "POLL_INTERVAL_S": "2"
-    })
+        "POLL_INTERVAL_S": "2",
+        **extra_env,
+    }
+    proc = subprocess.run(
+        [sys.executable, "-m", "experiments.run_with_watchdog_B_parallel"],
+        cwd=str(PROJECT_ROOT), env=env, capture_output=True, text=True, timeout=180,
+    )
+    print(proc.stdout, flush=True)
+
+
+def main() -> None:
+    with tempfile.TemporaryDirectory() as d:
+        workdir = Path(d)
+        _run_case("hang_with_child", {"FAKE_HARNESS_MODE": "hang_with_child"}, workdir)
+        _run_case("exit_0_incomplete", {"FAKE_HARNESS_MODE": "normal"}, workdir)
+        _run_case("exit_3", {"FAKE_HARNESS_MODE": "exit_3"}, workdir)
+
+
+if __name__ == "__main__":
+    main()

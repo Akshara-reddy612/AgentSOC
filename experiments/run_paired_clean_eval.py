@@ -29,7 +29,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 # Files
-CLEAN_ALERTS_JSON = PROJECT_ROOT / "GUIDE_Dataset" / "processed" / "guide_sample_500_alerts.json"
+# Verified clean twins (experiments/build_clean_twins.py). The original runs used
+# guide_sample_500_alerts.json, where 114 of the 320 lookups returned a
+# contaminated or different row; see RESEARCH_LOG 2026-10-10 Phase 1.
+CLEAN_ALERTS_JSON = PROJECT_ROOT / "GUIDE_Dataset" / "processed" / "guide_n50_scaleup_320_clean_twins.json"
 CONTAM_ALERTS_JSON = PROJECT_ROOT / "GUIDE_Dataset" / "processed" / "guide_n50_scaleup_320_alerts.json"
 RUN_A_JSON = PROJECT_ROOT / "agent" / "nce_n50_scaleup_results_runA.json"
 RUN_B_JSON = PROJECT_ROOT / "agent" / "nce_n50_scaleup_results_runB.json"

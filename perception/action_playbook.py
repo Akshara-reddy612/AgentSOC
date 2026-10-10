@@ -45,6 +45,7 @@ RSEM data structures.
 from __future__ import annotations
 
 import json
+import os
 import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -100,10 +101,19 @@ to review), ensuring workstation-class hosts get auto-approved while any
 server or higher-criticality host requires analyst review.
 """
 
-AUDIT_LOG_PATH: Path = Path(__file__).resolve().parent.parent / "agent" / "action_playbook_audit_log.jsonl"
+AUDIT_LOG_PATH: Path = Path(
+    os.environ.get(
+        "AGENTSOC_AUDIT_LOG",
+        Path(__file__).resolve().parent.parent / "logs" / "action_playbook_audit_log.jsonl",
+    )
+)
 """
 Append-only JSONL audit log for playbook execution events.
-Same pattern as the existing NCE-7/8 API call logs in agent/.
+
+Defaults to logs/ (git-ignored) so demo and Monitoring runs never modify a
+committed file; override with the AGENTSOC_AUDIT_LOG environment variable.
+The historical log at agent/action_playbook_audit_log.jsonl (entries up to
+2026-10-02) is no longer written to.
 """
 
 
@@ -387,7 +397,7 @@ def execute_playbook_dry_run(
     For ENABLE_MFA policy steps: produces an honest simulation report
     noting that MFA state is not currently modeled in the graph schema.
 
-    Appends an audit log entry to agent/action_playbook_audit_log.jsonl
+    Appends an audit log entry to AUDIT_LOG_PATH (logs/action_playbook_audit_log.jsonl by default)
     (same append-only JSONL pattern as the existing NCE-7/8 API call logs).
 
     Args:

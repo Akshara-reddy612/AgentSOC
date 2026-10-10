@@ -35,6 +35,8 @@ coverage.xml
 
 # Logs
 *.log
+# Runtime audit logs (perception/action_playbook.py AUDIT_LOG_PATH default)
+logs/
 
 # OS
 .DS_Store
