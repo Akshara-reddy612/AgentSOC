@@ -71,7 +71,15 @@ def _runs():
 
 
 def _candidate_actions(hyp):
-    """Same candidate set as the evaluation harness, order included (MONITOR_ONLY first)."""
+    """
+    Candidate actions for RSEM.  Uses the shared builder when it exists
+    (Phase 2 step 2.5+); otherwise the historical harness set (MONITOR_ONLY first).
+    """
+    try:
+        from perception.action_playbook import build_candidate_actions
+        return build_candidate_actions(hyp)
+    except ImportError:
+        pass
     from perception.rsem import ActionType, ProposedAction
     actions = [ProposedAction(action_type=ActionType.MONITOR_ONLY,
                               target_account_id=hyp.source_account or None,

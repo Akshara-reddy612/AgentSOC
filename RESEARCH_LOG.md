@@ -784,3 +784,22 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `tests/test_nce_grounding_label.py`, `experiments/rescore_snapshots/s3_grounding_label.json`
 - Modified: `perception/nce_contract.py`, `perception/nce_engine.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-10 — Session: Phase 2 step 2.5 — BLOCK_EGRESS, shared candidate builder, review-routing guardrail
+
+### What was tried
+- `perception/rsem.py` (locked, lifted): new `ActionType.BLOCK_EGRESS`; `_apply_action` sets `egress_blocked=True` on the host in the graph copy (minimal node if absent); `compute_business_impact` falls back to the `classify_host` tier for hosts not in the graph (only when classification confidence > 0, so external IPs stay 0.0).
+- `perception/action_playbook.py`: `build_candidate_actions(hypothesis)` (MONITOR_ONLY, REVOKE_SESSION, RESTRICT_PRIVILEGES, then BLOCK_EGRESS on the source host for T1071 or QUARANTINE_ACCESS on the target otherwise); `HARD_FLOOR_ACTIONS` adds BLOCK_EGRESS; `_review_reasons()` adds ungrounded T1071, CONDITIONALLY_FEASIBLE and top-score tie across action types.
+- Wiring: `monitoring/pipeline_adapter.py`, `streamlit_app.py` Live Mode and `experiments/rescore_all.py` use the shared builder. Streamlit refactor: `_run_downstream()` (SSE → RSEM → playbook → dry run) is shared by Live Mode and scenario replay; replay rebuilds hypotheses from the archived NCE output, labels them, and recomputes everything downstream with current code; dead `_compute_playbook_for_feasible` removed.
+- Demo text corrected: scenario 1-5 descriptions, banner/footer (now clean vs contaminated no-actionable rates instead of "attacks blocked"/"429/429 tests"), clean-alert label shows `_source_incident_grade` instead of a hard-coded BenignPositive, "Neural Correlation Engine" → Narrative Counterfactual Engine, isolation callout, Core Thesis callout replaced by an empty-graph caveat. `monitoring/demo_alerts.py` docstring outcomes re-verified by running all 5 curated alerts through the adapter offline (1/3/4 ALL_INFEASIBLE; 2 and 5 BLOCK_EGRESS → hard floor → PENDING_ANALYST_REVIEW).
+
+### What was found
+- `--diff s3_grounding_label s4_block_egress_guardrails`: 388 changed fields = 194 FEASIBLE T1071 hypotheses × (rsem_top MONITOR_ONLY → BLOCK_EGRESS, tied_top 4 → 1). BLOCK_EGRESS composite 0.75 (containment 1.0 − BI 0.25, workstation tier). The 95 CONDITIONALLY_FEASIBLE T1071 hypotheses (unresolved host) still tie 4-way at 0.0; the guardrail now routes them to review. 0 SSE verdict or alert-outcome changes.
+- Streamlit scenarios: 1 and 3 no playbook (all INFEASIBLE); 2 and 4 BLOCK_EGRESS 0.75 → PENDING (hard floor); 5 QUARANTINE_ACCESS 0.25 → PENDING; 6 RESTRICT (BI 0.75) → PENDING; 7 RESTRICT 1.0 → DRY_RUN_COMPLETE.
+
+### Test verification
+- New `tests/test_block_egress_and_guardrails.py` (8 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 484 passed, 1 deselected.
+
+### Files created/modified
+- Created: `tests/test_block_egress_and_guardrails.py`, `experiments/rescore_snapshots/s4_block_egress_guardrails.json`
+- Modified: `perception/rsem.py`, `perception/action_playbook.py`, `monitoring/pipeline_adapter.py`, `monitoring/demo_alerts.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

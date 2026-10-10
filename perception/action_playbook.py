@@ -270,8 +270,79 @@ def build_playbook(
 
 
 # ---------------------------------------------------------------------------
+# Shared candidate-action builder (added 2026-10-10, Phase 2 step 2.5)
+# ---------------------------------------------------------------------------
+
+def build_candidate_actions(hypothesis) -> list[ProposedAction]:
+    """
+    The one candidate-action set used by every code path (evaluation re-score,
+    Monitoring, Streamlit Live Mode), in a fixed canonical order.
+
+    Account actions target the hypothesis's source account.  The host-level
+    action depends on the technique: for T1071 (C2 from a compromised host)
+    BLOCK_EGRESS targets the SOURCE host; quarantining the external target is
+    meaningless.  For other techniques QUARANTINE_ACCESS targets the target
+    host.  Order no longer decides outcomes: a tie at the top routes the
+    playbook to analyst review (see evaluate_guardrails).
+    """
+    account = hypothesis.source_account or None
+    actions = [ProposedAction(
+        action_type=ActionType.MONITOR_ONLY,
+        target_account_id=account,
+        target_host_id=None if account else (hypothesis.source_host or hypothesis.target_host or "unknown"),
+    )]
+    if account:
+        actions.append(ProposedAction(action_type=ActionType.REVOKE_SESSION, target_account_id=account))
+        actions.append(ProposedAction(action_type=ActionType.RESTRICT_PRIVILEGES, target_account_id=account))
+    if hypothesis.technique_id == "T1071":
+        if hypothesis.source_host:
+            actions.append(ProposedAction(action_type=ActionType.BLOCK_EGRESS, target_host_id=hypothesis.source_host))
+    elif hypothesis.target_host:
+        actions.append(ProposedAction(action_type=ActionType.QUARANTINE_ACCESS, target_host_id=hypothesis.target_host))
+    return actions
+
+
+# ---------------------------------------------------------------------------
 # Policy and Safety Guardrails
 # ---------------------------------------------------------------------------
+
+HARD_FLOOR_ACTIONS: frozenset[ActionType] = frozenset({
+    ActionType.QUARANTINE_ACCESS,
+    ActionType.REVOKE_SESSION,
+    ActionType.BLOCK_EGRESS,  # cuts a host's internet access (added 2026-10-10)
+})
+"""Actions that always require analyst approval."""
+
+
+def _review_reasons(playbook: Playbook) -> list[str]:
+    """
+    Non-action-type reasons a playbook must go to analyst review
+    (added 2026-10-10, Phase 2 step 2.5):
+      - the hypothesis is an UNGROUNDED T1071 (no external IP, public domain
+        or beacon command in the evidence);
+      - SSE could only return CONDITIONALLY_FEASIBLE (e.g. unresolved source
+        host or low-confidence path);
+      - RSEM's top composite score is tied with another action type, so the
+        "choice" would otherwise be decided by candidate-list order.
+    """
+    from perception.sse import SSEVerdict
+
+    reasons: list[str] = []
+    vh = playbook.hypothesis.validated
+    if vh.hypothesis.evidence_grounding == "ungrounded":
+        reasons.append("Hypothesis is an ungrounded T1071 (no network indicator in the evidence).")
+    if vh.best_sse_verdict == SSEVerdict.CONDITIONALLY_FEASIBLE:
+        reasons.append("SSE verdict is CONDITIONALLY_FEASIBLE (unresolved host or low-confidence path).")
+    ranked = playbook.hypothesis.ranked_actions
+    if len(ranked) > 1:
+        top = ranked[0].composite_score
+        tied = {s.action.action_type for s in ranked if s.composite_score == top}
+        if len(tied) > 1:
+            reasons.append(
+                "RSEM tie at the top (" + ", ".join(sorted(t.value for t in tied))
+                + f" all at {top:.4f}); no risk-based basis to pick one."
+            )
+    return reasons
 
 def evaluate_guardrails(playbook: Playbook) -> Playbook:
     """
@@ -282,16 +353,20 @@ def evaluate_guardrails(playbook: Playbook) -> Playbook:
 
     Guardrail rules, in priority order:
 
-    1. HARD FLOOR: If Step 1's action_type is QUARANTINE_ACCESS or
-       REVOKE_SESSION, ALWAYS route to PENDING_ANALYST_REVIEW.  These
-       are the most disruptive/hardest-to-reverse actions and warrant
+    1. HARD FLOOR: If Step 1's action_type is QUARANTINE_ACCESS,
+       REVOKE_SESSION or BLOCK_EGRESS, ALWAYS route to PENDING_ANALYST_REVIEW.
+       These are the most disruptive/hardest-to-reverse actions and warrant
        human review by design, independent of RSEM's computed impact.
 
     2. THRESHOLD: If Step 1's business_impact exceeds
        GUARDRAIL_BUSINESS_IMPACT_THRESHOLD (0.35), route to
        PENDING_ANALYST_REVIEW.
 
-    3. Otherwise: AUTO_APPROVED.
+    3. REVIEW REASONS (added 2026-10-10): ungrounded T1071 hypothesis,
+       CONDITIONALLY_FEASIBLE SSE verdict, or a tie at the top of RSEM's
+       ranking -> PENDING_ANALYST_REVIEW.
+
+    4. Otherwise: AUTO_APPROVED.
 
     ENABLE_MFA policy steps (if present) are always auto-approved
     regardless of Step 1's routing — MFA enforcement is low-risk/
@@ -318,9 +393,9 @@ def evaluate_guardrails(playbook: Playbook) -> Playbook:
     business_impact = step1.action.business_impact
 
     # --- Determine routing for Step 1 ---
-    hard_floor_types = {ActionType.QUARANTINE_ACCESS, ActionType.REVOKE_SESSION}
+    review_reasons = _review_reasons(playbook)
 
-    if action_type in hard_floor_types:
+    if action_type in HARD_FLOOR_ACTIONS:
         step1_status = PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
         overall_status = PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
         reason = (
@@ -328,6 +403,8 @@ def evaluate_guardrails(playbook: Playbook) -> Playbook:
             f"requires mandatory human approval (hard floor rule — most "
             f"disruptive/hardest-to-reverse action class)."
         )
+        if review_reasons:
+            reason += " Also: " + " ".join(review_reasons)
     elif business_impact > GUARDRAIL_BUSINESS_IMPACT_THRESHOLD:
         step1_status = PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
         overall_status = PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
@@ -335,6 +412,12 @@ def evaluate_guardrails(playbook: Playbook) -> Playbook:
             f"Routed to analyst review: business_impact={business_impact:.2f} "
             f"exceeds threshold {GUARDRAIL_BUSINESS_IMPACT_THRESHOLD:.2f}."
         )
+        if review_reasons:
+            reason += " Also: " + " ".join(review_reasons)
+    elif review_reasons:
+        step1_status = PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
+        overall_status = PlaybookExecutionStatus.PENDING_ANALYST_REVIEW
+        reason = "Routed to analyst review: " + " ".join(review_reasons)
     else:
         step1_status = PlaybookExecutionStatus.AUTO_APPROVED
         overall_status = PlaybookExecutionStatus.AUTO_APPROVED
