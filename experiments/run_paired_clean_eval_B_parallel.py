@@ -56,10 +56,18 @@ def _p(msg: str) -> None:
     print(f"[{ts}] {msg}", flush=True)
 
 
+_API_LOG_LOCK = threading.Lock()
+
+
 def _log_api_call(log_path: Path, *, alert_id: str, model: str,
                   key_index: int, child_key_last4: str, success: bool, api_call_count: int,
                   error: str | None = None, wall_clock_s: float = 0.0) -> None:
-    """Append one line to the JSONL audit log (thread-safe via GIL)."""
+    """Append one line to the JSONL audit log.
+
+    Serialised with a lock (2026-10-11): concurrent appends from worker
+    threads lost lines on Windows; the earlier "thread-safe via GIL" claim
+    was wrong (the GIL does not make open/append/close atomic).
+    """
     entry = {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "alert_id": alert_id,
@@ -72,7 +80,7 @@ def _log_api_call(log_path: Path, *, alert_id: str, model: str,
     }
     if error:
         entry["error"] = error
-    with open(log_path, "a", encoding="utf-8") as f:
+    with _API_LOG_LOCK, open(log_path, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
 
 
