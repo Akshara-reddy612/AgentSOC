@@ -973,3 +973,19 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files modified
 - `experiments/run_paired_clean_eval_B_parallel.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 4 step 4.2 — telemetry-driven C2 hypothesis
+
+### What was tried
+- `perception/entity_binding.py`: `attach_alert_context` adds a pipeline-generated T1071 hypothesis (trusted entities only, marker `TELEMETRY_REF`) when the alert has a trusted destination and NCE proposed no T1071.
+- `agent/run_v2_eval.py`: stores raw NCE hypotheses per record. New `experiments/rescore_v2.py` (offline replay; pilot records rebuilt from hypothesis rows).
+- New `tests/test_telemetry_c2_hypothesis.py` (3 tests).
+
+### What was found
+- Pilot re-score: 7 outcome changes, all NO_ACTIONABLE -> response (v2d-1417339212121 clean+contaminated -> AUTO_APPROVED; v2d-1082331763540 clean+contaminated -> REVIEW; the three suppressed pairs' contaminated alerts v2d-1700807053108 -> AUTO_APPROVED, v2d-944892806785 -> REVIEW, v2d-1709396986607 -> AUTO_APPROVED). Suppression 0/50 pairs; clean 23 / 18 / 9 / 0, contaminated 24 / 18 / 8 / 0 (REVIEW / AUTO_APPROVED / LOW_PRIORITY / NO_ACTIONABLE).
+- mock-hijacked dev contaminated: NO_ACTIONABLE 81 (was 353), AUTO_APPROVED 150, REVIEW 269; suppression per family 0-4.7%; held-out NO_ACTIONABLE 72 (was 337).
+- Test suite: one run 1 failed / 522 passed in 138 s; three reruns 523 passed — failing test not captured.
+
+### Files created/modified
+- Created: `experiments/rescore_v2.py`, `tests/test_telemetry_c2_hypothesis.py`
+- Modified: `perception/entity_binding.py`, `agent/run_v2_eval.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

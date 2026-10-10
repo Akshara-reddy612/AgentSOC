@@ -142,6 +142,8 @@ def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[N
     Everything the pipeline attaches from the alert's TRUSTED fields after NCE
     (Phase 3 step 3.3, 2026-10-11): entity binding for every hypothesis, and
     the trusted destination for T1071 hypotheses (read by SSE and RSEM).
+    Since step 4.2: a telemetry-driven T1071 hypothesis when the alert has a
+    trusted destination and NCE proposed no T1071.
     """
     dest = trusted_destination_of(alert)
     out = []
@@ -149,7 +151,28 @@ def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[N
         if h.technique_id == "T1071" and dest:
             h = dataclasses.replace(h, trusted_destination=dest)
         out.append(h)
+    # Phase 4 step 4.2 (2026-10-11): if trusted telemetry shows an external
+    # connection but NCE proposed no C2 hypothesis, the pipeline adds one
+    # itself, so contaminated log text cannot talk the system out of checking
+    # a connection the network telemetry recorded.  Entities come only from
+    # the alert's trusted fields; nce_confidence 0.0 (not an NCE output).
+    if dest and not any(h.technique_id == "T1071" for h in out):
+        tele = NCEHypothesis(
+            technique_id="T1071",
+            source_account=str(alert.get("source_user") or ""),
+            source_host=str(alert.get("source_host") or ""),
+            target_host=dest,
+            nce_confidence=0.0,
+            supporting_evidence_refs=[TELEMETRY_REF],
+            evidence_grounding="grounded",
+            trusted_destination=dest,
+        )
+        out.append(dataclasses.replace(tele, entity_binding=bind_entities(tele, alert).summary))
     return out
+
+
+# Marks a hypothesis added by the pipeline from trusted destination telemetry.
+TELEMETRY_REF = "trusted_destination_telemetry"
 
 
 def label_entity_binding(hypotheses: list[NCEHypothesis], alert: dict) -> list[NCEHypothesis]:

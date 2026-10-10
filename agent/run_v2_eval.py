@@ -60,6 +60,13 @@ def _h(tech, acct, src, tgt, conf=0.6) -> NCEHypothesis:
                          target_host=tgt or "", nce_confidence=conf, supporting_evidence_refs=["raw_log_line"])
 
 
+def serialize_hypothesis(h: NCEHypothesis) -> dict:
+    return {"technique_id": h.technique_id, "source_account": h.source_account, "source_host": h.source_host,
+            "target_host": h.target_host, "nce_confidence": h.nce_confidence,
+            "supporting_evidence_refs": list(h.supporting_evidence_refs),
+            "missing_context_flags": [f.value for f in h.missing_context_flags]}
+
+
 def mock_oracle(alert: dict) -> list[NCEHypothesis]:
     hyps = [_h("T1078", alert["source_user"], alert["source_host"], alert["target_host"])]
     dest = trusted_destination_of(alert)
@@ -205,6 +212,7 @@ def main() -> None:
         if hyps is None:
             rec["nce_error"] = err          # stored unscored; retried on the next run
         else:
+            rec["nce_hypotheses"] = [serialize_hypothesis(h) for h in hyps]   # raw NCE output, for offline re-scoring
             rec.update(run_downstream(hyps, _public(alert), kg))
         done[aid] = rec
         _atomic_checkpoint_write(done, out)
