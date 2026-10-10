@@ -765,3 +765,22 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/network_model.py`, `experiments/rescore_snapshots/s2_network_model.json`
 - Modified: `perception/knowledge_graph.py`, `perception/sse.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-10 — Session: Phase 2 step 2.4 — T1071 grounding label replaces the drop
+
+### What was tried
+- `perception/nce_contract.py` (locked, lifted; additive only): `NCEHypothesis.evidence_grounding: str | None = None`, validated to None / "grounded" / "ungrounded"; preserved through `with_status()`.
+- `perception/nce_engine.py` (locked, lifted): new `label_t1071_grounding()` using the same three predicates as the legacy filter (external IP, public domain, beacon command); `generate_hypotheses(apply_evidentiary_filter=True)` now labels and keeps every hypothesis instead of dropping. Legacy `_apply_t1071_evidentiary_filter` kept (historical harnesses call `generate_hypotheses(apply_evidentiary_filter=False)` and then the legacy function, so their behaviour is unchanged).
+- New `tests/test_nce_grounding_label.py` (5 tests), including the case that previously returned `success=False` (alert whose only hypothesis is a weak T1071).
+
+### What was found
+- `--diff s2_network_model s3_grounding_label`: 385 T1071 hypotheses gained a label; alert-level "ungrounded only" class appears; 0 SSE verdict changes; no hypothesis removed.
+- Per-alert outcome NO_ACTIONABLE / REVIEW / ACTIONABLE (stored runs, current code): clean A 250/41/29, clean B 253/39/28, contaminated A 262/30/28, contaminated B 258/32/30, nce7 73/7/10, nce8 35/8/7.
+- Caveat kept in the code and docs: the grounding predicates read attacker-controlled text, so "grounded" is a hint, not a boundary; ungrounded hypotheses go to analyst review (guardrail enforcement in step 2.5).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 476 passed, 1 deselected.
+
+### Files created/modified
+- Created: `tests/test_nce_grounding_label.py`, `experiments/rescore_snapshots/s3_grounding_label.json`
+- Modified: `perception/nce_contract.py`, `perception/nce_engine.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

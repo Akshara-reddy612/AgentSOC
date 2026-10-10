@@ -497,6 +497,37 @@ def _apply_t1071_evidentiary_filter(
     return surviving, drop_reasons
 
 
+def label_t1071_grounding(
+    hypotheses: list[NCEHypothesis],
+    evidence_fields: dict[str, str],
+) -> list[NCEHypothesis]:
+    """
+    Label every T1071 hypothesis "grounded" or "ungrounded" instead of
+    dropping it (added 2026-10-10, Phase 2 step 2.4).
+
+    Uses exactly the same three predicates as the legacy
+    _apply_t1071_evidentiary_filter (external IP, non-internal public domain,
+    beaconing/C2 command).  Every hypothesis is returned, in order; non-T1071
+    hypotheses keep evidence_grounding=None.  Downstream, an "ungrounded"
+    T1071 hypothesis still goes through SSE/RSEM but can never be
+    auto-approved (Action/Playbook guardrail routes it to analyst review).
+
+    The legacy dropping filter is kept for reproducing historical results.
+    """
+    import dataclasses
+
+    grounded = (
+        _has_external_ip(evidence_fields)
+        or _has_non_internal_domain(evidence_fields)
+        or _has_beaconing_command(evidence_fields)
+    )
+    label = "grounded" if grounded else "ungrounded"
+    return [
+        dataclasses.replace(h, evidence_grounding=label) if h.technique_id == "T1071" else h
+        for h in hypotheses
+    ]
+
+
 # ---------------------------------------------------------------------------
 # Public API — generate_hypotheses
 # ---------------------------------------------------------------------------
@@ -524,8 +555,12 @@ def generate_hypotheses(
         validation failures — those are normal operation where invalid
         hypotheses get filtered out). Default: 1 (so 2 total attempts).
     apply_evidentiary_filter : bool
-        Whether to apply the T1071 evidentiary threshold filter (Step 4b).
-        Default: True. Set False to evaluate pre-filter baseline hypotheses.
+        Whether to apply the T1071 evidentiary check (Step 4b).  Default: True.
+        Since 2026-10-10 this LABELS T1071 hypotheses grounded/ungrounded
+        (label_t1071_grounding) instead of dropping them, so no hypothesis —
+        and therefore no alert — is removed from the pipeline.  Set False to
+        get unlabelled hypotheses (the historical harnesses do this and then
+        apply the legacy dropping filter themselves).
 
     Returns
     -------
@@ -635,19 +670,21 @@ def generate_hypotheses(
             "; ".join(drop_reasons),
         )
 
-    # --- Step 4b: T1071 evidentiary threshold filter ---
-    # Drop T1071 hypotheses that lack external IP, non-internal domain,
-    # AND beaconing/C2 command evidence.  Non-T1071 hypotheses pass through.
+    # --- Step 4b: T1071 evidentiary check (label, never drop) ---
+    # Since 2026-10-10: T1071 hypotheses lacking an external IP, non-internal
+    # domain AND beaconing/C2 command are labelled "ungrounded" and kept, so
+    # every alert reaches SSE/RSEM/Action.  (Previously they were dropped,
+    # and an alert whose only hypotheses were weak T1071s ended as
+    # success=False.)
     if apply_evidentiary_filter:
-        valid_hypotheses, evidentiary_drops = _apply_t1071_evidentiary_filter(
+        valid_hypotheses = label_t1071_grounding(
             valid_hypotheses, nce_input.evidence_fields
         )
-        if evidentiary_drops:
-            drop_reasons.extend(evidentiary_drops)
+        n_ungrounded = sum(1 for h in valid_hypotheses if h.evidence_grounding == "ungrounded")
+        if n_ungrounded:
             logger.info(
-                "[NCE] T1071 evidentiary filter dropped %d hypothesis(es): %s",
-                len(evidentiary_drops),
-                "; ".join(evidentiary_drops),
+                "[NCE] %d T1071 hypothesis(es) labelled ungrounded (kept; routed to review)",
+                n_ungrounded,
             )
 
     # --- Step 5: Handle zero valid hypotheses ---
