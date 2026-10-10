@@ -416,6 +416,14 @@ class MonitoringPipelineAdapter:
                 f"cached={len(hypotheses)} hypotheses",
             )
 
+        # Labels computed outside NCE (2026-10-10): T1071 evidence grounding
+        # (idempotent for live output; cached output was never labelled) and
+        # entity binding against the alert's structured entity fields.
+        from perception.entity_binding import label_entity_binding
+        from perception.nce_engine import _NCE_EVIDENCE_FIELD_NAMES, label_t1071_grounding
+        evidence = {f: str(alert[f]) for f in _NCE_EVIDENCE_FIELD_NAMES if alert.get(f) is not None}
+        hypotheses = label_entity_binding(label_t1071_grounding(hypotheses, evidence), alert)
+
         record.nce_hypothesis_count = len(hypotheses)
         record.nce_techniques = [h.technique_id for h in hypotheses]
 
@@ -477,25 +485,12 @@ class MonitoringPipelineAdapter:
             from perception.nce_rsem_integration import rank_validated_hypotheses
             from perception.rsem import ActionType, ProposedAction
 
+            from perception.action_playbook import build_candidate_actions
+
             top_h = feasible[0].hypothesis
-            candidate_actions = [
-                ProposedAction(
-                    action_type=ActionType.REVOKE_SESSION,
-                    target_account_id=top_h.source_account,
-                ),
-                ProposedAction(
-                    action_type=ActionType.RESTRICT_PRIVILEGES,
-                    target_account_id=top_h.source_account,
-                ),
-                ProposedAction(
-                    action_type=ActionType.QUARANTINE_ACCESS,
-                    target_host_id=top_h.target_host,
-                ),
-                ProposedAction(
-                    action_type=ActionType.MONITOR_ONLY,
-                    target_account_id=top_h.source_account,
-                ),
-            ]
+            # Shared canonical candidate set (2026-10-10): same as Live Mode
+            # and the evaluation re-score; ties route to analyst review.
+            candidate_actions = build_candidate_actions(top_h)
 
             pipeline_result = rank_validated_hypotheses(
                 validated_list, kg, sse, candidate_actions,

@@ -57,9 +57,11 @@ def main():
     for i, key in enumerate(pool.keys):
         print(f"--- Worker {i} (parent key_index={i}, parent key=...{key[-4:]}) ---")
         try:
-            result = _call_with_timeout(
+            # _call_with_timeout returns (value, child_key_last4)
+            result, _child_last4 = _call_with_timeout(
                 _real_tiny_request,
                 active_key=key,
+                all_keys=list(pool.keys),
                 timeout=30,
             )
             print(f"  Child key_last4: {result['child_key_last4']}")

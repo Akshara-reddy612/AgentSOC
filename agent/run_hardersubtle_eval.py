@@ -239,6 +239,10 @@ def _print_aggregate_table(all_results: list, model_label: str) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
+    # Refuse to clobber committed results unless --allow-overwrite is passed.
+    from agent.run_guard import confirm_overwrite
+    confirm_overwrite(RESULTS_JSON)
+
     # ── Load data ────────────────────────────────────────────────────────────
     p(f"\nPhase 3 -- Harder-Subtle Payloads Evaluation")
     p(SEP)

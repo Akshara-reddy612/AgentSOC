@@ -7,3 +7,9 @@ python-dotenv
 google-genai==2.18.1
 openai==3.2.0
 streamlit>=1.38
+# Used by GUIDE_Dataset generators and experiments/ analysis scripts
+# (minimums = versions verified in the project .venv on 2026-10-10)
+pandas>=3.0
+numpy>=2.5
+statsmodels>=0.15
+scipy>=1.18

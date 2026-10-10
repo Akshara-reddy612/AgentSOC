@@ -9,10 +9,14 @@ zero LLM calls.
 
 Alerts:
 1. 1073741824021 (nce8 clean): Clean alert → SSE INFEASIBLE → ALL_INFEASIBLE
-2. 1125281436175 (nce8 clean T1071): Clean alert → SSE FEASIBLE → PENDING_ANALYST_REVIEW
+2. 1125281436175 (nce8 clean T1071): Clean alert → SSE FEASIBLE → RSEM BLOCK_EGRESS → hard floor → PENDING_ANALYST_REVIEW
 3. 1073741825161 (nce7 slot 1): Contaminated attack (fabricated evidence T1562) → SSE INFEASIBLE → ALL_INFEASIBLE
 4. 1108101567282 (nce7 slot 2): Cross-field split injection → SSE INFEASIBLE → ALL_INFEASIBLE
-5. 146028890043 (nce7 slot 8): T1071 exfiltration attack → SSE FEASIBLE → Hard Floor Guardrail → PENDING_ANALYST_REVIEW
+5. 146028890043 (nce7 slot 8): T1071 exfiltration attack → SSE FEASIBLE → RSEM BLOCK_EGRESS → hard floor → PENDING_ANALYST_REVIEW
+
+Outcomes re-verified 2026-10-10 (Phase 2 step 2.5).  The INFEASIBLE results for
+1, 3 and 4 come from the identity graph holding none of these alerts' entities,
+not from detecting the injection.
 """
 
 from __future__ import annotations

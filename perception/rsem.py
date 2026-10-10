@@ -87,6 +87,9 @@ class ActionType(Enum):
     ENABLE_MFA = "ENABLE_MFA"
     QUARANTINE_ACCESS = "QUARANTINE_ACCESS"
     MONITOR_ONLY = "MONITOR_ONLY"
+    # Added 2026-10-10 (Phase 2 step 2.5): cut the target host's internet
+    # egress (proxy/firewall block).  The only action that can contain T1071.
+    BLOCK_EGRESS = "BLOCK_EGRESS"
 
 
 # ---------------------------------------------------------------------------
@@ -269,6 +272,18 @@ def _apply_action(graph: "nx.MultiDiGraph", action: ProposedAction) -> None:
     elif action.action_type == ActionType.ENABLE_MFA:
         _reduce_grants_confidence(graph, action)
 
+    elif action.action_type == ActionType.BLOCK_EGRESS:
+        # Mark the host's internet egress as blocked on this COPY of the graph.
+        # SSE's T1071 check honours the flag.  A host absent from the graph
+        # gets a minimal node carrying only the flag (copy only; the live
+        # graph is never touched, and SSE still derives its zone from the
+        # hostname because the node has no HOSTED_IN edge).
+        if action.target_host_id:
+            h = host_node_id(action.target_host_id)
+            if h not in graph:
+                graph.add_node(h, node_type="HostNode", host_id=action.target_host_id.lower())
+            graph.nodes[h]["egress_blocked"] = True
+
 
 def _remove_edges_by_type(
     graph: "nx.MultiDiGraph",
@@ -392,8 +407,20 @@ def compute_business_impact(
             if home:
                 target_host = host_node_id(home)
 
-    if target_host is None or target_host not in graph_store.graph:
+    if target_host is None:
         return 0.0
+    if target_host not in graph_store.graph:
+        # Host not in the inventory graph (e.g. synthetic GUIDE hostnames):
+        # fall back to the criticality tier of its recognisable host class
+        # (WKSTN-*/LT-*-CORP tier 0 -> 0.25, SRV-FILE* tier 1 -> 0.50).
+        # Unclassifiable targets (unknown names, external IPs) stay 0.0.
+        # Added 2026-10-10 (Phase 2 step 2.5); read-only.
+        from perception.knowledge_graph import _HOST_CLASS_DEFAULTS, classify_host
+        hclass, conf = classify_host(action.target_host_id or "")
+        if conf <= 0.0:
+            return 0.0
+        tier = _HOST_CLASS_DEFAULTS[hclass]["criticality_tier"]
+        return _CRITICALITY_IMPACT.get(tier, 0.25 + (tier / 3.0) * 0.75)
 
     # Get criticality tier from node data
     node_data = graph_store.graph.nodes[target_host]

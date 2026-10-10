@@ -134,8 +134,31 @@ class NCEHypothesis:
     missing_context_flags: list[MissingContextFlag] = field(default_factory=list)
     status: HypothesisStatus = HypothesisStatus.GENERATED
     incident_id: str | None = None
+    # Added 2026-10-10 (Phase 2 step 2.4).  Set by nce_engine.label_t1071_grounding
+    # for T1071 only: "grounded" when the evidence contains an external IP, a
+    # public domain or a beaconing command; "ungrounded" otherwise.  None for
+    # other techniques or when no labelling ran.  NOTE: the grounding
+    # predicates read attacker-controlled fields, so "grounded" is a hint, not
+    # a security boundary — an ungrounded hypothesis is routed to analyst
+    # review, never silently dropped.
+    evidence_grounding: str | None = None
+    # Added 2026-10-10 (Phase 2 step 2.7).  Set by entity_binding.label_entity_binding
+    # from the alert's structured entity fields (never by NCE): "bound" when every
+    # named entity matches them, "partial" when some are unknown/unverifiable,
+    # "unbound" when the hypothesis names an entity the alert does not contain.
+    entity_binding: str | None = None
 
     def __post_init__(self) -> None:
+        if self.entity_binding not in (None, "bound", "partial", "unbound"):
+            raise ValueError(
+                f"entity_binding must be None, 'bound', 'partial' or 'unbound', "
+                f"got {self.entity_binding!r}"
+            )
+        if self.evidence_grounding not in (None, "grounded", "ungrounded"):
+            raise ValueError(
+                f"evidence_grounding must be None, 'grounded' or 'ungrounded', "
+                f"got {self.evidence_grounding!r}"
+            )
         if self.technique_id not in TECHNIQUE_TABLE:
             raise ValueError(
                 f"technique_id {self.technique_id!r} is not in TECHNIQUE_TABLE. "

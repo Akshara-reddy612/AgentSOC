@@ -28,6 +28,9 @@ def main():
     gs = KnowledgeStoreGraph()
     sse = StructuralSimulationEngine(gs)
 
+    # Deliberately the file the historical clean runs actually read (last row
+    # per id wins), so stored verdicts re-score exactly. For 114 of the 320 ids
+    # this is NOT a true clean twin; see experiments/analyze_paired_valid.py.
     with open('GUIDE_Dataset/processed/guide_sample_500_alerts.json', encoding='utf-8') as f:
         clean_by_id = {str(a['alert_id']): a for a in json.load(f)}
     

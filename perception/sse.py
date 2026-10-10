@@ -156,6 +156,10 @@ class PathResult:
     path_confidence: float
     edge_path: list[str]
     dependency_note: str | None
+    # T1071 only (added 2026-10-10): "verified" / "unverified" destination,
+    # and the destination's reputation from the synthetic network model.
+    destination_status: str | None = None
+    destination_reputation: str | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -399,6 +403,7 @@ class StructuralSimulationEngine:
         source_host_id: str,
         target_host_id: str,
         technique_id: str,
+        trusted_destination: str | None = None,
     ) -> list[PathResult]:
         """
         Check whether ``technique_id`` is structurally feasible for
@@ -415,13 +420,18 @@ class StructuralSimulationEngine:
             source_host_id:  Plain string — the host the attack originates from.
             target_host_id:  Plain string — the target host.
             technique_id:    MITRE ATT&CK ID (e.g. "T1078").
+            trusted_destination: Optional destination IP/domain from TRUSTED
+                             network telemetry (never from LLM output or log
+                             text).  Used only by T1071.  When absent, a T1071
+                             result is marked destination_status="unverified".
 
         Raises:
             TypeError: If any argument is an Evidence object.
         """
         # --- Security gate ---
         self._reject_evidence(
-            account_id, source_host_id, target_host_id, technique_id
+            account_id, source_host_id, target_host_id, technique_id,
+            trusted_destination,
         )
 
         # --- Lookup technique ---
@@ -465,8 +475,17 @@ class StructuralSimulationEngine:
                     edge_descs, path_conf, confidences
                 ))
 
+        elif constraint.egress_to_any:
+            # Internet C2 (T1071): evaluated against the synthetic enterprise
+            # network model (2026-10-10).  Replaces the old rule, which
+            # accepted ANY outgoing 443/80 EGRESS edge (including the
+            # WORKSTATION->WORKSTATION self-loop and WEB->DMZ).
+            return [self._check_internet_c2(
+                source_host_id, constraint, trusted_destination
+            )]
+
         elif constraint.egress_ports:
-            # Network-only technique (e.g. T1071 C2)
+            # Network-only technique without egress_to_any
             egress_ok, egress_conf, egress_desc = self._check_egress(
                 src_node, tgt_node,
                 constraint.egress_ports,
@@ -514,12 +533,21 @@ class StructuralSimulationEngine:
             if seq_len == 0:
                 continue
 
+            # On a MultiDiGraph, all_simple_paths yields the same node path
+            # once per parallel edge; the edge-combination product below
+            # already covers parallel edges, so visit each node path once.
+            # (Fixed 2026-10-10: duplicates inflated RSEM containment.)
+            seen_node_paths: set[tuple[str, ...]] = set()
             try:
                 for node_path in nx.all_simple_paths(
                     g, acct_node, tgt_node, cutoff=min(seq_len, 4)
                 ):
                     if len(node_path) - 1 != seq_len:
                         continue  # Wrong number of edges
+                    path_key = tuple(node_path)
+                    if path_key in seen_node_paths:
+                        continue
+                    seen_node_paths.add(path_key)
 
                     # Collect all edge options between consecutive nodes
                     edge_options: list[list[tuple[str, dict[str, Any]]]] = []
@@ -624,6 +652,131 @@ class StructuralSimulationEngine:
                     found = True
 
         return (found, best_conf, best_desc)
+
+    # ------------------------------------------------------------------
+    # Internet C2 (T1071) — synthetic enterprise network model
+    # ------------------------------------------------------------------
+
+    def _source_zone(self, source_host_id: str) -> str:
+        """Zone node of the source host, without mutating the graph."""
+        from perception.knowledge_graph import (
+            _HOST_CLASS_DEFAULTS, HostClass, classify_host, zone_node_id,
+        )
+        src_node = host_node_id(source_host_id)
+        zone = self._graph_store.get_host_zone(src_node) if src_node in self._graph_store.graph else None
+        if zone:
+            return zone
+        hclass, _ = classify_host(source_host_id)
+        zstr = _HOST_CLASS_DEFAULTS.get(hclass, _HOST_CLASS_DEFAULTS[HostClass.UNKNOWN])["zone_id"]
+        return zone_node_id(zstr)
+
+    def _check_internet_c2(
+        self,
+        source_host_id: str,
+        constraint: TechniqueConstraint,
+        trusted_destination: str | None,
+    ) -> PathResult:
+        """
+        T1071 feasibility against the network model:
+
+        1. The source host must resolve to a known zone.  An unresolvable or
+           unclassifiable host (e.g. "unknown", an unmanaged asset) cannot be
+           ruled in or out structurally -> CONDITIONALLY_FEASIBLE with
+           confidence 0.0, flagged for analyst review (never a silent reject).
+        2. A host whose internet egress was blocked (response action, on a
+           graph copy) -> INFEASIBLE.
+        3. The zone's egress policy must allow internet access and an EGRESS
+           edge to zone:EXTERNAL on 443/80 must exist -> else INFEASIBLE.
+        4. With a TRUSTED destination: internal -> INFEASIBLE; blocked by the
+           zone policy (e.g. proxy denies known-bad) -> INFEASIBLE; otherwise
+           FEASIBLE with the destination's reputation attached.
+           Without one: FEASIBLE, destination_status="unverified".
+        """
+        from perception.knowledge_graph import zone_node_id
+        from perception.network_model import INTERNAL, egress_permits
+
+        g = self._graph_store.graph
+        src_zone = self._source_zone(source_host_id)
+        zone_id = g.nodes[src_zone].get("zone_id", src_zone.replace("zone:", "")) if src_zone in g else src_zone.replace("zone:", "")
+        dest_status = "verified" if trusted_destination else "unverified"
+
+        if zone_id == "UNKNOWN":
+            return PathResult(
+                verdict=SSEVerdict.CONDITIONALLY_FEASIBLE,
+                path_confidence=0.0,
+                edge_path=[],
+                dependency_note=(
+                    f"Source host {source_host_id!r} does not resolve to a known "
+                    f"zone; internet reachability cannot be determined "
+                    f"structurally. Requires analyst review."
+                ),
+                destination_status=dest_status,
+            )
+
+        src_node = host_node_id(source_host_id)
+        if src_node in g and g.nodes[src_node].get("egress_blocked"):
+            return PathResult(
+                verdict=SSEVerdict.INFEASIBLE, path_confidence=0.0, edge_path=[],
+                dependency_note=f"Internet egress blocked for {src_node} (response action).",
+                destination_status=dest_status,
+            )
+
+        policy = self._graph_store.get_zone_egress_policy(src_zone)
+        ext = zone_node_id("EXTERNAL")
+        best_conf, best_desc = 0.0, ""
+        if policy.get("mode", "none") != "none" and src_zone in g:
+            for u, v, data in g.out_edges(src_zone, data=True):
+                if data.get("edge_type") != "EGRESS" or v != ext:
+                    continue
+                port_fact = data.get("port")
+                port = port_fact.value if isinstance(port_fact, KnowledgeFact) else port_fact
+                if port not in (constraint.egress_ports or ()):
+                    continue
+                reach = data.get("reachable")
+                conf = reach.confidence if isinstance(reach, KnowledgeFact) else 1.0
+                if conf > best_conf:
+                    best_conf, best_desc = conf, f"{u} --[EGRESS port={port}]--> {v}"
+        if not best_desc:
+            return PathResult(
+                verdict=SSEVerdict.INFEASIBLE, path_confidence=0.0, edge_path=[],
+                dependency_note=(
+                    f"No internet route from {src_zone} (egress policy mode="
+                    f"{policy.get('mode', 'none')!r}); C2 over 443/80 is not "
+                    f"structurally possible from this host."
+                ),
+                destination_status=dest_status,
+            )
+
+        if trusted_destination is None:
+            result = self._classify_path([best_desc], best_conf, [best_conf])
+            result.destination_status = "unverified"
+            result.dependency_note = (
+                (result.dependency_note + " ") if result.dependency_note else ""
+            ) + "Destination unverified: no trusted destination telemetry supplied."
+            return result
+
+        rep, rep_conf, rep_source = self._graph_store.get_destination_reputation(trusted_destination)
+        if rep == INTERNAL:
+            return PathResult(
+                verdict=SSEVerdict.INFEASIBLE, path_confidence=0.0, edge_path=[best_desc],
+                dependency_note=f"Destination {trusted_destination!r} is internal; not external C2.",
+                destination_status="verified", destination_reputation=rep,
+            )
+        if rep == "blocked" or not egress_permits(zone_id, rep):
+            return PathResult(
+                verdict=SSEVerdict.INFEASIBLE, path_confidence=0.0, edge_path=[best_desc],
+                dependency_note=(
+                    f"Egress policy of zone {zone_id} blocks {rep} destination "
+                    f"{trusted_destination!r} ({rep_source})."
+                ),
+                destination_status="verified", destination_reputation=rep,
+            )
+        dest_desc = f"{ext} --[destination {rep} ({rep_source})]--> {trusted_destination}"
+        confs = [best_conf, rep_conf]
+        result = self._classify_path([best_desc, dest_desc], compute_path_confidence(confs), confs)
+        result.destination_status = "verified"
+        result.destination_reputation = rep
+        return result
 
     # ------------------------------------------------------------------
     # Classification helpers
