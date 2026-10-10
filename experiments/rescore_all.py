@@ -103,12 +103,19 @@ def score_all() -> dict:
 
     labeller = getattr(nce_engine, "label_t1071_grounding", None)  # added in a later Phase 2 step
     try:  # Phase 2 step 2.7+
-        from perception.entity_binding import label_entity_binding as binder
+        try:  # Phase 3 step 3.3+: binding + trusted destination
+            from perception.entity_binding import attach_alert_context as binder
+        except ImportError:
+            from perception.entity_binding import label_entity_binding as binder
         from perception.action_playbook import build_playbook, evaluate_guardrails
         from perception.nce_rsem_integration import rank_validated_hypotheses
         guardrail = lambda rhr: evaluate_guardrails(build_playbook(rhr, kg))  # noqa: E731
     except ImportError:
         binder = guardrail = None
+    try:
+        from perception.outcome import decide
+    except ImportError:
+        decide = None
     kg = KnowledgeStoreGraph()
     sse = StructuralSimulationEngine(kg)
     snapshot: dict = {"runs": {}}
@@ -175,6 +182,8 @@ def score_all() -> dict:
                 "actionable_grounded": any(r["grounding"] != "ungrounded" for r in feasible),
                 "actionable_ungrounded_only": bool(feasible) and all(r["grounding"] == "ungrounded" for r in feasible),
             }
+            if decide:  # Phase 3 step 3.3+: alert-level outcome incl. known-bad escalation
+                out[aid]["outcome"] = decide(alert, [r["guardrail_status"] for r in feasible if "guardrail_status" in r], kg).label
         snapshot["runs"][run] = out
     return snapshot
 
@@ -197,10 +206,11 @@ def diff(old: dict, new: dict) -> int:
     for run in old["runs"]:
         for aid, a in old["runs"][run].items():
             b = new["runs"][run].get(aid)
-            for key in ("no_actionable_pre", "no_actionable_post_legacy", "actionable_grounded", "actionable_ungrounded_only"):
-                if a[key] != b[key]:
+            for key in ("no_actionable_pre", "no_actionable_post_legacy", "actionable_grounded",
+                        "actionable_ungrounded_only", "outcome"):
+                if a.get(key) != b.get(key):
                     changes += 1
-                    print(f"[{run}] {aid} {key}: {a[key]} -> {b[key]}")
+                    print(f"[{run}] {aid} {key}: {a.get(key)} -> {b.get(key)}")
             for i, (ha, hb) in enumerate(zip(a["hypotheses"], b["hypotheses"])):
                 for key in ("sse_verdict", "path_confidence", "n_paths", "grounding", "entity_binding",
                             "rsem_top", "rsem_tied_top", "guardrail_status"):

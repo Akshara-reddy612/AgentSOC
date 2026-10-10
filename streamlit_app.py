@@ -1160,10 +1160,10 @@ def _run_downstream(
     from perception.nce_rsem_integration import rank_validated_hypotheses
     from perception.nce_sse_integration import validate_hypothesis_with_sse
     from perception.rsem import StructuralSimulationEngine
-    from perception.entity_binding import label_entity_binding
+    from perception.entity_binding import attach_alert_context
 
     if raw_alert:
-        hypotheses = label_entity_binding(hypotheses, raw_alert)
+        hypotheses = attach_alert_context(hypotheses, raw_alert)
 
     # SSE
     kg = KnowledgeStoreGraph()

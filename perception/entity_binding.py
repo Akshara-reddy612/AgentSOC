@@ -128,6 +128,30 @@ def bind_entities(hypothesis: NCEHypothesis, alert: dict) -> EntityBindingResult
     return EntityBindingResult(roles=roles, summary=summary, notes=notes)
 
 
+def trusted_destination_of(alert: dict) -> str | None:
+    """The alert's trusted destination telemetry: domain if present, else IP."""
+    for f in ("destination_domain", "destination_ip"):
+        v = alert.get(f)
+        if v and str(v).strip().lower() not in _PLACEHOLDERS:
+            return str(v).strip()
+    return None
+
+
+def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[NCEHypothesis]:
+    """
+    Everything the pipeline attaches from the alert's TRUSTED fields after NCE
+    (Phase 3 step 3.3, 2026-10-11): entity binding for every hypothesis, and
+    the trusted destination for T1071 hypotheses (read by SSE and RSEM).
+    """
+    dest = trusted_destination_of(alert)
+    out = []
+    for h in label_entity_binding(hypotheses, alert):
+        if h.technique_id == "T1071" and dest:
+            h = dataclasses.replace(h, trusted_destination=dest)
+        out.append(h)
+    return out
+
+
 def label_entity_binding(hypotheses: list[NCEHypothesis], alert: dict) -> list[NCEHypothesis]:
     """Return new hypotheses with entity_binding set (order preserved)."""
     return [dataclasses.replace(h, entity_binding=bind_entities(h, alert).summary) for h in hypotheses]

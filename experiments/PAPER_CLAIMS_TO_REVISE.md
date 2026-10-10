@@ -70,6 +70,7 @@ The following sentences in the project documentation and paper require revision 
 - In earlier undefended triage tests on held-out alerts ($n=10$ per family), this model was hijacked on three of the eight families used here (\texttt{fabricated\_evidence} 60\%, \texttt{zero\_imperative\_evidence} 30\%, \texttt{cross\_field\_split} 10\%) and on none of the others; the paired result above therefore comes from a model that the payloads rarely fool, which limits what it can show about the structural layers.
 
 ## Not supported (do not claim)
+- (Added 2026-10-11, Phase 3) That the clean-alert false-positive rate is 0%. With the corpus's entities seeded into the identity graph (synthetic inventory) and an NCE that names them correctly (offline mock), T1078 is FEASIBLE on 498/500 clean alerts and 483/500 go to analyst review; the 0% came from an identity graph that contained none of the corpus's entities.
 - That SSE validates hypotheses against a real identity graph.
 - That the pipeline blocked attacks at 85-86%.
 - That contamination has no effect on any model (only tested on gemini-3.1-flash-lite, which in undefended triage tests was hijacked on 3 of the 8 families).

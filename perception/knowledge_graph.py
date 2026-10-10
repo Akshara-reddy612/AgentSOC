@@ -263,6 +263,7 @@ class KnowledgeStoreGraph:
         self._seed_from_store()
         self._seed_additional_topology()
         self._seed_network_model()
+        self._seed_enterprise_model()
 
     @property
     def graph(self) -> nx.MultiDiGraph:
@@ -787,3 +788,69 @@ class KnowledgeStoreGraph:
                 synthetic=True,
             )
             self._graph.add_edge(node, ext, key="HOSTED_IN", edge_type="HOSTED_IN")
+
+    def _seed_enterprise_model(self) -> None:
+        """
+        Seed the SYNTHETIC enterprise identity/asset inventory
+        (perception/enterprise_model.py): users with their own devices,
+        department file shares, admin groups, domain controllers, database
+        servers and service accounts.  Added 2026-10-11 (Phase 3 step 3.1).
+        Authored facts carry confidence 1.0; existing nodes are never
+        overwritten.
+        """
+        from perception.enterprise_model import INVENTORY
+
+        for h in INVENTORY.hosts:
+            node = host_node_id(h.host_id)
+            if node in self._graph:
+                continue
+            host_class = HostClass(h.host_class)
+            self._graph.add_node(
+                node,
+                node_type="HostNode",
+                host_id=h.host_id.lower(),
+                host_class=_fact(host_class, 1.0),
+                criticality_tier=_fact(h.criticality_tier, 1.0),
+                zone_id=_fact(h.zone, 1.0),
+                exposed_services=_fact(list(_HOST_CLASS_DEFAULTS[host_class]["exposed_services"]), 1.0),
+                first_seen=_NOW,
+                synthetic_inventory=True,
+            )
+            zn = zone_node_id(h.zone)
+            if zn not in self._graph:
+                self._graph.add_node(zn, node_type="ZoneNode", zone_id=h.zone, security_zone=h.zone)
+            self._graph.add_edge(node, zn, key="HOSTED_IN", edge_type="HOSTED_IN")
+
+        for a in INVENTORY.accounts:
+            node = account_node_id(a.account_id)
+            if node not in self._graph:
+                self._graph.add_node(
+                    node,
+                    node_type="AccountNode",
+                    account_id=a.account_id,
+                    account_type=_fact(AccountType(a.account_type), 1.0),
+                    mfa_enabled=_fact(a.mfa_enabled, 1.0),
+                    home_host_id=a.home_host.lower() if a.home_host else None,
+                    synthetic_inventory=True,
+                )
+            for g in a.groups:
+                gn = group_node_id(g)
+                if gn not in self._graph:
+                    self._graph.add_node(gn, node_type="GroupNode", group_id=g,
+                                         privilege_level=g.replace("-", "_"))
+                self._graph.add_edge(node, gn, key="MEMBER_OF", edge_type="MEMBER_OF",
+                                     membership_fact=_fact(True, 1.0))
+
+        for gr in INVENTORY.grants:
+            kind, pid = gr.principal.split(":", 1)
+            src = account_node_id(pid) if kind == "account" else group_node_id(pid)
+            if src not in self._graph:
+                self._graph.add_node(src, node_type="GroupNode", group_id=pid,
+                                     privilege_level=pid.replace("-", "_"))
+            self._graph.add_edge(src, host_node_id(gr.host_id), key=f"GRANTS:{gr.level}",
+                                 edge_type="GRANTS", access_level=_fact(AccessLevel[gr.level], 1.0))
+
+        for acct, host in INVENTORY.prior_access:
+            self._graph.add_edge(account_node_id(acct), host_node_id(host), key="HAS_PRIOR_ACCESS",
+                                 edge_type="HAS_PRIOR_ACCESS", has_access=_fact(True, 1.0))
+

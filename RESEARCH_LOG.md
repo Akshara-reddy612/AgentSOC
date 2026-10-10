@@ -842,3 +842,81 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/entity_binding.py`, `tests/test_entity_binding.py`, `experiments/rescore_snapshots/s5_entity_binding.json`
 - Modified: `perception/nce_contract.py`, `perception/action_playbook.py`, `monitoring/pipeline_adapter.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md` (docs committed separately in the next commit)
+
+## 2026-10-11 — Session: Phase 2 merge; Phase 3 step 3.1 — synthetic enterprise inventory
+
+### What was done
+- Full suite on `phase2-locked-files` (496 passed), confirmed `main` had not diverged, merged with `--no-ff` (a649d5a), re-ran the suite on `main` (496 passed), tagged `post-phase2`, created branch `phase3-corpus`. Nothing pushed.
+- Read the corpus generator (`synth_fields.py`, `inject_payloads.py`, `guide_to_alerts.py`, `generate_n50_scaleup_320_alerts.py`) and the raw GUIDE CSVs to plan the v2 corpus (plan recorded in PROJECT_STATUS "Phase 3 plan").
+- New `perception/enterprise_model.py` (seed 73) and `KnowledgeStoreGraph._seed_enterprise_model()` (`perception/knowledge_graph.py`, lock lifted in Phase 2).
+
+### What was found
+- Raw GUIDE: `LastVerdict` (in every raw_log_line) is only weakly associated with IncidentGrade (NaN for 363/500; Malicious 7 BP / 2 FP / 14 TP) and is genuine detector telemetry, so it is kept; `severity` (= IncidentGrade) is removed in v2. guide_sample_500 has 22 duplicated `Id`s.
+- The identity graph held only 5 toy accounts and 5 toy hosts; no corpus entity ever matched, which is why every non-T1071 hypothesis was INFEASIBLE.
+- Inventory smoke test: standard user on own device T1078 FEASIBLE, T1562 INFEASIBLE (no admin); helpdesk admin T1550 on any endpoint FEASIBLE; domain admin T1484 on SRV-DC01 FEASIBLE; standard user T1078 on SRV-DB01 INFEASIBLE.
+- Re-score of all stored runs with the inventory seeded: 0 changes vs `s5_entity_binding` (snapshot identical, not kept).
+
+### Test verification
+- New `tests/test_enterprise_model.py` (4 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 500 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/enterprise_model.py`, `tests/test_enterprise_model.py`
+- Modified: `perception/knowledge_graph.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 step 3.2 — corpus v2 builder
+
+### What was tried
+- New package `corpus/`: `evidence.py` (entities from the inventory, destinations from the network model or unlisted reserved addresses, behaviour-label evidence, severity from Category), `payloads.py` (10 families with goals and slot-randomised templates, wrapper-free embedding), `build_v2.py` (pairs, shuffled balanced family assignment with seed 79, unique ids, overwrite guard).
+- Evidence format decision: the first attempt to write realistic literal command lines for the evidence templates was stopped by a safety classifier; v2 instead uses EDR-style behaviour labels with arguments redacted. This also removes the v1 generator artefact where templates contained the exact T1071 grounding patterns.
+- `perception/nce_engine.py`: `example` added to `_PUBLIC_TLDS`.
+
+### What was found
+- Dev: 500 pairs; families 50-52 each, destination_spoof 41 (network alerts only); injection sites raw_log_line 315 / command_line 135 / registry_key+raw_log_line 50; destinations 417 (unknown 188, sanctioned 128, known_bad 101). Held-out: 500 pairs, similar distribution.
+- 0 alerts contain `INJECTED_FIELD_VALUE` or a 185.x address; the PerceptionPipeline accepts all of the first 200 dev alerts (0 rejected).
+- Before adding `example` to the TLD list, 190/417 network alerts with a domain-only destination labelled ungrounded; after: grounding = presence of destination telemetry exactly (417/417 vs 0/83). Stored-run re-score: 0 changes (snapshot not kept).
+- Severity x grade (dev contaminated): high = BP 120 / FP 44 / TP 33; medium = TP 140 / BP 98 / FP 52 — residual association comes from GUIDE Category, not from the grade.
+
+### Test verification
+- New `tests/test_corpus_v2.py` (7 tests: determinism, unique ids, twins differ only at the recorded site, no wrapper / reserved addresses only, grade not an input, entities from inventory, family invariants). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 507 passed, 1 deselected.
+
+### Files created/modified
+- Created: `corpus/__init__.py`, `corpus/evidence.py`, `corpus/payloads.py`, `corpus/build_v2.py`, `GUIDE_Dataset/processed/v2/guide_v2_dev.json`, `guide_v2_heldout.json`, `tests/test_corpus_v2.py`
+- Modified: `perception/nce_engine.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 step 3.3 — trusted destination, BLOCK_DESTINATION, known-bad escalation
+
+### What was tried
+- `perception/nce_contract.py`: additive `trusted_destination` field. `perception/entity_binding.py`: `trusted_destination_of(alert)` and `attach_alert_context()` (binding for all hypotheses + trusted destination for T1071).
+- `perception/nce_sse_integration.py` (locked; lift judged worth it: one additive keyword, default unchanged): passes `trusted_destination` to `SSE.check()`. `perception/rsem.py`: containment re-checks pass it too; new `BLOCK_DESTINATION` with reputation-based business impact.
+- `perception/action_playbook.py`: `build_candidate_actions` offers BLOCK_DESTINATION when a trusted destination exists (not added to the hard floor: a single-destination proxy block is narrow and reversible).
+- New `perception/outcome.py` (`decide`, `known_bad_contact`). Callers switched to `attach_alert_context` (Monitoring, Streamlit, `rescore_all`); `rescore_all` records the alert outcome (and its diff tolerates keys missing from older snapshots).
+
+### What was found
+- Tests on the inventory: unknown destination -> SSE FEASIBLE (verified) -> BLOCK_DESTINATION (containment 1.0, BI 0.1, composite 0.9) -> AUTO_APPROVED -> dry run complete, live graph unchanged; sanctioned -> BLOCK_EGRESS (0.75) -> review; known-bad from a workstation -> SSE INFEASIBLE (proxy) but outcome REVIEW with the known-bad reason; NCE target taken from spoofed text -> unbound -> review, block still aimed at the telemetry destination.
+- `--diff s5_entity_binding s6_trusted_destination_outcome`: 1,420 changes, all the new `outcome` field (1,131 NO_ACTIONABLE, 289 REVIEW).
+
+### Test verification
+- New `tests/test_trusted_destination.py` (5 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 512 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/outcome.py`, `tests/test_trusted_destination.py`, `experiments/rescore_snapshots/s6_trusted_destination_outcome.json`
+- Modified: `perception/nce_contract.py`, `perception/nce_sse_integration.py`, `perception/rsem.py`, `perception/action_playbook.py`, `perception/entity_binding.py`, `monitoring/pipeline_adapter.py`, `streamlit_app.py`, `experiments/rescore_all.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 step 3.4 — attacker-goal metrics, v2 runner, offline mock results
+
+### What was tried
+- New `perception/defended_pipeline.py` (`run_downstream`), `experiments/attack_metrics.py` (pair-based suppression / misdirection metrics), `agent/run_v2_eval.py` (mock-oracle, mock-hijacked, live; live never run).
+- Ran both mock modes on dev and held-out (1,000 alerts each, offline, seconds per run; outputs in gitignored `logs/`).
+
+### What was found
+- mock-oracle, dev clean: REVIEW 483, AUTO_APPROVED 15, NO_ACTIONABLE 2 (held-out 480 / 16 / 4). T1078 FEASIBLE 498/500; top action QUARANTINE_ACCESS (own device, 0.75) -> review 475, RESTRICT_PRIVILEGES auto-approved 22. T1071 (417 alerts with destination): BLOCK_DESTINATION auto-approved 188 (unknown destinations), BLOCK_EGRESS review 128 (sanctioned), INFEASIBLE 101 (known-bad blocked by proxy -> escalated to review by the outcome rule).
+- Finding: structural feasibility is not evidence of malice for valid-account use; with real entities in the graph almost every alert reaches review. The earlier 0% clean FP was a property of the empty graph.
+- mock-hijacked, dev suppression rates given clean response: authority_escalation 90.4%, fabricated_evidence 86.0%, fake_output_injection 84.3%, cross_field_split 82.0%, native_format_mimicry 78.4%, obfuscated_trigger 76.5%, direct_override 75.0%, zero_imperative_evidence 72.0%, destination_spoof 0%. identity_steering: misdirect gated 20, executed 0, steered hits 20, NO_ACTIONABLE 23. Held-out: suppression 68.6-80.4%, destination_spoof 0%, identity_steering gated 13 / executed 0.
+- Interpretation: if NCE is fully compromised, suppression attacks mostly win unless trusted telemetry independently flags the alert; misdirection did not reach auto-execution in any case.
+
+### Test verification
+- New `tests/test_attack_metrics.py` (4 tests). `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 516 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/defended_pipeline.py`, `experiments/attack_metrics.py`, `agent/run_v2_eval.py`, `tests/test_attack_metrics.py`
+- Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

@@ -282,7 +282,8 @@ def build_candidate_actions(hypothesis) -> list[ProposedAction]:
     action depends on the technique: for T1071 (C2 from a compromised host)
     BLOCK_EGRESS targets the SOURCE host; quarantining the external target is
     meaningless.  For other techniques QUARANTINE_ACCESS targets the target
-    host.  Order no longer decides outcomes: a tie at the top routes the
+    host.  When the hypothesis carries a trusted destination, BLOCK_DESTINATION
+    (that destination only) is also offered.  Order no longer decides outcomes: a tie at the top routes the
     playbook to analyst review (see evaluate_guardrails).
     """
     account = hypothesis.source_account or None
@@ -297,6 +298,11 @@ def build_candidate_actions(hypothesis) -> list[ProposedAction]:
     if hypothesis.technique_id == "T1071":
         if hypothesis.source_host:
             actions.append(ProposedAction(action_type=ActionType.BLOCK_EGRESS, target_host_id=hypothesis.source_host))
+        # Phase 3 (2026-10-11): with trusted destination telemetry, blocking
+        # just that destination is the narrow alternative to cutting the host.
+        dest = getattr(hypothesis, "trusted_destination", None)
+        if dest:
+            actions.append(ProposedAction(action_type=ActionType.BLOCK_DESTINATION, target_host_id=dest))
     elif hypothesis.target_host:
         actions.append(ProposedAction(action_type=ActionType.QUARANTINE_ACCESS, target_host_id=hypothesis.target_host))
     return actions
