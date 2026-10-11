@@ -1791,3 +1791,26 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `review_api/__init__.py`, `review_api/app.py`, `review_api/__main__.py`, `tests/test_review_api.py`
 - Modified: `perception/case_store.py` (NotFoundError, `is_valid_analyst_id`), `perception/review_service.py`, `requirements.txt`, `requirements-lock.txt`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-12 — Session: Project plan (scope, end goals, deliverables)
+
+### What was decided (with the user)
+- **Context:** the project had grown step by step (GUIDE -> DEDALE -> analyst loop), and suggesting two more datasets made the lack of an end point visible.
+- **Decisions:**
+  - One paper with a combined thesis: an LLM-driven SOC has two attack surfaces (the LLM reading attacker-writable logs, and the memory that learns), defended by the full pipeline.
+  - Venue chosen after the draft.
+  - At most 3 datasets (GUIDE, DEDALE, optional AIT-LDS).
+  - The demo is a real frontend with accounts showing the whole pipeline on the DEDALE attack.
+- Written into `PROJECT_PLAN.md`:
+  - end goals;
+  - claims C1-C5 mapped to existing evidence;
+  - remaining experiments: E1 contamination through the full loop on DEDALE (needs an API budget), E2 freeze, optional E3 AIT-LDS;
+  - demo specification (use case, pages, backend additions);
+  - milestones M1-M7 with owners;
+  - rules and a "Later" list.
+- **Gap found while writing the plan:** contamination (C1) was so far tested only through the reasoning half (GUIDE), and learning (C2-C3) only without attacker-written text. E1 is the one new experiment the combined thesis needs.
+- **Environment:** Node.js v22.18.0 and npm 10.9.3 are installed (frontend build possible; npm installs need approval and are run by the user).
+
+### Files created/modified
+- Created: `PROJECT_PLAN.md`
+- Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

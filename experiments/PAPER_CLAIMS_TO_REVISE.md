@@ -1,5 +1,7 @@
 # Paper Claims to Revise
 
+> **2026-10-12:** the paper's thesis is decided: one paper, combined (both attack surfaces, full pipeline). `PROJECT_PLAN.md` section 3 maps claims C1-C5 to their evidence. This file still lists which earlier sentences must change and which claims are not supported.
+
 The following sentences in the project documentation and paper require revision based on the clean-vs-contaminated evaluation findings.
 
 ### (a) "Independently validates" against a "real identity/topology graph"
