@@ -72,7 +72,10 @@ The following sentences in the project documentation and paper require revision 
 - (Added 2026-10-11, corpus v2 live runs) On 500 dev + 500 held-out clean/contaminated pairs with the populated identity graph, contamination produced no detectable change in whether the pipeline responds (dev 4 vs 4 discordant pairs, p = 1.0; held-out 3 vs 0, p = 0.25), and every lost response was an ungrounded C2 guess without destination telemetry. State with the corpus caveats (synthetic inventory and behaviour-label evidence, one model).
 - (Added 2026-10-11) The NCE (gemini-3.1-flash-lite) followed identity-steering payloads on 44/50 and 42/50 alerts, yet no misdirected action was executed: entity binding flagged every steered hypothesis and the feasible ones (11 and 4) were gated to analyst review.
 
+- (Added 2026-10-11, DEDALE Phase 3) On real Windows telemetry (DEDALE, exact host labels), live NCE + SSE reduced analyst reviews from 65.2 to 54.6 per day. It dismissed 89 of 784 benign and 2 of 72 malicious cases; every attack step was still surfaced, with unchanged timing. State with the caveats: one model, one dataset, 2 labelled clients.
+
 ## Not supported (do not claim)
+- (Added 2026-10-11, DEDALE Phase 3) That SSE infeasibility is a safe dismissal criterion on real telemetry. On DEDALE it dismissed 2 malicious cases (scp collection from a server with no telemetry: "not in the store" was treated as "impossible"). It also does not separate benign from malicious there: FEASIBLE on 18 / 70 malicious vs 60 / 695 benign REVIEW cases.
 - (Added 2026-10-11, Phase 3) That the clean-alert false-positive rate is 0%. With the corpus's entities seeded into the identity graph (synthetic inventory) and an NCE that names them correctly (offline mock), T1078 is FEASIBLE on 498/500 clean alerts and 483/500 go to analyst review; the 0% came from an identity graph that contained none of the corpus's entities.
 - That SSE validates hypotheses against a real identity graph.
 - That the pipeline blocked attacks at 85-86%.

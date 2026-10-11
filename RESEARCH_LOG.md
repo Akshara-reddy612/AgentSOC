@@ -1508,3 +1508,28 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/DEDALE_PHASE2_RESULTS.md`, `experiments/dedale_results/phase2_novelty.json`, `experiments/dedale_results/phase2_scores.json`
 - Modified: `perception/host_detection.py`, `perception/soc_loop.py`, `tests/test_host_detection.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 — live NCE on DEDALE host alerts
+
+### What was tried
+- **Live NCE for host alerts** (`experiments/dedale_nce.py`): gemini-3.1-flash-lite with the full technique vocabulary (D6), a per-alert cache, an append-only API log, and a hard cap on live calls (cap reached -> the gate's unreasoned policy routes to review).
+- **Pilot** (to 2025-01-09): 117 calls, 0 errors. 169 cases: 153 REVIEW, 16 NO_ACTIONABLE (all benign).
+- **Full gated replay with NCE:** `--mode gated --nce live --max-calls 700`. 416 live calls in total (117 pilot reused from the cache + 299 new), 0 errors, 864.7 s.
+- **Scored** with `dedale_host_score --runs gated gated_nce gated_analyst --out phase3_scores.json`. The new `--out` flag stops the Phase 2 scores file from being overwritten.
+
+### What was found
+- **Workload:** 856 test cases (gated without NCE: 913). REVIEW 765, NO_ACTIONABLE 91. 54.6 reviews / day (week 1 34.3, week 2 75.0), against 65.2 without NCE. Nothing was auto-approved.
+- **Dismissals:**
+  - Benign: 89 of 784, mostly `svchost.exe -> HxTsr.exe` (60) and `FileCoAuth.exe` (16). 57 of the 89 came via the decision cache.
+  - Malicious: 2 of 72, both from the collection step at 2025-01-10 11:42 (`cmd.exe -> scp.exe` pulling `customer_data.xlsx` from root@172.16.0.2, and that scp's named pipe).
+  - NCE proposed T1039 / T1078 / T1021.002 against 172.16.0.2. All were INFEASIBLE because the store has no access edges for the Linux server.
+- **Effect on the attack steps:** step timings are unchanged (+1.2 min, +28.5 min, +30.0 min, +21 h). Collection-window cases dropped from 11 to 9. 0 attack keys were learned; 13 lineage keys were learned `closed_benign`; the gate dropped 61 pending items.
+- **SSE verdicts do not discriminate:** best verdict FEASIBLE on 18 / 70 malicious and 60 / 695 benign REVIEW cases; the rest are CONDITIONALLY_FEASIBLE (unconstrained T1059 / T1547 dominate).
+- **Hypothesis targets do discriminate:** 405 / 416 NCE results target only the alerting client. The 11 others target 172.19.1.1, 172.19.0.2, 172.16.0.2, `Z:` or "unknown". 10 of the 11 are labelled malicious events and the 11th is an unlabelled PowerShell record next to a labelled one; none belongs to a benign case.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 690 passed, 1 deselected (no new tests: experiment code only).
+
+### Files created/modified
+- Created: `experiments/dedale_nce.py`, `experiments/DEDALE_PHASE3_RESULTS.md`, `experiments/dedale_results/phase3_scores.json`
+- Modified: `experiments/dedale_host_replay.py`, `experiments/dedale_host_score.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

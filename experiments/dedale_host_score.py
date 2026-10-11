@@ -8,7 +8,8 @@ side only (design invariant I4); also provides the simulated analyst of the
 separate --analyst oracle condition.
 
     python -m experiments.dedale_host_score [--runs static frozen gated ungated gated_analyst]
-    -> experiments/dedale_results/phase2_scores.json
+            [--out phase2_scores.json]
+    -> experiments/dedale_results/<out>
 """
 from __future__ import annotations
 
@@ -132,12 +133,13 @@ def score_run(run: str, labels: dict) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", nargs="+", default=["static", "frozen", "gated", "ungated", "gated_analyst"])
+    ap.add_argument("--out", default="phase2_scores.json", help="file name under experiments/dedale_results/")
     args = ap.parse_args()
     labels = load_host_labels()
     runs = [r for r in args.runs if (data_dir().parent / "runs" / f"dedale_host_{r}" / "cases.jsonl").exists()]
     results = {"labels": len(labels), "runs": {r: score_run(r, labels) for r in runs}}
     RESULTS.mkdir(exist_ok=True)
-    out = RESULTS / "phase2_scores.json"
+    out = RESULTS / args.out
     out.write_text(json.dumps(results, indent=1, default=str), encoding="utf-8")
     for r, s in results["runs"].items():
         rpd = s["reviews_per_day"]
