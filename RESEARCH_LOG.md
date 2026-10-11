@@ -1465,3 +1465,46 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/host_detection.py`, `experiments/dedale_host_replay.py`, `experiments/dedale_host_score.py`, `tests/test_host_detection.py`
 - Modified: `perception/soc_loop.py`, `perception/knowledge_updater.py`, `perception/triage_gate.py`, `perception/outcome_monitor.py`, `perception/case_builder.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 2 — measurement, detectors, host replays, results
+
+### What was tried
+- **Extraction finished:** 672 hours, 188,115,925 records -> 13,548,274 kept events (7.2%), 303 MB, 3,693 s for the resumed part.
+- **Event types over four weeks:** Sysmon 7 = 50.9 M, 11 = 50.0 M, 26 = 42.0 M, 10 = 32.2 M, 22 = 6.7 M, 17/18 = 2.8 M, 1 = 903 k. Security 4624 = 151 k; PowerShell 4103 = 129 k. Sysmon 3 = 28 events; no Sysmon registry events.
+- **P2-3 measurement** (`experiments/dedale_host_novelty.py` -> `phase2_novelty.json`): benign new keys per test day vs labelled events on new keys.
+
+  | Detector | Benign new keys / day | Labelled class-1 events on new keys |
+  |:--|--:|:--|
+  | lineage | 22.8 | 70 / 84 |
+  | image_on_host | 13.6 | 31 / 84 |
+  | image_anywhere | 7.4 | 31 / 84 |
+  | command_shape | 2,467.4 | 84 / 84 |
+  | logon | 0.1 | 0 / 0 |
+  | powershell | 0.1 | 34 / 76 |
+  | dns_domain | 396.4 | 3 / 12 |
+  | lsass_access | 0.1 | 0 / 0 |
+  | pipe | 0.6 | 229 / 245 |
+  | exec_file_write | 1.0 | 67 / 68 |
+
+  Only 590 of the 10,593 labelled client events are of the kept event types.
+- **Added detectors:** pipe, exec_file_write, powershell. The PowerShell key is a SHA-256 of normalised script text: the store keeps the fingerprint, never the text — a stated refinement of I1. command_shape and dns_domain were dropped.
+- **Host replays:** frozen, gated, ungated, gated + analyst (static running). The analyst run first failed — `_confirmed_malicious` assumed a network alert (KeyError `src_ip`); fixed (it flags the host of a host alert) and tested.
+
+### What was found
+- **Every learned-store run:** 6,787,207 training + 6,761,067 test events, ~2 min.
+- **Frozen = gated:** 1,834 alerts -> 913 cases, all REVIEW, 65.2 / day (week 1 42.3, week 2 88.1). 72 cases contain labelled class-1 events, all REVIEW; 400 labelled class-1 events alerted; 0 attack keys learned. Lineage causes 853 of the 913 cases.
+- **Ungated:** 384 cases, 27.4 / day; 38 attack cases surfaced; 99 labelled events alerted; 38 attack keys learned "ungated". The exfiltration-window step was not surfaced at all.
+- **Gated + analyst** (4 h delay, oracle = any labelled event in the case so far): 432 cases, 30.9 / day; 360 benign / 72 malicious verdicts; 72 / 72 attack cases surfaced; 400 labelled events alerted; 0 attack keys learned.
+- **Static** (nothing learned): 3,142,395 alerts -> 85,336 cases, 6,095.4 reviews / day; 80 attack cases + 5 related, all REVIEW; every labelled event of the detected types alerted (473 class 1, 37 class 2).
+- **Attack steps (gated / analyst):**
+  - initial access +1.2 min (PowerShell file write);
+  - lateral movement +28.5 min (`taskhostw.exe -> Temp\svcmon.exe --fetch-command-url`);
+  - collection window +30 min (svcmon pipe);
+  - exfiltration window +21 h (svcmon relaunch).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 690 passed, 1 deselected (688 + the PowerShell / pipe / file-write test and the analyst host-flag test).
+
+### Files created/modified
+- Created: `experiments/DEDALE_PHASE2_RESULTS.md`, `experiments/dedale_results/phase2_novelty.json`, `experiments/dedale_results/phase2_scores.json`
+- Modified: `perception/host_detection.py`, `perception/soc_loop.py`, `tests/test_host_detection.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

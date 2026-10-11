@@ -1,0 +1,212 @@
+{
+ "labelled_events_in_extracted_data": 590,
+ "labels_total": 10593,
+ "detectors": {
+  "lineage": {
+   "known_keys_from_training": 4397,
+   "benign_novel_keys_per_day": {
+    "2025-01-06": 11,
+    "2025-01-07": 34,
+    "2025-01-08": 23,
+    "2025-01-09": 8,
+    "2025-01-10": 8,
+    "2025-01-13": 16,
+    "2025-01-14": 118,
+    "2025-01-15": 43,
+    "2025-01-16": 25,
+    "2025-01-17": 28,
+    "2025-01-18": 3,
+    "2025-01-19": 2
+   },
+   "benign_novel_keys_mean_per_day": 22.8,
+   "malicious_events_on_novel_keys": {
+    "class_1": 70,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 84,
+    "class_2": 37
+   }
+  },
+  "image_on_host": {
+   "known_keys_from_training": 3107,
+   "benign_novel_keys_per_day": {
+    "2025-01-06": 1,
+    "2025-01-07": 27,
+    "2025-01-08": 8,
+    "2025-01-09": 1,
+    "2025-01-13": 5,
+    "2025-01-14": 98,
+    "2025-01-15": 6,
+    "2025-01-16": 17,
+    "2025-01-17": 24,
+    "2025-01-18": 3,
+    "2025-01-19": 1
+   },
+   "benign_novel_keys_mean_per_day": 13.6,
+   "malicious_events_on_novel_keys": {
+    "class_1": 31,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 84,
+    "class_2": 37
+   }
+  },
+  "image_anywhere": {
+   "known_keys_from_training": 288,
+   "benign_novel_keys_per_day": {
+    "2025-01-07": 1,
+    "2025-01-08": 1,
+    "2025-01-14": 96,
+    "2025-01-16": 1,
+    "2025-01-18": 3,
+    "2025-01-19": 1
+   },
+   "benign_novel_keys_mean_per_day": 7.4,
+   "malicious_events_on_novel_keys": {
+    "class_1": 31,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 84,
+    "class_2": 37
+   }
+  },
+  "command_shape": {
+   "known_keys_from_training": 44672,
+   "benign_novel_keys_per_day": {
+    "2025-01-06": 4143,
+    "2025-01-07": 3229,
+    "2025-01-08": 3041,
+    "2025-01-09": 3366,
+    "2025-01-10": 3374,
+    "2025-01-11": 90,
+    "2025-01-12": 56,
+    "2025-01-13": 3985,
+    "2025-01-14": 3496,
+    "2025-01-15": 3125,
+    "2025-01-16": 3207,
+    "2025-01-17": 3266,
+    "2025-01-18": 104,
+    "2025-01-19": 61
+   },
+   "benign_novel_keys_mean_per_day": 2467.4,
+   "malicious_events_on_novel_keys": {
+    "class_1": 84,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 84,
+    "class_2": 37
+   }
+  },
+  "logon": {
+   "known_keys_from_training": 359,
+   "benign_novel_keys_per_day": {
+    "2025-01-08": 2
+   },
+   "benign_novel_keys_mean_per_day": 0.1,
+   "malicious_events_on_novel_keys": {
+    "class_1": 0,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 0,
+    "class_2": 0
+   }
+  },
+  "powershell": {
+   "known_keys_from_training": 150,
+   "benign_novel_keys_per_day": {
+    "2025-01-06": 1
+   },
+   "benign_novel_keys_mean_per_day": 0.1,
+   "malicious_events_on_novel_keys": {
+    "class_1": 34,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 76,
+    "class_2": 0
+   }
+  },
+  "dns_domain": {
+   "known_keys_from_training": 34706,
+   "benign_novel_keys_per_day": {
+    "2025-01-06": 734,
+    "2025-01-07": 657,
+    "2025-01-08": 630,
+    "2025-01-09": 620,
+    "2025-01-10": 556,
+    "2025-01-11": 2,
+    "2025-01-12": 6,
+    "2025-01-13": 476,
+    "2025-01-14": 467,
+    "2025-01-15": 482,
+    "2025-01-16": 444,
+    "2025-01-17": 468,
+    "2025-01-18": 6,
+    "2025-01-19": 2
+   },
+   "benign_novel_keys_mean_per_day": 396.4,
+   "malicious_events_on_novel_keys": {
+    "class_1": 3,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 12,
+    "class_2": 0
+   }
+  },
+  "lsass_access": {
+   "known_keys_from_training": 92,
+   "benign_novel_keys_per_day": {
+    "2025-01-08": 1
+   },
+   "benign_novel_keys_mean_per_day": 0.1,
+   "malicious_events_on_novel_keys": {
+    "class_1": 0,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 0,
+    "class_2": 0
+   }
+  },
+  "pipe": {
+   "known_keys_from_training": 929,
+   "benign_novel_keys_per_day": {
+    "2025-01-08": 2,
+    "2025-01-14": 6
+   },
+   "benign_novel_keys_mean_per_day": 0.6,
+   "malicious_events_on_novel_keys": {
+    "class_1": 229,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 245,
+    "class_2": 0
+   }
+  },
+  "exec_file_write": {
+   "known_keys_from_training": 557,
+   "benign_novel_keys_per_day": {
+    "2025-01-06": 3,
+    "2025-01-07": 1,
+    "2025-01-08": 7,
+    "2025-01-09": 3
+   },
+   "benign_novel_keys_mean_per_day": 1.0,
+   "malicious_events_on_novel_keys": {
+    "class_1": 67,
+    "class_2": 0
+   },
+   "malicious_events_of_this_type": {
+    "class_1": 68,
+    "class_2": 0
+   }
+  }
+ }
+}

@@ -24,13 +24,18 @@ the edge the expected-activity rule (perception/baseline.py) reads.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import ntpath
+import re
 from dataclasses import dataclass
 from typing import Callable
 
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import account_node_id, host_node_id
+
+_DIGITS = re.compile(r"\d+")
+
 
 # Node ids for programs (executables).  Paths are case-insensitive on Windows.
 def image_node_id(path: str) -> str:
@@ -94,8 +99,62 @@ def _lsass_edge(k: tuple) -> Edge:
                 _image(image), {"node_type": "HostNode", "host_id": host})
 
 
+def _host(host: str) -> dict:
+    return {"node_type": "HostNode", "host_id": host}
+
+
+def _pipe_key(e: dict) -> tuple | None:
+    if e.get("ch") == "sysmon" and e.get("code") in (17, 18) and e.get("image"):
+        return (e["host"], e["image"].lower(), _DIGITS.sub("#", (e.get("pipe") or "").lower()))
+    return None
+
+
+def _pipe_edge(k: tuple) -> Edge:
+    host, image, pipe = k
+    return Edge(image_node_id(image), host_node_id(host), f"pipe:{pipe}", "USES_PIPE", _image(image), _host(host))
+
+
+def _file_write_key(e: dict) -> tuple | None:
+    if e.get("ch") == "sysmon" and e.get("code") == 11 and e.get("image") and e.get("file"):
+        return (e["host"], e["image"].lower(), e["file"].lower().rsplit(".", 1)[-1])
+    return None
+
+
+def _file_write_edge(k: tuple) -> Edge:
+    host, image, ext = k
+    return Edge(image_node_id(image), host_node_id(host), f"writes:{ext}", "WRITES_FILE_TYPE",
+                _image(image), _host(host))
+
+
+def script_fingerprint(text: str) -> str:
+    """SHA-256 of normalised script / command text (lower case, digits blanked, first 160 characters)."""
+    return hashlib.sha256(_DIGITS.sub("#", text.lower())[:160].encode("utf-8")).hexdigest()
+
+
+def _powershell_key(e: dict) -> tuple | None:
+    text = e.get("script") or e.get("cmd")
+    if e.get("ch") == "powershell" and e.get("code") in (4103, 4104) and text:
+        return (e["host"], script_fingerprint(text))
+    return None
+
+
+def _powershell_edge(k: tuple) -> Edge:
+    host, fp = k
+    return Edge(host_node_id(host), f"script:{fp}", "runs", "RUNS_SCRIPT", _host(host),
+                {"node_type": "ScriptNode", "fingerprint": fp})
+
+
+# Chosen from the P2-3 measurement (experiments/dedale_results/phase2_novelty.json):
+# quiet on benign test days and catching most labelled attack events.  Left out:
+# command-line shape (2,467 new keys/day) and DNS domain (396/day).  The PowerShell
+# detector keys on a fingerprint of the script text: the store keeps the hash,
+# never the text (invariant I1 -- a fingerprint cannot carry instructions; it
+# only records that this exact script was seen before).
 DETECTORS: dict[str, HostDetector] = {d.name: d for d in (
     HostDetector("lineage", _lineage_key, _lineage_edge),
+    HostDetector("pipe", _pipe_key, _pipe_edge),
+    HostDetector("exec_file_write", _file_write_key, _file_write_edge),
+    HostDetector("powershell", _powershell_key, _powershell_edge),
     HostDetector("logon", _logon_key, _logon_edge),
     HostDetector("lsass_access", _lsass_key, _lsass_edge),
 )}

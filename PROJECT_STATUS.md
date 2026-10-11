@@ -205,6 +205,21 @@
   - **New experiment code:** `experiments/dedale_host_replay.py` (`alerts.jsonl.gz` maps every host alert's event to its case for exact scoring) and `experiments/dedale_host_score.py` (exact host labels, host oracle for the analyst condition).
   - **Smoke run (3 training days):** 4,109 lineage keys, 359 logon keys (240 prior-access edges), 92 LSASS readers learned in 53 s.
   - **Tests:** `tests/test_host_detection.py` (6). Suite: 688 passed, 1 deselected.
+- **Phase 2 results (2026-10-11): `experiments/DEDALE_PHASE2_RESULTS.md`** (for the team), scores in `experiments/dedale_results/phase2_scores.json`. Offline, NCE off, exact host labels.
+  - **Extraction:** all 672 hours (188.1 M records -> 13.5 M events, 303 MB).
+  - **Detector choice** (measured before the replay, `phase2_novelty.json`): lineage, named pipe, executable file write, PowerShell (script fingerprint), logon, LSASS reader. Rejected: command-line shape (2,467 benign new keys / day) and DNS domain (396 / day).
+
+    | Host run | Reviews / day | Attack cases surfaced | Labelled class-1 events alerted | Attack keys learned |
+    |:--|--:|:--|--:|--:|
+    | static (nothing learned) | 6,095.4 | 80 / 80 | 473 | 0 |
+    | frozen = gated | 65.2 | 72 / 72 | 400 | 0 |
+    | ungated | 27.4 | 38 | 99 | 38 |
+    | gated + analyst | 30.9 | 72 / 72 | 400 | 0 |
+
+  - **Attack steps:** initial access surfaced 1.2 min after 01-06 10:00; lateral movement to client 1 surfaced 28.5 min after it began (`svcmon.exe` from the temp folder).
+  - **Caveats:** only 590 of the 10,593 labelled client events are of the kept event types; registry persistence is invisible (no registry events in DEDALE); lineage causes 853 of the 913 gated cases.
+  - **Fix:** the analyst's "malicious" verdict handled only network alerts (KeyError `src_ip`); it now flags the host of a host alert.
+  - **Tests:** suite 690 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
