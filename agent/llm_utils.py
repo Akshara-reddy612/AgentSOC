@@ -43,6 +43,22 @@ def is_rate_limit_error(exc: Exception) -> bool:
     return any(k.lower() in msg for k in RATE_LIMIT_KEYWORDS)
 
 
+# Marker put in an NCE error when every key has hit its DAILY quota
+# (2026-10-11): retrying cannot succeed for hours, so callers stop instead.
+DAILY_QUOTA_MARKER = "QUOTA_EXHAUSTED_DAILY"
+
+
+def is_daily_quota_error(exc_or_msg) -> bool:
+    """
+    True for a per-day quota rejection: Groq "tokens per day (TPD)" /
+    "requests per day (RPD)", Gemini quota ids such as
+    "GenerateRequestsPerDayPerProjectPerModel".  Per-minute limits are not
+    matched (those clear within a minute and are worth retrying).
+    """
+    compact = str(exc_or_msg).lower().replace(" ", "")
+    return "perday" in compact or "(tpd)" in compact or "(rpd)" in compact
+
+
 # ---------------------------------------------------------------------------
 # Response cleanup
 # ---------------------------------------------------------------------------

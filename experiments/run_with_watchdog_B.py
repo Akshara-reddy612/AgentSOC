@@ -103,8 +103,11 @@ def main() -> None:
                         _log(f"Eval completed: {count_after}/320. Exit code {ret}.")
                         return
                     elif ret == 0:
-                        _log(f"Eval exited cleanly with {count_after}/320.")
-                        return
+                        # Exit 0 without a full checkpoint is NOT success (2026-10-11,
+                        # same fix as run_with_watchdog_B_parallel.py) — restart it.
+                        _log(f"Eval exited with code 0 but only {count_after}/320 "
+                             f"results - treating as failure.")
+                        break
                     else:
                         _log(f"Eval crashed (exit {ret}). "
                              f"Results so far: {count_after}/320.")

@@ -51,6 +51,11 @@ def main() -> None:
     set_name = args[args.index("--set") + 1] if "--set" in args else "dev"
     alerts = {a["alert_id"]: a for a in json.loads((V2_DIR / f"guide_v2_{set_name}.json").read_text(encoding="utf-8"))}
     kg = KnowledgeStoreGraph()
+    era = {}
+    era_path = PROJECT_ROOT / "agent" / "v2_results" / f"era_scores_{set_name}.json"
+    if era_path.exists():   # step 4.8: ERA escalation (scores from experiments/era_offline.py)
+        from experiments.era_offline import level_of
+        era = {r["alert_id"]: level_of(r) for r in json.loads(era_path.read_text(encoding="utf-8"))}
     out = []
     for rec in json.loads(src.read_text(encoding="utf-8")):
         if rec.get("nce_error") or "outcome" not in rec:
@@ -58,7 +63,8 @@ def main() -> None:
             continue
         alert = {k: v for k, v in alerts[rec["alert_id"]].items() if not k.startswith("_")}
         new = {k: v for k, v in rec.items() if k not in ("hypotheses", "outcome", "outcome_reasons")}
-        new.update(run_downstream(rebuild(rec), alert, kg))
+        new.update(run_downstream(rebuild(rec), alert, kg, era_level=era.get(rec["alert_id"])))
+        new["era_level"] = era.get(rec["alert_id"])
         out.append(new)
     dst = PROJECT_ROOT / "logs" / f"{src.stem}_rescored.json"
     dst.parent.mkdir(exist_ok=True)

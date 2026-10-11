@@ -307,13 +307,14 @@ class MonitoringPipelineAdapter:
             bundle = assess(incident.evidence)
             attach_risk_metadata(bundle, incident)
 
-            # Extract top-level risk from the incident-level result
-            if bundle.incident_result:
-                record.era_risk_level = bundle.incident_result.risk_level
-                record.era_risk_score = round(bundle.incident_result.overall_score, 3)
-            else:
-                record.era_risk_level = "LOW"
-                record.era_risk_score = 0.0
+            # Alert-level risk = the highest of the incident result and every
+            # field result (2026-10-11).  The incident result alone is almost
+            # always 0.0 (only the split-field detector runs at incident
+            # level), so recording it hid every field-level detection.
+            results = list(bundle.field_results.values()) + ([bundle.incident_result] if bundle.incident_result else [])
+            top = max(results, key=lambda r: r.overall_score, default=None)
+            record.era_risk_level = top.risk_level if top else "LOW"
+            record.era_risk_score = round(top.overall_score, 3) if top else 0.0
 
             record.mark_stage(
                 "ERA", "OK",
@@ -470,8 +471,19 @@ class MonitoringPipelineAdapter:
         # ------------------------------------------------------------------
         # Early exit if all hypotheses are SSE-rejected
         # ------------------------------------------------------------------
+        # Alert-level escalation rules shared with the evaluation pipeline
+        # (perception.outcome.decide, 2026-10-11): known-bad destination
+        # contact in trusted telemetry, ERA level MEDIUM/HIGH.
+        from perception.outcome import decide as _decide
+        escalation = _decide(alert, [], kg, era_level=record.era_risk_level)
+        escalate = escalation.label == "REVIEW"
+
         if not feasible:
-            record.final_decision = "ALL_INFEASIBLE"
+            if escalate:
+                record.final_decision = "PENDING_ANALYST_REVIEW"
+                record.guardrail_reason = "Escalated: " + " ".join(escalation.reasons)
+            else:
+                record.final_decision = "ALL_INFEASIBLE"
             record.status = EventStatus.DONE
             record.processing_finished_at = time.time()
             return
@@ -547,7 +559,12 @@ class MonitoringPipelineAdapter:
             guardrail_status = playbook.overall_status.value
             record.guardrail_reason = playbook.guardrail_decision_reason or ""
 
-            if guardrail_status == "AUTO_APPROVED":
+            if guardrail_status == "AUTO_APPROVED" and escalate:
+                # Never auto-execute on an alert an escalation rule flagged.
+                final = "PENDING_ANALYST_REVIEW"
+                record.guardrail_reason = (record.guardrail_reason + " Overridden — escalated: "
+                                           + " ".join(escalation.reasons)).strip()
+            elif guardrail_status == "AUTO_APPROVED":
                 playbook = execute_playbook_dry_run(playbook, kg)
                 final = playbook.overall_status.value  # DRY_RUN_COMPLETE or DRY_RUN_FAILED
             else:

@@ -112,19 +112,28 @@ def _is_groq(model: str) -> bool:
     return model.startswith("groq:")
 
 
-def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, model: str = MODEL) -> None:
+def _is_daily_quota(err: str | None) -> bool:
+    from agent.llm_utils import DAILY_QUOTA_MARKER
+    return bool(err) and DAILY_QUOTA_MARKER in err
+
+
+def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, model: str = MODEL,
+                  call_fn=None) -> bool:
     """
     One thread per worker, each starting on its own key; every NCE call runs in
     a child process with a hard timeout.  Reuses the tested helpers of the
     Experiment 1 parallel harness (experiments/run_paired_clean_eval_B_parallel.py).
     On failure a worker retries with backoff and rotates to the next key.
     Records are finished and written by the main thread only.
+    If every key has hit its DAILY quota (2026-10-11), all workers stop taking
+    work and nothing is retried; returns True in that case (caller exits 3).
     """
     import queue
     import threading
     from agent.key_pool import load_gemini_pool, load_groq_pool
     from experiments.run_paired_clean_eval_B_parallel import _call_with_timeout, _log_api_call
 
+    call_fn = call_fn or live_nce   # any top-level fn(alert, model=..., groq_keys=...) -> (result|None, err, raw, n_calls)
     groq = _is_groq(model)
     keys = (load_groq_pool() if groq else load_gemini_pool()).keys
     if not keys:
@@ -133,28 +142,38 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, mo
     for a in todo:
         work.put(a)
     results: queue.Queue = queue.Queue()
+    stop = threading.Event()
+    DONE = object()
 
     def worker(wid: int) -> None:
+        try:
+            _work(wid)
+        finally:
+            results.put(DONE)
+
+    def _work(wid: int) -> None:
         k = wid % len(keys)
         last = 0.0
-        while True:
+        while not stop.is_set():
             try:
                 alert = work.get_nowait()
             except queue.Empty:
                 return
             res, err = None, None
             for attempt in range(MAX_ATTEMPTS):
+                if stop.is_set():
+                    break
                 wait = LIVE_DELAY_S - (time.time() - last)
                 if wait > 0:
                     time.sleep(wait)
                 t0 = last = time.time()
                 try:
                     if groq:
-                        out, _ = _call_with_timeout(live_nce, alert, model=model, groq_keys=keys[k:] + keys[:k],
+                        out, _ = _call_with_timeout(call_fn, alert, model=model, groq_keys=keys[k:] + keys[:k],
                                                     timeout=CALL_TIMEOUT_S)
                         last4 = keys[k][-4:]
                     else:
-                        out, last4 = _call_with_timeout(live_nce, alert, model=model, active_key=keys[k],
+                        out, last4 = _call_with_timeout(call_fn, alert, model=model, active_key=keys[k],
                                                         all_keys=keys, timeout=CALL_TIMEOUT_S)
                     _log_api_call(api_log, alert_id=alert["alert_id"], model=model, key_index=k,
                                   child_key_last4=last4, success=out[0] is not None, api_call_count=out[3],
@@ -163,6 +182,9 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, mo
                     if out[0] is not None:
                         break
                     err = out[1]
+                    if _is_daily_quota(err):
+                        stop.set()          # retrying cannot help for hours
+                        break
                 except Exception as exc:  # noqa: BLE001  (timeout or child failure)
                     err = f"{type(exc).__name__}: {exc}"
                     _log_api_call(api_log, alert_id=alert["alert_id"], model=model, key_index=k,
@@ -176,13 +198,20 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, mo
     threads = [threading.Thread(target=worker, args=(i,), daemon=True) for i in range(workers)]
     for t in threads:
         t.start()
-    for n in range(1, len(todo) + 1):
-        aid, res = results.get()
+    n = finished = 0
+    while finished < len(threads):
+        item = results.get()
+        if item is DONE:
+            finished += 1
+            continue
+        aid, res = item
         finish_live(aid, res)
+        n += 1
         if n % 20 == 0 or n == len(todo):
             print(f"  {n}/{len(todo)} done", flush=True)
     for t in threads:
         t.join()
+    return stop.is_set()
 
 
 def main() -> None:
@@ -235,6 +264,7 @@ def main() -> None:
         done[aid] = rec
         _atomic_checkpoint_write(done, out)
 
+    stopped_by_quota = False
     if args.nce != "live":
         for alert in todo:
             hyps = mock_oracle(alert) if args.nce == "mock-oracle" else mock_hijacked(alert)
@@ -242,11 +272,20 @@ def main() -> None:
         out.write_text(json.dumps(list(done.values()), indent=1), encoding="utf-8")
     elif args.workers <= 1:
         for alert in todo:
-            finish_live(alert["alert_id"], live_nce(alert, model=args.model))
+            res = live_nce(alert, model=args.model)
+            finish_live(alert["alert_id"], res)
+            if res[0] is None and _is_daily_quota(res[1]):
+                stopped_by_quota = True
+                break
             time.sleep(LIVE_DELAY_S)
     else:
-        _run_parallel(todo, args.workers, finish_live,
-                      out.with_name(out.stem.replace("_results", "") + "_api_log.jsonl"), model=args.model)
+        stopped_by_quota = _run_parallel(todo, args.workers, finish_live,
+                                         out.with_name(out.stem.replace("_results", "") + "_api_log.jsonl"),
+                                         model=args.model)
+    if stopped_by_quota:
+        print(f"STOPPED: every key is at its daily quota. {len(done)} records stored -> {out}. "
+              f"Resume later with the same command (stored alerts are skipped, NCE errors retried).", flush=True)
+        sys.exit(3)
     print(f"{len(todo)} new alerts processed; {len(done)} stored -> {out}")
 
 

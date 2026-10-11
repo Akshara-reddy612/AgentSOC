@@ -59,18 +59,22 @@ class TestConfigValidation:
         If a module with bad weights were imported, it must raise ImportError.
         We test this by dynamically executing the validation logic with bad values.
         """
-        # Simulate the validation block with intentionally wrong weights.
-        bad_code = """
-import math
-REGEX_WEIGHT = 0.5
-SEMANTIC_WEIGHT = 0.5
-SPLIT_FIELD_WEIGHT = 0.5  # sums to 1.5, not 1.0
-_WEIGHT_SUM = REGEX_WEIGHT + SEMANTIC_WEIGHT + SPLIT_FIELD_WEIGHT
-if not math.isclose(_WEIGHT_SUM, 1.0, abs_tol=1e-9):
-    raise ImportError(f"Weights sum to {_WEIGHT_SUM}, not 1.0")
-"""
-        with pytest.raises(ImportError, match="Weights sum to"):
-            exec(bad_code, {})
+        # Rewritten 2026-10-11: the old version exec'd its own copy of the
+        # validation logic, so it never exercised risk_assessment/config.py.
+        # Now the REAL config source runs, once unchanged and once with one
+        # weight altered.
+        import inspect
+        import re
+
+        from risk_assessment import config
+
+        src = inspect.getsource(config)
+        exec(compile(src, "config.py", "exec"), {"__name__": "config_check"})   # valid as shipped
+        bad, n = re.subn(r"^SPLIT_FIELD_WEIGHT: float = [0-9.]+", "SPLIT_FIELD_WEIGHT: float = 0.85",
+                         src, flags=re.MULTILINE)
+        assert n == 1, "could not find SPLIT_FIELD_WEIGHT in config.py"
+        with pytest.raises(ImportError, match="must sum to 1.0"):
+            exec(compile(bad, "config.py", "exec"), {"__name__": "config_check"})
 
     def test_all_expected_constants_exist(self):
         """Every constant that Session 2 will consume must exist now."""
