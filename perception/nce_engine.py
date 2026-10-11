@@ -233,17 +233,23 @@ def _call_groq_nce(prompt: str, model: str) -> dict:
     from openai import OpenAI
 
     from agent.key_pool import load_groq_pool
-    from agent.llm_utils import RETRY_DELAYS, is_rate_limit_error, strip_code_fence
+    from agent.llm_utils import (
+        DAILY_QUOTA_MARKER, RETRY_DELAYS, is_daily_quota_error, is_rate_limit_error, strip_code_fence,
+    )
 
     pool = load_groq_pool()
     if not pool.keys:
         return {"raw_response": None, "parsed": None,
                 "parse_error": "API_ERROR: KeyPool is empty — no GROQ_API_KEY(S) set"}
     last_exc: Exception | None = None
+    daily_exhausted: set[int] = set()   # keys at their daily cap: never retried in this call
     for delay in [0] + RETRY_DELAYS:
         if delay:
             time.sleep(delay)
         for _ in range(len(pool.keys)):
+            if pool.current_index() in daily_exhausted:
+                pool.rotate()
+                continue
             try:
                 client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=pool.current())
                 resp = client.chat.completions.create(
@@ -259,6 +265,12 @@ def _call_groq_nce(prompt: str, model: str) -> dict:
             except Exception as exc:  # noqa: BLE001
                 last_exc = exc
                 if is_rate_limit_error(exc):
+                    if is_daily_quota_error(exc):
+                        daily_exhausted.add(pool.current_index())
+                        if len(daily_exhausted) == len(pool.keys):
+                            return {"raw_response": None, "parsed": None,
+                                    "parse_error": f"API_ERROR: {DAILY_QUOTA_MARKER}: all Groq keys at their "
+                                                   f"daily cap: {exc}"}
                     pool.rotate()
                     continue
                 return {"raw_response": None, "parsed": None,
@@ -291,7 +303,9 @@ def _call_gemini_nce(
 
     from agent.key_pool import load_gemini_pool
     from agent.llm_utils import (
+        DAILY_QUOTA_MARKER,
         RETRY_DELAYS as _RETRY_DELAYS,
+        is_daily_quota_error,
         is_rate_limit_error as _is_rate_limit_error,
         strip_code_fence as _strip_code_fence,
     )
@@ -310,6 +324,7 @@ def _call_gemini_nce(
     )
 
     last_exc: Exception | None = None
+    daily_exhausted: set[int] = set()   # keys at their daily cap: never retried in this call (2026-10-11)
 
     for attempt, delay in enumerate([0] + list(_RETRY_DELAYS)):
         if delay:
@@ -324,6 +339,9 @@ def _call_gemini_nce(
         for _ in range(len(pool.keys)):
             current_key = pool.current()
             current_idx = pool.current_index()
+            if current_idx in daily_exhausted:
+                pool.rotate()
+                continue
             logger.debug("[NCE] Using Gemini key at index %d", current_idx)
 
             try:
@@ -355,6 +373,12 @@ def _call_gemini_nce(
             except Exception as exc:
                 last_exc = exc
                 if _is_rate_limit_error(exc):
+                    if is_daily_quota_error(exc):
+                        daily_exhausted.add(current_idx)
+                        if len(daily_exhausted) == len(pool.keys):
+                            return {"raw_response": None, "parsed": None,
+                                    "parse_error": f"API_ERROR: {DAILY_QUOTA_MARKER}: all Gemini keys at "
+                                                   f"their daily cap: {exc}"}
                     logger.info(
                         "[NCE] Gemini key index %d rate limited. Rotating...",
                         current_idx,
