@@ -1288,3 +1288,40 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/outcome_monitor.py`, `tests/test_outcome_monitor.py`
 - Modified: `perception/knowledge_updater.py`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S8 — SOC loop and the Phase 1 DEDALE replays
+
+### What was tried
+- New `perception/soc_loop.py`:
+  - per alert: release gated learning, end watches, enrich, monitor, case builder, triage new cases;
+  - per closed case: updater;
+  - learning modes static / frozen / gated / ungated;
+  - shadow mode during the training window, with all cases closed at its end.
+- New `experiments/dedale_replay.py`. `CaseBuilder.close_all` takes a reason; `KnowledgeDB.edge_counts` added.
+- Ran all four modes plus gated with D7 policy "no_actionable" over the full Suricata file. NCE off, no API calls; the runner never reads labels or the timeline.
+
+### What was found
+- Every run: 1,465,627 alerts -> 7,273 training-window cases (shadow) + 7,732 test-window cases; 29-35 s per run.
+- Test-window outcomes:
+
+  | Run | LOW_PRIORITY | REVIEW | AUTO_APPROVED |
+  |:--|--:|--:|--:|
+  | static | 0 | 7,694 | 38 |
+  | frozen | 7,286 | 411 | 35 |
+  | gated | 7,286 | 411 | 35 |
+  | ungated | 7,362 | 336 | 34 |
+  | gated "no_actionable" | 7,305 | 156 (+ 236 NO_ACTIONABLE) | 35 |
+
+- Learned in training: 753 ALERT_PATTERN + 822 COMMUNICATES_WITH edges.
+- Gated run: 265 more COMMUNICATES_WITH edges learned "closed_benign", no new alert patterns; 4,703 benign cases dropped by the endpoint-escalation rule; 92 pending at the end.
+- Ungated: 289 alert patterns + 781 communications learned without the gate.
+- "no_actionable" policy: 54 alert patterns learned "closed_benign", i.e. novel patterns accepted as normal after 24 h without anyone examining them.
+- As expected, gated = frozen in Phase 1. Unreasoned REVIEW cases are not benign, so without NCE (Phase 3) or an analyst (simulated-analyst condition, D1) the gate cannot accept new patterns.
+- Not yet scored against ground truth (S9).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 668 passed, 1 deselected (663 + 5 new in `tests/test_soc_loop.py`).
+
+### Files created/modified
+- Created: `perception/soc_loop.py`, `experiments/dedale_replay.py`, `tests/test_soc_loop.py`
+- Modified: `perception/case_builder.py`, `perception/knowledge_db.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

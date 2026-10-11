@@ -46,7 +46,7 @@ class Case:
     alert_count: int = 1
     sensors: set[str] = field(default_factory=set)
     closed: datetime | None = None
-    close_reason: str | None = None        # "idle" | "max_duration" | "end_of_stream"
+    close_reason: str | None = None        # "idle" | "max_duration" | "end_of_stream" (or a caller's reason)
 
 
 class CaseBuilder:
@@ -94,9 +94,9 @@ class CaseBuilder:
             case.sensors.add(alert["sensor"])
         return closed, event, case
 
-    def close_all(self, at: datetime) -> list[Case]:
-        """End of the stream: close every open case."""
-        return [self._close(k, at, "end_of_stream") for k in list(self._open)]
+    def close_all(self, at: datetime, reason: str = "end_of_stream") -> list[Case]:
+        """Close every open case (end of the stream, or a boundary such as the end of a training window)."""
+        return [self._close(k, at, reason) for k in list(self._open)]
 
     def _close_idle(self, now: datetime) -> list[Case]:
         closed = []

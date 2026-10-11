@@ -146,7 +146,10 @@ Each step is a commit with tests and tracking-doc updates.
    - **Counts:** every later alert touching the target is counted, and separately the ones the response would have stopped (simulated, invariant I5).
    - **Escalation:** new cases touching a watched target get an escalation reason through the gate's watch hook.
    - **Write-back:** the response and its result are recorded on the target's node as a `response` fact (mode "simulated"); observed facts are untouched.
-8. **S8 Replay runner** (synchronous, virtual clock). It reuses the pipeline adapter; the threaded `monitoring/` worker can later consume the same components for live mode.
+8. **S8 Replay runner** (synchronous, virtual clock). It reuses the pipeline adapter; the threaded `monitoring/` worker can later consume the same components for live mode. **Done 2026-10-11:** `perception/soc_loop.py` and `experiments/dedale_replay.py`.
+   - `soc_loop.py` is the generic loop: enrichment -> monitor -> case builder -> triage -> updater, with learning modes static / frozen / gated / ungated.
+   - The training window runs in shadow mode (learn only, no triage). Open cases are closed at the window's end.
+   - `dedale_replay.py` writes per-case records outside the repo. All four weeks take about 30 s per mode.
 9. **S9 Scorer + report** (conditions C0-C3).
 10. **B** analyst API on `analyst_actions` / `decisions` (separate plan).
 

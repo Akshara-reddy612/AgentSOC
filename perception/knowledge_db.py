@@ -238,6 +238,11 @@ class KnowledgeDB:
                                 (src, dst, _dumps(key))).fetchone()
         return row[0] if row else None
 
+    def edge_counts(self) -> dict[tuple[str, str], int]:
+        """Number of stored edges per (edge_type, learned_from)."""
+        return {(t, lf): n for t, lf, n in self._con.execute(
+            "SELECT edge_type, learned_from, COUNT(*) FROM edges GROUP BY edge_type, learned_from")}
+
     def audit_log(self, since_seq: int = 0) -> Iterator[dict]:
         for seq, ts, writer, op, payload in self._con.execute(
                 "SELECT seq, ts, writer, op, payload FROM ks_log WHERE seq > ? ORDER BY seq", (since_seq,)):
