@@ -151,6 +151,15 @@
   - **C3** learned 289 new alert patterns without examination.
   - **Not yet scored against ground truth** (design step S9).
   - **Tests:** `tests/test_soc_loop.py` (5). Suite: 668 passed, 1 deselected.
+- **Design step S9 — Phase 1 scored (2026-10-11):** `experiments/dedale_score.py` -> `experiments/dedale_results/phase1_scores.json`; report `experiments/DEDALE_PHASE1_RESULTS.md` (for the team).
+  - **Ground truth:** 1 confirmed attack case (attacker address) and 6 heuristic "probable" cases (compromised host + new pattern + labelled host event within 5 min; 4 of the 6 are probably benign DNS lookups). No precision / recall is claimed.
+  - **Workload:** learning the benign weeks cuts test-week reviews from 549.6 to 29.4 per day (94.2% LOW_PRIORITY).
+  - **Initial access:** the dropper download (client 2 -> 172.19.1.1, 01-06 10:01) was auto-blocked in every run.
+  - **Lateral movement:** the two SMB alerts to the domain controller (01-08 14:58 / 15:05) reached an analyst in static / frozen / gated.
+  - **Blind spots:** Suricata saw nothing of collection or exfiltration.
+  - **Learning safety:** ungated learning stored the attacker's dropper pattern as routine. The D7 "no_actionable" policy silently dropped both lateral-movement alerts and the 3 known false positives. Gated = frozen in this phase (nothing vouches for new patterns without NCE or an analyst).
+  - **Side effects:** 34 benign auto-blocks (31 = STUN requests from 4 clients to newly seen servers; simulated collateral 1,065 alerts). Their watches caused 141 of the 411 reviews.
+  - **Correction:** the earlier prediction that a static store would block the DNS resolver was wrong. The forwarders' criticality sends that block to review.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
@@ -201,6 +210,7 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/outcome_monitor.py`](perception/outcome_monitor.py) | Outcome monitor (design step S7): watches targets of auto-approved responses, counts what they would have stopped (simulated), escalates new activity, writes the result back to the store | Built & Tested |
 | [`perception/soc_loop.py`](perception/soc_loop.py) | The store-backed Sense-Reason-Act loop over an alert stream (design step S8): enrichment, monitor, cases, triage, gated learning; modes static / frozen / gated / ungated | Built & Tested |
 | [`experiments/dedale_replay.py`](experiments/dedale_replay.py) | Phase 1 DEDALE replay (offline, NCE off): one run per learning mode, store + per-case records outside the repo | Built & Run |
+| [`experiments/dedale_score.py`](experiments/dedale_score.py) | Phase 1 scorer (design step S9): the only reader of DEDALE ground truth; workload, attack coverage, false positives, learning safety per replay run | Built & Run |
 | [`perception/network_alert.py`](perception/network_alert.py) | Network IDS alerts: addresses -> entity fields (source/target host, destination) through the Knowledge Store's inventory (design step S3) | Built & Tested |
 | [`dedale/`](dedale/) | DEDALE dataset: environment profile + 37-host inventory seeded into the store, Suricata alert adapter (data outside the repo, `$AGENTSOC_DATA_DIR/dedale`) | Built & Tested |
 | [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |

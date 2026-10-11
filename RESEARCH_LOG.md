@@ -1209,6 +1209,7 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### What was found
 - 1,465,627 alerts in 39 s: internal 1,396,291, outbound 64,835, inbound 4,433, external 68. Outbound alerts reach only 28 external addresses; 52,535 go to 172.18.0.1 (internet router, DNS). Without a learned baseline these become telemetry C2 checks on unknown destinations that are auto-blocked, so the static store would block the DNS resolver. Recorded in `experiments/DEDALE_DATA_NOTES.md`; it is what comparison C0 vs C1 measures.
+  - [Correction 2026-10-11, Phase 1 replay] The static run did not block the resolver. Its outbound DNS alerts come from the DNS forwarders (companyrouter2, dmzserver), which the inventory rates criticality 2, so the guardrails send the block to review; all 278 resolver cases ended REVIEW. This depends on that criticality assumption.
 - NCE's technique vocabulary = SSE's 7 constrained techniques. Most of DEDALE's attack steps cannot be named (design decision D6, for the host-log phase).
 - Synthetic environment unchanged by the shared-code changes: historical re-score diff 0 vs `s8_env_profile`; 6,282 corpus-v2 live / mock records identical.
 
@@ -1325,3 +1326,43 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/soc_loop.py`, `experiments/dedale_replay.py`, `tests/test_soc_loop.py`
 - Modified: `perception/case_builder.py`, `perception/knowledge_db.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S9 — Phase 1 scored
+
+### What was tried
+- Added `last_seen` to the replay's case records and re-ran all five replays (outcome counts identical to the previous runs, i.e. deterministic).
+- New `experiments/dedale_score.py`, the only reader of ground truth:
+  - **confirmed tier:** cases with a published attacker address;
+  - **probable tier:** a compromised host per the timeline, after its compromise time, with a key not seen in training and a labelled class 1+2 host event within 5 min;
+  - **metrics:** workload, attack steps, known false positives, auto-approvals, watches, attacker patterns learned.
+- Inspected the ground-truth lists before fixing the metrics, and did not tune the heuristic to the outcomes.
+
+### What was found
+- **Ground truth:**
+  - 1 confirmed case: the ZIP download from client 2 to 172.19.1.1 at 01-06 10:01:14; the nearest labelled event is 0.35 s away.
+  - 6 probable cases: the SMB shellcode / executable-transfer alerts client 2 -> DC at 01-08 14:58 / 15:05 (nearest labelled event 67 s / 4.6 s), and 4 "TikTok domain" DNS cases from client 1 on 01-09 / 01-10. The latter are probably benign (client 1's malware has labelled events every few minutes).
+- **Reviews per day** (mean, max):
+
+  | Run | Mean | Max |
+  |:--|--:|--:|
+  | static | 549.6 | 822 |
+  | frozen = gated | 29.4 | 84 |
+  | ungated | 24.0 | 81 |
+  | "no_actionable" | 11.1 | 35 |
+
+- **Attack-related cases hidden** (LOW_PRIORITY / NO_ACTIONABLE): static / frozen / gated 0 of 7, ungated 4 of 7 (the TikTok cases), "no_actionable" 6 of 7 (including both lateral-movement alerts).
+- **Auto-approvals:** 34-38 per run; 1 on attacker infrastructure, i.e. the dropper block in every run.
+  - Frozen: 34 benign blocks, 31 of them STUN Binding Requests from CLIENT9 / 12 / 13 / 30 to newly seen servers; simulated collateral 1,065 alerts; their watches caused 141 of the 411 reviews.
+  - Static: 6,291 collateral alerts.
+  - The single "would have stopped" count on the attacker block is the second router's copy of the same download.
+- **Frozen review causes:** novel + unreasoned 214, watch escalation 141, cache 41, critical-host guardrail 15.
+- **Attacker patterns learned as routine:** only in the ungated run (sid 2027262 client2 -> 172.19.1.1).
+- **Steps not seen:** collection (SSH to the internal server) and exfiltration raised no Suricata alert.
+- **Correction:** the static run did not block the DNS resolver. The outbound DNS comes from the forwarders (companyrouter2 142, dmzserver 102, plus 34 external->external), rated criticality 2, so the guardrails send the block to review. Dated corrections added in `experiments/DEDALE_DATA_NOTES.md` and in the S3 entry above. The S8 unit test was renamed (its synthetic client source does get blocked).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 668 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/dedale_score.py`, `experiments/dedale_results/phase1_scores.json`, `experiments/DEDALE_PHASE1_RESULTS.md`
+- Modified: `experiments/dedale_replay.py`, `tests/test_soc_loop.py`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

@@ -48,7 +48,8 @@ def _iso(t: datetime | None) -> str | None:
 def case_record(case: Case, decision: Decision | None, training: bool) -> dict:
     a = case.first_alert
     rec = {
-        "case_id": case.case_id, "training": training, "opened": _iso(case.opened), "closed": _iso(case.closed),
+        "case_id": case.case_id, "training": training, "opened": _iso(case.opened),
+        "last_seen": _iso(case.last_seen), "closed": _iso(case.closed),
         "close_reason": case.close_reason, "alert_count": case.alert_count, "sensors": sorted(case.sensors),
         "signature_id": a["signature_id"], "signature": a["signature"], "priority": a["priority"],
         "protocol": a["protocol"], "src_ip": a["src_ip"], "dst_ip": a["dst_ip"], "dst_port": a["dst_port"],

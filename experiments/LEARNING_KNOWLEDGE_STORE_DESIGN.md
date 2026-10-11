@@ -150,7 +150,7 @@ Each step is a commit with tests and tracking-doc updates.
    - `soc_loop.py` is the generic loop: enrichment -> monitor -> case builder -> triage -> updater, with learning modes static / frozen / gated / ungated.
    - The training window runs in shadow mode (learn only, no triage). Open cases are closed at the window's end.
    - `dedale_replay.py` writes per-case records outside the repo. All four weeks take about 30 s per mode.
-9. **S9 Scorer + report** (conditions C0-C3).
+9. **S9 Scorer + report** (conditions C0-C3). **Done 2026-10-11:** `experiments/dedale_score.py` -> `experiments/dedale_results/phase1_scores.json`; report in `experiments/DEDALE_PHASE1_RESULTS.md`.
 10. **B** analyst API on `analyst_actions` / `decisions` (separate plan).
 
 ## 8. Open decisions

@@ -1,0 +1,2635 @@
+{
+ "ground_truth": {
+  "tiers": {
+   "confirmed": 1,
+   "probable": 6
+  },
+  "case_ids": {
+   "case-7540": "confirmed",
+   "case-9311": "probable",
+   "case-9312": "probable",
+   "case-9819": "probable",
+   "case-9820": "probable",
+   "case-10574": "probable",
+   "case-10579": "probable"
+  }
+ },
+ "runs": {
+  "static": {
+   "run": "static",
+   "test_cases": 7732,
+   "outcomes": {
+    "REVIEW": 7694,
+    "AUTO_APPROVED": 38
+   },
+   "reviews_per_day": {
+    "mean": 549.6,
+    "max": 822,
+    "by_day": [
+     726,
+     782,
+     735,
+     720,
+     729,
+     53,
+     69,
+     687,
+     822,
+     703,
+     773,
+     720,
+     88,
+     87
+    ]
+   },
+   "low_priority_share": 0.0,
+   "attack_related": [
+    {
+     "case_id": "case-7540",
+     "opened": "2025-01-06T10:01:14.335000Z",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "alerts": 2,
+     "path": "pipeline",
+     "outcome": "AUTO_APPROVED",
+     "pipeline_outcome": "AUTO_APPROVED",
+     "actions": [
+      {
+       "technique": "T1071",
+       "sse": "FEASIBLE",
+       "action": "BLOCK_DESTINATION",
+       "target": "172.19.1.1",
+       "status": "AUTO_APPROVED"
+      }
+     ],
+     "tier": "confirmed",
+     "nearest_label_s": 0.349
+    },
+    {
+     "case_id": "case-9311",
+     "opened": "2025-01-08T14:58:53.271000Z",
+     "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 66.743
+    },
+    {
+     "case_id": "case-9312",
+     "opened": "2025-01-08T15:05:36.673000Z",
+     "signature": "ET POLICY SMB Executable File Transfer",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 4.627
+    },
+    {
+     "case_id": "case-9819",
+     "opened": "2025-01-09T10:54:51.365000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 9,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-9820",
+     "opened": "2025-01-09T10:54:51.405000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 2,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10574",
+     "opened": "2025-01-10T11:46:37.168000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 3,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10579",
+     "opened": "2025-01-10T11:48:14.042000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 1,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 45.974
+    }
+   ],
+   "attack_related_hidden": 0,
+   "attack_steps": [
+    {
+     "step": "Initial access: phishing macro on client 2, dropper download",
+     "time": "2025-01-06T10:00:00+00:00",
+     "cases_near": 5,
+     "surfaced": [
+      {
+       "case_id": "case-7540",
+       "opened": "2025-01-06T10:01:14.335000Z",
+       "signature": "ET INFO Dotted Quad Host ZIP Request",
+       "flow": "172.16.1.3 -> 172.19.1.1:80",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "AUTO_APPROVED",
+       "pipeline_outcome": "AUTO_APPROVED",
+       "actions": [
+        {
+         "technique": "T1071",
+         "sse": "FEASIBLE",
+         "action": "BLOCK_DESTINATION",
+         "target": "172.19.1.1",
+         "status": "AUTO_APPROVED"
+        }
+       ]
+      },
+      {
+       "case_id": "case-7537",
+       "opened": "2025-01-06T09:57:23.522000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.3 -> 172.16.0.2:53",
+       "alerts": 4,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-7541",
+       "opened": "2025-01-06T10:01:30.097000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.3 -> 172.16.1.1:53",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-7542",
+       "opened": "2025-01-06T10:04:21.937000Z",
+       "signature": "ET DNS Query for .cc TLD",
+       "flow": "172.16.1.3 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-7606",
+       "opened": "2025-01-06T11:50:49.892000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.3 -> 172.16.0.2:53",
+       "alerts": 7,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Lateral movement client 2 -> client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "cases_near": 10,
+     "surfaced": [
+      {
+       "case_id": "case-9311",
+       "opened": "2025-01-08T14:58:53.271000Z",
+       "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9312",
+       "opened": "2025-01-08T15:05:36.673000Z",
+       "signature": "ET POLICY SMB Executable File Transfer",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9320",
+       "opened": "2025-01-08T15:13:13.998000Z",
+       "signature": "ET USER_AGENTS Microsoft Device Metadata Retrieval Client User-Agent",
+       "flow": "172.16.1.2 -> 2.21.225.158:80",
+       "alerts": 16,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "AUTO_APPROVED",
+       "actions": [
+        {
+         "technique": "T1071",
+         "sse": "FEASIBLE",
+         "action": "BLOCK_DESTINATION",
+         "target": "2.21.225.158",
+         "status": "AUTO_APPROVED"
+        }
+       ]
+      },
+      {
+       "case_id": "case-9360",
+       "opened": "2025-01-08T15:53:54.816000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.3 -> 172.16.1.1:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9359",
+       "opened": "2025-01-08T15:53:35.108000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.3 -> 172.16.0.2:53",
+       "alerts": 15,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9403",
+       "opened": "2025-01-08T16:27:16.812000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.3 -> 172.16.0.2:53",
+       "alerts": 5,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9370",
+       "opened": "2025-01-08T16:07:22.835000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.2 -> 172.16.1.1:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9339",
+       "opened": "2025-01-08T15:22:09.480000Z",
+       "signature": "ET TROJAN Suspicious POST With Reference to WINDOWS Folder Possible Malware Infection",
+       "flow": "172.16.1.3 -> 172.16.0.3:9200",
+       "alerts": 59,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9338",
+       "opened": "2025-01-08T15:22:09.319000Z",
+       "signature": "ET USER_AGENTS Go HTTP Client User-Agent",
+       "flow": "172.16.1.3 -> 172.16.0.3:9200",
+       "alerts": 67,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9369",
+       "opened": "2025-01-08T16:07:14.674000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.2 -> 172.16.0.2:53",
+       "alerts": 18,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Collection on the internal server (SSH from client 1)",
+     "time": "2025-01-10T11:00:00+00:00",
+     "cases_near": 59,
+     "surfaced": [
+      {
+       "case_id": "case-10524",
+       "opened": "2025-01-10T11:02:21.481000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.14 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10527",
+       "opened": "2025-01-10T11:02:36.793000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.16 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10530",
+       "opened": "2025-01-10T11:04:39.194000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.10 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10529",
+       "opened": "2025-01-10T11:04:36.109000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.2 -> 172.16.1.1:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10532",
+       "opened": "2025-01-10T11:06:57.143000Z",
+       "signature": "ET INFO Observed ZeroSSL SSL/TLS Certificate",
+       "flow": "3.227.190.204 -> 172.16.1.2:53485",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10533",
+       "opened": "2025-01-10T11:11:19.609000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.18 -> 172.16.0.2:53",
+       "alerts": 5,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10539",
+       "opened": "2025-01-10T11:14:21.186000Z",
+       "signature": "ET DNS Query for .cc TLD",
+       "flow": "172.16.1.3 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10545",
+       "opened": "2025-01-10T11:19:11.109000Z",
+       "signature": "ET DNS Query for .cc TLD",
+       "flow": "172.16.1.21 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10541",
+       "opened": "2025-01-10T11:15:05.685000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.20 -> 172.16.0.2:53",
+       "alerts": 16,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10551",
+       "opened": "2025-01-10T11:25:21.393000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.28 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10552",
+       "opened": "2025-01-10T11:26:03.082000Z",
+       "signature": "ET POLICY External IP Lookup Domain (ipapi .co in DNS lookup)",
+       "flow": "172.16.1.28 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10547",
+       "opened": "2025-01-10T11:21:40.513000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.9 -> 172.16.0.2:53",
+       "alerts": 12,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10548",
+       "opened": "2025-01-10T11:21:48.715000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.27 -> 172.16.0.2:53",
+       "alerts": 12,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10554",
+       "opened": "2025-01-10T11:27:51.955000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.15 -> 172.16.0.2:53",
+       "alerts": 7,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10553",
+       "opened": "2025-01-10T11:26:20.528000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.3 -> 172.16.0.2:53",
+       "alerts": 7,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10537",
+       "opened": "2025-01-10T11:11:39.457000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.8 -> 172.16.0.2:53",
+       "alerts": 9,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10568",
+       "opened": "2025-01-10T11:40:03.514000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.17 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10571",
+       "opened": "2025-01-10T11:40:22.436000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.22 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10574",
+       "opened": "2025-01-10T11:46:37.168000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.2 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10579",
+       "opened": "2025-01-10T11:48:14.042000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.2 -> 172.16.1.1:53",
+       "alerts": 1,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10575",
+       "opened": "2025-01-10T11:46:40.579000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.31 -> 172.16.0.2:53",
+       "alerts": 8,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10528",
+       "opened": "2025-01-10T11:04:35.740000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.2 -> 172.16.0.2:53",
+       "alerts": 12,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10581",
+       "opened": "2025-01-10T11:53:46.046000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.21 -> 172.16.0.2:53",
+       "alerts": 9,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10587",
+       "opened": "2025-01-10T11:56:00.744000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.13 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10588",
+       "opened": "2025-01-10T11:59:56.970000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.7 -> 172.16.0.2:53",
+       "alerts": 6,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10597",
+       "opened": "2025-01-10T12:04:55.027000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.25 -> 172.16.0.2:53",
+       "alerts": 6,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10598",
+       "opened": "2025-01-10T12:06:03.700000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.25 -> 172.16.0.2:53",
+       "alerts": 4,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10600",
+       "opened": "2025-01-10T12:08:47.252000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.19 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10535",
+       "opened": "2025-01-10T11:11:37.688000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.23 -> 172.16.0.2:53",
+       "alerts": 27,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10602",
+       "opened": "2025-01-10T12:09:18.513000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.23 -> 172.16.0.2:53",
+       "alerts": 15,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10606",
+       "opened": "2025-01-10T12:16:00.521000Z",
+       "signature": "ET DNS Query for .cc TLD",
+       "flow": "172.16.1.18 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10612",
+       "opened": "2025-01-10T12:18:24.335000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.11 -> 172.16.0.2:53",
+       "alerts": 4,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10615",
+       "opened": "2025-01-10T12:21:13.048000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.22 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10618",
+       "opened": "2025-01-10T12:22:50.346000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.20 -> 172.16.0.2:53",
+       "alerts": 10,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10622",
+       "opened": "2025-01-10T12:25:06.474000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.6 -> 172.16.0.2:53",
+       "alerts": 8,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10628",
+       "opened": "2025-01-10T12:29:50.596000Z",
+       "signature": "ET POLICY External IP Lookup Domain (ipapi .co in DNS lookup)",
+       "flow": "172.16.1.10 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10630",
+       "opened": "2025-01-10T12:31:53.677000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.10 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10632",
+       "opened": "2025-01-10T12:32:40.168000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.15 -> 172.16.0.2:53",
+       "alerts": 5,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10604",
+       "opened": "2025-01-10T12:11:28.931000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.12 -> 172.16.0.2:53",
+       "alerts": 10,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10580",
+       "opened": "2025-01-10T11:52:52.642000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.29 -> 172.16.0.2:53",
+       "alerts": 32,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10563",
+       "opened": "2025-01-10T11:37:50.566000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.16 -> 172.16.0.2:53",
+       "alerts": 22,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10564",
+       "opened": "2025-01-10T11:37:50.567000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.0.2 -> 172.16.0.1:53",
+       "alerts": 28,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10635",
+       "opened": "2025-01-10T12:40:10.400000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.30 -> 172.16.0.2:53",
+       "alerts": 15,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10641",
+       "opened": "2025-01-10T12:44:57.986000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.24 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10546",
+       "opened": "2025-01-10T11:19:42.816000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.7 -> 172.16.0.2:53",
+       "alerts": 14,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10637",
+       "opened": "2025-01-10T12:41:01.116000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.15 -> 172.16.0.2:53",
+       "alerts": 14,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10652",
+       "opened": "2025-01-10T12:51:09.710000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.22 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10583",
+       "opened": "2025-01-10T11:54:36.109000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.20 -> 172.16.0.2:53",
+       "alerts": 4,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10658",
+       "opened": "2025-01-10T12:52:00.759000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.11 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10648",
+       "opened": "2025-01-10T12:50:20.212000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.1.21 -> 172.16.0.2:53",
+       "alerts": 11,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10661",
+       "opened": "2025-01-10T12:55:34.653000Z",
+       "signature": "ET DNS Query for .cc TLD",
+       "flow": "172.16.1.24 -> 172.16.0.2:53",
+       "alerts": 2,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10540",
+       "opened": "2025-01-10T11:14:21.187000Z",
+       "signature": "ET DNS Query for .cc TLD",
+       "flow": "172.16.0.2 -> 172.16.0.1:53",
+       "alerts": 8,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10643",
+       "opened": "2025-01-10T12:46:59.551000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.13 -> 172.16.0.2:53",
+       "alerts": 8,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10596",
+       "opened": "2025-01-10T12:04:36.550000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.22 -> 172.16.0.2:53",
+       "alerts": 13,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10591",
+       "opened": "2025-01-10T12:02:26.086000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.29 -> 172.16.0.2:53",
+       "alerts": 9,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10663",
+       "opened": "2025-01-10T12:56:40.726000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.5 -> 172.16.0.2:53",
+       "alerts": 14,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10629",
+       "opened": "2025-01-10T12:29:50.597000Z",
+       "signature": "ET POLICY External IP Lookup Domain (ipapi .co in DNS lookup)",
+       "flow": "172.16.0.2 -> 172.16.0.1:53",
+       "alerts": 9,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10525",
+       "opened": "2025-01-10T11:02:21.483000Z",
+       "signature": "ET DNS Query for .to TLD",
+       "flow": "172.16.0.2 -> 172.16.0.1:53",
+       "alerts": 112,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10662",
+       "opened": "2025-01-10T12:56:11.632000Z",
+       "signature": "ET INFO Observed DNS Query to .biz TLD",
+       "flow": "172.16.1.16 -> 172.16.0.2:53",
+       "alerts": 11,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "cases_near": 2,
+     "surfaced": [
+      {
+       "case_id": "case-11013",
+       "opened": "2025-01-11T12:41:41.108000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.2 -> 172.16.0.2:53",
+       "alerts": 29,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-11015",
+       "opened": "2025-01-11T12:41:41.301000Z",
+       "signature": "ET INFO Observed DNS Query to .cloud TLD",
+       "flow": "172.16.1.2 -> 172.16.1.1:53",
+       "alerts": 12,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    }
+   ],
+   "known_false_positives": [
+    {
+     "case_id": "case-7351",
+     "opened": "2025-01-06T08:10:54.357000Z",
+     "signature": "ET TROJAN Suspicious POST with Common Windows Process Names - Possible Process List Exfiltration",
+     "flow": "172.16.1.15 -> 172.16.0.3:9200",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9071",
+     "opened": "2025-01-08T10:49:20.794000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.30 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9489",
+     "opened": "2025-01-08T17:53:12.040000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.6 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    }
+   ],
+   "auto_approved": {
+    "cases": 38,
+    "on_attacker_infrastructure": 1,
+    "targets": [
+     [
+      "2.21.225.158",
+      2
+     ],
+     [
+      "34.117.59.81",
+      2
+     ],
+     [
+      "52.23.111.175",
+      2
+     ],
+     [
+      "94.23.17.185",
+      2
+     ],
+     [
+      "212.227.67.34",
+      2
+     ],
+     [
+      "213.140.209.236",
+      2
+     ],
+     [
+      "77.72.169.211",
+      2
+     ],
+     [
+      "77.72.169.213",
+      2
+     ],
+     [
+      "212.227.67.33",
+      2
+     ],
+     [
+      "85.17.88.164",
+      2
+     ],
+     [
+      "85.93.219.114",
+      2
+     ],
+     [
+      "81.187.30.115",
+      2
+     ],
+     [
+      "82.113.193.63",
+      2
+     ],
+     [
+      "154.73.34.4",
+      2
+     ],
+     [
+      "185.208.37.90",
+      2
+     ],
+     [
+      "172.19.1.1",
+      1
+     ],
+     [
+      "64.131.63.217",
+      1
+     ],
+     [
+      "77.72.169.212",
+      1
+     ],
+     [
+      "154.73.34.8",
+      1
+     ],
+     [
+      "64.131.63.216",
+      1
+     ],
+     [
+      "23.217.186.82",
+      1
+     ],
+     [
+      "77.72.169.210",
+      1
+     ],
+     [
+      "95.100.246.76",
+      1
+     ]
+    ]
+   },
+   "watches": {
+    "count": 38,
+    "would_block_on_attacker": 1,
+    "would_block_on_benign_targets": 6291,
+    "top_benign": [
+     [
+      "2.21.225.158",
+      2469
+     ],
+     [
+      "2.21.225.158",
+      2435
+     ],
+     [
+      "34.117.59.81",
+      378
+     ],
+     [
+      "34.117.59.81",
+      363
+     ],
+     [
+      "185.208.37.90",
+      96
+     ]
+    ]
+   },
+   "attack_patterns_learned_as_routine": []
+  },
+  "frozen": {
+   "run": "frozen",
+   "test_cases": 7732,
+   "outcomes": {
+    "LOW_PRIORITY": 7286,
+    "REVIEW": 411,
+    "AUTO_APPROVED": 35
+   },
+   "reviews_per_day": {
+    "mean": 29.4,
+    "max": 84,
+    "by_day": [
+     41,
+     15,
+     29,
+     48,
+     37,
+     0,
+     0,
+     29,
+     84,
+     15,
+     66,
+     45,
+     0,
+     2
+    ]
+   },
+   "low_priority_share": 0.9423,
+   "attack_related": [
+    {
+     "case_id": "case-7540",
+     "opened": "2025-01-06T10:01:14.335000Z",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "alerts": 2,
+     "path": "pipeline",
+     "outcome": "AUTO_APPROVED",
+     "pipeline_outcome": "AUTO_APPROVED",
+     "actions": [
+      {
+       "technique": "T1071",
+       "sse": "FEASIBLE",
+       "action": "BLOCK_DESTINATION",
+       "target": "172.19.1.1",
+       "status": "AUTO_APPROVED"
+      }
+     ],
+     "tier": "confirmed",
+     "nearest_label_s": 0.349
+    },
+    {
+     "case_id": "case-9311",
+     "opened": "2025-01-08T14:58:53.271000Z",
+     "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 66.743
+    },
+    {
+     "case_id": "case-9312",
+     "opened": "2025-01-08T15:05:36.673000Z",
+     "signature": "ET POLICY SMB Executable File Transfer",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 4.627
+    },
+    {
+     "case_id": "case-9819",
+     "opened": "2025-01-09T10:54:51.365000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 9,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-9820",
+     "opened": "2025-01-09T10:54:51.405000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 2,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10574",
+     "opened": "2025-01-10T11:46:37.168000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 3,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10579",
+     "opened": "2025-01-10T11:48:14.042000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 1,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 45.974
+    }
+   ],
+   "attack_related_hidden": 0,
+   "attack_steps": [
+    {
+     "step": "Initial access: phishing macro on client 2, dropper download",
+     "time": "2025-01-06T10:00:00+00:00",
+     "cases_near": 5,
+     "surfaced": [
+      {
+       "case_id": "case-7540",
+       "opened": "2025-01-06T10:01:14.335000Z",
+       "signature": "ET INFO Dotted Quad Host ZIP Request",
+       "flow": "172.16.1.3 -> 172.19.1.1:80",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "AUTO_APPROVED",
+       "pipeline_outcome": "AUTO_APPROVED",
+       "actions": [
+        {
+         "technique": "T1071",
+         "sse": "FEASIBLE",
+         "action": "BLOCK_DESTINATION",
+         "target": "172.19.1.1",
+         "status": "AUTO_APPROVED"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "step": "Lateral movement client 2 -> client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "cases_near": 10,
+     "surfaced": [
+      {
+       "case_id": "case-9311",
+       "opened": "2025-01-08T14:58:53.271000Z",
+       "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9312",
+       "opened": "2025-01-08T15:05:36.673000Z",
+       "signature": "ET POLICY SMB Executable File Transfer",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Collection on the internal server (SSH from client 1)",
+     "time": "2025-01-10T11:00:00+00:00",
+     "cases_near": 59,
+     "surfaced": [
+      {
+       "case_id": "case-10574",
+       "opened": "2025-01-10T11:46:37.168000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.2 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10579",
+       "opened": "2025-01-10T11:48:14.042000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.2 -> 172.16.1.1:53",
+       "alerts": 1,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "cases_near": 2,
+     "surfaced": []
+    }
+   ],
+   "known_false_positives": [
+    {
+     "case_id": "case-7351",
+     "opened": "2025-01-06T08:10:54.357000Z",
+     "signature": "ET TROJAN Suspicious POST with Common Windows Process Names - Possible Process List Exfiltration",
+     "flow": "172.16.1.15 -> 172.16.0.3:9200",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9071",
+     "opened": "2025-01-08T10:49:20.794000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.30 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9489",
+     "opened": "2025-01-08T17:53:12.040000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.6 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    }
+   ],
+   "auto_approved": {
+    "cases": 35,
+    "on_attacker_infrastructure": 1,
+    "targets": [
+     [
+      "52.23.111.175",
+      2
+     ],
+     [
+      "34.117.59.81",
+      2
+     ],
+     [
+      "94.23.17.185",
+      2
+     ],
+     [
+      "212.227.67.34",
+      2
+     ],
+     [
+      "213.140.209.236",
+      2
+     ],
+     [
+      "77.72.169.211",
+      2
+     ],
+     [
+      "77.72.169.213",
+      2
+     ],
+     [
+      "212.227.67.33",
+      2
+     ],
+     [
+      "85.17.88.164",
+      2
+     ],
+     [
+      "85.93.219.114",
+      2
+     ],
+     [
+      "81.187.30.115",
+      2
+     ],
+     [
+      "82.113.193.63",
+      2
+     ],
+     [
+      "154.73.34.4",
+      2
+     ],
+     [
+      "185.208.37.90",
+      2
+     ],
+     [
+      "172.19.1.1",
+      1
+     ],
+     [
+      "64.131.63.217",
+      1
+     ],
+     [
+      "77.72.169.212",
+      1
+     ],
+     [
+      "154.73.34.8",
+      1
+     ],
+     [
+      "64.131.63.216",
+      1
+     ],
+     [
+      "77.72.169.210",
+      1
+     ],
+     [
+      "95.100.246.76",
+      1
+     ]
+    ]
+   },
+   "watches": {
+    "count": 35,
+    "would_block_on_attacker": 1,
+    "would_block_on_benign_targets": 1065,
+    "top_benign": [
+     [
+      "34.117.59.81",
+      347
+     ],
+     [
+      "185.208.37.90",
+      96
+     ],
+     [
+      "64.131.63.216",
+      83
+     ],
+     [
+      "34.117.59.81",
+      73
+     ],
+     [
+      "64.131.63.217",
+      69
+     ]
+    ]
+   },
+   "attack_patterns_learned_as_routine": []
+  },
+  "gated": {
+   "run": "gated",
+   "test_cases": 7732,
+   "outcomes": {
+    "LOW_PRIORITY": 7286,
+    "REVIEW": 411,
+    "AUTO_APPROVED": 35
+   },
+   "reviews_per_day": {
+    "mean": 29.4,
+    "max": 84,
+    "by_day": [
+     41,
+     15,
+     29,
+     48,
+     37,
+     0,
+     0,
+     29,
+     84,
+     15,
+     66,
+     45,
+     0,
+     2
+    ]
+   },
+   "low_priority_share": 0.9423,
+   "attack_related": [
+    {
+     "case_id": "case-7540",
+     "opened": "2025-01-06T10:01:14.335000Z",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "alerts": 2,
+     "path": "pipeline",
+     "outcome": "AUTO_APPROVED",
+     "pipeline_outcome": "AUTO_APPROVED",
+     "actions": [
+      {
+       "technique": "T1071",
+       "sse": "FEASIBLE",
+       "action": "BLOCK_DESTINATION",
+       "target": "172.19.1.1",
+       "status": "AUTO_APPROVED"
+      }
+     ],
+     "tier": "confirmed",
+     "nearest_label_s": 0.349
+    },
+    {
+     "case_id": "case-9311",
+     "opened": "2025-01-08T14:58:53.271000Z",
+     "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 66.743
+    },
+    {
+     "case_id": "case-9312",
+     "opened": "2025-01-08T15:05:36.673000Z",
+     "signature": "ET POLICY SMB Executable File Transfer",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 4.627
+    },
+    {
+     "case_id": "case-9819",
+     "opened": "2025-01-09T10:54:51.365000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 9,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-9820",
+     "opened": "2025-01-09T10:54:51.405000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 2,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10574",
+     "opened": "2025-01-10T11:46:37.168000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 3,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10579",
+     "opened": "2025-01-10T11:48:14.042000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 1,
+     "path": "cache",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 45.974
+    }
+   ],
+   "attack_related_hidden": 0,
+   "attack_steps": [
+    {
+     "step": "Initial access: phishing macro on client 2, dropper download",
+     "time": "2025-01-06T10:00:00+00:00",
+     "cases_near": 5,
+     "surfaced": [
+      {
+       "case_id": "case-7540",
+       "opened": "2025-01-06T10:01:14.335000Z",
+       "signature": "ET INFO Dotted Quad Host ZIP Request",
+       "flow": "172.16.1.3 -> 172.19.1.1:80",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "AUTO_APPROVED",
+       "pipeline_outcome": "AUTO_APPROVED",
+       "actions": [
+        {
+         "technique": "T1071",
+         "sse": "FEASIBLE",
+         "action": "BLOCK_DESTINATION",
+         "target": "172.19.1.1",
+         "status": "AUTO_APPROVED"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "step": "Lateral movement client 2 -> client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "cases_near": 10,
+     "surfaced": [
+      {
+       "case_id": "case-9311",
+       "opened": "2025-01-08T14:58:53.271000Z",
+       "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9312",
+       "opened": "2025-01-08T15:05:36.673000Z",
+       "signature": "ET POLICY SMB Executable File Transfer",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Collection on the internal server (SSH from client 1)",
+     "time": "2025-01-10T11:00:00+00:00",
+     "cases_near": 59,
+     "surfaced": [
+      {
+       "case_id": "case-10574",
+       "opened": "2025-01-10T11:46:37.168000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.2 -> 172.16.0.2:53",
+       "alerts": 3,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-10579",
+       "opened": "2025-01-10T11:48:14.042000Z",
+       "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+       "flow": "172.16.1.2 -> 172.16.1.1:53",
+       "alerts": 1,
+       "path": "cache",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "cases_near": 2,
+     "surfaced": []
+    }
+   ],
+   "known_false_positives": [
+    {
+     "case_id": "case-7351",
+     "opened": "2025-01-06T08:10:54.357000Z",
+     "signature": "ET TROJAN Suspicious POST with Common Windows Process Names - Possible Process List Exfiltration",
+     "flow": "172.16.1.15 -> 172.16.0.3:9200",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9071",
+     "opened": "2025-01-08T10:49:20.794000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.30 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9489",
+     "opened": "2025-01-08T17:53:12.040000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.6 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    }
+   ],
+   "auto_approved": {
+    "cases": 35,
+    "on_attacker_infrastructure": 1,
+    "targets": [
+     [
+      "52.23.111.175",
+      2
+     ],
+     [
+      "34.117.59.81",
+      2
+     ],
+     [
+      "94.23.17.185",
+      2
+     ],
+     [
+      "212.227.67.34",
+      2
+     ],
+     [
+      "213.140.209.236",
+      2
+     ],
+     [
+      "77.72.169.211",
+      2
+     ],
+     [
+      "77.72.169.213",
+      2
+     ],
+     [
+      "212.227.67.33",
+      2
+     ],
+     [
+      "85.17.88.164",
+      2
+     ],
+     [
+      "85.93.219.114",
+      2
+     ],
+     [
+      "81.187.30.115",
+      2
+     ],
+     [
+      "82.113.193.63",
+      2
+     ],
+     [
+      "154.73.34.4",
+      2
+     ],
+     [
+      "185.208.37.90",
+      2
+     ],
+     [
+      "172.19.1.1",
+      1
+     ],
+     [
+      "64.131.63.217",
+      1
+     ],
+     [
+      "77.72.169.212",
+      1
+     ],
+     [
+      "154.73.34.8",
+      1
+     ],
+     [
+      "64.131.63.216",
+      1
+     ],
+     [
+      "77.72.169.210",
+      1
+     ],
+     [
+      "95.100.246.76",
+      1
+     ]
+    ]
+   },
+   "watches": {
+    "count": 35,
+    "would_block_on_attacker": 1,
+    "would_block_on_benign_targets": 1065,
+    "top_benign": [
+     [
+      "34.117.59.81",
+      347
+     ],
+     [
+      "185.208.37.90",
+      96
+     ],
+     [
+      "64.131.63.216",
+      83
+     ],
+     [
+      "34.117.59.81",
+      73
+     ],
+     [
+      "64.131.63.217",
+      69
+     ]
+    ]
+   },
+   "attack_patterns_learned_as_routine": []
+  },
+  "ungated": {
+   "run": "ungated",
+   "test_cases": 7732,
+   "outcomes": {
+    "LOW_PRIORITY": 7362,
+    "REVIEW": 336,
+    "AUTO_APPROVED": 34
+   },
+   "reviews_per_day": {
+    "mean": 24.0,
+    "max": 81,
+    "by_day": [
+     40,
+     13,
+     27,
+     42,
+     23,
+     0,
+     0,
+     24,
+     81,
+     9,
+     43,
+     34,
+     0,
+     0
+    ]
+   },
+   "low_priority_share": 0.9521,
+   "attack_related": [
+    {
+     "case_id": "case-7540",
+     "opened": "2025-01-06T10:01:14.335000Z",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "alerts": 2,
+     "path": "pipeline",
+     "outcome": "AUTO_APPROVED",
+     "pipeline_outcome": "AUTO_APPROVED",
+     "actions": [
+      {
+       "technique": "T1071",
+       "sse": "FEASIBLE",
+       "action": "BLOCK_DESTINATION",
+       "target": "172.19.1.1",
+       "status": "AUTO_APPROVED"
+      }
+     ],
+     "tier": "confirmed",
+     "nearest_label_s": 0.349
+    },
+    {
+     "case_id": "case-9311",
+     "opened": "2025-01-08T14:58:53.271000Z",
+     "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 66.743
+    },
+    {
+     "case_id": "case-9312",
+     "opened": "2025-01-08T15:05:36.673000Z",
+     "signature": "ET POLICY SMB Executable File Transfer",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 4.627
+    },
+    {
+     "case_id": "case-9819",
+     "opened": "2025-01-09T10:54:51.365000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 9,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-9820",
+     "opened": "2025-01-09T10:54:51.405000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 2,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10574",
+     "opened": "2025-01-10T11:46:37.168000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 3,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10579",
+     "opened": "2025-01-10T11:48:14.042000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 1,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 45.974
+    }
+   ],
+   "attack_related_hidden": 4,
+   "attack_steps": [
+    {
+     "step": "Initial access: phishing macro on client 2, dropper download",
+     "time": "2025-01-06T10:00:00+00:00",
+     "cases_near": 5,
+     "surfaced": [
+      {
+       "case_id": "case-7540",
+       "opened": "2025-01-06T10:01:14.335000Z",
+       "signature": "ET INFO Dotted Quad Host ZIP Request",
+       "flow": "172.16.1.3 -> 172.19.1.1:80",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "AUTO_APPROVED",
+       "pipeline_outcome": "AUTO_APPROVED",
+       "actions": [
+        {
+         "technique": "T1071",
+         "sse": "FEASIBLE",
+         "action": "BLOCK_DESTINATION",
+         "target": "172.19.1.1",
+         "status": "AUTO_APPROVED"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "step": "Lateral movement client 2 -> client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "cases_near": 10,
+     "surfaced": [
+      {
+       "case_id": "case-9311",
+       "opened": "2025-01-08T14:58:53.271000Z",
+       "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9312",
+       "opened": "2025-01-08T15:05:36.673000Z",
+       "signature": "ET POLICY SMB Executable File Transfer",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Collection on the internal server (SSH from client 1)",
+     "time": "2025-01-10T11:00:00+00:00",
+     "cases_near": 59,
+     "surfaced": []
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "cases_near": 2,
+     "surfaced": []
+    }
+   ],
+   "known_false_positives": [
+    {
+     "case_id": "case-7351",
+     "opened": "2025-01-06T08:10:54.357000Z",
+     "signature": "ET TROJAN Suspicious POST with Common Windows Process Names - Possible Process List Exfiltration",
+     "flow": "172.16.1.15 -> 172.16.0.3:9200",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9071",
+     "opened": "2025-01-08T10:49:20.794000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.30 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9489",
+     "opened": "2025-01-08T17:53:12.040000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.6 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    }
+   ],
+   "auto_approved": {
+    "cases": 34,
+    "on_attacker_infrastructure": 1,
+    "targets": [
+     [
+      "52.23.111.175",
+      2
+     ],
+     [
+      "94.23.17.185",
+      2
+     ],
+     [
+      "212.227.67.34",
+      2
+     ],
+     [
+      "213.140.209.236",
+      2
+     ],
+     [
+      "77.72.169.211",
+      2
+     ],
+     [
+      "77.72.169.213",
+      2
+     ],
+     [
+      "212.227.67.33",
+      2
+     ],
+     [
+      "85.17.88.164",
+      2
+     ],
+     [
+      "85.93.219.114",
+      2
+     ],
+     [
+      "81.187.30.115",
+      2
+     ],
+     [
+      "82.113.193.63",
+      2
+     ],
+     [
+      "154.73.34.4",
+      2
+     ],
+     [
+      "185.208.37.90",
+      2
+     ],
+     [
+      "172.19.1.1",
+      1
+     ],
+     [
+      "34.117.59.81",
+      1
+     ],
+     [
+      "64.131.63.217",
+      1
+     ],
+     [
+      "77.72.169.212",
+      1
+     ],
+     [
+      "154.73.34.8",
+      1
+     ],
+     [
+      "64.131.63.216",
+      1
+     ],
+     [
+      "77.72.169.210",
+      1
+     ],
+     [
+      "95.100.246.76",
+      1
+     ]
+    ]
+   },
+   "watches": {
+    "count": 34,
+    "would_block_on_attacker": 1,
+    "would_block_on_benign_targets": 988,
+    "top_benign": [
+     [
+      "34.117.59.81",
+      347
+     ],
+     [
+      "185.208.37.90",
+      96
+     ],
+     [
+      "64.131.63.216",
+      83
+     ],
+     [
+      "64.131.63.217",
+      69
+     ],
+     [
+      "185.208.37.90",
+      54
+     ]
+    ]
+   },
+   "attack_patterns_learned_as_routine": [
+    "sid 2027262 host:client2 -> dest:172.19.1.1"
+   ]
+  },
+  "gated_noact": {
+   "run": "gated_noact",
+   "test_cases": 7732,
+   "outcomes": {
+    "LOW_PRIORITY": 7305,
+    "NO_ACTIONABLE": 236,
+    "REVIEW": 156,
+    "AUTO_APPROVED": 35
+   },
+   "reviews_per_day": {
+    "mean": 11.1,
+    "max": 35,
+    "by_day": [
+     13,
+     4,
+     13,
+     10,
+     19,
+     0,
+     0,
+     17,
+     35,
+     4,
+     19,
+     22,
+     0,
+     0
+    ]
+   },
+   "low_priority_share": 0.9448,
+   "attack_related": [
+    {
+     "case_id": "case-7540",
+     "opened": "2025-01-06T10:01:14.335000Z",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "alerts": 2,
+     "path": "pipeline",
+     "outcome": "AUTO_APPROVED",
+     "pipeline_outcome": "AUTO_APPROVED",
+     "actions": [
+      {
+       "technique": "T1071",
+       "sse": "FEASIBLE",
+       "action": "BLOCK_DESTINATION",
+       "target": "172.19.1.1",
+       "status": "AUTO_APPROVED"
+      }
+     ],
+     "tier": "confirmed",
+     "nearest_label_s": 0.349
+    },
+    {
+     "case_id": "case-9311",
+     "opened": "2025-01-08T14:58:53.271000Z",
+     "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "NO_ACTIONABLE",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 66.743
+    },
+    {
+     "case_id": "case-9312",
+     "opened": "2025-01-08T15:05:36.673000Z",
+     "signature": "ET POLICY SMB Executable File Transfer",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "NO_ACTIONABLE",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 4.627
+    },
+    {
+     "case_id": "case-9819",
+     "opened": "2025-01-09T10:54:51.365000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 9,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-9820",
+     "opened": "2025-01-09T10:54:51.405000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 2,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10574",
+     "opened": "2025-01-10T11:46:37.168000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 3,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10579",
+     "opened": "2025-01-10T11:48:14.042000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 1,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 45.974
+    }
+   ],
+   "attack_related_hidden": 6,
+   "attack_steps": [
+    {
+     "step": "Initial access: phishing macro on client 2, dropper download",
+     "time": "2025-01-06T10:00:00+00:00",
+     "cases_near": 5,
+     "surfaced": [
+      {
+       "case_id": "case-7540",
+       "opened": "2025-01-06T10:01:14.335000Z",
+       "signature": "ET INFO Dotted Quad Host ZIP Request",
+       "flow": "172.16.1.3 -> 172.19.1.1:80",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "AUTO_APPROVED",
+       "pipeline_outcome": "AUTO_APPROVED",
+       "actions": [
+        {
+         "technique": "T1071",
+         "sse": "FEASIBLE",
+         "action": "BLOCK_DESTINATION",
+         "target": "172.19.1.1",
+         "status": "AUTO_APPROVED"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "step": "Lateral movement client 2 -> client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "cases_near": 10,
+     "surfaced": []
+    },
+    {
+     "step": "Collection on the internal server (SSH from client 1)",
+     "time": "2025-01-10T11:00:00+00:00",
+     "cases_near": 59,
+     "surfaced": []
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "cases_near": 2,
+     "surfaced": []
+    }
+   ],
+   "known_false_positives": [
+    {
+     "case_id": "case-7351",
+     "opened": "2025-01-06T08:10:54.357000Z",
+     "signature": "ET TROJAN Suspicious POST with Common Windows Process Names - Possible Process List Exfiltration",
+     "flow": "172.16.1.15 -> 172.16.0.3:9200",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "NO_ACTIONABLE",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9071",
+     "opened": "2025-01-08T10:49:20.794000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.30 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "NO_ACTIONABLE",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9489",
+     "opened": "2025-01-08T17:53:12.040000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.6 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "NO_ACTIONABLE",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    }
+   ],
+   "auto_approved": {
+    "cases": 35,
+    "on_attacker_infrastructure": 1,
+    "targets": [
+     [
+      "52.23.111.175",
+      2
+     ],
+     [
+      "34.117.59.81",
+      2
+     ],
+     [
+      "94.23.17.185",
+      2
+     ],
+     [
+      "212.227.67.34",
+      2
+     ],
+     [
+      "213.140.209.236",
+      2
+     ],
+     [
+      "77.72.169.211",
+      2
+     ],
+     [
+      "77.72.169.213",
+      2
+     ],
+     [
+      "212.227.67.33",
+      2
+     ],
+     [
+      "85.17.88.164",
+      2
+     ],
+     [
+      "85.93.219.114",
+      2
+     ],
+     [
+      "81.187.30.115",
+      2
+     ],
+     [
+      "82.113.193.63",
+      2
+     ],
+     [
+      "154.73.34.4",
+      2
+     ],
+     [
+      "185.208.37.90",
+      2
+     ],
+     [
+      "172.19.1.1",
+      1
+     ],
+     [
+      "64.131.63.217",
+      1
+     ],
+     [
+      "77.72.169.212",
+      1
+     ],
+     [
+      "154.73.34.8",
+      1
+     ],
+     [
+      "64.131.63.216",
+      1
+     ],
+     [
+      "77.72.169.210",
+      1
+     ],
+     [
+      "95.100.246.76",
+      1
+     ]
+    ]
+   },
+   "watches": {
+    "count": 35,
+    "would_block_on_attacker": 1,
+    "would_block_on_benign_targets": 1065,
+    "top_benign": [
+     [
+      "34.117.59.81",
+      347
+     ],
+     [
+      "185.208.37.90",
+      96
+     ],
+     [
+      "64.131.63.216",
+      83
+     ],
+     [
+      "34.117.59.81",
+      73
+     ],
+     [
+      "64.131.63.217",
+      69
+     ]
+    ]
+   },
+   "attack_patterns_learned_as_routine": []
+  }
+ }
+}
