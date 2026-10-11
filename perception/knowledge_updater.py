@@ -49,6 +49,7 @@ from perception.network_model import UNKNOWN
 from perception.source_systems import SourceSystem
 
 BENIGN_OUTCOMES = frozenset({"LOW_PRIORITY", "NO_ACTIONABLE"})
+RETRACTABLE = frozenset({"closed_benign", "analyst", "ungated"})   # learned after training (decision B5)
 ESCALATED_OUTCOMES = frozenset({"REVIEW", "AUTO_APPROVED"})
 GATE_DELAY = timedelta(hours=24)
 
@@ -112,6 +113,25 @@ class KnowledgeUpdater:
         """The analyst resolved this escalated case as not malicious: it stops blocking gated learning."""
         for address in _addresses(case):
             self._escalations.get(address, {}).pop(case.case_id, None)
+
+    def retract_host_learning(self, host: str, since: datetime, at: datetime, writer: str) -> list[str]:
+        """
+        Decision B5 (a): the host is confirmed compromised.  Patterns learned on it
+        since `since` from closed cases or verdicts (not training, not config) may
+        be the attacker's, so they are retracted: they alert again.  Returns the
+        retracted edges as "src -[key]-> dst".
+        """
+        node, lineage_key = host_node_id(host), f"host:{host.lower()}"
+        out = []
+        for src, dst, key, _, learned_at in self.db.learned_edges(RETRACTABLE):
+            if learned_at < since or not (node in (src, dst) or key == lineage_key):
+                continue
+            if not self.db.graph.graph.has_edge(src, dst, key):
+                continue
+            self.db.retract_edge(src, dst, key, writer=writer, at=at,
+                                 reason=f"host {host} confirmed compromised; learned since {since.isoformat()}")
+            out.append(f"{src} -[{key}]-> {dst}")
+        return out
 
     @property
     def pending(self) -> int:
