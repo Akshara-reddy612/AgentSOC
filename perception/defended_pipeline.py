@@ -22,7 +22,7 @@ from perception.sse import SSEVerdict, StructuralSimulationEngine
 
 
 def run_downstream(hypotheses: list[NCEHypothesis], alert: dict,
-                   kg: KnowledgeStoreGraph | None = None) -> dict:
+                   kg: KnowledgeStoreGraph | None = None, era_level: str | None = None) -> dict:
     kg = kg or KnowledgeStoreGraph()
     sse = StructuralSimulationEngine(kg)
     evidence = {f: str(alert[f]) for f in _NCE_EVIDENCE_FIELD_NAMES if alert.get(f) is not None}
@@ -53,5 +53,5 @@ def run_downstream(hypotheses: list[NCEHypothesis], alert: dict,
             })
             statuses.append(pb.overall_status.value)
         rows.append(row)
-    out = decide(alert, statuses, kg)
+    out = decide(alert, statuses, kg, era_level=era_level)
     return {"hypotheses": rows, "outcome": out.label, "outcome_reasons": out.reasons}
