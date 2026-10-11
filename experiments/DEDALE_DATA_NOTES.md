@@ -84,6 +84,11 @@ These counts come from all 1,465,627 alerts through `dedale.suricata.iter_alerts
 
 With no learned baseline, each outbound alert becomes a telemetry C2 check on an unknown destination, and an unknown destination is auto-blocked (BLOCK_DESTINATION). So a static store would auto-block the DNS resolver. It is deliberately not put on an allow-list in the profile: recognising routine destinations is what the learned baseline (design steps S5/S6) is supposed to do, and comparison C0 vs C1 measures it.
 
+[Correction 2026-10-11, after the Phase 1 replay] The static run did NOT block the resolver.
+- The outbound DNS alerts to 172.18.0.1 come from the DNS forwarders: companyrouter2 (172.16.255.2, 142 test-window cases), the DMZ mail server (102) and 172.18.0.2 (34, external -> external, no C2 check). The clients query those forwarders, not the resolver.
+- The inventory rates routers and the mail server criticality 2, so the guardrails' critical-host rule sends the proposed BLOCK_DESTINATION to review instead of auto-approving it. In the static run all 278 resolver cases ended REVIEW.
+- This depends on that criticality assumption: with the forwarders rated 0-1 the block would have been auto-approved.
+
 ## User behaviour (`userbehaviour_logs.zip`)
 
 - 45 VMs × (`<ip>_<role>_ub.log`, `<ip>_<role>_timeline.csv`). The timeline is the benign activity plan: `ts, date_str, inter_event_delay, action_duration, action_type` (e.g. browsing, mailing). IPs here are on 192.168.56.0/24 (management network), not the 172.16.x addresses seen in Suricata.

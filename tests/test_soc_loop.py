@@ -77,7 +77,8 @@ def test_gated_run_decisions(tmp_path):
     assert [w.would_block for w in loop.monitor.finished] == [1]
 
 
-def test_static_store_blocks_the_resolver_and_reviews_routine_traffic(tmp_path):
+def test_static_store_blocks_a_routine_destination_and_reviews_routine_traffic(tmp_path):
+    """A client (criticality 0) contacting the resolver; in the real data that DNS comes from forwarders."""
     _, _, _, d = _run(tmp_path, "static")
     assert d[1].outcome == "REVIEW"
     assert d[2].outcome == "AUTO_APPROVED" and d[2].hypotheses[0]["top_action"] == "BLOCK_DESTINATION"
