@@ -117,7 +117,8 @@ def _is_daily_quota(err: str | None) -> bool:
     return bool(err) and DAILY_QUOTA_MARKER in err
 
 
-def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, model: str = MODEL) -> bool:
+def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, model: str = MODEL,
+                  call_fn=None) -> bool:
     """
     One thread per worker, each starting on its own key; every NCE call runs in
     a child process with a hard timeout.  Reuses the tested helpers of the
@@ -132,6 +133,7 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, mo
     from agent.key_pool import load_gemini_pool, load_groq_pool
     from experiments.run_paired_clean_eval_B_parallel import _call_with_timeout, _log_api_call
 
+    call_fn = call_fn or live_nce   # any top-level fn(alert, model=..., groq_keys=...) -> (result|None, err, raw, n_calls)
     groq = _is_groq(model)
     keys = (load_groq_pool() if groq else load_gemini_pool()).keys
     if not keys:
@@ -167,11 +169,11 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, mo
                 t0 = last = time.time()
                 try:
                     if groq:
-                        out, _ = _call_with_timeout(live_nce, alert, model=model, groq_keys=keys[k:] + keys[:k],
+                        out, _ = _call_with_timeout(call_fn, alert, model=model, groq_keys=keys[k:] + keys[:k],
                                                     timeout=CALL_TIMEOUT_S)
                         last4 = keys[k][-4:]
                     else:
-                        out, last4 = _call_with_timeout(live_nce, alert, model=model, active_key=keys[k],
+                        out, last4 = _call_with_timeout(call_fn, alert, model=model, active_key=keys[k],
                                                         all_keys=keys, timeout=CALL_TIMEOUT_S)
                     _log_api_call(api_log, alert_id=alert["alert_id"], model=model, key_index=k,
                                   child_key_last4=last4, success=out[0] is not None, api_call_count=out[3],

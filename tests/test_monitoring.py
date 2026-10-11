@@ -35,6 +35,17 @@ from monitoring.sources.api_source import APISource, MAX_PAYLOAD_BYTES
 from monitoring.demo_alerts import CURATED_DEMO_ALERTS
 
 
+@pytest.fixture(scope="module", autouse=True)
+def _warm_era_model():
+    """
+    Load the ERA sentence-transformer once before any timed adapter test, as
+    MonitoringWorker does in production (2026-10-11).  Without it the first
+    test to reach ERA paid the cold model load inside its time limit and
+    failed intermittently (seen as a 1-in-N full-suite failure).
+    """
+    MonitoringPipelineAdapter().warmup()
+
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -496,20 +507,37 @@ def test_api_source_rebind_safety():
 # 8. Safety & Invariant Tests
 # ---------------------------------------------------------------------------
 
-def test_graph_immutability_during_monitoring():
-    """Verify live KnowledgeStoreGraph is never mutated during monitoring runs."""
-    from perception.knowledge_graph import KnowledgeStoreGraph
+def test_graph_immutability_during_monitoring(monkeypatch, tmp_path):
+    """
+    Verify the adapter's live KnowledgeStoreGraph is never mutated.
 
-    kg = KnowledgeStoreGraph()
-    initial_nodes = kg.graph.number_of_nodes()
-    initial_edges = kg.graph.number_of_edges()
+    Rewritten 2026-10-11: the old version built its own graph, which the
+    adapter never touched, so it could not fail.  Now every graph the adapter
+    creates is captured, and a FEASIBLE alert (RSEM + playbook + dry run on a
+    graph copy) is used.
+    """
+    import perception.knowledge_graph as kgmod
 
+    monkeypatch.setattr("perception.action_playbook.AUDIT_LOG_PATH", tmp_path / "audit.jsonl")
+    created: list = []
+
+    class SpyGraph(kgmod.KnowledgeStoreGraph):
+        def __init__(self, *a, **kw):
+            super().__init__(*a, **kw)
+            created.append((self, self.graph.number_of_nodes(), self.graph.number_of_edges(),
+                            sorted(map(str, self.graph.edges(keys=True)))))
+
+    monkeypatch.setattr(kgmod, "KnowledgeStoreGraph", SpyGraph)
     adapter = MonitoringPipelineAdapter()
     rec = EventRecord()
-    adapter.run(CURATED_DEMO_ALERTS[0], rec, time_limit_s=60.0, use_live_nce=False)
+    adapter.run(CURATED_DEMO_ALERTS[1], rec, time_limit_s=60.0, use_live_nce=False)
 
-    assert kg.graph.number_of_nodes() == initial_nodes
-    assert kg.graph.number_of_edges() == initial_edges
+    assert rec.sse_feasible_count >= 1 and rec.rsem_top_action      # reached RSEM / playbook
+    assert created, "adapter created no KnowledgeStoreGraph — test would be vacuous"
+    for kg, n_nodes, n_edges, edges in created:
+        assert kg.graph.number_of_nodes() == n_nodes
+        assert kg.graph.number_of_edges() == n_edges
+        assert sorted(map(str, kg.graph.edges(keys=True))) == edges
 
 
 def test_adapter_warmup_no_state_mutation():
