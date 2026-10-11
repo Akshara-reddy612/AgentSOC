@@ -76,7 +76,9 @@ def case_record(case: Case, decision: Decision | None) -> dict:
            "command_line": (a.get("command_line") or "")[:300] or None}
     if decision is not None:
         rec.update(decided=_iso(decision.at), path=decision.path, outcome=decision.outcome,
-                   pipeline_outcome=decision.pipeline_outcome, nce=decision.nce, reasons=decision.reasons)
+                   pipeline_outcome=decision.pipeline_outcome, nce=decision.nce, reasons=decision.reasons,
+                   hypotheses=[{k: h.get(k) for k in ("technique_id", "sse_verdict", "entity_binding", "top_action",
+                                                      "playbook_status")} for h in decision.hypotheses])
     return rec
 
 
@@ -84,12 +86,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--mode", required=True, choices=LEARNING_MODES)
     ap.add_argument("--analyst", default="none", choices=["none", "oracle"])
+    ap.add_argument("--nce", default="off", choices=["off", "live"],
+                    help="live: Gemini NCE on cases reaching the pipeline (API calls; cached; needs budget approval)")
+    ap.add_argument("--max-calls", type=int, default=950, help="hard cap on live NCE calls in this run")
     ap.add_argument("--detectors", nargs="+", default=list(DETECTORS), choices=list(DETECTORS))
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD)")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
 
-    run = args.mode + ("_analyst" if args.analyst == "oracle" else "")
+    run = args.mode + ("_nce" if args.nce == "live" else "") + ("_analyst" if args.analyst == "oracle" else "")
     root = data_dir().parent
     store_path = root / "ks" / f"dedale_host_{run}.sqlite"
     run_dir = root / "runs" / f"dedale_host_{run}"
@@ -122,8 +127,14 @@ def main() -> None:
             if analyst is not None:
                 analyst.observe_alert(case, alert)
 
+        gate_options, nce = {}, None
+        if args.nce == "live":
+            from experiments.dedale_nce import CallCap, LiveNCE
+            cap = CallCap(args.max_calls)
+            nce = LiveNCE(cap)
+            gate_options = {"nce": nce, "budget": cap}
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
-                       detectors=tuple(args.detectors), on_alert=on_alert)
+                       detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options)
         last = TRAINING_START
         events = iter_events(until)
         while chunk := list(islice(events, CHUNK)):
@@ -144,6 +155,7 @@ def main() -> None:
             out.write(json.dumps({"case_id": case_id, "at": _iso(at), "verdict": verdict}) + "\n")
     summary = {
         "run": run, "mode": args.mode, "analyst": args.analyst, "detectors": args.detectors, "until": args.until,
+        "nce": args.nce, "nce_live_calls": nce.live_calls if nce else 0, "nce_cache_hits": nce.cache_hits if nce else 0,
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,

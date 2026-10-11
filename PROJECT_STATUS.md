@@ -220,6 +220,27 @@
   - **Caveats:** only 590 of the 10,593 labelled client events are of the kept event types; registry persistence is invisible (no registry events in DEDALE); lineage causes 853 of the 913 gated cases.
   - **Fix:** the analyst's "malicious" verdict handled only network alerts (KeyError `src_ip`); it now flags the host of a host alert.
   - **Tests:** suite 690 passed, 1 deselected.
+- **DEDALE Phase 3 — live NCE on host alerts (2026-10-11, API budget user-approved): `experiments/DEDALE_PHASE3_RESULTS.md`**, scores in `experiments/dedale_results/phase3_scores.json`.
+  - **Code:**
+    - `experiments/dedale_nce.py`: live NCE with the full technique vocabulary (D6), a per-alert cache (`runs/nce_cache_host.jsonl`), an API log, and a hard cap on live calls.
+    - `dedale_host_replay.py`: `--nce live --max-calls N`; case records keep hypothesis summaries.
+    - `dedale_host_score.py`: `--out`.
+  - **Run:** gated mode, gemini-3.1-flash-lite. 416 live calls (117 pilot + 299 new), 0 errors, 14.4 min.
+
+    | | gated | gated + NCE | gated + analyst |
+    |:--|--:|--:|--:|
+    | Reviews / day | 65.2 | 54.6 | 30.9 |
+    | Benign / malicious cases dismissed | 0 / 0 | 89 / 2 of 72 | 0 / 0 |
+    | Attack keys learned | 0 | 0 | 0 |
+
+  - **Finding — dismissals:**
+    - The 16% reduction comes entirely from all-INFEASIBLE dismissals.
+    - The 2 malicious dismissals are the start of the collection step: `scp` from the internal Linux server 172.16.0.2. The store has no access edges for it (no telemetry), so SSE read "unknown" as "impossible".
+    - The step was still surfaced by 9 other cases at +30 min.
+  - **Finding — verdicts and targets:**
+    - SSE verdicts do not separate benign from malicious: a FEASIBLE hypothesis appears on 18 of 70 malicious and 60 of 695 benign REVIEW cases.
+    - The **target** NCE names does separate them. 405 of the 416 results name only the alerting client. The 11 that name another host (attacker 172.19.x, internal server, `Z:`) are 10 labelled malicious events plus 1 unlabelled record next to them.
+  - **Open decision:** (a) open-world SSE for entities the store has no telemetry for (CONDITIONALLY_FEASIBLE -> review); (b) never dismiss host alerts on infeasibility alone; (c) keep as is. A replay reuses the cached hypotheses.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
