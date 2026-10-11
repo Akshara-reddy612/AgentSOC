@@ -1007,3 +1007,19 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created/updated: `agent/v2_results/v2_dev_live_results.json` (+900), `v2_dev_live_api_log.jsonl`, `v2_heldout_live_results.json`, `v2_heldout_live_api_log.jsonl`, `v2_dev_live_results_rescored.json`, `v2_heldout_live_results_rescored.json`
 - Modified: `experiments/run_paired_clean_eval_B_parallel.py` (retry), `tests/test_atomic_checkpoint_retry.py` (new), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Phase 4 steps 4.4-4.5 — accuracy vs grade; structured-field tampering (offline)
+
+### What was tried
+- Pushed `main` (f414544) at user request. New `experiments/accuracy_by_grade.py` and `experiments/tamper_structured.py`; `tests/test_tamper_and_accuracy.py` (2 tests). No API calls.
+
+### What was found
+- Accuracy: clean-alert response rate by grade — dev TP 161/175 (92.0%), BP 182/222 (82.0%), FP 83/99 (83.8%); held-out TP 143/161 (88.8%), BP 189/224 (84.4%), FP 105/115 (91.3%). By Category (dev): InitialAccess 220 alerts 100% responded (TP 56%), Exfiltration 84 / 100% (TP 11%), CommandAndControl 51 / 100% (TP 16%), SuspiciousActivity 52 / 40% (TP 29%). Expected given corpus design (grade-independent evidence and reputation); detection accuracy is not measurable on corpus v2.
+- Tampering (dev / held-out): steer_identity 50 / 50 alerts, executed 0 / 0, gated 7 / 2, AUTO_APPROVED->REVIEW 12 / 17; drop_destination 417 / 428 alerts, suppressed 25 / 24 (AUTO->NO_ACTIONABLE 12 / 9, REVIEW->NO_ACTIONABLE 13 / 13), AUTO->REVIEW 163 / 159; launder_destination suppressed 0 / 0, AUTO->REVIEW 175 / 168. Misdirection judged against the original (untampered) fields.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 529 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/accuracy_by_grade.py`, `experiments/tamper_structured.py`, `tests/test_tamper_and_accuracy.py`
+- Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
