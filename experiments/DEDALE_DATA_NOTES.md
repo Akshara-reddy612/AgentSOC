@@ -10,6 +10,23 @@ Data: `D:\agentsoc_data\dedale\` (outside the repo; CC BY 4.0, DOI 10.57745/Y5JL
 - **Timeline (UTC as on the site):** 2025-01-06 10:00 email infection of client 2 (172.16.1.3); 01-08 15:00 lateral movement to client 1 (172.16.1.2) via PrintNightmare; 01-10 11:00 collection on the samba server / DC (172.16.0.2); 01-11 11:00 exfiltration to the attacker; 01-12..01-13 11:40 malware extinction and last beaconing; normal activity before 01-06 and from 01-14.
 - The site also offers DFIR-ORC forensic artefacts for client_1..4, internal_server and dmz_server (not downloaded).
 
+## Network architecture (source for the environment profile)
+
+From the RESCOUSSE testbed page and diagram (dedale.inria.fr/rescousse.html, read 2026-10-11). This is the kind of knowledge a real enterprise has in its own CMDB / network plan.
+
+| Zone (capture point) | Subnet | Hosts |
+|:--|:--|:--|
+| Internal (green_internal) | 172.16.1.0/24 | Internal company clients 1-N (Windows) = 172.16.1.2-.254 (client 1 = .2, client 2 = .3, consistent with the attack timeline); gateway 172.16.1.1 |
+| Servers (orange_servers) | 172.16.0.0/24 | Internal Server 172.16.0.2 (samba / DC, holds domain credentials and documents), Log Server 172.16.0.3 (ELK; all Sysmon/auditd logs are sent here); gateway 172.16.0.1 |
+| Company Router 2 | 172.16.255.0/24 | red0 172.16.255.2 |
+| DMZ (orange_dmz) | 172.17.0.0/16 | DMZ Server 172.17.0.2 (mail + DVWA), Web Server 172.17.0.3 (WordPress), VPN Server 172.17.0.5 (VPN clients 10.8.0.0/16) |
+| Internet (red zone) | 172.18.0.0/16 | Internet Router 172.18.0.1, External Router red0 172.18.0.3 |
+| External | 172.19.0.0/16 | External clients 172.19.0.3-.102, external company clients (remote employees) 172.19.0.103-.202, SMTP server 172.19.0.254, external router 172.19.0.1 |
+
+The diagram also marks the attacker addresses. Per design invariant I4 they are ground truth for the scorer and are **not** part of the profile; the profile only says "172.19.0.0/16 = external".
+
+The current `network_model.is_internal_address()` (RFC 1918) would classify every one of these zones as internal, including the simulated internet and the external zone.
+
 ## Host labels (`system_logs_labels.zip`)
 
 - **Positives only.** Each file is a list of malicious raw events (Elastic/ECS JSON as shipped by winlogbeat/auditbeat). There is no list of benign events and no alert objects; negatives would be "every other event" in the full winlogbeat/auditbeat logs (not downloaded).
@@ -24,10 +41,11 @@ Data: `D:\agentsoc_data\dedale\` (outside the repo; CC BY 4.0, DOI 10.57745/Y5JL
 
 - 1,465,627 alerts, all four weeks, from two routers (companyrouter2 1,258,286; companyrouter 207,341). Format: syslog lines in Suricata's one-line text format (`[gid:sid:rev] signature [Classification] [Priority] {proto} src:port -> dst:port`), **no labels**, no EVE JSON, no flow id.
 - Only **33 distinct signatures**. Three account for 88%: `ET INFO User-Agent (python-requests) Inbound to Webserver` 732,828; `ET USER_AGENTS Go HTTP Client User-Agent` 301,950; `ET TROJAN Suspicious POST With Reference to WINDOWS Folder Possible Malware Infection` 250,476. All fire at the same daily rate in the benign weeks (~62-68k per weekday, ~15k per weekend day).
+- **88.5% of all alerts (1,297,618) are traffic to the Log Server 172.16.0.3**, on port 9200 (564,790) and port 50010 (732,828). By signature: python-requests UA 732,828 (all port 50010), Go HTTP client UA 301,950, "Suspicious POST With Reference to WINDOWS Folder" 250,476, "GPL EXPLOIT echo command attempt" 12,363, process-list POST 1. By source zone: internal clients 917,662, DMZ 258,791, router2 80,778, servers 40,387. The README says all host logs are sent to the Elastic log server, so the IDS is firing on the SIEM's own log shipping (log content contains Windows paths, process names and commands). The service on port 50010 is not documented. The remaining 168,009 alerts are mostly DNS-TLD and policy signatures.
 - Only 4 signatures first appear after the benign weeks (6 alerts in total):
   - `ET INFO Dotted Quad Host ZIP Request` ×2, 2025-01-06 10:01, 172.16.1.3 -> 172.19.1.1:80 — **matches CLIENT2's labelled Invoke-WebRequest download** (both routers saw it).
   - `ET POLICY SMB Executable File Transfer` ×1, 2025-01-08 15:05, 172.16.1.3 -> 172.16.0.2:445 — within 5 min of 6,714 labelled CLIENT2 events (svcmon.exe).
-  - `ET TROJAN Suspicious POST with Common Windows Process Names` ×1, 2025-01-06 08:10, from 172.16.1.15 — before the 10:00 infection, from a host the attack never touched: **false positive** (per the published timeline).
+  - `ET TROJAN Suspicious POST with Common Windows Process Names` ×1, 2025-01-06 08:10, from 172.16.1.15 — before the 10:00 infection, from a host the attack never touched: **false positive** (per the published timeline). Its destination is the Log Server, i.e. a client shipping its logs.
   - `ET TROJAN Backdoor family PCRat/Gh0st CnC traffic` ×2, 2025-01-08, from 172.16.1.30 and 172.16.1.6 to the DC's SMB port — hosts the attack never touched: **false positives** (per the published timeline).
 - Alerts touching the attacker IPs (172.19.1.1 / 172.19.2.1 / 172.19.0.2): only the 2 ZIP-download copies. The C2 and reverse-shell traffic raised **no** Suricata alert.
 - Ground truth for network data is in the Zeek `conn.log` labels (not downloaded); for Suricata alerts it can also be derived from the published timeline + attacker/victim IPs.

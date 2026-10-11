@@ -113,7 +113,7 @@ Each step is a commit with tests and tracking-doc updates.
 
 1. **S1 Environment profile + configurable internal ranges.** The default profile reproduces today's behaviour (re-score of stored runs must show 0 changes).
 2. **S2 Persistent store** (SQLite, `KnowledgeFact` mapping, graph projection, audit log).
-3. **S3 DEDALE Suricata adapter + DEDALE profile.** The profile is built from DEDALE's documented architecture; the architecture page still has to be read.
+3. **S3 DEDALE Suricata adapter + DEDALE profile.** The profile is built from DEDALE's documented architecture: zones, subnets and server roles, recorded in `experiments/DEDALE_DATA_NOTES.md`. The attacker addresses shown in that diagram are left out (I4).
 4. **S4 Case builder with memory.** Extends `NoiseReducer` rather than replacing it.
 5. **S5 KnowledgeUpdater + learning gate (I1, I3).**
 6. **S6 Triage gate, decision cache, NCE budget queue.**
