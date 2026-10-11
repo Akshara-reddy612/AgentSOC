@@ -15,6 +15,7 @@ from dedale.suricata import to_alert
 from perception.case_builder import Case, network_case_key
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import destination_node_id
+from perception.nce_contract import NCEHypothesis
 from perception.network_alert import with_entities
 from perception.outcome_monitor import OutcomeMonitor
 from perception.triage_gate import Decision, TriageGate
@@ -36,10 +37,18 @@ def _alert(db, src="172.16.1.3", dst=EXT, port=80, sid=2027262, n=1):
     return with_entities(to_alert({"@timestamp": int(T0.timestamp() * 1000), "message": line}, n), db)
 
 
+def _reasoned_c2(alert):
+    return [NCEHypothesis(technique_id="T1071", source_account="", source_host=alert["source_host"],
+                          target_host=alert["destination_ip"], nce_confidence=0.7,
+                          supporting_evidence_refs=["raw_log_line"])]
+
+
 def _blocked(db):
+    """A reasoned C2 case whose BLOCK_DESTINATION is auto-approved (telemetry alone would go to review)."""
     a = _alert(db)
     case = Case("case-1", network_case_key(a), T0, T0, a)
-    decision = TriageGate(db).triage(case, a, T0)
+    decision = TriageGate(db, nce=_reasoned_c2).triage(case, a, T0)
+    assert decision.outcome == "AUTO_APPROVED"
     monitor = OutcomeMonitor(db)
     return monitor, monitor.register(decision, T0)
 
@@ -71,6 +80,20 @@ def test_watch_ends_and_records_its_result(db):
     value = db.graph.graph.nodes[destination_node_id(EXT)]["response"].value
     assert (value["status"], value["hits"], value["would_block"]) == ("ended", 1, 1)
     assert monitor.reasons(_alert(db, n=3), T0 + timedelta(days=8)) == []
+
+
+def test_investigation_flag_escalates_only_new_activity_of_the_host(db):
+    from perception.case_builder import Case as _Case
+    from perception.knowledge_updater import KnowledgeUpdater
+    routine = _alert(db, dst="172.16.0.3", port=9200, sid=2017515, n=2)
+    KnowledgeUpdater(db).case_closed(_Case("case-0", network_case_key(routine), T0 - timedelta(days=7),
+                                           T0 - timedelta(days=7), routine, closed=T0 - timedelta(days=6)),
+                                     "NO_ACTIONABLE", training=True)
+    monitor = OutcomeMonitor(db)
+    monitor.flag_host("CLIENT2", "case-5", T0)
+    assert monitor.reasons(routine, T0 + timedelta(hours=1)) == []                       # learned routine
+    novel = _alert(db, dst="172.16.0.2", port=445, sid=2025699, n=3)
+    assert monitor.reasons(novel, T0 + timedelta(hours=1))[0].startswith("Host CLIENT2 is under watch")
 
 
 def test_only_executed_responses_are_watched(db):

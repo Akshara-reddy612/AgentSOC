@@ -12,6 +12,39 @@
    "case-9820": "probable",
    "case-10574": "probable",
    "case-10579": "probable"
+  },
+  "zeek_router1": {
+   "labelled_flows": 84,
+   "by_step": {
+    "initial_access": 4,
+    "attack_related_activity": 20,
+    "command_and_control": 58,
+    "exfiltration": 2
+   },
+   "suricata_alerts_matching": [
+    {
+     "timestamp": "2025-01-06T10:01:14.335Z",
+     "sensor": "companyrouter",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "step": "command_and_control",
+     "technique": "T1105"
+    },
+    {
+     "timestamp": "2025-01-06T10:01:17.467Z",
+     "sensor": "companyrouter2",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "step": "command_and_control",
+     "technique": "T1105"
+    }
+   ],
+   "labelled_flows_without_alert": {
+    "initial_access": 4,
+    "attack_related_activity": 20,
+    "command_and_control": 57,
+    "exfiltration": 2
+   }
   }
  },
  "runs": {
@@ -19,29 +52,32 @@
    "run": "static",
    "test_cases": 7732,
    "outcomes": {
-    "REVIEW": 7694,
-    "AUTO_APPROVED": 38
+    "REVIEW": 7732
    },
    "reviews_per_day": {
-    "mean": 549.6,
-    "max": 822,
+    "mean": 552.3,
+    "max": 826,
     "by_day": [
-     726,
-     782,
+     729,
+     783,
      735,
-     720,
+     733,
      729,
      53,
      69,
-     687,
-     822,
-     703,
-     773,
-     720,
+     689,
+     826,
+     704,
+     784,
+     722,
      88,
-     87
-    ]
+     88
+    ],
+    "week_1_mean": 547.3,
+    "week_2_mean": 557.3
    },
+   "attacker_server_contained_after_min": null,
+   "analyst_verdicts": {},
    "low_priority_share": 0.0,
    "attack_related": [
     {
@@ -51,17 +87,9 @@
      "flow": "172.16.1.3 -> 172.19.1.1:80",
      "alerts": 2,
      "path": "pipeline",
-     "outcome": "AUTO_APPROVED",
-     "pipeline_outcome": "AUTO_APPROVED",
-     "actions": [
-      {
-       "technique": "T1071",
-       "sse": "FEASIBLE",
-       "action": "BLOCK_DESTINATION",
-       "target": "172.19.1.1",
-       "status": "AUTO_APPROVED"
-      }
-     ],
+     "outcome": "REVIEW",
+     "pipeline_outcome": "REVIEW",
+     "actions": [],
      "tier": "confirmed",
      "nearest_label_s": 0.349
     },
@@ -158,17 +186,9 @@
        "flow": "172.16.1.3 -> 172.19.1.1:80",
        "alerts": 2,
        "path": "pipeline",
-       "outcome": "AUTO_APPROVED",
-       "pipeline_outcome": "AUTO_APPROVED",
-       "actions": [
-        {
-         "technique": "T1071",
-         "sse": "FEASIBLE",
-         "action": "BLOCK_DESTINATION",
-         "target": "172.19.1.1",
-         "status": "AUTO_APPROVED"
-        }
-       ]
+       "outcome": "REVIEW",
+       "pipeline_outcome": "REVIEW",
+       "actions": []
       },
       {
        "case_id": "case-7537",
@@ -249,18 +269,10 @@
        "signature": "ET USER_AGENTS Microsoft Device Metadata Retrieval Client User-Agent",
        "flow": "172.16.1.2 -> 2.21.225.158:80",
        "alerts": 16,
-       "path": "pipeline",
+       "path": "cache",
        "outcome": "REVIEW",
-       "pipeline_outcome": "AUTO_APPROVED",
-       "actions": [
-        {
-         "technique": "T1071",
-         "sse": "FEASIBLE",
-         "action": "BLOCK_DESTINATION",
-         "target": "2.21.225.158",
-         "status": "AUTO_APPROVED"
-        }
-       ]
+       "pipeline_outcome": "REVIEW",
+       "actions": []
       },
       {
        "case_id": "case-9360",
@@ -1063,129 +1075,15 @@
     }
    ],
    "auto_approved": {
-    "cases": 38,
-    "on_attacker_infrastructure": 1,
-    "targets": [
-     [
-      "2.21.225.158",
-      2
-     ],
-     [
-      "34.117.59.81",
-      2
-     ],
-     [
-      "52.23.111.175",
-      2
-     ],
-     [
-      "94.23.17.185",
-      2
-     ],
-     [
-      "212.227.67.34",
-      2
-     ],
-     [
-      "213.140.209.236",
-      2
-     ],
-     [
-      "77.72.169.211",
-      2
-     ],
-     [
-      "77.72.169.213",
-      2
-     ],
-     [
-      "212.227.67.33",
-      2
-     ],
-     [
-      "85.17.88.164",
-      2
-     ],
-     [
-      "85.93.219.114",
-      2
-     ],
-     [
-      "81.187.30.115",
-      2
-     ],
-     [
-      "82.113.193.63",
-      2
-     ],
-     [
-      "154.73.34.4",
-      2
-     ],
-     [
-      "185.208.37.90",
-      2
-     ],
-     [
-      "172.19.1.1",
-      1
-     ],
-     [
-      "64.131.63.217",
-      1
-     ],
-     [
-      "77.72.169.212",
-      1
-     ],
-     [
-      "154.73.34.8",
-      1
-     ],
-     [
-      "64.131.63.216",
-      1
-     ],
-     [
-      "23.217.186.82",
-      1
-     ],
-     [
-      "77.72.169.210",
-      1
-     ],
-     [
-      "95.100.246.76",
-      1
-     ]
-    ]
+    "cases": 0,
+    "on_attacker_infrastructure": 0,
+    "targets": []
    },
    "watches": {
-    "count": 38,
-    "would_block_on_attacker": 1,
-    "would_block_on_benign_targets": 6291,
-    "top_benign": [
-     [
-      "2.21.225.158",
-      2469
-     ],
-     [
-      "2.21.225.158",
-      2435
-     ],
-     [
-      "34.117.59.81",
-      378
-     ],
-     [
-      "34.117.59.81",
-      363
-     ],
-     [
-      "185.208.37.90",
-      96
-     ]
-    ]
+    "count": 0,
+    "would_block_on_attacker": 0,
+    "would_block_on_benign_targets": 0,
+    "top_benign": []
    },
    "attack_patterns_learned_as_routine": []
   },
@@ -1193,31 +1091,34 @@
    "run": "frozen",
    "test_cases": 7732,
    "outcomes": {
-    "LOW_PRIORITY": 7286,
-    "REVIEW": 411,
-    "AUTO_APPROVED": 35
+    "LOW_PRIORITY": 7366,
+    "REVIEW": 366
    },
    "reviews_per_day": {
-    "mean": 29.4,
-    "max": 84,
+    "mean": 26.1,
+    "max": 77,
     "by_day": [
-     41,
+     42,
+     14,
+     19,
+     52,
+     18,
+     0,
+     0,
      15,
-     29,
-     48,
+     77,
+     15,
+     74,
      37,
      0,
-     0,
-     29,
-     84,
-     15,
-     66,
-     45,
-     0,
-     2
-    ]
+     3
+    ],
+    "week_1_mean": 20.7,
+    "week_2_mean": 31.6
    },
-   "low_priority_share": 0.9423,
+   "attacker_server_contained_after_min": null,
+   "analyst_verdicts": {},
+   "low_priority_share": 0.9527,
    "attack_related": [
     {
      "case_id": "case-7540",
@@ -1226,17 +1127,9 @@
      "flow": "172.16.1.3 -> 172.19.1.1:80",
      "alerts": 2,
      "path": "pipeline",
-     "outcome": "AUTO_APPROVED",
-     "pipeline_outcome": "AUTO_APPROVED",
-     "actions": [
-      {
-       "technique": "T1071",
-       "sse": "FEASIBLE",
-       "action": "BLOCK_DESTINATION",
-       "target": "172.19.1.1",
-       "status": "AUTO_APPROVED"
-      }
-     ],
+     "outcome": "REVIEW",
+     "pipeline_outcome": "REVIEW",
+     "actions": [],
      "tier": "confirmed",
      "nearest_label_s": 0.349
     },
@@ -1333,17 +1226,9 @@
        "flow": "172.16.1.3 -> 172.19.1.1:80",
        "alerts": 2,
        "path": "pipeline",
-       "outcome": "AUTO_APPROVED",
-       "pipeline_outcome": "AUTO_APPROVED",
-       "actions": [
-        {
-         "technique": "T1071",
-         "sse": "FEASIBLE",
-         "action": "BLOCK_DESTINATION",
-         "target": "172.19.1.1",
-         "status": "AUTO_APPROVED"
-        }
-       ]
+       "outcome": "REVIEW",
+       "pipeline_outcome": "REVIEW",
+       "actions": []
       }
      ]
     },
@@ -1448,121 +1333,15 @@
     }
    ],
    "auto_approved": {
-    "cases": 35,
-    "on_attacker_infrastructure": 1,
-    "targets": [
-     [
-      "52.23.111.175",
-      2
-     ],
-     [
-      "34.117.59.81",
-      2
-     ],
-     [
-      "94.23.17.185",
-      2
-     ],
-     [
-      "212.227.67.34",
-      2
-     ],
-     [
-      "213.140.209.236",
-      2
-     ],
-     [
-      "77.72.169.211",
-      2
-     ],
-     [
-      "77.72.169.213",
-      2
-     ],
-     [
-      "212.227.67.33",
-      2
-     ],
-     [
-      "85.17.88.164",
-      2
-     ],
-     [
-      "85.93.219.114",
-      2
-     ],
-     [
-      "81.187.30.115",
-      2
-     ],
-     [
-      "82.113.193.63",
-      2
-     ],
-     [
-      "154.73.34.4",
-      2
-     ],
-     [
-      "185.208.37.90",
-      2
-     ],
-     [
-      "172.19.1.1",
-      1
-     ],
-     [
-      "64.131.63.217",
-      1
-     ],
-     [
-      "77.72.169.212",
-      1
-     ],
-     [
-      "154.73.34.8",
-      1
-     ],
-     [
-      "64.131.63.216",
-      1
-     ],
-     [
-      "77.72.169.210",
-      1
-     ],
-     [
-      "95.100.246.76",
-      1
-     ]
-    ]
+    "cases": 0,
+    "on_attacker_infrastructure": 0,
+    "targets": []
    },
    "watches": {
-    "count": 35,
-    "would_block_on_attacker": 1,
-    "would_block_on_benign_targets": 1065,
-    "top_benign": [
-     [
-      "34.117.59.81",
-      347
-     ],
-     [
-      "185.208.37.90",
-      96
-     ],
-     [
-      "64.131.63.216",
-      83
-     ],
-     [
-      "34.117.59.81",
-      73
-     ],
-     [
-      "64.131.63.217",
-      69
-     ]
-    ]
+    "count": 0,
+    "would_block_on_attacker": 0,
+    "would_block_on_benign_targets": 0,
+    "top_benign": []
    },
    "attack_patterns_learned_as_routine": []
   },
@@ -1570,31 +1349,34 @@
    "run": "gated",
    "test_cases": 7732,
    "outcomes": {
-    "LOW_PRIORITY": 7286,
-    "REVIEW": 411,
-    "AUTO_APPROVED": 35
+    "LOW_PRIORITY": 7366,
+    "REVIEW": 366
    },
    "reviews_per_day": {
-    "mean": 29.4,
-    "max": 84,
+    "mean": 26.1,
+    "max": 77,
     "by_day": [
-     41,
+     42,
+     14,
+     19,
+     52,
+     18,
+     0,
+     0,
      15,
-     29,
-     48,
+     77,
+     15,
+     74,
      37,
      0,
-     0,
-     29,
-     84,
-     15,
-     66,
-     45,
-     0,
-     2
-    ]
+     3
+    ],
+    "week_1_mean": 20.7,
+    "week_2_mean": 31.6
    },
-   "low_priority_share": 0.9423,
+   "attacker_server_contained_after_min": null,
+   "analyst_verdicts": {},
+   "low_priority_share": 0.9527,
    "attack_related": [
     {
      "case_id": "case-7540",
@@ -1603,17 +1385,9 @@
      "flow": "172.16.1.3 -> 172.19.1.1:80",
      "alerts": 2,
      "path": "pipeline",
-     "outcome": "AUTO_APPROVED",
-     "pipeline_outcome": "AUTO_APPROVED",
-     "actions": [
-      {
-       "technique": "T1071",
-       "sse": "FEASIBLE",
-       "action": "BLOCK_DESTINATION",
-       "target": "172.19.1.1",
-       "status": "AUTO_APPROVED"
-      }
-     ],
+     "outcome": "REVIEW",
+     "pipeline_outcome": "REVIEW",
+     "actions": [],
      "tier": "confirmed",
      "nearest_label_s": 0.349
     },
@@ -1710,17 +1484,9 @@
        "flow": "172.16.1.3 -> 172.19.1.1:80",
        "alerts": 2,
        "path": "pipeline",
-       "outcome": "AUTO_APPROVED",
-       "pipeline_outcome": "AUTO_APPROVED",
-       "actions": [
-        {
-         "technique": "T1071",
-         "sse": "FEASIBLE",
-         "action": "BLOCK_DESTINATION",
-         "target": "172.19.1.1",
-         "status": "AUTO_APPROVED"
-        }
-       ]
+       "outcome": "REVIEW",
+       "pipeline_outcome": "REVIEW",
+       "actions": []
       }
      ]
     },
@@ -1825,121 +1591,15 @@
     }
    ],
    "auto_approved": {
-    "cases": 35,
-    "on_attacker_infrastructure": 1,
-    "targets": [
-     [
-      "52.23.111.175",
-      2
-     ],
-     [
-      "34.117.59.81",
-      2
-     ],
-     [
-      "94.23.17.185",
-      2
-     ],
-     [
-      "212.227.67.34",
-      2
-     ],
-     [
-      "213.140.209.236",
-      2
-     ],
-     [
-      "77.72.169.211",
-      2
-     ],
-     [
-      "77.72.169.213",
-      2
-     ],
-     [
-      "212.227.67.33",
-      2
-     ],
-     [
-      "85.17.88.164",
-      2
-     ],
-     [
-      "85.93.219.114",
-      2
-     ],
-     [
-      "81.187.30.115",
-      2
-     ],
-     [
-      "82.113.193.63",
-      2
-     ],
-     [
-      "154.73.34.4",
-      2
-     ],
-     [
-      "185.208.37.90",
-      2
-     ],
-     [
-      "172.19.1.1",
-      1
-     ],
-     [
-      "64.131.63.217",
-      1
-     ],
-     [
-      "77.72.169.212",
-      1
-     ],
-     [
-      "154.73.34.8",
-      1
-     ],
-     [
-      "64.131.63.216",
-      1
-     ],
-     [
-      "77.72.169.210",
-      1
-     ],
-     [
-      "95.100.246.76",
-      1
-     ]
-    ]
+    "cases": 0,
+    "on_attacker_infrastructure": 0,
+    "targets": []
    },
    "watches": {
-    "count": 35,
-    "would_block_on_attacker": 1,
-    "would_block_on_benign_targets": 1065,
-    "top_benign": [
-     [
-      "34.117.59.81",
-      347
-     ],
-     [
-      "185.208.37.90",
-      96
-     ],
-     [
-      "64.131.63.216",
-      83
-     ],
-     [
-      "34.117.59.81",
-      73
-     ],
-     [
-      "64.131.63.217",
-      69
-     ]
-    ]
+    "count": 0,
+    "would_block_on_attacker": 0,
+    "would_block_on_benign_targets": 0,
+    "top_benign": []
    },
    "attack_patterns_learned_as_routine": []
   },
@@ -1947,31 +1607,34 @@
    "run": "ungated",
    "test_cases": 7732,
    "outcomes": {
-    "LOW_PRIORITY": 7362,
-    "REVIEW": 336,
-    "AUTO_APPROVED": 34
+    "LOW_PRIORITY": 7443,
+    "REVIEW": 289
    },
    "reviews_per_day": {
-    "mean": 24.0,
-    "max": 81,
+    "mean": 20.6,
+    "max": 74,
     "by_day": [
-     40,
-     13,
-     27,
-     42,
-     23,
+     41,
+     12,
+     16,
+     46,
+     4,
      0,
      0,
-     24,
-     81,
-     9,
-     43,
-     34,
+     7,
+     74,
+     8,
+     45,
+     35,
      0,
-     0
-    ]
+     1
+    ],
+    "week_1_mean": 17.0,
+    "week_2_mean": 24.3
    },
-   "low_priority_share": 0.9521,
+   "attacker_server_contained_after_min": null,
+   "analyst_verdicts": {},
+   "low_priority_share": 0.9626,
    "attack_related": [
     {
      "case_id": "case-7540",
@@ -1980,17 +1643,9 @@
      "flow": "172.16.1.3 -> 172.19.1.1:80",
      "alerts": 2,
      "path": "pipeline",
-     "outcome": "AUTO_APPROVED",
-     "pipeline_outcome": "AUTO_APPROVED",
-     "actions": [
-      {
-       "technique": "T1071",
-       "sse": "FEASIBLE",
-       "action": "BLOCK_DESTINATION",
-       "target": "172.19.1.1",
-       "status": "AUTO_APPROVED"
-      }
-     ],
+     "outcome": "REVIEW",
+     "pipeline_outcome": "REVIEW",
+     "actions": [],
      "tier": "confirmed",
      "nearest_label_s": 0.349
     },
@@ -2087,17 +1742,9 @@
        "flow": "172.16.1.3 -> 172.19.1.1:80",
        "alerts": 2,
        "path": "pipeline",
-       "outcome": "AUTO_APPROVED",
-       "pipeline_outcome": "AUTO_APPROVED",
-       "actions": [
-        {
-         "technique": "T1071",
-         "sse": "FEASIBLE",
-         "action": "BLOCK_DESTINATION",
-         "target": "172.19.1.1",
-         "status": "AUTO_APPROVED"
-        }
-       ]
+       "outcome": "REVIEW",
+       "pipeline_outcome": "REVIEW",
+       "actions": []
       }
      ]
     },
@@ -2179,121 +1826,15 @@
     }
    ],
    "auto_approved": {
-    "cases": 34,
-    "on_attacker_infrastructure": 1,
-    "targets": [
-     [
-      "52.23.111.175",
-      2
-     ],
-     [
-      "94.23.17.185",
-      2
-     ],
-     [
-      "212.227.67.34",
-      2
-     ],
-     [
-      "213.140.209.236",
-      2
-     ],
-     [
-      "77.72.169.211",
-      2
-     ],
-     [
-      "77.72.169.213",
-      2
-     ],
-     [
-      "212.227.67.33",
-      2
-     ],
-     [
-      "85.17.88.164",
-      2
-     ],
-     [
-      "85.93.219.114",
-      2
-     ],
-     [
-      "81.187.30.115",
-      2
-     ],
-     [
-      "82.113.193.63",
-      2
-     ],
-     [
-      "154.73.34.4",
-      2
-     ],
-     [
-      "185.208.37.90",
-      2
-     ],
-     [
-      "172.19.1.1",
-      1
-     ],
-     [
-      "34.117.59.81",
-      1
-     ],
-     [
-      "64.131.63.217",
-      1
-     ],
-     [
-      "77.72.169.212",
-      1
-     ],
-     [
-      "154.73.34.8",
-      1
-     ],
-     [
-      "64.131.63.216",
-      1
-     ],
-     [
-      "77.72.169.210",
-      1
-     ],
-     [
-      "95.100.246.76",
-      1
-     ]
-    ]
+    "cases": 0,
+    "on_attacker_infrastructure": 0,
+    "targets": []
    },
    "watches": {
-    "count": 34,
-    "would_block_on_attacker": 1,
-    "would_block_on_benign_targets": 988,
-    "top_benign": [
-     [
-      "34.117.59.81",
-      347
-     ],
-     [
-      "185.208.37.90",
-      96
-     ],
-     [
-      "64.131.63.216",
-      83
-     ],
-     [
-      "64.131.63.217",
-      69
-     ],
-     [
-      "185.208.37.90",
-      54
-     ]
-    ]
+    "count": 0,
+    "would_block_on_attacker": 0,
+    "would_block_on_benign_targets": 0,
+    "top_benign": []
    },
    "attack_patterns_learned_as_routine": [
     "sid 2027262 host:client2 -> dest:172.19.1.1"
@@ -2303,32 +1844,35 @@
    "run": "gated_noact",
    "test_cases": 7732,
    "outcomes": {
-    "LOW_PRIORITY": 7305,
-    "NO_ACTIONABLE": 236,
-    "REVIEW": 156,
-    "AUTO_APPROVED": 35
+    "LOW_PRIORITY": 7390,
+    "NO_ACTIONABLE": 231,
+    "REVIEW": 111
    },
    "reviews_per_day": {
-    "mean": 11.1,
-    "max": 35,
+    "mean": 7.9,
+    "max": 28,
     "by_day": [
-     13,
+     14,
+     3,
+     3,
+     14,
+     0,
+     0,
+     0,
+     3,
+     28,
      4,
-     13,
-     10,
-     19,
+     27,
+     14,
      0,
-     0,
-     17,
-     35,
-     4,
-     19,
-     22,
-     0,
-     0
-    ]
+     1
+    ],
+    "week_1_mean": 4.9,
+    "week_2_mean": 11.0
    },
-   "low_priority_share": 0.9448,
+   "attacker_server_contained_after_min": null,
+   "analyst_verdicts": {},
+   "low_priority_share": 0.9558,
    "attack_related": [
     {
      "case_id": "case-7540",
@@ -2337,17 +1881,9 @@
      "flow": "172.16.1.3 -> 172.19.1.1:80",
      "alerts": 2,
      "path": "pipeline",
-     "outcome": "AUTO_APPROVED",
-     "pipeline_outcome": "AUTO_APPROVED",
-     "actions": [
-      {
-       "technique": "T1071",
-       "sse": "FEASIBLE",
-       "action": "BLOCK_DESTINATION",
-       "target": "172.19.1.1",
-       "status": "AUTO_APPROVED"
-      }
-     ],
+     "outcome": "REVIEW",
+     "pipeline_outcome": "REVIEW",
+     "actions": [],
      "tier": "confirmed",
      "nearest_label_s": 0.349
     },
@@ -2444,17 +1980,9 @@
        "flow": "172.16.1.3 -> 172.19.1.1:80",
        "alerts": 2,
        "path": "pipeline",
-       "outcome": "AUTO_APPROVED",
-       "pipeline_outcome": "AUTO_APPROVED",
-       "actions": [
-        {
-         "technique": "T1071",
-         "sse": "FEASIBLE",
-         "action": "BLOCK_DESTINATION",
-         "target": "172.19.1.1",
-         "status": "AUTO_APPROVED"
-        }
-       ]
+       "outcome": "REVIEW",
+       "pipeline_outcome": "REVIEW",
+       "actions": []
       }
      ]
     },
@@ -2513,119 +2041,264 @@
     }
    ],
    "auto_approved": {
-    "cases": 35,
-    "on_attacker_infrastructure": 1,
-    "targets": [
-     [
-      "52.23.111.175",
-      2
-     ],
-     [
-      "34.117.59.81",
-      2
-     ],
-     [
-      "94.23.17.185",
-      2
-     ],
-     [
-      "212.227.67.34",
-      2
-     ],
-     [
-      "213.140.209.236",
-      2
-     ],
-     [
-      "77.72.169.211",
-      2
-     ],
-     [
-      "77.72.169.213",
-      2
-     ],
-     [
-      "212.227.67.33",
-      2
-     ],
-     [
-      "85.17.88.164",
-      2
-     ],
-     [
-      "85.93.219.114",
-      2
-     ],
-     [
-      "81.187.30.115",
-      2
-     ],
-     [
-      "82.113.193.63",
-      2
-     ],
-     [
-      "154.73.34.4",
-      2
-     ],
-     [
-      "185.208.37.90",
-      2
-     ],
-     [
-      "172.19.1.1",
-      1
-     ],
-     [
-      "64.131.63.217",
-      1
-     ],
-     [
-      "77.72.169.212",
-      1
-     ],
-     [
-      "154.73.34.8",
-      1
-     ],
-     [
-      "64.131.63.216",
-      1
-     ],
-     [
-      "77.72.169.210",
-      1
-     ],
-     [
-      "95.100.246.76",
-      1
-     ]
-    ]
+    "cases": 0,
+    "on_attacker_infrastructure": 0,
+    "targets": []
    },
    "watches": {
-    "count": 35,
-    "would_block_on_attacker": 1,
-    "would_block_on_benign_targets": 1065,
+    "count": 0,
+    "would_block_on_attacker": 0,
+    "would_block_on_benign_targets": 0,
+    "top_benign": []
+   },
+   "attack_patterns_learned_as_routine": []
+  },
+  "gated_analyst": {
+   "run": "gated_analyst",
+   "test_cases": 7732,
+   "outcomes": {
+    "LOW_PRIORITY": 7439,
+    "REVIEW": 293
+   },
+   "reviews_per_day": {
+    "mean": 20.9,
+    "max": 74,
+    "by_day": [
+     42,
+     12,
+     17,
+     46,
+     5,
+     0,
+     0,
+     8,
+     74,
+     8,
+     45,
+     35,
+     0,
+     1
+    ],
+    "week_1_mean": 17.4,
+    "week_2_mean": 24.4
+   },
+   "attacker_server_contained_after_min": 240.0,
+   "analyst_verdicts": {
+    "benign": 290,
+    "malicious": 3
+   },
+   "low_priority_share": 0.9621,
+   "attack_related": [
+    {
+     "case_id": "case-7540",
+     "opened": "2025-01-06T10:01:14.335000Z",
+     "signature": "ET INFO Dotted Quad Host ZIP Request",
+     "flow": "172.16.1.3 -> 172.19.1.1:80",
+     "alerts": 2,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "REVIEW",
+     "actions": [],
+     "tier": "confirmed",
+     "nearest_label_s": 0.349
+    },
+    {
+     "case_id": "case-9311",
+     "opened": "2025-01-08T14:58:53.271000Z",
+     "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 66.743
+    },
+    {
+     "case_id": "case-9312",
+     "opened": "2025-01-08T15:05:36.673000Z",
+     "signature": "ET POLICY SMB Executable File Transfer",
+     "flow": "172.16.1.3 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 4.627
+    },
+    {
+     "case_id": "case-9819",
+     "opened": "2025-01-09T10:54:51.365000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 9,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-9820",
+     "opened": "2025-01-09T10:54:51.405000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 2,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10574",
+     "opened": "2025-01-10T11:46:37.168000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.0.2:53",
+     "alerts": 3,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 0.0
+    },
+    {
+     "case_id": "case-10579",
+     "opened": "2025-01-10T11:48:14.042000Z",
+     "signature": "ET CURRENT_EVENTS Suspicious TikTok Domain Request - Possible Phishing or Scam",
+     "flow": "172.16.1.2 -> 172.16.1.1:53",
+     "alerts": 1,
+     "path": "baseline",
+     "outcome": "LOW_PRIORITY",
+     "pipeline_outcome": null,
+     "actions": [],
+     "tier": "probable",
+     "nearest_label_s": 45.974
+    }
+   ],
+   "attack_related_hidden": 4,
+   "attack_steps": [
+    {
+     "step": "Initial access: phishing macro on client 2, dropper download",
+     "time": "2025-01-06T10:00:00+00:00",
+     "cases_near": 5,
+     "surfaced": [
+      {
+       "case_id": "case-7540",
+       "opened": "2025-01-06T10:01:14.335000Z",
+       "signature": "ET INFO Dotted Quad Host ZIP Request",
+       "flow": "172.16.1.3 -> 172.19.1.1:80",
+       "alerts": 2,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "REVIEW",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Lateral movement client 2 -> client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "cases_near": 10,
+     "surfaced": [
+      {
+       "case_id": "case-9311",
+       "opened": "2025-01-08T14:58:53.271000Z",
+       "signature": "ET SHELLCODE Possible Call with No Offset TCP Shellcode",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      },
+      {
+       "case_id": "case-9312",
+       "opened": "2025-01-08T15:05:36.673000Z",
+       "signature": "ET POLICY SMB Executable File Transfer",
+       "flow": "172.16.1.3 -> 172.16.0.2:445",
+       "alerts": 1,
+       "path": "pipeline",
+       "outcome": "REVIEW",
+       "pipeline_outcome": "NO_ACTIONABLE",
+       "actions": []
+      }
+     ]
+    },
+    {
+     "step": "Collection on the internal server (SSH from client 1)",
+     "time": "2025-01-10T11:00:00+00:00",
+     "cases_near": 59,
+     "surfaced": []
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "cases_near": 2,
+     "surfaced": []
+    }
+   ],
+   "known_false_positives": [
+    {
+     "case_id": "case-7351",
+     "opened": "2025-01-06T08:10:54.357000Z",
+     "signature": "ET TROJAN Suspicious POST with Common Windows Process Names - Possible Process List Exfiltration",
+     "flow": "172.16.1.15 -> 172.16.0.3:9200",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9071",
+     "opened": "2025-01-08T10:49:20.794000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.30 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    },
+    {
+     "case_id": "case-9489",
+     "opened": "2025-01-08T17:53:12.040000Z",
+     "signature": "ET TROJAN Backdoor family PCRat/Gh0st CnC traffic",
+     "flow": "172.16.1.6 -> 172.16.0.2:445",
+     "alerts": 1,
+     "path": "pipeline",
+     "outcome": "REVIEW",
+     "pipeline_outcome": "NO_ACTIONABLE",
+     "actions": []
+    }
+   ],
+   "auto_approved": {
+    "cases": 0,
+    "on_attacker_infrastructure": 0,
+    "targets": []
+   },
+   "watches": {
+    "count": 4,
+    "would_block_on_attacker": 0,
+    "would_block_on_benign_targets": 0,
     "top_benign": [
      [
-      "34.117.59.81",
-      347
+      "CLIENT2",
+      0
      ],
      [
-      "185.208.37.90",
-      96
+      "CLIENT2",
+      0
      ],
      [
-      "64.131.63.216",
-      83
-     ],
-     [
-      "34.117.59.81",
-      73
-     ],
-     [
-      "64.131.63.217",
-      69
+      "CLIENT2",
+      0
      ]
     ]
    },

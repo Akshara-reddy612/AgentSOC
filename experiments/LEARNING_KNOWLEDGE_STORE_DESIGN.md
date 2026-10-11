@@ -155,6 +155,16 @@ Each step is a commit with tests and tracking-doc updates.
 
 ## 8. Open decisions
 
+**Decided 2026-10-11** (the user left D1-D6 to Claude; details in the Phase 1 report):
+- **D1:** both. Indicators come from config by default; in addition there is a simulated-analyst condition (`SocLoop(analyst=...)`, oracle in `experiments/dedale_score.py`). It gives a verdict 4 h after each review: benign -> learned; malicious -> containment approved, destination known-bad, host flagged.
+- **D2:** yes (single writer, trusted-only, audited).
+- **D3:** idle 1 h / max 24 h / gate delay 24 h as initial values.
+- **D4:** `agentsoc_data/ks/`.
+- **D5:** later.
+- **D6:** for Phase 2, extend NCE's vocabulary and SSE's constraints to the techniques host logs show, and add a defined review path for techniques without a structural precondition.
+- **D7:** "review".
+- **New — response policy:** containment for a C2 check that rests on telemetry alone needs an analyst (profile flag `auto_contain_unreasoned_c2`, False for DEDALE; the synthetic environment keeps True).
+
 - **D1 Indicators without an analyst during replay.** (a) Indicators only from config, so nothing is confirmed during replay. (b) A simulated analyst that closes REVIEW cases using the labels, reported as a separate "with analyst feedback" condition. This is realistic, because analysts establish ground truth, but it must be kept apart from C0-C3.
 - **D2 Replace the monitoring invariant** "graph immutability" with "single writer, trusted-only, audited" (I1, I6). The invariant is enforced today by `test_graph_immutability_during_monitoring`. That test would be kept for the pipeline stages (SSE / RSEM / guardrails must still never write), and new tests would cover the updater. The dashboard text changes when the frontend is rebuilt.
 - **D3 Case window *W*** and learning-gate delay *D*: tune on the training window only.

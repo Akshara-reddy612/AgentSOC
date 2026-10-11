@@ -160,6 +160,24 @@
   - **Learning safety:** ungated learning stored the attacker's dropper pattern as routine. The D7 "no_actionable" policy silently dropped both lateral-movement alerts and the 3 known false positives. Gated = frozen in this phase (nothing vouches for new patterns without NCE or an analyst).
   - **Side effects:** 34 benign auto-blocks (31 = STUN requests from 4 clients to newly seen servers; simulated collateral 1,065 alerts). Their watches caused 141 of the 411 reviews.
   - **Correction:** the earlier prediction that a static store would block the DNS resolver was wrong. The forwarders' criticality sends that block to review.
+- **Phase 1 decisions applied (2026-10-11; user: "1-4 your wish"):**
+  1. **Response policy.** The new profile flag `EnvironmentProfile.auto_contain_unreasoned_c2` makes a guardrail route containment for telemetry-only C2 checks to review. It is False for DEDALE; the synthetic environment keeps True, so all earlier results show 0 changes (re-score diff 0; 6,282 v2 / mock records identical).
+  2. **Simulated analyst condition.** `SocLoop(analyst=...)`: verdict 4 h after each review. Benign -> learned (provenance analyst); malicious -> containment approved, destination known-bad, host flagged. A flagged host escalates only its non-routine activity.
+  3. **D6 decided for Phase 2:** extend the technique vocabulary plus a review path.
+  4. **Zeek router 1 labels downloaded:** 4.40 GB, MD5-verified.
+- **Phase 1 results, revision 2** (`experiments/DEDALE_PHASE1_RESULTS.md`; no automatic containment in any run):
+
+  | Run | Reviews/day |
+  |:--|--:|
+  | static | 552.3 |
+  | frozen / gated | 26.1 |
+  | ungated | 20.6 |
+  | "no_actionable" | 7.9 |
+  | gated + analyst | 20.9 |
+
+  - **Analyst run:** 290 benign / 3 malicious verdicts; the 3 are the real attack cases. The attacker server is contained after 4 h (the analyst delay); no attacker pattern is learned. Ungated learning, at a similar load, stored the dropper pattern as routine.
+  - **Exact network labels:** 84 attack flows; only the dropper download (2 router copies) raised a Suricata alert. 83 of 84 labelled flows went unalerted, including all 57 other C2 flows and the exfiltration.
+  - **First contacts:** 4,400-9,300 outbound pairs per weekday were never seen in training (all 5 attack pairs among them), so first contact alone is not a usable detector.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)

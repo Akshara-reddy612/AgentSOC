@@ -1366,3 +1366,51 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/dedale_score.py`, `experiments/dedale_results/phase1_scores.json`, `experiments/DEDALE_PHASE1_RESULTS.md`
 - Modified: `experiments/dedale_replay.py`, `tests/test_soc_loop.py`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 1 decisions — response policy, simulated analyst, Zeek ground truth
+
+### What was tried
+- Pushed main to origin (user: "yes"); 34 commits, `36204eb..e759698`.
+- The user left decisions 1-4 to Claude.
+- **Response policy:**
+  - new `EnvironmentProfile.auto_contain_unreasoned_c2` (default True), False in DEDALE_PROFILE;
+  - new guardrail `_unreasoned_containment` in `perception/action_playbook.py`: a T1071 hypothesis whose only evidence ref is the pipeline's telemetry ref -> review;
+  - tests updated: a stand-in NCE shows that reasoned C2 is still auto-contained.
+- **Simulated analyst:**
+  - `SocLoop(analyst=..., analyst_delay=4 h)`;
+  - `OutcomeMonitor.register(approved_by=...)` and `flag_host`;
+  - `GroundTruth` / `analyst_oracle` in `experiments/dedale_score.py`;
+  - `--analyst oracle` in the replay.
+  - First analyst run: a flagged host escalated all its new cases, including routine log shipping (126 extra reviews in week 1). Refined so a flag escalates only non-routine activity; containment watches still escalate everything.
+- **Zeek labels:**
+  - downloaded `zeek_router1.zip` (4,396,439,880 bytes, MD5 c5f237d2… verified);
+  - new `experiments/dedale_zeek_labels.py`: extract labelled flows, match Suricata alerts, first-contact statistics;
+  - the scorer reports the Zeek check.
+- Re-ran all six replays and re-scored.
+
+### What was found
+- Synthetic environment unchanged by the policy (historical diff 0; 6,282 v2 / mock records identical).
+- DEDALE, no automatic containment in any run. Reviews per day:
+
+  | Run | Mean | Week 1 -> week 2 |
+  |:--|--:|:--|
+  | static | 552.3 | |
+  | frozen = gated | 26.1 | 20.7 -> 31.6 |
+  | ungated | 20.6 | |
+  | "no_actionable" | 7.9 | |
+  | gated + analyst | 20.9 | 17.4 -> 24.4 |
+
+- REVIEW counts: frozen / gated 366, ungated 289, "no_actionable" 111 (+ 231 NO_ACTIONABLE), analyst 293.
+- **Analyst run:** 290 benign / 3 malicious verdicts. The 3 are the dropper download and the two SMB lateral-movement alerts. The block on 172.19.1.1 was approved 240 min after the case opened (the delay). No attacker pattern learned. The 4 "hidden" cases are the probably-benign TikTok heuristic cases, learned after earlier benign verdicts on the same pattern.
+- **Exact labels (router 1):**
+  - 84 attack-labelled flows: C2 58 (T1104 38, T1102 19, T1105 1), initial access 4, exfiltration 2, attack-related 20;
+  - only 2 Suricata alerts match one (the two router copies of the dropper download = the confirmed case);
+  - 83 of 84 flows had no alert.
+- **First-contact outbound pairs:** 126,229 known from training; per test weekday 4,402-9,279 new (weekend 93-153). All 5 attack pairs appear on their first day.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 671 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/dedale_zeek_labels.py`
+- Modified: `perception/environment.py`, `perception/action_playbook.py`, `perception/outcome_monitor.py`, `perception/soc_loop.py`, `dedale/environment.py`, `experiments/dedale_replay.py`, `experiments/dedale_score.py`, `experiments/dedale_results/phase1_scores.json`, `experiments/DEDALE_PHASE1_RESULTS.md`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, tests (`test_dedale`, `test_triage_gate`, `test_outcome_monitor`, `test_soc_loop`), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

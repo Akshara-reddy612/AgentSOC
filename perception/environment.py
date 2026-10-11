@@ -58,6 +58,10 @@ class EnvironmentProfile:
     internal_domain_suffixes: tuple[str, ...] = (".corp.local", ".internal")
     internal_hostname_pattern: str = r"^(WKSTN-|SRV-|LT-.*-CORP$)"
     zone_egress_policy: Mapping[str, dict] = field(default_factory=lambda: dict(ZONE_EGRESS_POLICY))
+    # Response policy (added 2026-10-11): may containment proposed for a C2 check
+    # that rests on telemetry alone (no NCE reasoning, no threat intelligence) be
+    # auto-approved?  True keeps the synthetic enterprise's original behaviour.
+    auto_contain_unreasoned_c2: bool = True
     _networks: tuple[ipaddress.IPv4Network, ...] = field(init=False, repr=False)
     _hostname_re: re.Pattern = field(init=False, repr=False)
 
@@ -98,6 +102,7 @@ class EnvironmentProfile:
             "internal_domain_suffixes": list(self.internal_domain_suffixes),
             "internal_hostname_pattern": self.internal_hostname_pattern,
             "zone_egress_policy": {zone: dict(policy) for zone, policy in self.zone_egress_policy.items()},
+            "auto_contain_unreasoned_c2": self.auto_contain_unreasoned_c2,
         }
 
     @classmethod
@@ -108,6 +113,7 @@ class EnvironmentProfile:
             internal_domain_suffixes=tuple(d["internal_domain_suffixes"]),
             internal_hostname_pattern=d["internal_hostname_pattern"],
             zone_egress_policy=d["zone_egress_policy"],
+            auto_contain_unreasoned_c2=d.get("auto_contain_unreasoned_c2", True),
         )
 
 

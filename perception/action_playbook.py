@@ -357,6 +357,27 @@ def _review_reasons(playbook: Playbook) -> list[str]:
             )
     return reasons
 
+def _unreasoned_containment(playbook: Playbook, graph_store: KnowledgeStoreGraph) -> str | None:
+    """
+    Environment response policy (profile.auto_contain_unreasoned_c2, added
+    2026-10-11): when it is False, a C2 check that rests on telemetry alone --
+    the pipeline's own T1071 hypothesis, with no NCE reasoning behind it -- may
+    not auto-approve containment.  A connection to an unknown destination shows
+    that traffic happened, not that it is malicious (on DEDALE, 34 of 35 such
+    auto-blocks hit benign destinations); known-bad destinations escalate on
+    their own (perception/outcome.py).
+    """
+    from perception.entity_binding import TELEMETRY_REF
+
+    if graph_store.profile.auto_contain_unreasoned_c2:
+        return None
+    h = playbook.hypothesis.validated.hypothesis
+    if h.technique_id == "T1071" and list(h.supporting_evidence_refs) == [TELEMETRY_REF]:
+        return ("C2 check rests on telemetry alone (a connection to an unknown destination, not assessed by "
+                "reasoning or threat intelligence); this environment's policy requires an analyst for containment.")
+    return None
+
+
 def evaluate_guardrails(playbook: Playbook, graph_store: KnowledgeStoreGraph | None = None) -> Playbook:
     """
     Evaluate policy and safety guardrails for a playbook.
@@ -422,6 +443,9 @@ def evaluate_guardrails(playbook: Playbook, graph_store: KnowledgeStoreGraph | N
         priv = privileged_context(playbook.hypothesis.validated, graph_store)
         if priv:
             review_reasons.append(priv)
+        unreasoned = _unreasoned_containment(playbook, graph_store)
+        if unreasoned:
+            review_reasons.append(unreasoned)
     if graph_store is not None and baseline_only(playbook.hypothesis.validated, graph_store):
         logged = PlaybookExecutionStatus.LOGGED_EXPECTED_ACTIVITY
         return Playbook(
