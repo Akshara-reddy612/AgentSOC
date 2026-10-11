@@ -54,6 +54,11 @@ DEDALE_PROFILE = EnvironmentProfile(
     # servers) for 1 attacker server, and the blocks' watches caused a third of all
     # reviews.  Containment now needs reasoning (NCE) or threat intelligence.
     auto_contain_unreasoned_c2=False,
+    # Log sources (decision (a), Phase 3): the replay learns from the 30 Windows
+    # clients' winlogbeat logs only.  The servers' logs (auditd, syslog) are not
+    # ingested, so the store cannot rule out access to them.  Phase 3 found the
+    # attacker's scp from internalserver dismissed as "infeasible" for that reason.
+    observed_hosts=tuple(f"CLIENT{i}" for i in range(1, 31)),
 )
 
 

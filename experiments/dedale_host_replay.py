@@ -8,7 +8,8 @@ learned (shadow mode).  Test weeks: an event whose key the store has not learned
 becomes a host alert -> cases -> triage gate -> gated learning.
 
     python -m experiments.dedale_host_replay --mode gated [--analyst oracle]
-            [--detectors lineage logon lsass_access] [--until 2025-01-08] --overwrite
+            [--nce live --max-calls N] [--detectors lineage logon lsass_access] [--until 2025-01-08]
+            [--tag NAME] --overwrite
 
 Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agentsoc_data):
     ks/dedale_host_<run>.sqlite                the run's Knowledge Store
@@ -91,10 +92,12 @@ def main() -> None:
     ap.add_argument("--max-calls", type=int, default=950, help="hard cap on live NCE calls in this run")
     ap.add_argument("--detectors", nargs="+", default=list(DETECTORS), choices=list(DETECTORS))
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD)")
+    ap.add_argument("--tag", default=None, help="suffix for the run name (keeps earlier runs of the same condition)")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
 
     run = args.mode + ("_nce" if args.nce == "live" else "") + ("_analyst" if args.analyst == "oracle" else "")
+    run += f"_{args.tag}" if args.tag else ""
     root = data_dir().parent
     store_path = root / "ks" / f"dedale_host_{run}.sqlite"
     run_dir = root / "runs" / f"dedale_host_{run}"
