@@ -27,6 +27,9 @@ Classification rules:
       at all, or existing paths fail to match the technique's required
       edge sequence.  Partial / malformed matches are ALWAYS INFEASIBLE
       regardless of any individual edge's confidence.
+      Exception (2026-10-11, open world): when the environment profile lists
+      the hosts the store learns from (observed_hosts) and the target is not
+      one of them, a missing path is CONDITIONALLY_FEASIBLE, not INFEASIBLE.
 """
 
 from __future__ import annotations
@@ -596,6 +599,19 @@ class StructuralSimulationEngine:
                 ))
 
         # --- Return results or INFEASIBLE ---
+        if not results and self._target_observed(target_host_id) is False:
+            # Open world (decision (a), 2026-10-11): the store has no logs from this
+            # target, so a missing access path means "not known", not "impossible".
+            return [PathResult(
+                verdict=SSEVerdict.CONDITIONALLY_FEASIBLE,
+                path_confidence=0.0,
+                edge_path=[],
+                dependency_note=(
+                    f"{technique_id}: no access path in the store to {target_host_id!r}, but this "
+                    f"environment ingests no telemetry from that host, so access cannot be ruled "
+                    f"out structurally. Requires analyst review."
+                ),
+            )]
         if not results:
             return [PathResult(
                 verdict=SSEVerdict.INFEASIBLE,
@@ -607,6 +623,22 @@ class StructuralSimulationEngine:
             )]
 
         return results
+
+    def _target_observed(self, target_host_id: str) -> bool | None:
+        """
+        Whether the store learns from the target host's logs (the environment
+        profile's observed_hosts); None when the profile does not model coverage
+        (closed world).  An address is resolved to the inventory host that owns it.
+        """
+        profile = self._graph_store.profile
+        if profile.observed_hosts is None:
+            return None
+        target = target_host_id.strip()
+        for node, data in self._graph_store.graph.nodes(data=True):
+            fact = data.get("ip_addresses")
+            if isinstance(fact, KnowledgeFact) and target in fact.value:
+                return profile.observes_host(str(data.get("host_id", node)))
+        return profile.observes_host(target)
 
     # ------------------------------------------------------------------
     # Path-finding internals

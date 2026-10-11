@@ -62,6 +62,12 @@ class EnvironmentProfile:
     # that rests on telemetry alone (no NCE reasoning, no threat intelligence) be
     # auto-approved?  True keeps the synthetic enterprise's original behaviour.
     auto_contain_unreasoned_c2: bool = True
+    # Telemetry coverage (added 2026-10-11, DEDALE Phase 3, decision (a)): the hosts whose
+    # logs the store learns from (a log-source inventory).  None = closed world: the store
+    # is taken to describe every host completely (synthetic enterprise, original
+    # behaviour).  With a list, a missing access path to any other host means "not
+    # known", not "impossible": SSE answers CONDITIONALLY_FEASIBLE (-> analyst review).
+    observed_hosts: tuple[str, ...] | None = None
     _networks: tuple[ipaddress.IPv4Network, ...] = field(init=False, repr=False)
     _hostname_re: re.Pattern = field(init=False, repr=False)
 
@@ -69,6 +75,8 @@ class EnvironmentProfile:
         object.__setattr__(self, "_networks", tuple(ipaddress.IPv4Network(n) for n in self.internal_networks))
         object.__setattr__(self, "_hostname_re", re.compile(self.internal_hostname_pattern, re.IGNORECASE))
         object.__setattr__(self, "internal_domain_suffixes", tuple(s.lower() for s in self.internal_domain_suffixes))
+        if self.observed_hosts is not None:
+            object.__setattr__(self, "observed_hosts", tuple(sorted({h.lower() for h in self.observed_hosts})))
         object.__setattr__(self, "zone_egress_policy", MappingProxyType(
             {zone.upper(): dict(policy) for zone, policy in self.zone_egress_policy.items()}))
 
@@ -94,9 +102,20 @@ class EnvironmentProfile:
         """A name in free text that follows the internal host naming or an internal suffix."""
         return bool(self._hostname_re.match(name)) or name.lower().endswith(self.internal_domain_suffixes)
 
+    def observes_host(self, name: str) -> bool | None:
+        """Whether the store learns from this host's logs; None if coverage is not modelled (closed world)."""
+        if self.observed_hosts is None:
+            return None
+        n = name.strip().lower()
+        for suffix in self.internal_domain_suffixes:
+            if n.endswith(suffix):
+                n = n[:-len(suffix)]
+                break
+        return n in self.observed_hosts
+
     def to_dict(self) -> dict:
         """Plain-JSON form (stored with a persistent Knowledge Store, design step S2)."""
-        return {
+        d = {
             "name": self.name,
             "internal_networks": list(self.internal_networks),
             "internal_domain_suffixes": list(self.internal_domain_suffixes),
@@ -104,6 +123,9 @@ class EnvironmentProfile:
             "zone_egress_policy": {zone: dict(policy) for zone, policy in self.zone_egress_policy.items()},
             "auto_contain_unreasoned_c2": self.auto_contain_unreasoned_c2,
         }
+        if self.observed_hosts is not None:          # absent when unset: older stores stay readable
+            d["observed_hosts"] = list(self.observed_hosts)
+        return d
 
     @classmethod
     def from_dict(cls, d: dict) -> "EnvironmentProfile":
@@ -114,6 +136,7 @@ class EnvironmentProfile:
             internal_hostname_pattern=d["internal_hostname_pattern"],
             zone_egress_policy=d["zone_egress_policy"],
             auto_contain_unreasoned_c2=d.get("auto_contain_unreasoned_c2", True),
+            observed_hosts=tuple(d["observed_hosts"]) if d.get("observed_hosts") is not None else None,
         )
 
 

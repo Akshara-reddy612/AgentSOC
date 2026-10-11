@@ -1533,3 +1533,28 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/dedale_nce.py`, `experiments/DEDALE_PHASE3_RESULTS.md`, `experiments/dedale_results/phase3_scores.json`
 - Modified: `experiments/dedale_host_replay.py`, `experiments/dedale_host_score.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Phase 3 — decision (a), open-world SSE
+
+### What was tried
+- **Decision (a)** (user-approved): no access path to a host the store gets no logs from means "not known", not "impossible".
+- **Code:**
+  - `EnvironmentProfile.observed_hosts` + `observes_host()` (omitted from `to_dict` when unset, so existing synthetic stores still reopen).
+  - `SSE.check`: no path + target outside the list -> CONDITIONALLY_FEASIBLE (addresses resolved via the hosts' `ip_addresses` facts).
+  - DEDALE profile: CLIENT1..30.
+  - `dedale_host_replay --tag`.
+- **Replay:** `--mode gated --nce live --max-calls 50 --tag openworld`.
+
+### What was found
+- 0 live calls (416 cache hits), 109.4 s.
+- 856 cases: REVIEW 767, NO_ACTIONABLE 89. Reviews / day 54.8 (week 1 34.6, week 2 75.0).
+- Malicious 72 / 72 REVIEW (before: 70 + 2 dismissed). Benign NO_ACTIONABLE 89 (unchanged).
+- Attack steps: 20 / 11 / 11 / 4 cases at +1.2 min / +28.5 min / +30.0 min / +21 h (collection 9 -> 11).
+- 0 attack keys learned; 13 `closed_benign` lineage keys; the gate dropped 59.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 696 passed, 1 deselected (690 + 6 in `tests/test_open_world_sse.py`).
+
+### Files created/modified
+- Created: `tests/test_open_world_sse.py`
+- Modified: `perception/environment.py`, `perception/sse.py`, `dedale/environment.py`, `experiments/dedale_host_replay.py`, `experiments/DEDALE_PHASE3_RESULTS.md`, `experiments/dedale_results/phase3_scores.json`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
