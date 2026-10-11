@@ -25,7 +25,9 @@ pipeline found nothing actionable for a case the store has never learned,
 `unreasoned="review"` (default) sends it to an analyst instead of letting it
 end NO_ACTIONABLE unseen.  The decision keeps the pipeline's own outcome, so
 both policies can be scored.
-Network alerts only for now (the alert has src_ip / dst_ip / signature_id).
+Network alerts (src_ip / dst_ip / signature_id) and, since Phase 2, host
+alerts (detector + structured key); the learned pattern is looked up with
+knowledge_updater.pattern_edge.
 ERA is not applied to IDS alerts: their text is the rule's message, not
 attacker-controlled content.
 """
@@ -38,7 +40,7 @@ from typing import Callable
 from perception.case_builder import Case
 from perception.defended_pipeline import run_downstream
 from perception.knowledge_db import KnowledgeDB
-from perception.knowledge_updater import endpoint_node_id
+from perception.knowledge_updater import pattern_edge
 from perception.nce_contract import NCEHypothesis
 from perception.outcome import LOW_PRIORITY, NO_ACTIONABLE, REVIEW, known_bad_contact
 
@@ -100,11 +102,11 @@ class TriageGate:
         escalations = [r for r in (known_bad_contact(alert, kg),) if r]
         if self.watch is not None:
             escalations += self.watch(alert, at)
-        ends = (endpoint_node_id(self.db, alert["src_ip"]), endpoint_node_id(self.db, alert["dst_ip"]))
-        versions = (self.db.node_version(ends[0]), self.db.node_version(ends[1]))
+        src, dst, pattern_key = pattern_edge(self.db, alert)
+        versions = (self.db.node_version(src), self.db.node_version(dst))
 
         if not escalations:
-            if kg.graph.has_edge(ends[0], ends[1], f"sid:{alert['signature_id']}"):
+            if kg.graph.has_edge(src, dst, pattern_key):
                 return Decision(case.case_id, at, "baseline", LOW_PRIORITY, None,
                                 ["Alert pattern learned as routine for these endpoints."], "not_needed",
                                 store_seq=self.db.last_seq())

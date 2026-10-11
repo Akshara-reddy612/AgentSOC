@@ -34,7 +34,7 @@ from datetime import datetime, timedelta
 from perception.environment import parse_ipv4
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import account_node_id, host_node_id
-from perception.knowledge_updater import endpoint_node_id, ensure_endpoint
+from perception.knowledge_updater import ensure_endpoint, pattern_learned
 from perception.outcome import AUTO_APPROVED
 from perception.source_systems import SourceSystem
 from perception.triage_gate import Decision
@@ -152,12 +152,10 @@ class OutcomeMonitor:
     # -- internals ------------------------------------------------------------
 
     def _routine(self, alert: dict) -> bool:
-        """Is this network alert's pattern learned as routine for its endpoints?"""
-        if "signature_id" not in alert:
+        """Is this alert's pattern (network signature or host detector key) learned as routine?"""
+        if "signature_id" not in alert and alert.get("kind") != "host":
             return False
-        src = endpoint_node_id(self.db, str(alert["src_ip"]))
-        dst = endpoint_node_id(self.db, str(alert["dst_ip"]))
-        return self.db.graph.graph.has_edge(src, dst, f"sid:{alert['signature_id']}")
+        return pattern_learned(self.db, alert)
 
     def _matching(self, alert: dict, at: datetime) -> list[Watch]:
         keys = {("destination", str(alert.get("destination_ip") or "")),

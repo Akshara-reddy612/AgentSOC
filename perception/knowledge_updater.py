@@ -37,6 +37,7 @@ from datetime import datetime, timedelta
 
 from perception.case_builder import Case
 from perception.environment import parse_ipv4
+from perception.host_detection import DETECTORS, learn_key
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import destination_node_id, host_node_id
 from perception.knowledge_store import KnowledgeFact
@@ -112,6 +113,10 @@ class KnowledgeUpdater:
     def _learn(self, case: Case, provenance: str, at: datetime, writer: str | None = None) -> None:
         a = case.first_alert
         writer = writer or self.writer
+        if a.get("kind") == "host":                     # host alert: its detector key (Phase 2)
+            learn_key(self.db, a["detector"], tuple(a["detector_key"]), provenance=provenance, at=at,
+                      writer=writer, first_seen=case.opened, last_seen=case.last_seen, count=case.alert_count)
+            return
         sid = int(a["signature_id"])
         with self.db.batch():
             src = self._endpoint(str(a["src_ip"]), at, writer)
@@ -144,6 +149,20 @@ class KnowledgeUpdater:
         }, writer=writer, at=at)
 
 
+def pattern_edge(db: KnowledgeDB, alert: dict) -> tuple[str, str, str]:
+    """(source node, destination node, edge key) under which an alert's pattern counts as learned."""
+    if alert.get("kind") == "host":
+        e = DETECTORS[alert["detector"]].edge(tuple(alert["detector_key"]))
+        return e.src, e.dst, e.key
+    return (endpoint_node_id(db, str(alert["src_ip"])), endpoint_node_id(db, str(alert["dst_ip"])),
+            f"sid:{alert['signature_id']}")
+
+
+def pattern_learned(db: KnowledgeDB, alert: dict) -> bool:
+    src, dst, key = pattern_edge(db, alert)
+    return db.graph.graph.has_edge(src, dst, key)
+
+
 def endpoint_node_id(db: KnowledgeDB, address: str) -> str:
     """The node that stands for an address: its inventory host, else an internal address or external destination."""
     host = db.host_for_address(address)
@@ -169,4 +188,8 @@ def ensure_endpoint(db: KnowledgeDB, address: str, at: datetime, writer: str) ->
 
 
 def _addresses(case: Case) -> tuple[str, str]:
-    return str(case.first_alert["src_ip"]), str(case.first_alert["dst_ip"])
+    """The case's two endpoints as the escalation bookkeeping names them (addresses, or hosts for host alerts)."""
+    a = case.first_alert
+    if a.get("kind") == "host":
+        return str(a.get("source_host")), str(a.get("target_host"))
+    return str(a["src_ip"]), str(a["dst_ip"])

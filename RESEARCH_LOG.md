@@ -1444,3 +1444,24 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/PHASE2_HOST_LOGS_DESIGN.md`, `dedale/winlogbeat.py`, `experiments/dedale_extract_winlogbeat.py`, `experiments/dedale_host_novelty.py`, `tests/test_technique_coverage.py`, `tests/test_dedale_winlogbeat.py`
 - Modified: `perception/sse.py`, `prompt_construction/nce_prompt_builder.py`, `perception/nce_engine.py`, `tests/test_nce_prompt_builder.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 2 — host alerts from the Knowledge Store (built)
+
+### What was tried
+- Measured key counts on the first 96 extracted training hours: 148,636 process creations and 62,654 logons give only 4,143 lineage keys, 2,959 (host, program) keys, 287 programs and 359 logon keys. That is small enough to keep in the store graph.
+- New `perception/host_detection.py`: detectors -> structured keys -> learned graph edges; host alert format; `learn_key`.
+- `SocLoop.process_host_event` (training: learn keys; test: unknown key -> host alert) and an `on_alert` hook. Refactored `process()` into `_advance` / `_handle_alert`.
+- `pattern_edge` / `pattern_learned` shared by the gate, monitor and updater (host and network); `alert_case_key`.
+- `experiments/dedale_host_replay.py`, `experiments/dedale_host_score.py` (exact labels, host oracle).
+
+### What was found
+- The refactor leaves Phase 1 unchanged: gated and gated + analyst replays re-run with byte-identical cases.jsonl and watches.jsonl.
+- Smoke run over three training days: 4,109 SPAWNED, 359 LOGON, 240 HAS_PRIOR_ACCESS, 92 READS_LSASS edges (provenance training), 5,305 log entries, 53 s.
+- Design choice: telemetry-created accounts have no account type. The baseline rule therefore treats them as not standard users, so expected-activity never applies to them yet; identity enrichment (e.g. from 4672 special-privilege logons) is future work.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 688 passed, 1 deselected (682 + 6 new in `tests/test_host_detection.py`).
+
+### Files created/modified
+- Created: `perception/host_detection.py`, `experiments/dedale_host_replay.py`, `experiments/dedale_host_score.py`, `tests/test_host_detection.py`
+- Modified: `perception/soc_loop.py`, `perception/knowledge_updater.py`, `perception/triage_gate.py`, `perception/outcome_monitor.py`, `perception/case_builder.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

@@ -36,6 +36,13 @@ def network_case_key(alert: dict) -> tuple:
     return (alert["signature_id"], alert["src_ip"], alert["dst_ip"])
 
 
+def alert_case_key(alert: dict) -> tuple:
+    """Network alerts: signature + addresses.  Host alerts (Phase 2): detector + its structured key."""
+    if alert.get("kind") == "host":
+        return ("host", alert["detector"], *alert["detector_key"])
+    return network_case_key(alert)
+
+
 @dataclass
 class Case:
     case_id: str
