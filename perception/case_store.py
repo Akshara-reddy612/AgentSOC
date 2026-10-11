@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS cases (
     kind          TEXT NOT NULL,
     title         TEXT NOT NULL,
     host          TEXT,
+    host_tier     INTEGER,
     opened        TEXT NOT NULL,
     last_seen     TEXT NOT NULL,
     closed        TEXT,
@@ -126,7 +127,8 @@ CREATE TABLE IF NOT EXISTS decisions (
     nce              TEXT NOT NULL,
     reasons          TEXT NOT NULL,
     hypotheses       TEXT NOT NULL,
-    store_seq        INTEGER NOT NULL
+    store_seq        INTEGER NOT NULL,
+    escalations      TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS actions (
     action_id        TEXT PRIMARY KEY,
@@ -342,22 +344,29 @@ class CaseStore:
     # -- written by the loop (actor "loop") -------------------------------------
 
     def case_opened(self, case: Case, alert: dict, at: datetime, decision: Decision,
-                    approvals: Callable[[ProposedResponse], int] = lambda r: 1) -> None:
-        """A newly opened, triaged case: its row, first alert, decision and proposed responses."""
+                    approvals: Callable[[ProposedResponse], int] = lambda r: 1,
+                    host_tier: int | None = None) -> None:
+        """
+        A newly opened, triaged case: its row, first alert, decision and proposed
+        responses.  What the review side needs from the Knowledge Store (the host's
+        criticality tier, the approvals each response needs) is recorded here, so
+        reviewing never reads the Knowledge Store.
+        """
         review = "open" if decision.outcome == REVIEW else "none"
         self._alert_cap[case.case_id] = MAX_ALERTS_PER_CASE if review == "open" else MAX_ALERTS_NOT_FOR_REVIEW
         with self.batch():
             self._con.execute(
-                "INSERT INTO cases (case_id, case_key, kind, title, host, opened, last_seen, alert_count, outcome,"
-                " review_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO cases (case_id, case_key, kind, title, host, host_tier, opened, last_seen, alert_count,"
+                " outcome, review_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (case.case_id, _dumps(list(case.key)), alert.get("kind") or "network", describe_pattern(alert),
-                 alert.get("target_host"), _iso(case.opened), _iso(case.last_seen), case.alert_count,
+                 alert.get("target_host"), host_tier, _iso(case.opened), _iso(case.last_seen), case.alert_count,
                  decision.outcome, review))
             self._insert_alert(case.case_id, 0, alert, at)
             self._con.execute(
-                "INSERT INTO decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (case.case_id, _iso(decision.at), decision.path, decision.outcome, decision.pipeline_outcome,
-                 decision.nce, _dumps(decision.reasons), _dumps(decision.hypotheses), decision.store_seq))
+                 decision.nce, _dumps(decision.reasons), _dumps(decision.hypotheses), decision.store_seq,
+                 _dumps(decision.escalations)))
             self._audit(at, "loop", "case_opened", case.case_id,
                         {"outcome": decision.outcome, "path": decision.path, "review_status": review})
             for r in proposed_responses(decision):
@@ -547,7 +556,8 @@ class CaseStore:
         if not rows:
             return None
         d = rows[0]
-        d["reasons"], d["hypotheses"] = json.loads(d["reasons"]), json.loads(d["hypotheses"])
+        for k in ("reasons", "hypotheses", "escalations"):
+            d[k] = json.loads(d[k])
         return d
 
     def actions(self, case_id: str) -> list[dict]:

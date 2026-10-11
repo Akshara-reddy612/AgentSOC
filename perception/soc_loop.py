@@ -51,7 +51,7 @@ from datetime import datetime, timedelta
 from typing import Callable
 
 from perception.case_builder import Case, CaseBuilder, alert_case_key
-from perception.case_store import CaseStore, approvals_needed
+from perception.case_store import CaseStore, approvals_needed, host_tier
 from perception.host_detection import DETECTORS, host_alert, learn_key, novel_keys
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, ensure_endpoint
@@ -158,7 +158,8 @@ class SocLoop:
                 if self.analyst is not None and d.outcome == REVIEW:
                     heapq.heappush(self._reviews, (at + self.analyst_delay, next(self._review_seq), case, d))
                 if self.case_store is not None:
-                    self.case_store.case_opened(case, a, at, d, approvals=lambda r: approvals_needed(self.db, r))
+                    self.case_store.case_opened(case, a, at, d, approvals=lambda r: approvals_needed(self.db, r),
+                                                host_tier=host_tier(self.db, str(a.get("target_host") or "")))
         elif not self._in_training and self.case_store is not None:
             self.case_store.alert_attached(case, a, at)
 
