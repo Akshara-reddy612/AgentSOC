@@ -65,6 +65,17 @@ outcome monitor (watches on decided entities)  --> KnowledgeUpdater (gated, audi
 
 ## 4. Store schema (SQLite, first version)
 
+**Implemented in S2 (2026-10-11), `perception/knowledge_db.py`:**
+- `meta` (schema version, environment profile).
+- `ks_log`: append-only, enforced by SQLite triggers. It is complete, so `replay_log` rebuilds the graph as it was after any entry.
+- `nodes` and `edges`: attributes stored as typed JSON, plus a `learned_from` column.
+
+Two changes from the plan below:
+- Fact versions live inside the node attributes (`KnowledgeFact.audit_history`) instead of a separate `facts` table.
+- Indicators are `ExternalDestination` nodes with a versioned `reputation` fact, which is the graph's existing model, instead of a separate `indicators` table.
+
+The remaining tables are added by the steps that first use them.
+
 | Table | Columns (main) | Notes |
 |:--|:--|:--|
 | `entities` | id, kind (host / account / address / domain / zone / group / service), attrs, first_seen, last_seen | |
@@ -112,7 +123,7 @@ outcome monitor (watches on decided entities)  --> KnowledgeUpdater (gated, audi
 Each step is a commit with tests and tracking-doc updates.
 
 1. **S1 Environment profile + configurable internal ranges.** The default profile reproduces today's behaviour (re-score of stored runs must show 0 changes). **Done 2026-10-11:** `perception/environment.py`; 0 changes on all stored runs (see RESEARCH_LOG).
-2. **S2 Persistent store** (SQLite, `KnowledgeFact` mapping, graph projection, audit log).
+2. **S2 Persistent store** (SQLite, `KnowledgeFact` mapping, graph projection, audit log). **Done 2026-10-11:** `perception/knowledge_db.py`. The synthetic graph round-trips exactly, and every stored evaluation gives 0 changes on the store-loaded graph (see RESEARCH_LOG).
 3. **S3 DEDALE Suricata adapter + DEDALE profile.** The profile is built from DEDALE's documented architecture: zones, subnets and server roles, recorded in `experiments/DEDALE_DATA_NOTES.md`. The attacker addresses shown in that diagram are left out (I4).
 4. **S4 Case builder with memory.** Extends `NoiseReducer` rather than replacing it.
 5. **S5 KnowledgeUpdater + learning gate (I1, I3).**

@@ -1173,3 +1173,25 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/environment.py`, `tests/test_environment_profile.py`, `experiments/rescore_snapshots/s8_env_profile.json`
 - Modified: `perception/knowledge_graph.py`, `perception/network_model.py`, `perception/sse.py`, `perception/nce_engine.py`, `perception/entity_binding.py`, `perception/defended_pipeline.py`, `monitoring/pipeline_adapter.py`, `tests/test_nce_evidentiary_threshold.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S2 — persistent Knowledge Store
+
+### What was tried
+- New `perception/knowledge_db.py` (`KnowledgeDB`):
+  - SQLite tables `meta`, `ks_log` (append-only via triggers), `nodes`, `edges`;
+  - typed-JSON encoding of attribute values;
+  - write-through graph projection; `batch()` transactions with projection rollback; `set_fact` versioning; `replay_log`; `projection_matches_store`.
+- `EnvironmentProfile.to_dict` / `from_dict` added so the store keeps its environment.
+- Verification: wrote the synthetic graph into a store and reopened it. Then reran every stored evaluation (historical re-score, the three corpus-v2 live re-scores, the four offline mock runs) with the evaluation entry points patched to read the store-loaded graph (scratch harness), and compared against the S1 outputs.
+
+### What was found
+- The round trip is exact: 154 nodes / 330 edges, every attribute equal, through the live projection, after reopening the file, and through `replay_log`. Node and successor order are kept. Predecessor order is not (edges are re-added grouped by source node), but no pipeline code iterates incoming edges.
+- On the store-loaded graph: historical re-score `TOTAL CHANGES: 0`, and 0 differing records across all 6,282 corpus-v2 live and mock records. In all 7 runs the pipeline left the projection equal to the store.
+- Plan changes, recorded in the design doc: fact versions are kept inside node attributes (`KnowledgeFact.audit_history`), and indicators are `ExternalDestination` nodes with a versioned `reputation` fact, instead of separate `facts` / `indicators` tables. Tables for patterns, cases, decisions, watches and analyst actions will be added by the steps that use them.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 630 passed, 1 deselected (619 + 11 new in `tests/test_knowledge_db.py`).
+
+### Files created/modified
+- Created: `perception/knowledge_db.py`, `tests/test_knowledge_db.py`
+- Modified: `perception/environment.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
