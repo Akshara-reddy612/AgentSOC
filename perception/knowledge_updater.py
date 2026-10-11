@@ -36,6 +36,7 @@ import itertools
 from datetime import datetime, timedelta
 
 from perception.case_builder import Case
+from perception.environment import parse_ipv4
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import destination_node_id, host_node_id
 from perception.knowledge_store import KnowledgeFact
@@ -123,17 +124,7 @@ class KnowledgeUpdater:
                              case, provenance, at, writer)
 
     def _endpoint(self, address: str, at: datetime, writer: str) -> str:
-        node = endpoint_node_id(self.db, address)
-        if node in self.db.graph.graph:
-            return node
-        if node.startswith("addr:"):
-            attrs = {"node_type": "AddressNode", "address": address}
-        else:
-            attrs = {"node_type": "ExternalDestination", "address": address, "kind": "ip", "source": "observed",
-                     "reputation": KnowledgeFact(value=UNKNOWN, version=1, confidence=1.0,
-                                                 source=SourceSystem.KNOWLEDGE_STORE, timestamp=at)}
-        self.db.add_node(node, attrs, writer=writer, at=at, learned_from="telemetry")
-        return node
+        return ensure_endpoint(self.db, address, at, writer)
 
     def _count_edge(self, src: str, dst: str, key: str, base: dict, case: Case, provenance: str,
                     at: datetime, writer: str) -> None:
@@ -159,6 +150,22 @@ def endpoint_node_id(db: KnowledgeDB, address: str) -> str:
     if host is not None:
         return host_node_id(host)
     return f"addr:{address}" if db.profile.is_internal_address(address) else destination_node_id(address)
+
+
+def ensure_endpoint(db: KnowledgeDB, address: str, at: datetime, writer: str) -> str:
+    """endpoint_node_id, creating the node (provenance "telemetry") if the store has none yet."""
+    node = endpoint_node_id(db, address)
+    if node in db.graph.graph:
+        return node
+    if node.startswith("addr:"):
+        attrs = {"node_type": "AddressNode", "address": address}
+    else:
+        attrs = {"node_type": "ExternalDestination", "address": address,
+                 "kind": "ip" if parse_ipv4(address) else "domain", "source": "observed",
+                 "reputation": KnowledgeFact(value=UNKNOWN, version=1, confidence=1.0,
+                                             source=SourceSystem.KNOWLEDGE_STORE, timestamp=at)}
+    db.add_node(node, attrs, writer=writer, at=at, learned_from="telemetry")
+    return node
 
 
 def _addresses(case: Case) -> tuple[str, str]:
