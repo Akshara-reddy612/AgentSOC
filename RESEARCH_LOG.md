@@ -1558,3 +1558,25 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `tests/test_open_world_sse.py`
 - Modified: `perception/environment.py`, `perception/sse.py`, `dedale/environment.py`, `experiments/dedale_host_replay.py`, `experiments/DEDALE_PHASE3_RESULTS.md`, `experiments/dedale_results/phase3_scores.json`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Phase 3 — NCE + analyst run
+
+### What was tried
+- `dedale_host_replay --mode gated --nce live --analyst oracle --max-calls 150` (open-world rule on); scored with `dedale_host_score --runs gated gated_nce gated_nce_openworld gated_analyst gated_nce_analyst --out phase3_scores.json`.
+
+### What was found
+- **API:** 39 live calls, 383 cache hits, 0 errors, 297.9 s. API log total 455 lines, 0 errors.
+- **Workload:** 943 alerts -> 455 test cases: REVIEW 420, NO_ACTIONABLE 35 (all benign). 30.0 reviews / day (week 1 24.6, week 2 35.4), against 30.9 for the analyst alone.
+- **Analyst verdicts:** 348 benign, 72 malicious; all 72 malicious cases reviewed.
+- **Attack steps:** 20 / 11 / 11 / 4 cases at +1.2 min / +28.5 min / +30.0 min / +21 h (same as the analyst alone). 0 attack keys learned.
+- **Learned edges:**
+  - provenance `analyst`: SPAWNED 309, WRITES_FILE_TYPE 14, USES_PIPE 7, LOGON 2, HAS_PRIOR_ACCESS 1, READS_LSASS 1, RUNS_SCRIPT 1;
+  - `closed_benign`: SPAWNED 4;
+  - gate dropped 29.
+- **Learning gap:** NCE dismissals teach the store through the gate only, so dismissed patterns recur (455 cases vs 432 with the analyst alone).
+
+### Test verification
+- No code change in this step; suite last run 696 passed, 1 deselected.
+
+### Files created/modified
+- Modified: `experiments/DEDALE_PHASE3_RESULTS.md`, `experiments/dedale_results/phase3_scores.json`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
