@@ -1136,3 +1136,16 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`
 - Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: DEDALE network architecture; Log Server noise
+
+### What was tried
+- Read the RESCOUSSE testbed page and architecture diagram (dedale.inria.fr/rescousse.html) to check that design step S3's environment profile can be built from documentation. Counted the Suricata alerts addressed to the Log Server (scratch script, read-only). Listed the sizes of the remaining DEDALE files from the saved Dataverse metadata (nothing downloaded).
+
+### What was found
+- The diagram gives the full IP plan and server roles: internal clients 172.16.1.2-.254, servers 172.16.0.0/24 (Internal Server / DC .2, Log Server .3), DMZ 172.17.0.0/16 (mail + DVWA .2, web .3, VPN .5), internet 172.18.0.0/16, external 172.19.0.0/16. Recorded in `experiments/DEDALE_DATA_NOTES.md`. The attacker addresses shown there stay out of the profile (design invariant I4).
+- 88.5% of all Suricata alerts (1,297,618 / 1,465,627) are traffic to the Log Server (port 9200: 564,790; port 50010: 732,828) from every zone, i.e. the IDS firing on the SIEM's own log shipping. The 01-06 process-list false positive is one of these.
+- Remaining DEDALE files (compressed): winlogbeat 27.12 GB, packetbeat 28.20 GB, auditbeat 10.90 GB, zeek per zone 0.42-4.40 GB (router1 4.40 GB), CICFlowMeter 0.28-5.22 GB.
+
+### Files created/modified
+- Modified: `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md` (S3), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
