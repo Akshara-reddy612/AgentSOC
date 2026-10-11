@@ -95,6 +95,13 @@
   - **Removed:** `network_model.is_internal_address`, replaced by `EnvironmentProfile.is_internal_address`.
   - **Effect with the default profile: 0 changes.** The historical re-score diff is 0 (`experiments/rescore_snapshots/s8_env_profile.json`), and all 6,282 corpus-v2 records (live re-scores + offline mocks) are identical before and after. The only intended difference: malformed dotted quads (an octet > 255) no longer count as internal addresses.
   - **Tests:** `tests/test_environment_profile.py` (81). `test_helper_functions_take_only_dict` was updated to allow the optional profile (configuration, not alert context). Suite: 619 passed, 1 deselected.
+- **Design step S2 — persistent Knowledge Store (2026-10-11):** new `perception/knowledge_db.py` (`KnowledgeDB`).
+  - **Contents:** a SQLite file holding the graph's nodes and edges with their `KnowledgeFact` attributes, stored as typed JSON (facts, enums, datetimes and tuples round-trip exactly), plus the environment profile and an audit log.
+  - **Audit log:** append-only, enforced by SQLite triggers, and complete. `replay_log(seq)` rebuilds the graph as it was after any entry. Every write records its writer, event time and provenance (`learned_from`: config / telemetry / training / closed_benign / analyst).
+  - **Fact versions:** a new version keeps the earlier ones in `audit_history`.
+  - **Pipeline access:** the pipeline reads a live projection (`db.graph`, a `KnowledgeStoreGraph`) that every write updates. A failed batch rolls back both the file and the projection, and `projection_matches_store()` detects changes made outside the store.
+  - **Verification:** the synthetic graph (154 nodes / 330 edges) round-trips exactly, through reopening and through log replay. Every stored evaluation run on the store-loaded graph gives 0 changes (historical re-score diff 0; all 6,282 corpus-v2 live and mock records identical), and the pipeline left the projection unchanged in all 7 runs.
+  - **Tests:** `tests/test_knowledge_db.py` (11). Suite: 630 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11):** `system_logs_winlogbeat.zip` (27.12 GB, Dataverse id 717892) is downloading to `D:\agentsoc_data\dedale\` with resume; it will be MD5-checked against the published value (7af54ba2…) before use.
 
 ### Phase 3 plan (decided 2026-10-11)
@@ -138,6 +145,7 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`GUIDE_Dataset/`](GUIDE_Dataset/) | Stores processed/raw incident telemetry datasets, CSV records, and generated evaluation subsets (subtle, hardersubtle, strongblunt, ambiguous). | Built & Tested |
 | [`perception/knowledge_graph.py`](perception/knowledge_graph.py) | Real graph-backed knowledge store (separate, parallel structure to InMemoryKnowledgeStore, importing it only for one-time seed-data migration at initialization, not a subclass); hostname classification, lazy node creation, service dependency tracking | Built & Tested |
 | [`perception/environment.py`](perception/environment.py) | Environment profile (design step S1): internal address ranges and name suffixes, internal host naming, per-zone egress policy; stored as a graph attribute of `KnowledgeStoreGraph` | Built & Tested |
+| [`perception/knowledge_db.py`](perception/knowledge_db.py) | Persistent Knowledge Store (design step S2): SQLite nodes / edges / typed-JSON facts, environment profile, append-only audit log; the pipeline reads its live graph projection | Built & Tested |
 | [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
 | [`perception/rsem.py`](perception/rsem.py) | Risk Scoring and Evaluation Module — real graph-based containment simulation and business-impact scoring, action ranking | Built & Tested |
 | [`perception/nce_contract.py`](perception/nce_contract.py) | NCE output data contract + LLM-free mock generator (the real LLM NCE is in nce_engine.py) | Built & Tested |

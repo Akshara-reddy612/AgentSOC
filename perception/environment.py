@@ -90,6 +90,26 @@ class EnvironmentProfile:
         """A name in free text that follows the internal host naming or an internal suffix."""
         return bool(self._hostname_re.match(name)) or name.lower().endswith(self.internal_domain_suffixes)
 
+    def to_dict(self) -> dict:
+        """Plain-JSON form (stored with a persistent Knowledge Store, design step S2)."""
+        return {
+            "name": self.name,
+            "internal_networks": list(self.internal_networks),
+            "internal_domain_suffixes": list(self.internal_domain_suffixes),
+            "internal_hostname_pattern": self.internal_hostname_pattern,
+            "zone_egress_policy": {zone: dict(policy) for zone, policy in self.zone_egress_policy.items()},
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EnvironmentProfile":
+        return cls(
+            name=d["name"],
+            internal_networks=tuple(d["internal_networks"]),
+            internal_domain_suffixes=tuple(d["internal_domain_suffixes"]),
+            internal_hostname_pattern=d["internal_hostname_pattern"],
+            zone_egress_policy=d["zone_egress_policy"],
+        )
+
 
 DEFAULT_PROFILE = EnvironmentProfile(
     name="default (synthetic enterprise, RFC 1918 internal)",
