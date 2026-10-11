@@ -415,13 +415,18 @@ class TestFilterContractSafety:
         """
         All three helper functions (_has_external_ip, _has_non_internal_domain,
         _has_beaconing_command) accept only a dict[str, str] — the same
-        type as NCEInput.evidence_fields.
+        type as NCEInput.evidence_fields.  Since design step S1 (2026-10-11)
+        the two address checks also take an optional environment profile:
+        trusted configuration (which ranges are internal), not the alert's
+        trusted or derived context.
         """
         import inspect
         for fn in [_has_external_ip, _has_non_internal_domain, _has_beaconing_command]:
             sig = inspect.signature(fn)
             param_names = list(sig.parameters.keys())
-            assert param_names == ["evidence_fields"], (
-                f"{fn.__name__} expected parameter ['evidence_fields'], "
+            assert param_names in (["evidence_fields"], ["evidence_fields", "profile"]), (
+                f"{fn.__name__} expected parameters ['evidence_fields'] (+ optional 'profile'), "
                 f"got {param_names}"
             )
+            if "profile" in sig.parameters:
+                assert sig.parameters["profile"].default is None

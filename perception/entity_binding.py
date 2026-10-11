@@ -33,8 +33,8 @@ import dataclasses
 import re
 from dataclasses import dataclass, field
 
+from perception.environment import DEFAULT_PROFILE, EnvironmentProfile
 from perception.nce_contract import NCEHypothesis
-from perception.network_model import is_internal_address
 
 BOUND = "bound"
 BOUND_OTHER_ROLE = "bound_other_role"
@@ -69,11 +69,12 @@ def _norm(attr: str, v: str) -> str:
     return _norm_account(v) if attr == "source_account" else _norm_host(v)
 
 
-def _is_external(v: str) -> bool:
+def _is_external(v: str, profile: EnvironmentProfile | None = None) -> bool:
+    p = profile or DEFAULT_PROFILE
     v = v.strip().lower()
     if _IPV4.match(v):
-        return not is_internal_address(v)
-    return "." in v and not is_internal_address(v)
+        return not p.is_internal_address(v)
+    return "." in v and not p.is_internal_address(v)
 
 
 @dataclass(frozen=True)
@@ -83,7 +84,8 @@ class EntityBindingResult:
     notes: list[str] = field(default_factory=list)
 
 
-def bind_entities(hypothesis: NCEHypothesis, alert: dict) -> EntityBindingResult:
+def bind_entities(hypothesis: NCEHypothesis, alert: dict,
+                  profile: EnvironmentProfile | None = None) -> EntityBindingResult:
     """Label every entity the hypothesis names against the alert's structured fields."""
     trusted_accounts = {_norm_account(str(alert[f])) for f in ("source_user",)
                         if alert.get(f) and str(alert[f]).strip().lower() not in _PLACEHOLDERS}
@@ -108,7 +110,7 @@ def bind_entities(hypothesis: NCEHypothesis, alert: dict) -> EntityBindingResult
                 roles[attr] = BOUND if value in dest else UNBOUND
             elif value == trusted_norm:
                 roles[attr] = BOUND
-            elif _is_external(raw):
+            elif _is_external(raw, profile):
                 roles[attr] = UNVERIFIABLE
             else:
                 roles[attr] = UNBOUND
@@ -137,17 +139,19 @@ def trusted_destination_of(alert: dict) -> str | None:
     return None
 
 
-def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[NCEHypothesis]:
+def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict,
+                         profile: EnvironmentProfile | None = None) -> list[NCEHypothesis]:
     """
     Everything the pipeline attaches from the alert's TRUSTED fields after NCE
     (Phase 3 step 3.3, 2026-10-11): entity binding for every hypothesis, and
     the trusted destination for T1071 hypotheses (read by SSE and RSEM).
     Since step 4.2: a telemetry-driven T1071 hypothesis when the alert has a
     trusted destination and NCE proposed no T1071.
+    `profile` (design step S1): which addresses are internal; default profile if None.
     """
     dest = trusted_destination_of(alert)
     out = []
-    for h in label_entity_binding(hypotheses, alert):
+    for h in label_entity_binding(hypotheses, alert, profile):
         if h.technique_id == "T1071" and dest:
             h = dataclasses.replace(h, trusted_destination=dest)
         out.append(h)
@@ -160,7 +164,7 @@ def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[N
     # alert's REAL source host counts.  With Groq, a steering payload made NCE
     # propose C2 from the steered server (no internet route -> INFEASIBLE),
     # which previously suppressed the telemetry check on the real host.
-    if dest and not any(h.technique_id == "T1071" and bind_entities(h, alert).roles.get("source_host") == BOUND
+    if dest and not any(h.technique_id == "T1071" and bind_entities(h, alert, profile).roles.get("source_host") == BOUND
                         for h in out):
         tele = NCEHypothesis(
             technique_id="T1071",
@@ -172,7 +176,7 @@ def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[N
             evidence_grounding="grounded",
             trusted_destination=dest,
         )
-        out.append(dataclasses.replace(tele, entity_binding=bind_entities(tele, alert).summary))
+        out.append(dataclasses.replace(tele, entity_binding=bind_entities(tele, alert, profile).summary))
     return out
 
 
@@ -180,6 +184,7 @@ def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[N
 TELEMETRY_REF = "trusted_destination_telemetry"
 
 
-def label_entity_binding(hypotheses: list[NCEHypothesis], alert: dict) -> list[NCEHypothesis]:
+def label_entity_binding(hypotheses: list[NCEHypothesis], alert: dict,
+                         profile: EnvironmentProfile | None = None) -> list[NCEHypothesis]:
     """Return new hypotheses with entity_binding set (order preserved)."""
-    return [dataclasses.replace(h, entity_binding=bind_entities(h, alert).summary) for h in hypotheses]
+    return [dataclasses.replace(h, entity_binding=bind_entities(h, alert, profile).summary) for h in hypotheses]

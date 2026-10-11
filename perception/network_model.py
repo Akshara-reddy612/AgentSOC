@@ -87,23 +87,12 @@ def _build_destinations() -> list[dict]:
 SYNTHETIC_DESTINATIONS: list[dict] = _build_destinations()
 
 
-def is_internal_address(address: str) -> bool:
-    """RFC 1918 / loopback / link-local IPv4, or a corporate-internal name."""
-    a = address.strip().lower()
-    if a.endswith((".corp.local", ".internal")):
-        return True
-    parts = a.split(".")
-    if len(parts) == 4 and all(p.isdigit() for p in parts):
-        o = [int(p) for p in parts]
-        return (o[0] == 10 or (o[0] == 172 and 16 <= o[1] <= 31)
-                or (o[0] == 192 and o[1] == 168) or o[0] == 127
-                or (o[0] == 169 and o[1] == 254))
-    return False
+# Which addresses count as internal is part of the environment profile since
+# design step S1 (perception/environment.py; RFC 1918 in the default profile).
 
 
-def egress_permits(zone_id: str, reputation: str) -> bool:
-    """Does the zone's egress policy let traffic reach a destination of this reputation?"""
-    policy = ZONE_EGRESS_POLICY.get(zone_id.upper(), {"mode": "none"})
+def policy_permits(policy: dict, reputation: str) -> bool:
+    """Does an egress policy let traffic reach a destination of this reputation?"""
     mode = policy["mode"]
     if mode == "none":
         return False
@@ -112,3 +101,8 @@ def egress_permits(zone_id: str, reputation: str) -> bool:
     if mode == "allowlist":
         return reputation in policy.get("allow", [])
     return False
+
+
+def egress_permits(zone_id: str, reputation: str) -> bool:
+    """policy_permits for the synthetic enterprise's zone policy table (no graph needed)."""
+    return policy_permits(ZONE_EGRESS_POLICY.get(zone_id.upper(), {"mode": "none"}), reputation)

@@ -25,6 +25,7 @@ from typing import Any
 
 import networkx as nx
 
+from perception.environment import DEFAULT_PROFILE, GRAPH_ATTR, EnvironmentProfile, profile_of
 from perception.knowledge_store import InMemoryKnowledgeStore, KnowledgeFact
 from perception.source_systems import SourceSystem
 
@@ -257,9 +258,12 @@ class KnowledgeStoreGraph:
     Edge types: GRANTS, EGRESS, HOSTED_IN, HAS_PRIOR_ACCESS, DEPENDS_ON, MEMBER_OF.
     """
 
-    def __init__(self, store: InMemoryKnowledgeStore | None = None) -> None:
+    def __init__(self, store: InMemoryKnowledgeStore | None = None,
+                 profile: EnvironmentProfile | None = None) -> None:
         self._store = store or InMemoryKnowledgeStore()
         self._graph = nx.MultiDiGraph()
+        # Graph attribute, so graph.copy() / from_graph keep it (design step S1).
+        self._graph.graph[GRAPH_ATTR] = profile or DEFAULT_PROFILE
         self._seed_from_store()
         self._seed_additional_topology()
         self._seed_network_model()
@@ -269,6 +273,11 @@ class KnowledgeStoreGraph:
     def graph(self) -> nx.MultiDiGraph:
         """Direct access to the underlying NetworkX graph."""
         return self._graph
+
+    @property
+    def profile(self) -> EnvironmentProfile:
+        """The environment profile this graph was built for (perception/environment.py)."""
+        return profile_of(self._graph)
 
     # ------------------------------------------------------------------
     # Lazy node creation (idempotent)
@@ -376,9 +385,9 @@ class KnowledgeStoreGraph:
         addresses absent from the allow-list / threat-intel tables ->
         ("unknown", 1.0, "not_listed").
         """
-        from perception.network_model import INTERNAL, UNKNOWN, is_internal_address
+        from perception.network_model import INTERNAL, UNKNOWN
 
-        if is_internal_address(address):
+        if self.profile.is_internal_address(address):
             return (INTERNAL, 1.0, "address_rules")
         node = destination_node_id(address)
         if node in self._graph:
@@ -766,9 +775,9 @@ class KnowledgeStoreGraph:
         destination nodes (sanctioned allow-list + known-bad threat intel)
         HOSTED_IN zone:EXTERNAL.  Added 2026-10-10 (Phase 2 step 2.3).
         """
-        from perception.network_model import SYNTHETIC_DESTINATIONS, ZONE_EGRESS_POLICY
+        from perception.network_model import SYNTHETIC_DESTINATIONS
 
-        for zone_id, policy in ZONE_EGRESS_POLICY.items():
+        for zone_id, policy in self.profile.zone_egress_policy.items():
             zn = zone_node_id(zone_id)
             if zn not in self._graph:
                 self._graph.add_node(zn, node_type="ZoneNode", zone_id=zone_id,

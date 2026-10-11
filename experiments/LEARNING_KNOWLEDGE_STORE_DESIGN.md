@@ -111,7 +111,7 @@ outcome monitor (watches on decided entities)  --> KnowledgeUpdater (gated, audi
 
 Each step is a commit with tests and tracking-doc updates.
 
-1. **S1 Environment profile + configurable internal ranges.** The default profile reproduces today's behaviour (re-score of stored runs must show 0 changes).
+1. **S1 Environment profile + configurable internal ranges.** The default profile reproduces today's behaviour (re-score of stored runs must show 0 changes). **Done 2026-10-11:** `perception/environment.py`; 0 changes on all stored runs (see RESEARCH_LOG).
 2. **S2 Persistent store** (SQLite, `KnowledgeFact` mapping, graph projection, audit log).
 3. **S3 DEDALE Suricata adapter + DEDALE profile.** The profile is built from DEDALE's documented architecture: zones, subnets and server roles, recorded in `experiments/DEDALE_DATA_NOTES.md`. The attacker addresses shown in that diagram are left out (I4).
 4. **S4 Case builder with memory.** Extends `NoiseReducer` rather than replacing it.

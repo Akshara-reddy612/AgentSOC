@@ -28,6 +28,7 @@ import time
 from pathlib import Path
 from monitoring.models import EventRecord, EventStatus
 from perception.pipeline import PerceptionPipeline
+from perception.environment import EnvironmentProfile
 from perception.nce_contract import NCEOutput, NCEHypothesis, HypothesisStatus, MissingContextFlag
 from perception.knowledge_graph import KnowledgeStoreGraph
 from perception.nce_sse_integration import validate_nce_output
@@ -175,6 +176,11 @@ class MonitoringPipelineAdapter:
 
     If TIMEOUT is raised internally, run() re-raises it; the caller sets status.
     """
+
+    def __init__(self, profile: EnvironmentProfile | None = None) -> None:
+        # Environment profile (design step S1): which addresses are internal and
+        # each zone's egress policy.  None -> the default (synthetic enterprise).
+        self.profile = profile
 
     def warmup(self) -> None:
         """
@@ -423,7 +429,8 @@ class MonitoringPipelineAdapter:
         from perception.entity_binding import attach_alert_context
         from perception.nce_engine import _NCE_EVIDENCE_FIELD_NAMES, label_t1071_grounding
         evidence = {f: str(alert[f]) for f in _NCE_EVIDENCE_FIELD_NAMES if alert.get(f) is not None}
-        hypotheses = attach_alert_context(label_t1071_grounding(hypotheses, evidence), alert)
+        hypotheses = attach_alert_context(label_t1071_grounding(hypotheses, evidence, self.profile), alert,
+                                          self.profile)
 
         record.nce_hypothesis_count = len(hypotheses)
         record.nce_techniques = [h.technique_id for h in hypotheses]
@@ -439,7 +446,7 @@ class MonitoringPipelineAdapter:
             from perception.nce_sse_integration import validate_nce_output
             from perception.rsem import StructuralSimulationEngine
 
-            kg = KnowledgeStoreGraph()
+            kg = KnowledgeStoreGraph(profile=self.profile)
             sse = StructuralSimulationEngine(kg)
 
             nce_output = NCEOutput(
