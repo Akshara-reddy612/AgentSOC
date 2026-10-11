@@ -131,7 +131,11 @@ Each step is a commit with tests and tracking-doc updates.
    - It sits next to `NoiseReducer` rather than extending it, because `NoiseReducer` works on one batch of Perception incidents while the case builder keeps open cases across a time-ordered stream of alert dicts. Same rule: the key uses structured fields only.
    - Windows (D3, initial choice): idle 1 h, max 24 h.
    - DEDALE: 1,465,627 alerts -> 15,005 cases (training weeks 7,273, test weeks 7,732). 366 test-week cases have a key never seen in training.
-5. **S5 KnowledgeUpdater + learning gate (I1, I3).**
+5. **S5 KnowledgeUpdater + learning gate (I1, I3).** **Done 2026-10-11:** `perception/knowledge_updater.py`.
+   - **What it learns:** `ALERT_PATTERN` (key `sid:<id>`) and `COMMUNICATES_WITH` (key `<proto>/<port>`) edges between the case's endpoints, with first/last seen, case and alert counts, and per-provenance counts. Unknown external addresses become `ExternalDestination` nodes (reputation unknown, provenance "telemetry").
+   - **Gate:** training cases are learned directly. Test cases are learned only if LOW_PRIORITY / NO_ACTIONABLE, released 24 h after closing (D3, initial choice), and dropped if a case involving either endpoint was escalated since the case opened. Escalated cases are learned only through `analyst_closed_benign`.
+   - **Ablation C3:** gate off, provenance "ungated".
+   - **Store:** `KnowledgeDB.update_edge` (logged and replayable) was added.
 6. **S6 Triage gate, decision cache, NCE budget queue.**
 7. **S7 Outcome monitor (watches).**
 8. **S8 Replay runner** (synchronous, virtual clock). It reuses the pipeline adapter; the threaded `monitoring/` worker can later consume the same components for live mode.

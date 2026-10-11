@@ -114,6 +114,11 @@
   - **How it works:** later alerts with the same key join the open case (count, last seen, sensors). A case closes after 1 h idle or at 24 h (open decision D3, initial choice). Time is the alerts' own time, alerts must arrive in time order, and closing idle cases is O(1) per alert. The two routers' copies of a flow join one case.
   - **DEDALE (all 1,465,627 alerts, 25 s):** 15,005 cases — training weeks 7,273, test weeks 7,732 (~550/day). 366 test-week cases (289 keys) have a key never seen in the training weeks, i.e. ~26/day would need full triage if everything seen in training were recognised as routine. Idle 4 h gives 9,413 cases.
   - **Tests:** `tests/test_case_builder.py` (6). Suite: 644 passed, 1 deselected.
+- **Design step S5 — knowledge updater and learning gate (2026-10-11):** new `perception/knowledge_updater.py` (`KnowledgeUpdater`).
+  - **What it learns:** from each closed case it writes or updates an `ALERT_PATTERN` edge (signature between two endpoints) and a `COMMUNICATES_WITH` edge (endpoints + destination port). Both carry first/last seen, case / alert counts and per-provenance counts. Only the case's structured fields are read; a test checks that injected alert text never reaches the store.
+  - **Gate:** training-window cases are learned directly ("training"). Afterwards only LOW_PRIORITY / NO_ACTIONABLE cases are learned, 24 h after closing, and only if no case involving either endpoint was escalated since the case opened ("closed_benign"). Escalated cases are learned only when an analyst closes them as benign ("analyst"). With the gate off (ablation C3) everything is learned at once ("ungated").
+  - **Store:** `KnowledgeDB.update_edge` / `edge_attrs` added (logged; `replay_log` reproduces updates).
+  - **Tests:** `tests/test_knowledge_updater.py` (7). Suite: 651 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11):** `system_logs_winlogbeat.zip` (27.12 GB, Dataverse id 717892) is downloading to `D:\agentsoc_data\dedale\` with resume; it will be MD5-checked against the published value (7af54ba2…) before use.
 
 ### Phase 3 plan (decided 2026-10-11)
@@ -159,6 +164,7 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/environment.py`](perception/environment.py) | Environment profile (design step S1): internal address ranges and name suffixes, internal host naming, per-zone egress policy; stored as a graph attribute of `KnowledgeStoreGraph` | Built & Tested |
 | [`perception/knowledge_db.py`](perception/knowledge_db.py) | Persistent Knowledge Store (design step S2): SQLite nodes / edges / typed-JSON facts, environment profile, append-only audit log; the pipeline reads its live graph projection | Built & Tested |
 | [`perception/case_builder.py`](perception/case_builder.py) | Case builder (design step S4): groups a time-ordered alert stream into cases on structured keys, closing on idle time or max duration (noise reduction with memory) | Built & Tested |
+| [`perception/knowledge_updater.py`](perception/knowledge_updater.py) | Knowledge updater (design step S5): the only writer of learned knowledge — alert patterns and communications from closed cases, trusted fields only, behind the learning gate | Built & Tested |
 | [`perception/network_alert.py`](perception/network_alert.py) | Network IDS alerts: addresses -> entity fields (source/target host, destination) through the Knowledge Store's inventory (design step S3) | Built & Tested |
 | [`dedale/`](dedale/) | DEDALE dataset: environment profile + 37-host inventory seeded into the store, Suricata alert adapter (data outside the repo, `$AGENTSOC_DATA_DIR/dedale`) | Built & Tested |
 | [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
