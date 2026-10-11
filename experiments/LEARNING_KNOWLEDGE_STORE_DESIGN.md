@@ -141,7 +141,11 @@ Each step is a commit with tests and tracking-doc updates.
    - **Two simplifications against the plan above:**
      - the budget is first-come-first-served per day, not priority-ordered. A priority queue needs decisions to be deferred; it is planned for when live NCE runs (Phase 3);
      - there is no NCE evidence-hash cache. Each alert line carries its own ports, so identical evidence hardly recurs; repeats are caught by the decision cache instead.
-7. **S7 Outcome monitor (watches).**
+7. **S7 Outcome monitor (watches).** **Done 2026-10-11:** `perception/outcome_monitor.py`.
+   - **Watches:** each auto-approved response's target (destination, host or account) is watched for 7 days.
+   - **Counts:** every later alert touching the target is counted, and separately the ones the response would have stopped (simulated, invariant I5).
+   - **Escalation:** new cases touching a watched target get an escalation reason through the gate's watch hook.
+   - **Write-back:** the response and its result are recorded on the target's node as a `response` fact (mode "simulated"); observed facts are untouched.
 8. **S8 Replay runner** (synchronous, virtual clock). It reuses the pipeline adapter; the threaded `monitoring/` worker can later consume the same components for live mode.
 9. **S9 Scorer + report** (conditions C0-C3).
 10. **B** analyst API on `analyst_actions` / `decisions` (separate plan).

@@ -1271,3 +1271,20 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/triage_gate.py`, `tests/test_triage_gate.py`
 - Modified: `perception/knowledge_updater.py`, `perception/knowledge_db.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S7 — outcome monitor; winlogbeat download verified
+
+### What was tried
+- New `perception/outcome_monitor.py`: 7-day watches on the targets of auto-approved responses; per-alert hit counts and simulated "would have stopped" counts; an escalation hook for the triage gate; write-back of a `response` fact to the target node.
+- `ensure_endpoint` moved into `knowledge_updater` as a helper shared with the monitor.
+- The winlogbeat download finished.
+
+### What was found
+- `system_logs_winlogbeat.zip`: 27,123,250,952 bytes, MD5 7af54ba2977f7535d4c07beb6b1ec657 = published value. The resumable script needed 3 attempts (connection resets at 8.2 GB and 16.3 GB). 672 hourly `.jsonl.bz2` members. A cosmetic logging bug in the scratch download script made it print "curl exit 0" after failed attempts (the timestamp substitution reset `$?`); the resume logic itself worked.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 663 passed, 1 deselected (658 + 5 new in `tests/test_outcome_monitor.py`).
+
+### Files created/modified
+- Created: `perception/outcome_monitor.py`, `tests/test_outcome_monitor.py`
+- Modified: `perception/knowledge_updater.py`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

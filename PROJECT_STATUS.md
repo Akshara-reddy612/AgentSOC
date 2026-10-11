@@ -126,7 +126,14 @@
   4. otherwise `run_downstream`, with NCE only if enabled and within the daily budget (shortfalls counted as backlog).
 
   Open decision D7: with NCE not run and nothing actionable, a never-learned pattern goes to REVIEW by default instead of NO_ACTIONABLE; the pipeline's own outcome is kept so both policies can be scored. ERA is not applied to IDS alerts (their text is the rule message). Simplifications vs the design plan: the budget is first-come-first-served per day (priority queue planned for live NCE), and there is no NCE evidence-hash cache. Tests: `tests/test_triage_gate.py` (7). Suite: 658 passed, 1 deselected.
-- **DEDALE winlogbeat download (user-approved 2026-10-11):** `system_logs_winlogbeat.zip` (27.12 GB, Dataverse id 717892) is downloading to `D:\agentsoc_data\dedale\` with resume; it will be MD5-checked against the published value (7af54ba2…) before use.
+- **Design step S7 — outcome monitor (2026-10-11):** new `perception/outcome_monitor.py` (`OutcomeMonitor`, `Watch`), the paper's Real-Time Monitoring for an alert stream.
+  - **Watches:** the target of each auto-approved response (destination / host / account) is watched for 7 days.
+  - **Counts:** later alerts touching the target are counted, and separately those the dry-run response would have stopped (simulated).
+  - **Escalation:** newly opened cases touching a watched target are escalated to REVIEW through the triage gate's watch hook.
+  - **Write-back:** the response and, at the end, its observed result are written to the target's node as a `response` fact (mode "simulated"); observed facts are never overwritten.
+  - **Refactor:** `ensure_endpoint` moved into `knowledge_updater` as a shared helper.
+  - **Tests:** `tests/test_outcome_monitor.py` (5). Suite: 663 passed, 1 deselected.
+- **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
 1. **3.1 Enterprise inventory** (done, above).
@@ -173,6 +180,7 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/case_builder.py`](perception/case_builder.py) | Case builder (design step S4): groups a time-ordered alert stream into cases on structured keys, closing on idle time or max duration (noise reduction with memory) | Built & Tested |
 | [`perception/knowledge_updater.py`](perception/knowledge_updater.py) | Knowledge updater (design step S5): the only writer of learned knowledge — alert patterns and communications from closed cases, trusted fields only, behind the learning gate | Built & Tested |
 | [`perception/triage_gate.py`](perception/triage_gate.py) | Triage gate (design step S6): escalation rules, learned pattern -> LOW_PRIORITY, decision cache, pipeline with NCE behind a daily budget | Built & Tested |
+| [`perception/outcome_monitor.py`](perception/outcome_monitor.py) | Outcome monitor (design step S7): watches targets of auto-approved responses, counts what they would have stopped (simulated), escalates new activity, writes the result back to the store | Built & Tested |
 | [`perception/network_alert.py`](perception/network_alert.py) | Network IDS alerts: addresses -> entity fields (source/target host, destination) through the Knowledge Store's inventory (design step S3) | Built & Tested |
 | [`dedale/`](dedale/) | DEDALE dataset: environment profile + 37-host inventory seeded into the store, Suricata alert adapter (data outside the repo, `$AGENTSOC_DATA_DIR/dedale`) | Built & Tested |
 | [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |

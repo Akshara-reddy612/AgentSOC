@@ -88,6 +88,12 @@ With no learned baseline, each outbound alert becomes a telemetry C2 check on an
 
 - 45 VMs × (`<ip>_<role>_ub.log`, `<ip>_<role>_timeline.csv`). The timeline is the benign activity plan: `ts, date_str, inter_event_delay, action_duration, action_type` (e.g. browsing, mailing). IPs here are on 192.168.56.0/24 (management network), not the 172.16.x addresses seen in Suricata.
 
+## Windows logs (`system_logs_winlogbeat.zip`, downloaded and MD5-verified 2026-10-11)
+
+- 27,123,250,952 bytes, MD5 7af54ba2977f7535d4c07beb6b1ec657 (matches the Dataverse metadata).
+- Contents: 672 hourly files `daily_winlogbeat/D<day>_H<hour>_<date>T<hour>_winlogbeat_F<n>.jsonl.bz2` plus `winlogbeat_md5sum.sig`; 27.2 GB of bz2 members.
+- Each member can be decompressed while it is read, as with syslog, so nothing has to be extracted. Record formats are not inspected yet.
+
 ## Syslog (`system_logs_syslog.zip`)
 
 - 673 hourly `.jsonl.bz2` files. One hour (2025-01-08 00h) = 2,096 records: auditbeat 608, suricata 540 (the same alerts as above), filebeat 245, kernel 98, samba 96, postfix 160, dovecot 78, CRON 51, ovpn-server 41. Server-side Linux context, not alerts.
