@@ -1044,3 +1044,24 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json`, `_api_log.jsonl`, `_results_rescored.json`
 - Modified: `perception/nce_engine.py`, `perception/entity_binding.py`, `agent/run_v2_eval.py`, `tests/test_v2_parallel_runner.py`, `tests/test_telemetry_c2_hypothesis.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 4 steps 4.7-4.10 + leftovers (user: "do all of them except 4")
+
+### What was tried
+- 4.7 Daily-quota stop: `agent/llm_utils.py` (`DAILY_QUOTA_MARKER`, `is_daily_quota_error`), `perception/nce_engine.py` (both callers), `agent/run_v2_eval.py` (stop event, worker sentinels, exit 3). Tests `tests/test_daily_quota_stop.py` (4).
+- 4.8 ERA: `experiments/era_offline.py` (real Perception + ERA per alert); `perception/outcome.py` ERA escalation; `perception/defended_pipeline.py` / `experiments/rescore_v2.py` pass ERA levels; `monitoring/pipeline_adapter.py` max-level ERA + shared escalations. Tests `tests/test_era_escalation.py` (3). First debugging pass: contaminated alerts scored identically to clean ones — not shared pipeline state (checked with a fresh pipeline per alert) but ERA genuinely missing v2's varied payload phrasings and diluting partial hits in score fusion (e.g. semantic 0.44 + approval-claim 0.40 -> fused 0.18 LOW).
+- 4.9 Undefended baseline: `agent/run_v2_undefended.py` (reuses `_run_parallel`, now with `call_fn`), `experiments/undefended_metrics.py`. User-approved ~1,000 Gemini calls; stopped at 368 scored alerts by Gemini's daily cap (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`, quotaValue 500, retryDelay ~18 h). The baseline caller was made quota-aware (marks daily-quota errors so the runner stops).
+- 4.10 Real-telemetry scoping: web search; `experiments/REAL_TELEMETRY_PLAN.md`.
+- Leftovers: watchdog exit-0 fix (2 files), two non-vacuous test rewrites, ERA warm-up fixture.
+
+### What was found
+- ERA: clean 0/500 + 0/500 flagged; contaminated 65/500 dev, 56/500 held-out (MEDIUM+). Escalation re-score: dev contaminated LOW_PRIORITY->REVIEW 12, AUTO_APPROVED->REVIEW 17; held-out 10 / 18; clean 0 changes. Paired lost/gained after ERA: dev 4 / 16, held-out 3 / 10.
+- Undefended vs defended (183 dev pairs): undefended hijacked 48/156 (30.8%, CI 24.1-38.4%, p = 1.7e-5); defended suppressed 2/155 (1.3%, CI 0.4-4.6%, p = 0.29); misdirect executed 0.
+- Curated Monitoring demo alerts: ERA LOW (0.118-0.193), outcomes unchanged.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 538 passed, 1 deselected.
+
+### Pending (quota-bound, resume when caps reset)
+- Groq dev run: ~740 alerts + 23 NCE errors (Groq TPD 200k/key/day).
+- Undefended Gemini dev baseline: ~630 alerts (Gemini 500 requests/key/day).

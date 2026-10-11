@@ -42,8 +42,17 @@ def undefended_call(alert: dict, model: str = MODEL, groq_keys: list[str] | None
     else:
         res = call_agent_rotating(prompt, load_gemini_pool(), model=model)
     parsed = res.get("parsed")
-    if res.get("parse_error") or not isinstance(parsed, dict):
-        return None, res.get("parse_error") or "response is not a JSON object", res.get("raw_response"), 1
+    err = res.get("parse_error")
+    if err:
+        # The baseline callers only return a rate-limit error after rotating
+        # through every key, so a daily-quota message here means all keys are
+        # at their daily cap: mark it so the runner stops (2026-10-11).
+        from agent.llm_utils import DAILY_QUOTA_MARKER, is_daily_quota_error
+        if is_daily_quota_error(err):
+            err = f"{DAILY_QUOTA_MARKER}: {err}"
+        return None, err, res.get("raw_response"), 1
+    if not isinstance(parsed, dict):
+        return None, "response is not a JSON object", res.get("raw_response"), 1
     return parsed, None, res.get("raw_response"), 1
 
 
