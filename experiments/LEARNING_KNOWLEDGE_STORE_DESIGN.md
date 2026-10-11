@@ -124,7 +124,9 @@ Each step is a commit with tests and tracking-doc updates.
 
 1. **S1 Environment profile + configurable internal ranges.** The default profile reproduces today's behaviour (re-score of stored runs must show 0 changes). **Done 2026-10-11:** `perception/environment.py`; 0 changes on all stored runs (see RESEARCH_LOG).
 2. **S2 Persistent store** (SQLite, `KnowledgeFact` mapping, graph projection, audit log). **Done 2026-10-11:** `perception/knowledge_db.py`. The synthetic graph round-trips exactly, and every stored evaluation gives 0 changes on the store-loaded graph (see RESEARCH_LOG).
-3. **S3 DEDALE Suricata adapter + DEDALE profile.** The profile is built from DEDALE's documented architecture: zones, subnets and server roles, recorded in `experiments/DEDALE_DATA_NOTES.md`. The attacker addresses shown in that diagram are left out (I4).
+3. **S3 DEDALE Suricata adapter + DEDALE profile.** The profile is built from DEDALE's documented architecture: zones, subnets and server roles, recorded in `experiments/DEDALE_DATA_NOTES.md`. The attacker addresses shown in that diagram are left out (I4). **Done 2026-10-11:**
+   - `dedale/environment.py` (profile, inventory of 37 hosts, `seed_store`), `dedale/suricata.py` (adapter), `perception/network_alert.py` (addresses -> entity fields through the store's address index).
+   - New host classes for inventory roles, and egress mode "open" for undocumented egress.
 4. **S4 Case builder with memory.** Extends `NoiseReducer` rather than replacing it.
 5. **S5 KnowledgeUpdater + learning gate (I1, I3).**
 6. **S6 Triage gate, decision cache, NCE budget queue.**
@@ -140,6 +142,16 @@ Each step is a commit with tests and tracking-doc updates.
 - **D3 Case window *W*** and learning-gate delay *D*: tune on the training window only.
 - **D4 Store location:** `D:\agentsoc_data\ks\` (outside the repo, next to the data) vs `logs/` (git-ignored).
 - **D5 Second dataset for generalization** (see §9). Needs download approval.
+- **D6 Technique coverage (found 2026-10-11, blocks the host-log phase, not Phase 1).** NCE may only name the 7 techniques SSE has constraints for: T1078, T1021.001, T1021.002, T1550, T1484, T1071, T1562 (`nce_contract` validates against `sse.TECHNIQUE_TABLE`). Most of DEDALE's attack falls outside that set:
+  - phishing attachment T1566.001;
+  - PowerShell T1059.001;
+  - registry run keys T1547.001;
+  - PrintNightmare lateral movement T1210 / T1068;
+  - SSH with a stolen key T1021.004;
+  - collection T1005 / T1039;
+  - exfiltration over C2 T1041.
+
+  Only C2 (T1071) and the key-based logon (T1078) can be named. Before host logs are evaluated, the vocabulary and the SSE constraints need to be extended to the techniques host telemetry can show, or hypotheses outside the table must get a defined "cannot be checked structurally -> review" path. This is the user's decision.
 
 ## 9. Dataset choice
 

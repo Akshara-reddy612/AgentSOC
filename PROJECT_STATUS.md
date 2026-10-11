@@ -102,6 +102,14 @@
   - **Pipeline access:** the pipeline reads a live projection (`db.graph`, a `KnowledgeStoreGraph`) that every write updates. A failed batch rolls back both the file and the projection, and `projection_matches_store()` detects changes made outside the store.
   - **Verification:** the synthetic graph (154 nodes / 330 edges) round-trips exactly, through reopening and through log replay. Every stored evaluation run on the store-loaded graph gives 0 changes (historical re-score diff 0; all 6,282 corpus-v2 live and mock records identical), and the pipeline left the projection unchanged in all 7 runs.
   - **Tests:** `tests/test_knowledge_db.py` (11). Suite: 630 passed, 1 deselected.
+- **Design step S3 — DEDALE environment, inventory and Suricata adapter (2026-10-11):**
+  - **`dedale/environment.py`:** the DEDALE profile (internal = 172.16/16, 172.17/16, VPN 10.8/16; domain suffix `.breach.local`; company zones with egress mode "open") and a 37-host inventory from the documented architecture (30 clients, domain controller, log, mail, web and VPN servers, 2 routers), seeded into a `KnowledgeDB` with provenance "config". No attacker or external-zone address is configuration (test-enforced). Assumptions are listed in the module (egress, internal reachability at confidence 0.8, client numbering, criticality tiers).
+  - **`dedale/suricata.py`:** streams the alerts as network alerts with structured fields and the line as free-text evidence.
+  - **`perception/network_alert.py`:** resolves addresses to entity fields through the store's new address index (`KnowledgeDB.host_for_address`).
+  - **Shared code:** new host classes (LOG_SERVER, MAIL_SERVER, WEB_SERVER, VPN_GATEWAY, ROUTER) and egress mode "open". Synthetic-environment re-scores show 0 changes.
+  - **Full-file run (39 s):** 95.3% internal->internal, 64,835 outbound alerts to only 28 external addresses (81% to 172.18.0.1, the internet router answering DNS), 4,433 inbound. Every internal address resolves to an inventory host.
+  - **Finding (design decision D6):** NCE can only name the 7 SSE techniques, so most of DEDALE's attack (phishing, PowerShell, registry persistence, PrintNightmare, SSH, exfiltration) cannot be named. This blocks the host-log phase, not Phase 1.
+  - **Tests:** `tests/test_dedale.py` (8, one on the real file, skipped without data). Suite: 638 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11):** `system_logs_winlogbeat.zip` (27.12 GB, Dataverse id 717892) is downloading to `D:\agentsoc_data\dedale\` with resume; it will be MD5-checked against the published value (7af54ba2…) before use.
 
 ### Phase 3 plan (decided 2026-10-11)
@@ -146,6 +154,8 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/knowledge_graph.py`](perception/knowledge_graph.py) | Real graph-backed knowledge store (separate, parallel structure to InMemoryKnowledgeStore, importing it only for one-time seed-data migration at initialization, not a subclass); hostname classification, lazy node creation, service dependency tracking | Built & Tested |
 | [`perception/environment.py`](perception/environment.py) | Environment profile (design step S1): internal address ranges and name suffixes, internal host naming, per-zone egress policy; stored as a graph attribute of `KnowledgeStoreGraph` | Built & Tested |
 | [`perception/knowledge_db.py`](perception/knowledge_db.py) | Persistent Knowledge Store (design step S2): SQLite nodes / edges / typed-JSON facts, environment profile, append-only audit log; the pipeline reads its live graph projection | Built & Tested |
+| [`perception/network_alert.py`](perception/network_alert.py) | Network IDS alerts: addresses -> entity fields (source/target host, destination) through the Knowledge Store's inventory (design step S3) | Built & Tested |
+| [`dedale/`](dedale/) | DEDALE dataset: environment profile + 37-host inventory seeded into the store, Suricata alert adapter (data outside the repo, `$AGENTSOC_DATA_DIR/dedale`) | Built & Tested |
 | [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
 | [`perception/rsem.py`](perception/rsem.py) | Risk Scoring and Evaluation Module — real graph-based containment simulation and business-impact scoring, action ranking | Built & Tested |
 | [`perception/nce_contract.py`](perception/nce_contract.py) | NCE output data contract + LLM-free mock generator (the real LLM NCE is in nce_engine.py) | Built & Tested |

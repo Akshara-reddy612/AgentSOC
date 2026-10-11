@@ -183,6 +183,7 @@ class KnowledgeDB:
         self._con.executescript(_SCHEMA)
         self._in_batch = False
         self._graph = nx.MultiDiGraph()
+        self._address_index: dict[str, str] = {}      # address -> host_id (from hosts' ip_addresses facts)
         stored = self._meta("profile")
         if stored is None:
             if profile is None:
@@ -211,6 +212,10 @@ class KnowledgeDB:
     @property
     def profile(self) -> EnvironmentProfile:
         return self._profile
+
+    def host_for_address(self, address: str) -> str | None:
+        """Host id (as alerts name hosts) of the inventory host that owns this address, else None."""
+        return self._address_index.get(address.strip())
 
     def learned_from(self, node_id: str) -> str | None:
         row = self._con.execute("SELECT learned_from FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
@@ -289,6 +294,8 @@ class KnowledgeDB:
             old = self._graph.nodes[node_id].get(name)
             if old is not None and not isinstance(old, KnowledgeFact):
                 raise TypeError(f"{node_id}.{name} is not a KnowledgeFact attribute")
+            if name == "ip_addresses":
+                self._check_addresses_free(node_id, value)
             fact = KnowledgeFact(
                 value=value, version=old.version + 1 if old else 1, confidence=confidence, source=source,
                 timestamp=at,
@@ -299,6 +306,8 @@ class KnowledgeDB:
             self._con.execute("UPDATE nodes SET attrs = ?, updated_seq = ? WHERE node_id = ?",
                               (_dumps(attrs), seq, node_id))
             self._graph.nodes[node_id][name] = _stored_copy(fact)
+            if name == "ip_addresses":
+                self._rebuild_address_index()
             return fact
 
     def import_graph(self, source: KnowledgeStoreGraph | nx.MultiDiGraph, *, writer: str, at: datetime,
@@ -346,11 +355,18 @@ class KnowledgeDB:
             raise ValueError("a node needs a node_type")
         if node_id in self._graph:
             raise ValueError(f"node {node_id!r} already exists")
+        addresses = attrs.get("ip_addresses")
+        if addresses is not None:
+            if not isinstance(addresses, KnowledgeFact):
+                raise TypeError("ip_addresses is a KnowledgeFact attribute")
+            self._check_addresses_free(node_id, addresses.value)
         seq = self._log(writer, at, "add_node",
                         {"node_id": node_id, "attrs": encode_value(attrs), "learned_from": learned_from})
         self._con.execute("INSERT INTO nodes VALUES (?, ?, ?, ?, ?, ?)",
                           (node_id, attrs["node_type"], _dumps(attrs), learned_from, seq, seq))
         self._graph.add_node(node_id, **_stored_copy(attrs))
+        if addresses is not None:
+            self._rebuild_address_index()
 
     def _add_edge(self, src: str, dst: str, key: Any, attrs: dict, writer: str, at: datetime,
                   learned_from: str) -> None:
@@ -379,3 +395,20 @@ class KnowledgeDB:
         """Make the in-memory graph equal to the committed tables again (same object, so readers stay valid)."""
         self._graph.clear()
         self._fill_from_tables(self._graph)
+        self._rebuild_address_index()
+
+    def _rebuild_address_index(self) -> None:
+        self._address_index = {}
+        for node_id, d in self._graph.nodes(data=True):
+            fact = d.get("ip_addresses")
+            if isinstance(fact, KnowledgeFact):
+                for address in fact.value:
+                    self._address_index[address] = d.get("host_id", node_id)
+
+    def _check_addresses_free(self, node_id: str, addresses: list[str]) -> None:
+        """An address belongs to one host: contradictory asset data is refused."""
+        mine = self._graph.nodes[node_id].get("host_id", node_id) if node_id in self._graph else None
+        for address in addresses:
+            owner = self._address_index.get(address)
+            if owner is not None and owner != mine:
+                raise ValueError(f"address {address} already belongs to host {owner!r}")
