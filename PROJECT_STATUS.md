@@ -133,6 +133,24 @@
   - **Write-back:** the response and, at the end, its observed result are written to the target's node as a `response` fact (mode "simulated"); observed facts are never overwritten.
   - **Refactor:** `ensure_endpoint` moved into `knowledge_updater` as a shared helper.
   - **Tests:** `tests/test_outcome_monitor.py` (5). Suite: 663 passed, 1 deselected.
+- **Design step S8 — SOC loop and DEDALE Phase 1 replay (2026-10-11):**
+  - **New code:** `perception/soc_loop.py` (`SocLoop`) and `experiments/dedale_replay.py`. The training window (2024-12-23..2025-01-05, documented benign) runs in shadow mode: cases are learned, not triaged.
+  - **Outputs:** written outside the repo — `agentsoc_data/ks/dedale_<run>.sqlite` (store) and `agentsoc_data/runs/dedale_<run>/` (cases.jsonl, watches.jsonl, summary.json).
+  - **Full replays, NCE off, no API calls (1,465,627 alerts; 7,273 training + 7,732 test cases; ~30 s each).** Test-window outcomes:
+
+    | Run | LOW_PRIORITY | REVIEW | AUTO_APPROVED |
+    |:--|--:|--:|--:|
+    | static (C0) | 0 | 7,694 | 38 |
+    | frozen (C1) | 7,286 | 411 | 35 |
+    | gated (C2) | 7,286 | 411 | 35 |
+    | ungated (C3) | 7,362 | 336 | 34 |
+    | gated, D7 policy "no_actionable" | 7,305 | 156 (+236 NO_ACTIONABLE) | 35 |
+
+  - **Learning from the benign weeks:** 753 alert patterns + 822 communications cut test-week analyst reviews from ~550/day to ~29/day.
+  - **C2 = C1 in this phase:** without NCE or an analyst nothing can vouch for new patterns. Unreasoned REVIEW cases are not benign, so the gate learns only extra communications from routine cases (265) and drops 4,703 benign updates that shared an endpoint with an escalated case.
+  - **C3** learned 289 new alert patterns without examination.
+  - **Not yet scored against ground truth** (design step S9).
+  - **Tests:** `tests/test_soc_loop.py` (5). Suite: 668 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
@@ -181,6 +199,8 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/knowledge_updater.py`](perception/knowledge_updater.py) | Knowledge updater (design step S5): the only writer of learned knowledge — alert patterns and communications from closed cases, trusted fields only, behind the learning gate | Built & Tested |
 | [`perception/triage_gate.py`](perception/triage_gate.py) | Triage gate (design step S6): escalation rules, learned pattern -> LOW_PRIORITY, decision cache, pipeline with NCE behind a daily budget | Built & Tested |
 | [`perception/outcome_monitor.py`](perception/outcome_monitor.py) | Outcome monitor (design step S7): watches targets of auto-approved responses, counts what they would have stopped (simulated), escalates new activity, writes the result back to the store | Built & Tested |
+| [`perception/soc_loop.py`](perception/soc_loop.py) | The store-backed Sense-Reason-Act loop over an alert stream (design step S8): enrichment, monitor, cases, triage, gated learning; modes static / frozen / gated / ungated | Built & Tested |
+| [`experiments/dedale_replay.py`](experiments/dedale_replay.py) | Phase 1 DEDALE replay (offline, NCE off): one run per learning mode, store + per-case records outside the repo | Built & Run |
 | [`perception/network_alert.py`](perception/network_alert.py) | Network IDS alerts: addresses -> entity fields (source/target host, destination) through the Knowledge Store's inventory (design step S3) | Built & Tested |
 | [`dedale/`](dedale/) | DEDALE dataset: environment profile + 37-host inventory seeded into the store, Suricata alert adapter (data outside the repo, `$AGENTSOC_DATA_DIR/dedale`) | Built & Tested |
 | [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
