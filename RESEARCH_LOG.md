@@ -1121,3 +1121,18 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `experiments/DEDALE_DATA_NOTES.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Learning Knowledge Store design (draft)
+
+### What was tried
+- Re-read the base paper (`agenso_.research_base.pdf`, arXiv 2604.20134) §III-A, §III-D and §III-E. Checked the code for what the paper's Knowledge Store and Real-Time Monitoring would need: graph writes, persistence, noise reduction, the baseline rule, outcome escalation and the monitoring runner. Wrote `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`.
+- Web search (not verified by download) on alternative datasets: AIT Alert Data Set (8 attack executions, Suricata/Wazuh/AMiner alerts with attack-phase labels) and LANL (base paper's dataset; 58 days, ~12 GB compressed, real de-identified enterprise, no free text).
+
+### What was found
+- The code has the paper's static Knowledge Store (synthetic, rebuilt each run) but not its dynamic part. The only graph writes outside seeding are in `knowledge_graph.py` (seeding) and `rsem.py` (dry-run copies). Nothing is saved between runs, and `NoiseReducer` has no memory across batches. `KnowledgeFact` already supports versions, source, timestamp and audit history.
+- The existing `monitoring/` package is an alert-stream runner (queue, one worker, in-memory deque of 500) whose stated invariant is graph immutability (`test_graph_immutability_during_monitoring`). The paper's outcome feedback into the store is missing.
+- `network_model.is_internal_address()` hard-codes RFC 1918, so DEDALE's simulated internet and attacker addresses (172.19.x) would be treated as internal and the known-bad / T1071 destination checks would not fire. The fix is planned as design step S1.
+
+### Files created/modified
+- Created: `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`
+- Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
