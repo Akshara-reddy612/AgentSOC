@@ -14,7 +14,8 @@ from perception.case_builder import Case
 from perception.case_store import CaseStore, ConflictError
 from perception.host_detection import DETECTORS, host_alert, image_node_id
 from perception.knowledge_db import KnowledgeDB
-from perception.review_service import ReviewService, priority
+from perception.case_store import other_targets
+from perception.review_service import ReviewService, host_peers, priority
 from perception.soc_loop import SocLoop
 from perception.triage_gate import Decision
 
@@ -68,10 +69,11 @@ def test_priority_points_and_reasons(db, cs):
     svc = ReviewService(cs, clock=Clock(T + timedelta(hours=3, minutes=30)))
     q = svc.queue()
     assert [i["case_id"] for i in q] == ["case-3", "case-2", "case-1"]
-    assert q[0]["priority"] == 50 + 30 + 3 and q[0]["priority_reasons"] == [
-        "+50 escalated: Host CLIENT1 is under watch", "+30 host criticality tier 3", "+3 waiting 3 h"]
-    assert q[1]["priority_reasons"][:2] == ["+15 structurally feasible: T1021.004",
-                                           "+10 containment proposed: QUARANTINE_ACCESS internalserver"]
+    assert q[0]["priority"] == 50 + 30 + 10 + 3 and q[0]["priority_reasons"] == [
+        "+50 escalated: Host CLIENT1 is under watch", "+30 host criticality tier 3",
+        "+10 2 other open or confirmed cases on this host in 24 h", "+3 waiting 3 h"]
+    assert {"+15 structurally feasible: T1021.004",
+            "+10 containment proposed: QUARANTINE_ACCESS internalserver"} <= set(q[1]["priority_reasons"])
     case = cs.case("case-1")
     assert priority(dict(case, alert_count=40), None, [], T)[1] == ["+10 40 alerts"]     # capped at +10
 
@@ -125,3 +127,29 @@ def test_end_to_end_review_through_the_loop(db, cs):
     assert loop.counts["alerts"] == 2                                        # scp no longer alerts; y.exe did
     ops = [e["op"] for e in svc.case_view(item["case_id"])["audit"]]
     assert ops == ["case_opened", "claim", "note", "verdict", "command_applied", "case_closed"]
+
+
+def test_other_targets_resolve_addresses_and_raise_priority(db, cs):
+    rows = [{"technique_id": "T1078", "target_host": "CLIENT1"},
+            {"technique_id": "T1078", "target_host": "client1.breach.local"},
+            {"technique_id": "T1078", "target_host": "172.16.1.2"},                  # CLIENT1's own address
+            {"technique_id": "T1021.004", "target_host": "172.16.0.2"},              # internalserver
+            {"technique_id": "T1071", "target_host": ""}]
+    d = Decision("case-1", T, "pipeline", "REVIEW", "REVIEW", [], "ran", rows, 1)
+    assert other_targets(db, d, "CLIENT1") == ["172.16.0.2"]
+    assert other_targets(db, d, None) == []
+    _record(db, cs, 1)
+    case = cs.case("case-1")
+    pts, why = priority(case, {"hypotheses": rows, "other_targets": ["172.16.0.2"]}, [], T)
+    assert pts == 25 and why == ["+25 hypotheses name another target: 172.16.0.2"]
+
+
+def test_host_peers_window(db, cs):
+    _record(db, cs, 1, t=T - timedelta(hours=30))                         # too early
+    _record(db, cs, 2, t=T - timedelta(hours=2), image="a.exe")
+    _record(db, cs, 3, t=T + timedelta(hours=1), image="b.exe")            # later: not a peer of case-4
+    _record(db, cs, 4, image="c.exe")
+    _record(db, cs, 5, host="CLIENT9", image="d.exe")                      # other host
+    pool = cs.cases()
+    assert host_peers(cs.case("case-4"), pool) == 1
+    assert priority(cs.case("case-4"), None, [], T, peers=9)[1] == ["+25 9 other open or confirmed cases on this host in 24 h"]

@@ -7,9 +7,11 @@ of the case store.  The HTTP API calls this; it holds the review logic.
 
   - queue: cases waiting for an analyst, ordered by a transparent priority.
     Every item lists the points it got and why (escalation on trusted fields,
-    host criticality, a structurally feasible hypothesis, proposed
+    host criticality, hypotheses naming another host as target, other open
+    or confirmed cases on the same host in the previous 24 h -- the
+    risk-based-alerting idea --, a structurally feasible hypothesis, proposed
     containment, number of alerts, waiting time), so the order can be checked
-    and tuned.
+    and tuned.  LLM output may raise a case's priority, never lower it.
   - case view: evidence in three labelled groups --
       trusted:  structured sensor / inventory fields;
       untrusted text: command lines, raw events (may contain text written by
@@ -20,15 +22,18 @@ of the case store.  The HTTP API calls this; it holds the review logic.
     closed automatically), notes, the case's audit trail, and the learning
     preview (decision B2): what each verdict would do, in particular what
     `benign` would teach the store.
-  - claim / release / verdicts (single or an explicit list) / notes, passed to
-    the case store with the service's clock.
+  - claim / release / verdicts (single or an explicit list) / notes, and
+    approve / reject / roll back proposed responses (four-eyes where the
+    case store requires two approvals), passed to the case store with the
+    service's clock.
 It reads only the case store: the Knowledge Store stays with the loop (its
 single writer), which records at triage time what reviewing needs.
 """
 from __future__ import annotations
 
 import math
-from datetime import datetime, timezone
+from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from typing import Callable
 
 from perception.case_store import CaseStore, ReviewError
@@ -42,6 +47,10 @@ LLM_NOTICE = ("Hypotheses are LLM output (NCE) from the alert text, checked agai
 # Priority points (transparent and deliberately simple; tune on reviewed data, not on labels).
 P_ESCALATED = 50          # known-bad contact or activity on something under watch (trusted fields)
 P_PER_TIER = 10           # host criticality tier 0-3
+P_OTHER_TARGET = 25       # the hypotheses name another host / address as target (lateral movement, remote access)
+P_PER_PEER = 5            # each other open or confirmed-malicious case on the same host in the previous 24 h
+P_PEERS_MAX = 25
+PEER_WINDOW = timedelta(hours=24)
 P_FEASIBLE = 15           # a hypothesis SSE found structurally feasible
 P_PROPOSED = 10           # containment waiting for approval
 P_ALERTS_MAX = 10         # 2 points per doubling of the alert count
@@ -70,8 +79,16 @@ def _pattern_type(case: dict) -> str:
     return key[1] if key and key[0] == "host" else "network"
 
 
-def priority(case: dict, decision: dict | None, actions: list[dict], now: datetime) -> tuple[int, list[str]]:
-    """(points, reasons) for a case in the review queue."""
+def host_peers(case: dict, pool: list[dict]) -> int:
+    """Other cases in `pool` on the same host, opened in the PEER_WINDOW before this one."""
+    opened = _t(case["opened"])
+    return sum(1 for p in pool if p["case_id"] != case["case_id"] and p["host"] == case["host"]
+               and opened - PEER_WINDOW <= _t(p["opened"]) <= opened)
+
+
+def priority(case: dict, decision: dict | None, actions: list[dict], now: datetime,
+             peers: int = 0) -> tuple[int, list[str]]:
+    """(points, reasons) for a case in the review queue; `peers` from host_peers."""
     points, why = 0, []
 
     def add(p: int, reason: str) -> None:
@@ -85,6 +102,11 @@ def priority(case: dict, decision: dict | None, actions: list[dict], now: dateti
     tier = case.get("host_tier")
     if tier:
         add(P_PER_TIER * int(tier), f"host criticality tier {tier}")
+    others = (decision or {}).get("other_targets") or []
+    if others:
+        add(P_OTHER_TARGET, "hypotheses name another target: " + ", ".join(others))
+    if peers:
+        add(min(P_PEERS_MAX, P_PER_PEER * peers), f"{peers} other open or confirmed cases on this host in 24 h")
     feasible = sorted({h["technique_id"] for h in (decision or {}).get("hypotheses", [])
                        if h.get("sse_verdict") == "FEASIBLE"})
     if feasible:
@@ -107,8 +129,8 @@ def learning_preview(case: dict) -> dict[str, str]:
         "benign": (f"Teaches the store that \"{case['title']}\" is routine: it stops alerting. "
                    f"{SCOPE[_pattern_type(case)]}"),
         "benign_once": "Closes this case without teaching the store: the next occurrence alerts again.",
-        "malicious": ("Confirms an attack: an external destination involved is marked known-bad, the host is put "
-                      "under watch, and the proposed containment is approved."),
+        "malicious": ("Confirms an attack: an external destination involved is marked known-bad and the host is put "
+                      "under watch. Proposed containment is not executed by the verdict: approve each action."),
         "needs_info": "Puts the case back in the queue; it keeps blocking automatic learning on its host.",
     }
 
@@ -126,11 +148,15 @@ class ReviewService:
         """Cases waiting for an analyst, highest priority first (ties: oldest first)."""
         now = self.clock()
         statuses = QUEUE_STATUSES if include_claimed else ("open", "needs_info")
+        waiting = self.store.cases(review_status=statuses, host=host, limit=100_000)
+        pools = defaultdict(list)
+        for p in self._peer_pool(host):
+            pools[p["host"]].append(p)
         items = []
-        for c in self.store.cases(review_status=statuses, host=host, limit=100_000):
+        for c in waiting:
             d = self.store.decision(c["case_id"])
             acts = self.store.actions(c["case_id"])
-            points, why = priority(c, d, acts, now)
+            points, why = priority(c, d, acts, now, host_peers(c, pools[c["host"]]))
             items.append({"case_id": c["case_id"], "title": c["title"], "host": c["host"],
                           "opened": c["opened"], "alert_count": c["alert_count"],
                           "review_status": c["review_status"], "claimed_by": c["claimed_by"],
@@ -148,7 +174,7 @@ class ReviewService:
         same_pattern = [self._summary(x) for x in self.store.cases(case_key=c["case_key"]) if x["case_id"] != case_id]
         same_host = ([self._summary(x) for x in self.store.cases(review_status=QUEUE_STATUSES, host=c["host"])
                       if x["case_id"] != case_id] if c["host"] else [])
-        points, why = priority(c, d, actions, self.clock())
+        points, why = priority(c, d, actions, self.clock(), host_peers(c, self._peer_pool(c["host"])))
         return {
             "case": c,
             "priority": points, "priority_reasons": why,
@@ -169,6 +195,13 @@ class ReviewService:
             "notes": self.store.notes(case_id),
             "audit": self.store.audit(case_id=case_id),
         }
+
+    def _peer_pool(self, host: str | None) -> list[dict]:
+        """Cases that raise a host's risk: waiting for review, or confirmed malicious."""
+        pool =self.store.cases(review_status=QUEUE_STATUSES, host=host, limit=100_000)
+        pool += [c for c in self.store.cases(review_status="closed", host=host, limit=100_000)
+                 if c["verdict"] == "malicious"]
+        return pool
 
     @staticmethod
     def _summary(c: dict) -> dict:
@@ -191,3 +224,13 @@ class ReviewService:
 
     def note(self, case_id: str, analyst: str, text: str) -> None:
         self.store.add_note(case_id, analyst, self.clock(), text)
+
+    def approve(self, action_id: str, analyst: str) -> int | None:
+        """Approve a proposed response; returns the execute command's id once it has enough approvals."""
+        return self.store.approve_action(action_id, analyst, self.clock())
+
+    def reject(self, action_id: str, analyst: str, reason: str) -> None:
+        self.store.reject_action(action_id, analyst, self.clock(), reason)
+
+    def rollback(self, action_id: str, analyst: str, reason: str) -> int:
+        return self.store.request_rollback(action_id, analyst, self.clock(), reason)

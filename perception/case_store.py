@@ -24,6 +24,12 @@ SOC loop raised and what analysts did about it, and the loop's inbox.
     each one applied with what it did.
   - Review status of a case: none (not for review) / open -> claimed ->
     closed; needs_info puts it back in the queue (it keeps its learning hold).
+  - Proposed responses (step 4): proposed -> approved (enough approvals:
+    one, or two different analysts under the four-eyes rule, decision B4)
+    -> executed by the loop (simulated, invariant I5: watched by the outcome
+    monitor) -> rollback_requested -> rolled_back; or proposed -> rejected.
+    A verdict never executes containment by itself: each action is approved
+    on its own.  Responses the policy auto-approved arrive as executed.
   - Times are event times (replay-safe), stored as ISO 8601 UTC.
 All strings are data: a client must escape them when it displays them.
 """
@@ -128,7 +134,8 @@ CREATE TABLE IF NOT EXISTS decisions (
     reasons          TEXT NOT NULL,
     hypotheses       TEXT NOT NULL,
     store_seq        INTEGER NOT NULL,
-    escalations      TEXT NOT NULL
+    escalations      TEXT NOT NULL,
+    other_targets    TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS actions (
     action_id        TEXT PRIMARY KEY,
@@ -139,7 +146,8 @@ CREATE TABLE IF NOT EXISTS actions (
     target_kind      TEXT NOT NULL,
     status           TEXT NOT NULL,
     approvals_needed INTEGER NOT NULL,
-    approvals        TEXT NOT NULL
+    approvals        TEXT NOT NULL,
+    watch_id         TEXT
 );
 CREATE INDEX IF NOT EXISTS actions_case ON actions (case_id);
 CREATE TABLE IF NOT EXISTS notes (
@@ -186,7 +194,7 @@ class ConflictError(ReviewError):
 @dataclass(frozen=True)
 class Command:
     cmd_id: int
-    kind: str                   # "verdict" (later: "execute", "rollback")
+    kind: str                   # "verdict" | "execute" | "rollback"
     case_id: str
     action_id: str | None
     verdict: str | None
@@ -268,6 +276,31 @@ def host_tier(db: KnowledgeDB, host: str) -> int | None:
     return int(tier) if isinstance(tier, (int, float)) else None
 
 
+def _host_key(db: KnowledgeDB, name: str) -> str:
+    """A host name or address as one comparable key: inventory host for an address, lower case, no domain suffix."""
+    n = (db.host_for_address(name.strip()) or name).strip().lower()
+    for suffix in db.profile.internal_domain_suffixes:
+        if n.endswith(suffix):
+            return n[:-len(suffix)]
+    return n
+
+
+def other_targets(db: KnowledgeDB, decision: Decision, host: str | None) -> list[str]:
+    """
+    Targets the hypotheses name other than the alerting host (addresses resolved
+    to inventory hosts).  LLM output, so the review queue uses it only to raise
+    attention, never to lower it.
+    """
+    if not host:
+        return []
+    own, out = _host_key(db, host), []
+    for h in decision.hypotheses:
+        t = str(h.get("target_host") or "").strip()
+        if t and _host_key(db, t) != own and t not in out:
+            out.append(t)
+    return out
+
+
 def approvals_needed(db: KnowledgeDB, response: ProposedResponse) -> int:
     """Decision B4: two different analysts for host cut-offs on hosts at or above the profile's tier."""
     min_tier = db.profile.four_eyes_min_tier
@@ -345,7 +378,8 @@ class CaseStore:
 
     def case_opened(self, case: Case, alert: dict, at: datetime, decision: Decision,
                     approvals: Callable[[ProposedResponse], int] = lambda r: 1,
-                    host_tier: int | None = None) -> None:
+                    host_tier: int | None = None, watch_ids: dict[int, str] | None = None,
+                    other_targets: list[str] | None = None) -> None:
         """
         A newly opened, triaged case: its row, first alert, decision and proposed
         responses.  What the review side needs from the Knowledge Store (the host's
@@ -363,19 +397,20 @@ class CaseStore:
                  decision.outcome, review))
             self._insert_alert(case.case_id, 0, alert, at)
             self._con.execute(
-                "INSERT INTO decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO decisions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (case.case_id, _iso(decision.at), decision.path, decision.outcome, decision.pipeline_outcome,
                  decision.nce, _dumps(decision.reasons), _dumps(decision.hypotheses), decision.store_seq,
-                 _dumps(decision.escalations)))
+                 _dumps(decision.escalations), _dumps(other_targets or [])))
             self._audit(at, "loop", "case_opened", case.case_id,
                         {"outcome": decision.outcome, "path": decision.path, "review_status": review})
             for r in proposed_responses(decision):
                 executed = decision.outcome == AUTO_APPROVED and r.playbook_status == AUTO_APPROVED
                 status, needed = ("executed", 1) if executed else ("proposed", approvals(r))
                 action_id = f"{case.case_id}:a{r.row}"
-                self._con.execute("INSERT INTO actions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                self._con.execute("INSERT INTO actions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                                   (action_id, case.case_id, r.row, r.action, r.target, r.target_kind, status,
-                                   needed, _dumps(["auto"] if executed else [])))
+                                   needed, _dumps(["auto"] if executed else []),
+                                   (watch_ids or {}).get(r.row) if executed else None))
                 self._audit(at, "loop", "action_executed" if executed else "action_proposed", case.case_id,
                             {"action_id": action_id, "action": r.action, "target": r.target,
                              "approvals_needed": needed})
@@ -476,6 +511,73 @@ class CaseStore:
         with self.batch():
             return [self.submit_verdict(c, verdict, analyst, at, note) for c in case_ids]
 
+    def _action_row(self, action_id: str) -> dict:
+        cur = self._con.execute("SELECT * FROM actions WHERE action_id = ?", (action_id,))
+        row = cur.fetchone()
+        if row is None:
+            raise ReviewError(f"no action {action_id!r}")
+        a = dict(zip([d[0] for d in cur.description], row))
+        a["approvals"] = json.loads(a["approvals"])
+        return a
+
+    def approve_action(self, action_id: str, analyst: str, at: datetime) -> int | None:
+        """
+        One analyst's approval of a proposed response.  With enough approvals
+        (two different analysts under the four-eyes rule) the action is
+        approved and queued for the loop to execute; returns that command's id.
+        """
+        _check_analyst(analyst)
+        with self.batch():
+            a = self._action_row(action_id)
+            if a["status"] != "proposed":
+                raise ReviewError(f"{action_id} is {a['status']}, not proposed")
+            if analyst in a["approvals"]:
+                raise ReviewError(f"{analyst} already approved {action_id}; a different analyst must approve it")
+            approvals = [*a["approvals"], analyst]
+            done = len(approvals) >= a["approvals_needed"]
+            self._con.execute("UPDATE actions SET approvals = ?, status = ? WHERE action_id = ?",
+                              (_dumps(approvals), "approved" if done else "proposed", action_id))
+            actor = f"analyst:{analyst}"
+            cmd_id = None
+            if done:
+                cmd_id = self._con.execute(
+                    "INSERT INTO commands (kind, case_id, action_id, actor, at) VALUES (?, ?, ?, ?, ?)",
+                    ("execute", a["case_id"], action_id, actor, _iso(at))).lastrowid
+            self._audit(at, actor, "action_approval", a["case_id"],
+                        {"action_id": action_id, "approvals": f"{len(approvals)}/{a['approvals_needed']}",
+                         "cmd_id": cmd_id})
+            return cmd_id
+
+    def reject_action(self, action_id: str, analyst: str, at: datetime, reason: str) -> None:
+        _check_analyst(analyst)
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 1000:
+            raise ReviewError("a rejection needs a reason (1-1000 characters)")
+        with self.batch():
+            a = self._action_row(action_id)
+            if a["status"] != "proposed":
+                raise ReviewError(f"{action_id} is {a['status']}, not proposed")
+            self._con.execute("UPDATE actions SET status = 'rejected' WHERE action_id = ?", (action_id,))
+            self._audit(at, f"analyst:{analyst}", "action_rejected", a["case_id"],
+                        {"action_id": action_id, "reason": reason})
+
+    def request_rollback(self, action_id: str, analyst: str, at: datetime, reason: str) -> int:
+        """Undo an executed response (any analyst, decision B4); the loop ends it.  Returns the command id."""
+        _check_analyst(analyst)
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 1000:
+            raise ReviewError("a rollback needs a reason (1-1000 characters)")
+        with self.batch():
+            a = self._action_row(action_id)
+            if a["status"] != "executed":
+                raise ReviewError(f"{action_id} is {a['status']}; only an executed action can be rolled back")
+            self._con.execute("UPDATE actions SET status = 'rollback_requested' WHERE action_id = ?", (action_id,))
+            actor = f"analyst:{analyst}"
+            cmd_id = self._con.execute(
+                "INSERT INTO commands (kind, case_id, action_id, actor, at) VALUES (?, ?, ?, ?, ?)",
+                ("rollback", a["case_id"], action_id, actor, _iso(at))).lastrowid
+            self._audit(at, actor, "rollback_requested", a["case_id"],
+                        {"action_id": action_id, "reason": reason, "cmd_id": cmd_id})
+            return cmd_id
+
     def add_note(self, case_id: str, analyst: str, at: datetime, text: str) -> None:
         """Free-text note (stays in the case store; never read as knowledge)."""
         _check_analyst(analyst)
@@ -506,8 +608,16 @@ class CaseStore:
                                     " AND applied_at IS NULL", (_iso(at), _dumps(result), cmd_id))
             if not cur.rowcount:
                 raise ReviewError(f"command {cmd_id} does not exist or was already applied")
-            case_id = self._con.execute("SELECT case_id FROM commands WHERE cmd_id = ?", (cmd_id,)).fetchone()[0]
-            self._audit(at, "loop", "command_applied", case_id, {"cmd_id": cmd_id, **result})
+            case_id, kind, action_id = self._con.execute(
+                "SELECT case_id, kind, action_id FROM commands WHERE cmd_id = ?", (cmd_id,)).fetchone()
+            ok = bool(result.get("applied"))
+            if kind == "execute":
+                self._con.execute("UPDATE actions SET status = ?, watch_id = ? WHERE action_id = ?",
+                                  ("executed" if ok else "approved", result.get("watch_id"), action_id))
+            elif kind == "rollback":
+                self._con.execute("UPDATE actions SET status = ? WHERE action_id = ?",
+                                  ("rolled_back" if ok else "executed", action_id))
+            self._audit(at, "loop", "command_applied", case_id, {"cmd_id": cmd_id, "kind": kind, **result})
 
     # -- reading ------------------------------------------------------------------------
 
@@ -556,9 +666,16 @@ class CaseStore:
         if not rows:
             return None
         d = rows[0]
-        for k in ("reasons", "hypotheses", "escalations"):
+        for k in ("reasons", "hypotheses", "escalations", "other_targets"):
             d[k] = json.loads(d[k])
         return d
+
+    def action(self, action_id: str) -> dict | None:
+        with self._lock:
+            try:
+                return self._action_row(action_id)
+            except ReviewError:
+                return None
 
     def actions(self, case_id: str) -> list[dict]:
         out = self._rows("SELECT * FROM actions WHERE case_id = ? ORDER BY row", (case_id,))

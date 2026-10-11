@@ -84,6 +84,7 @@ class Watch:
     until: datetime
     hits: int = 0
     would_block: int = 0             # simulated: alerts the action would have stopped
+    status: str = "active"           # "active" | "ended" | "rolled_back"
 
 
 class OutcomeMonitor:
@@ -96,6 +97,7 @@ class OutcomeMonitor:
         self._by_target: dict[tuple[str, str], list[Watch]] = {}
         self._expiry: list[tuple[datetime, int, Watch]] = []
         self._ids = itertools.count(1)
+        self._by_id: dict[str, Watch] = {}
         self.finished: list[Watch] = []
 
     def register(self, decision: Decision, at: datetime, *, approved_by: str | None = None) -> list[Watch]:
@@ -113,8 +115,20 @@ class OutcomeMonitor:
         """Start watching one executed response (simulated) on its target."""
         w = Watch(f"watch-{next(self._ids)}", case_id, action, target, target_kind, at, at + self.duration)
         self._by_target.setdefault((target_kind, target), []).append(w)
+        self._by_id[w.watch_id] = w
         heapq.heappush(self._expiry, (w.until, next(self._ids), w))
         self._write_back(w, at, "active")
+        return w
+
+    def roll_back(self, watch_id: str, at: datetime) -> Watch | None:
+        """An analyst rolled back the response: its watch ends now (None if it is not active)."""
+        w = self._by_id.get(watch_id)
+        if w is None or w.status != "active":
+            return None
+        self._by_target[(w.target_kind, w.target)].remove(w)
+        w.until, w.status = at, "rolled_back"
+        self._write_back(w, at, "rolled_back")
+        self.finished.append(w)
         return w
 
     def flag_host(self, host: str, case_id: str, at: datetime) -> Watch:
@@ -146,7 +160,10 @@ class OutcomeMonitor:
         ended = []
         while self._expiry and self._expiry[0][0] <= now:
             _, _, w = heapq.heappop(self._expiry)
+            if w.status != "active":                 # rolled back earlier
+                continue
             self._by_target[(w.target_kind, w.target)].remove(w)
+            w.status = "ended"
             self._write_back(w, w.until, "ended")
             self.finished.append(w)
             ended.append(w)
@@ -157,7 +174,10 @@ class OutcomeMonitor:
         ended = []
         while self._expiry:
             _, _, w = heapq.heappop(self._expiry)
+            if w.status != "active":
+                continue
             self._by_target[(w.target_kind, w.target)].remove(w)
+            w.status = "ended"
             self._write_back(w, min(now, w.until), "ended")
             self.finished.append(w)
             ended.append(w)

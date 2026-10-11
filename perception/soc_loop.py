@@ -28,9 +28,12 @@ is the only path by which a verdict changes the Knowledge Store:
   - "benign" -> the updater learns the case (provenance "analyst"; not in
     frozen or static mode) and lifts its hold on gated learning;
   - "benign_once" -> the hold is lifted, nothing is learned;
-  - "malicious" -> the proposed containment is approved (watched by the
-    outcome monitor), an external destination is marked known-bad in the
-    store, and the host is put under watch.
+  - "malicious" -> an external destination is marked known-bad in the store
+    and the host is put under watch.  Containment is approved per action
+    (case store, step 4: one approval, or two under the four-eyes rule); the
+    loop executes approved actions (simulated: watched by the outcome
+    monitor) and rolls them back on request.  The simulated analyst, being
+    a team, approves the proposed containment with its malicious verdicts.
 Verdicts arrive in two ways:
   - with a case store (perception/case_store.py), as commands in its inbox:
     analysts submit them there, never to the Knowledge Store, and the loop
@@ -51,20 +54,21 @@ from datetime import datetime, timedelta
 from typing import Callable
 
 from perception.case_builder import Case, CaseBuilder, alert_case_key
-from perception.case_store import CaseStore, approvals_needed, host_tier
+from perception.case_store import CaseStore, approvals_needed, host_tier, other_targets
 from perception.host_detection import DETECTORS, host_alert, learn_key, novel_keys
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, ensure_endpoint
 from perception.network_alert import with_entities
 from perception.network_model import KNOWN_BAD
-from perception.outcome import REVIEW
-from perception.outcome_monitor import OutcomeMonitor
+from perception.outcome import AUTO_APPROVED, REVIEW
+from perception.outcome_monitor import OutcomeMonitor, proposed_responses
 from perception.source_systems import SourceSystem
 from perception.triage_gate import Decision, TriageGate
 
 LEARNING_MODES = ("static", "frozen", "gated", "ungated")
 ANALYST_DELAY = timedelta(hours=4)
 SIMULATED_ANALYST = "oracle"
+SIMULATED_APPROVERS = ("oracle", "oracle-2")          # the simulated team (four-eyes needs two)
 Analyst = Callable[[Case, Decision, datetime], "str | None"]
 
 
@@ -152,14 +156,17 @@ class SocLoop:
                 self._decisions[case.case_id] = d
                 if self.updater is not None:
                     self.updater.record_outcome(case, d.outcome, at)
-                self.monitor.register(d, at)
+                started = self.monitor.register(d, at)
                 if d.outcome == REVIEW and (self.analyst is not None or self.case_store is not None):
                     self._awaiting[case.case_id] = (case, d)
                 if self.analyst is not None and d.outcome == REVIEW:
                     heapq.heappush(self._reviews, (at + self.analyst_delay, next(self._review_seq), case, d))
                 if self.case_store is not None:
+                    auto = [r.row for r in proposed_responses(d) if r.playbook_status == AUTO_APPROVED]
                     self.case_store.case_opened(case, a, at, d, approvals=lambda r: approvals_needed(self.db, r),
-                                                host_tier=host_tier(self.db, str(a.get("target_host") or "")))
+                                                host_tier=host_tier(self.db, str(a.get("target_host") or "")),
+                                                watch_ids={row: w.watch_id for row, w in zip(auto, started)},
+                                                other_targets=other_targets(self.db, d, a.get("target_host")))
         elif not self._in_training and self.case_store is not None:
             self.case_store.alert_attached(case, a, at)
 
@@ -171,11 +178,14 @@ class SocLoop:
             self._closed(c)
         self.monitor.finish(at)
 
-    def apply_verdict(self, case_id: str, verdict: str, analyst: str, at: datetime) -> dict:
+    def apply_verdict(self, case_id: str, verdict: str, analyst: str, at: datetime, *,
+                      execute_proposed: bool = False) -> dict:
         """
         Apply an analyst's final verdict at time `at` (see module docstring);
         returns what was done.  A case that is not awaiting a verdict in this
-        loop is left alone.
+        loop is left alone.  `execute_proposed` (simulated analyst without a
+        case store only): a malicious verdict also executes the proposed
+        containment, as the simulated team approves it.
         """
         if verdict not in ("benign", "benign_once", "malicious"):
             raise ValueError(f"not a final verdict: {verdict!r}")
@@ -193,7 +203,7 @@ class SocLoop:
             if self.updater is not None:
                 self.updater.lift_hold(case)
         else:
-            done.update(self._confirmed_malicious(case, d, at, f"analyst:{analyst}"))
+            done.update(self._confirmed_malicious(case, d, at, f"analyst:{analyst}", execute_proposed))
         return done
 
     def _analyst_due(self, now: datetime) -> None:
@@ -205,10 +215,15 @@ class SocLoop:
             if verdict not in ("benign", "malicious"):
                 continue
             if self.case_store is not None:        # the path a person's verdict takes
+                if verdict == "malicious":         # the team approves the proposed containment
+                    for act in self.case_store.actions(case.case_id):
+                        if act["status"] == "proposed":
+                            for who in SIMULATED_APPROVERS[:act["approvals_needed"]]:
+                                self.case_store.approve_action(act["action_id"], who, due)
                 self.case_store.submit_verdict(case.case_id, verdict, SIMULATED_ANALYST, due)
                 self._apply_commands(due, now)
             else:
-                self.apply_verdict(case.case_id, verdict, SIMULATED_ANALYST, due)
+                self.apply_verdict(case.case_id, verdict, SIMULATED_ANALYST, due, execute_proposed=True)
 
     def _apply_commands(self, upto: datetime, now: datetime | None = None) -> None:
         """Apply the case store's commands whose time is at or before `upto`, in order."""
@@ -217,11 +232,21 @@ class SocLoop:
         for cmd in self.case_store.pending_commands(upto):
             if cmd.kind == "verdict":
                 result = self.apply_verdict(cmd.case_id, cmd.verdict, cmd.actor.removeprefix("analyst:"), cmd.at)
+            elif cmd.kind == "execute":
+                act = self.case_store.action(cmd.action_id)
+                w = self.monitor.start(act["case_id"], act["action"], act["target"], act["target_kind"], cmd.at)
+                result = {"applied": True, "watch_id": w.watch_id, "mode": "simulated"}
+            elif cmd.kind == "rollback":
+                act = self.case_store.action(cmd.action_id)
+                w = self.monitor.roll_back(act["watch_id"], cmd.at) if act["watch_id"] else None
+                result = ({"applied": True, "watch_id": w.watch_id} if w is not None else
+                          {"applied": False, "reason": "no active watch for this action in this loop"})
             else:
                 result = {"applied": False, "reason": f"unknown command kind {cmd.kind!r}"}
             self.case_store.mark_applied(cmd.cmd_id, now or upto, result)
 
-    def _confirmed_malicious(self, case: Case, d: Decision, at: datetime, writer: str) -> dict:
+    def _confirmed_malicious(self, case: Case, d: Decision, at: datetime, writer: str,
+                             execute_proposed: bool) -> dict:
         a = case.first_alert
         done: dict = {"known_bad": None, "flagged_host": None}
         if a.get("destination_ip"):
@@ -229,7 +254,8 @@ class SocLoop:
             self.db.set_fact(node, "reputation", KNOWN_BAD, confidence=1.0, source=SourceSystem.SYSTEM,
                              writer=writer, at=at)
             done["known_bad"] = str(a["destination_ip"])
-        done["watches"] = [w.watch_id for w in self.monitor.register(d, at, approved_by=writer)]
+        if execute_proposed:
+            done["watches"] = [w.watch_id for w in self.monitor.register(d, at, approved_by=writer)]
         if a.get("kind") == "host":                 # the host where the confirmed activity happened
             done["flagged_host"] = str(a["target_host"])
         elif a.get("source_host") and self.db.profile.is_internal_address(str(a["src_ip"])):
