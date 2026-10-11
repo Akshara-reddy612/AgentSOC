@@ -300,6 +300,20 @@
     - The v2 factors: another target named in 24% of malicious vs 0.1% of benign cases; 3+ other host cases in 24 h in 89% vs 46%.
     - **In-sample:** the v2 factors were chosen after seeing this data, and only 2 hosts were attacked. A fair test needs another dataset.
   - **Tests:** `tests/test_review_service.py` (6), `tests/test_review_actions.py` (7); suite 732 passed, 1 deselected.
+- **Analyst review loop, step 6: evaluation (2026-10-11): `experiments/REVIEW_LOOP_RESULTS.md`** (for the team), scores in `dedale_results/review_eval_{host,network}.json`.
+  - Setup: oracle analyst through the inbox, NCE off (no API calls). New replay options `--analyst-delay`, `--analyst-miss`, `--analyst-false-alarm`, `--analyst-seed` (`experiments/analyst_sim.py`).
+  - **Delay 1 / 4 / 24 / 72 h:**
+    - host reviews / day 29.8 / 30.9 / 35.1 / 49.7 (benign patterns are learned only when the verdict comes);
+    - network reviews / day 20.6 / 20.9 / 21.5 / 22.6; attacker contained after 60 min / 4 h / 24 h / 72 h;
+    - detection unchanged (72 / 72 malicious reviewed, same step timing, 0 attack keys learned).
+  - **Mistakes (host, 4 h):**
+    - misses 5%: 4 wrong benign verdicts -> 8 attack cases' patterns learned as routine, 397 / 400 labelled events alerted;
+    - **misses 20%: 11 wrong benign verdicts -> 20 learned, labelled events alerted 400 -> 256 (-36%), exfiltration-window cases 4 -> 1;**
+    - false alarms 5%: +0.5 reviews / day, no detection loss;
+    - network false alarms 5%: 12 wrong malicious verdicts, approved blocks would have hit benign traffic 8 times.
+  - **Finding:** analyst feedback is the larger poisoning route. A `benign` verdict is learned at once, without the gate, and nothing corrects it later.
+  - **Open decision B5:** (a) retroactive unlearning when a host is confirmed malicious; (b) `benign` on a risky host needs a second analyst or defaults to `benign_once`.
+  - **Tests:** `tests/test_analyst_sim.py` (2); suite 734 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)

@@ -121,9 +121,8 @@ The Python API the HTTP layer and tests call:
   2. `apply_verdict` + inbox + regression replays (byte-identical).
   3. Review service. The queue priority was revised once after the DEDALE queue check: v2 adds other targets and host peers. In-sample; see `experiments/dedale_queue_eval.py`.
   4. Actions with four-eyes and rollback; a verdict no longer executes containment.
-- **Next:**
-  - 6. Evaluations (analyst delay, noisy analyst), moved before 5 because they need no install.
-  - 5. HTTP API (FastAPI, after install approval).
+  6. Evaluations: analyst delay and analyst mistakes (`experiments/REVIEW_LOOP_RESULTS.md`). A missed attack teaches the attacker's pattern; this led to open decision B5 (guard on analyst feedback).
+- **Next:** 5. HTTP API (FastAPI, after install approval).
 
 ## Order of work
 

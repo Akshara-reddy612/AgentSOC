@@ -28,7 +28,7 @@ import json
 import time
 from collections import Counter
 from contextlib import nullcontext
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from itertools import islice
 from pathlib import Path
 
@@ -77,6 +77,11 @@ def main() -> None:
     ap.add_argument("--unreasoned", default="review", choices=["review", "no_actionable"])
     ap.add_argument("--analyst", default="none", choices=["none", "oracle"],
                     help="oracle: simulated analyst that reads ground truth (separate condition, open decision D1)")
+    ap.add_argument("--analyst-delay", type=float, default=4.0, help="hours from a REVIEW case to its verdict")
+    ap.add_argument("--analyst-miss", type=float, default=0.0, help="share of malicious verdicts given as benign")
+    ap.add_argument("--analyst-false-alarm", type=float, default=0.0,
+                    help="share of benign verdicts given as malicious")
+    ap.add_argument("--analyst-seed", type=int, default=0, help="seed of the analyst's mistakes (reproducible)")
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD), for quick runs")
     ap.add_argument("--tag", default=None, help="suffix for the run name (keeps earlier runs of the same condition)")
     ap.add_argument("--case-store", action="store_true", help="also record cases in a case store (review loop)")
@@ -110,8 +115,12 @@ def main() -> None:
     truth, analyst = None, None
     if args.analyst == "oracle":       # the only place the replay touches ground truth (separate condition)
         from experiments.dedale_score import GroundTruth, analyst_oracle, load_label_times
+        from experiments.analyst_sim import noisy
         truth = GroundTruth(load_label_times())
         analyst = analyst_oracle(truth)
+        if args.analyst_miss or args.analyst_false_alarm:
+            analyst = noisy(analyst, miss=args.analyst_miss, false_alarm=args.analyst_false_alarm,
+                            seed=args.analyst_seed)
     with open(run_dir / "cases.jsonl", "w", encoding="utf-8") as out:
         def on_case(case: Case, decision: Decision | None, training: bool) -> None:
             out.write(json.dumps(case_record(case, decision, training)) + "\n")
@@ -121,7 +130,8 @@ def main() -> None:
                 truth.add_training_key(case.key)
 
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case,
-                       gate_options={"unreasoned": args.unreasoned}, analyst=analyst, case_store=case_store)
+                       gate_options={"unreasoned": args.unreasoned}, analyst=analyst, case_store=case_store,
+                       analyst_delay=timedelta(hours=args.analyst_delay))
         alerts = iter_alerts(end=until)
         last = TRAINING_START
         while chunk := list(islice(alerts, CHUNK)):
@@ -142,6 +152,9 @@ def main() -> None:
             out.write(json.dumps({"case_id": case_id, "at": _iso(at), "verdict": verdict}) + "\n")
     summary = {
         "run": run, "mode": args.mode, "unreasoned": args.unreasoned, "analyst": args.analyst,
+        **({"analyst_delay_h": args.analyst_delay, "analyst_miss": args.analyst_miss,
+            "analyst_false_alarm": args.analyst_false_alarm, "analyst_seed": args.analyst_seed}
+           if args.analyst == "oracle" else {}),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)), "until": args.until,
         "training_end": _iso(TRAINING_END), "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "nce_backlog": loop.gate.backlog,
