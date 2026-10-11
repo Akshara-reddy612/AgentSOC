@@ -68,6 +68,10 @@ class EnvironmentProfile:
     # behaviour).  With a list, a missing access path to any other host means "not
     # known", not "impossible": SSE answers CONDITIONALLY_FEASIBLE (-> analyst review).
     observed_hosts: tuple[str, ...] | None = None
+    # Four-eyes rule (added 2026-10-11, analyst review loop, decision B4): containment
+    # that cuts off a host (QUARANTINE_ACCESS, BLOCK_EGRESS) needs a second, different
+    # analyst when the host's criticality tier is at least this.  None = off.
+    four_eyes_min_tier: int | None = None
     _networks: tuple[ipaddress.IPv4Network, ...] = field(init=False, repr=False)
     _hostname_re: re.Pattern = field(init=False, repr=False)
 
@@ -125,6 +129,8 @@ class EnvironmentProfile:
         }
         if self.observed_hosts is not None:          # absent when unset: older stores stay readable
             d["observed_hosts"] = list(self.observed_hosts)
+        if self.four_eyes_min_tier is not None:
+            d["four_eyes_min_tier"] = self.four_eyes_min_tier
         return d
 
     @classmethod
@@ -137,6 +143,7 @@ class EnvironmentProfile:
             zone_egress_policy=d["zone_egress_policy"],
             auto_contain_unreasoned_c2=d.get("auto_contain_unreasoned_c2", True),
             observed_hosts=tuple(d["observed_hosts"]) if d.get("observed_hosts") is not None else None,
+            four_eyes_min_tier=d.get("four_eyes_min_tier"),
         )
 
 

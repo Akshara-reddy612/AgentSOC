@@ -9,13 +9,14 @@ becomes a host alert -> cases -> triage gate -> gated learning.
 
     python -m experiments.dedale_host_replay --mode gated [--analyst oracle]
             [--nce live --max-calls N] [--detectors lineage logon lsass_access] [--until 2025-01-08]
-            [--tag NAME] --overwrite
+            [--tag NAME] [--case-store] --overwrite
 
 Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agentsoc_data):
     ks/dedale_host_<run>.sqlite                the run's Knowledge Store
     runs/dedale_host_<run>/cases.jsonl         one record per closed case
     runs/dedale_host_<run>/alerts.jsonl.gz     (case id, event reference) per host alert, for the scorer
     runs/dedale_host_<run>/{watches,analyst}.jsonl, summary.json
+    runs/dedale_host_<run>/cases.sqlite        with --case-store: the review loop's case store
 Events of one hour are replayed in time order; an event stamped earlier than
 the previous one (files are per hour, shipping is asynchronous) is processed
 at the previous event's time.  Labels are never read here, except by the
@@ -28,6 +29,7 @@ import gzip
 import json
 import time
 from collections import Counter
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from itertools import islice
 from pathlib import Path
@@ -35,6 +37,7 @@ from pathlib import Path
 from dedale import data_dir
 from dedale.environment import DEDALE_PROFILE, seed_store
 from perception.case_builder import Case
+from perception.case_store import CaseStore
 from perception.host_detection import DETECTORS
 from perception.knowledge_db import KnowledgeDB
 from perception.soc_loop import LEARNING_MODES, SocLoop
@@ -93,6 +96,7 @@ def main() -> None:
     ap.add_argument("--detectors", nargs="+", default=list(DETECTORS), choices=list(DETECTORS))
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD)")
     ap.add_argument("--tag", default=None, help="suffix for the run name (keeps earlier runs of the same condition)")
+    ap.add_argument("--case-store", action="store_true", help="also record cases in a case store (review loop)")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
 
@@ -113,6 +117,13 @@ def main() -> None:
     if args.analyst == "oracle":       # the only place the replay touches ground truth (separate condition)
         from experiments.dedale_host_score import host_oracle
         analyst = host_oracle()
+
+    case_store = None
+    if args.case_store:
+        cs_path = run_dir / "cases.sqlite"
+        for p in (cs_path, Path(f"{cs_path}-wal"), Path(f"{cs_path}-shm")):
+            p.unlink(missing_ok=True)
+        case_store = CaseStore(cs_path, created_at=TRAINING_START)
 
     t0 = time.perf_counter()
     db = KnowledgeDB(store_path, DEDALE_PROFILE, created_at=TRAINING_START)
@@ -137,15 +148,16 @@ def main() -> None:
             nce = LiveNCE(cap)
             gate_options = {"nce": nce, "budget": cap}
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
-                       detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options)
+                       detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
+                       case_store=case_store)
         last = TRAINING_START
         events = iter_events(until)
         while chunk := list(islice(events, CHUNK)):
-            with db.batch():                      # one transaction per chunk of events
+            with db.batch(), (case_store.batch() if case_store else nullcontext()):   # one transaction per chunk
                 for at, event in chunk:
                     last = max(at, last)
                     loop.process_host_event(event, last)
-        with db.batch():
+        with db.batch(), (case_store.batch() if case_store else nullcontext()):
             loop.finish(last)
 
     with open(run_dir / "watches.jsonl", "w", encoding="utf-8") as out:
@@ -169,6 +181,8 @@ def main() -> None:
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
     db.close()
+    if case_store is not None:
+        case_store.close()
     print(json.dumps(summary, indent=1))
 
 

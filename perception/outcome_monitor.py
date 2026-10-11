@@ -40,7 +40,7 @@ from perception.source_systems import SourceSystem
 from perception.triage_gate import Decision
 
 WATCH_DURATION = timedelta(days=7)
-_TARGET_KIND = {
+TARGET_KIND = {
     "BLOCK_DESTINATION": "destination",
     "BLOCK_EGRESS": "host",
     "QUARANTINE_ACCESS": "host",
@@ -48,6 +48,29 @@ _TARGET_KIND = {
     "RESTRICT_PRIVILEGES": "account",
     "ENABLE_MFA": "account",
 }
+
+
+@dataclass(frozen=True)
+class ProposedResponse:
+    row: int                         # index of the hypothesis row in the decision
+    action: str
+    target: str
+    target_kind: str                 # "destination" | "host" | "account"
+    playbook_status: str             # "AUTO_APPROVED" | "PENDING_ANALYST_REVIEW"
+
+
+def proposed_responses(decision: Decision) -> list[ProposedResponse]:
+    """The containment responses a decision proposes: executable now (AUTO_APPROVED) or after approval."""
+    out = []
+    for i, row in enumerate(decision.hypotheses):
+        action, status = row.get("top_action"), row.get("playbook_status")
+        if action not in TARGET_KIND or status not in (AUTO_APPROVED, "PENDING_ANALYST_REVIEW"):
+            continue
+        kind = TARGET_KIND[action]
+        target = row.get("top_target_account") if kind == "account" else row.get("top_target_host")
+        if target:
+            out.append(ProposedResponse(i, action, str(target), kind, status))
+    return out
 
 
 @dataclass
@@ -61,6 +84,7 @@ class Watch:
     until: datetime
     hits: int = 0
     would_block: int = 0             # simulated: alerts the action would have stopped
+    status: str = "active"           # "active" | "ended" | "rolled_back"
 
 
 class OutcomeMonitor:
@@ -73,6 +97,7 @@ class OutcomeMonitor:
         self._by_target: dict[tuple[str, str], list[Watch]] = {}
         self._expiry: list[tuple[datetime, int, Watch]] = []
         self._ids = itertools.count(1)
+        self._by_id: dict[str, Watch] = {}
         self.finished: list[Watch] = []
 
     def register(self, decision: Decision, at: datetime, *, approved_by: str | None = None) -> list[Watch]:
@@ -83,29 +108,32 @@ class OutcomeMonitor:
         if approved_by is None and decision.outcome != AUTO_APPROVED:
             return []
         executed = {AUTO_APPROVED} if approved_by is None else {AUTO_APPROVED, "PENDING_ANALYST_REVIEW"}
-        started = []
-        for row in decision.hypotheses:
-            action = row.get("top_action")
-            if row.get("playbook_status") not in executed or action not in _TARGET_KIND:
-                continue
-            kind = _TARGET_KIND[action]
-            target = row.get("top_target_account") if kind == "account" else row.get("top_target_host")
-            if not target:
-                continue
-            w = Watch(f"watch-{next(self._ids)}", decision.case_id, action, str(target), kind, at, at + self.duration)
-            self._by_target.setdefault((kind, w.target), []).append(w)
-            heapq.heappush(self._expiry, (w.until, next(self._ids), w))
-            self._write_back(w, at, "active")
-            started.append(w)
-        return started
+        return [self.start(decision.case_id, r.action, r.target, r.target_kind, at)
+                for r in proposed_responses(decision) if r.playbook_status in executed]
 
-    def flag_host(self, host: str, case_id: str, at: datetime) -> Watch:
-        """An analyst confirmed malicious activity from this host: watch it (no containment effect)."""
-        w = Watch(f"watch-{next(self._ids)}", case_id, "ANALYST_CONFIRMED", host, "host", at, at + self.duration)
-        self._by_target.setdefault(("host", host), []).append(w)
+    def start(self, case_id: str, action: str, target: str, target_kind: str, at: datetime) -> Watch:
+        """Start watching one executed response (simulated) on its target."""
+        w = Watch(f"watch-{next(self._ids)}", case_id, action, target, target_kind, at, at + self.duration)
+        self._by_target.setdefault((target_kind, target), []).append(w)
+        self._by_id[w.watch_id] = w
         heapq.heappush(self._expiry, (w.until, next(self._ids), w))
         self._write_back(w, at, "active")
         return w
+
+    def roll_back(self, watch_id: str, at: datetime) -> Watch | None:
+        """An analyst rolled back the response: its watch ends now (None if it is not active)."""
+        w = self._by_id.get(watch_id)
+        if w is None or w.status != "active":
+            return None
+        self._by_target[(w.target_kind, w.target)].remove(w)
+        w.until, w.status = at, "rolled_back"
+        self._write_back(w, at, "rolled_back")
+        self.finished.append(w)
+        return w
+
+    def flag_host(self, host: str, case_id: str, at: datetime) -> Watch:
+        """An analyst confirmed malicious activity from this host: watch it (no containment effect)."""
+        return self.start(case_id, "ANALYST_CONFIRMED", host, "host", at)
 
     def observe(self, alert: dict, at: datetime) -> None:
         """Count one alert against every active watch it touches."""
@@ -132,7 +160,10 @@ class OutcomeMonitor:
         ended = []
         while self._expiry and self._expiry[0][0] <= now:
             _, _, w = heapq.heappop(self._expiry)
+            if w.status != "active":                 # rolled back earlier
+                continue
             self._by_target[(w.target_kind, w.target)].remove(w)
+            w.status = "ended"
             self._write_back(w, w.until, "ended")
             self.finished.append(w)
             ended.append(w)
@@ -143,7 +174,10 @@ class OutcomeMonitor:
         ended = []
         while self._expiry:
             _, _, w = heapq.heappop(self._expiry)
+            if w.status != "active":
+                continue
             self._by_target[(w.target_kind, w.target)].remove(w)
+            w.status = "ended"
             self._write_back(w, min(now, w.until), "ended")
             self.finished.append(w)
             ended.append(w)
@@ -158,9 +192,12 @@ class OutcomeMonitor:
         return pattern_learned(self.db, alert)
 
     def _matching(self, alert: dict, at: datetime) -> list[Watch]:
-        keys = {("destination", str(alert.get("destination_ip") or "")),
-                ("host", str(alert.get("source_host") or "")), ("host", str(alert.get("target_host") or "")),
-                ("account", str(alert.get("source_user") or ""))}
+        # de-duplicated in a fixed order (a set's order changes with Python's per-process string hashing,
+        # which made the order of escalation reasons differ between identical runs; fixed 2026-10-11)
+        keys = dict.fromkeys([("destination", str(alert.get("destination_ip") or "")),
+                              ("host", str(alert.get("source_host") or "")),
+                              ("host", str(alert.get("target_host") or "")),
+                              ("account", str(alert.get("source_user") or ""))])
         return [w for k in keys if k[1] for w in self._by_target.get(k, ()) if w.since < at <= w.until]
 
     @staticmethod

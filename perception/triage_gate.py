@@ -58,6 +58,7 @@ class Decision:
     nce: str                        # "disabled" | "ran" | "budget_exhausted" | "error" | "not_needed"
     hypotheses: list[dict] = field(default_factory=list)
     store_seq: int = 0              # store version the decision was made on
+    escalations: list[str] = field(default_factory=list)   # trusted-field escalation reasons (also in reasons)
 
 
 class DailyBudget:
@@ -129,7 +130,7 @@ class TriageGate:
             outcome = REVIEW
             reasons = [*reasons, f"Pattern not learned as routine and not reasoned about (NCE {nce_status})."]
         decision = Decision(case.case_id, at, "pipeline", outcome, res["outcome"], reasons, nce_status,
-                            res["hypotheses"], self.db.last_seq())
+                            res["hypotheses"], self.db.last_seq(), list(escalations))
         if not escalations:
             self._cache[case.key] = (decision, versions)
         return decision
