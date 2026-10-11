@@ -81,6 +81,28 @@ def test_escalation_on_a_shared_endpoint_blocks_learning(db):
     assert db.edge_attrs(CLIENT2, LOG, "sid:2017515") is None
 
 
+def test_escalation_closed_benign_by_the_analyst_no_longer_blocks_learning(db):
+    up = KnowledgeUpdater(db)
+    benign = _case(1, T0)
+    up.case_closed(benign, "NO_ACTIONABLE", training=False)
+    cleared = _case(2, T0 + timedelta(hours=2), dst="172.18.0.9")
+    up.record_outcome(cleared, "REVIEW", cleared.opened)
+    up.analyst_closed_benign(cleared, T0 + timedelta(hours=6), "alice")              # before the release
+    assert up.advance(benign.closed + D) == 1 and up.dropped == 0
+    assert db.edge_learned_from(CLIENT2, LOG, "sid:2017515") == "closed_benign"
+
+
+def test_an_open_escalation_still_blocks_after_another_is_cleared(db):
+    up = KnowledgeUpdater(db)
+    benign = _case(1, T0)
+    up.case_closed(benign, "NO_ACTIONABLE", training=False)
+    cleared, still_open = _case(2, T0 + timedelta(hours=2)), _case(3, T0 + timedelta(hours=3))
+    up.record_outcome(cleared, "REVIEW", cleared.opened)
+    up.record_outcome(still_open, "REVIEW", still_open.opened)
+    up.analyst_closed_benign(cleared, T0 + timedelta(hours=6), "alice")
+    assert up.advance(benign.closed + D) == 0 and up.dropped == 1
+
+
 def test_escalated_cases_need_an_analyst(db):
     up = KnowledgeUpdater(db)
     case = _case(1, T0)

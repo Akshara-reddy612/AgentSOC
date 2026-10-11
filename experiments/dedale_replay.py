@@ -75,11 +75,12 @@ def main() -> None:
     ap.add_argument("--analyst", default="none", choices=["none", "oracle"],
                     help="oracle: simulated analyst that reads ground truth (separate condition, open decision D1)")
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD), for quick runs")
+    ap.add_argument("--tag", default=None, help="suffix for the run name (keeps earlier runs of the same condition)")
     ap.add_argument("--overwrite", action="store_true", help="replace this run's store and records")
     args = ap.parse_args()
 
     run = (args.mode + ("_noact" if args.unreasoned == "no_actionable" else "")
-           + ("_analyst" if args.analyst == "oracle" else ""))
+           + ("_analyst" if args.analyst == "oracle" else "") + (f"_{args.tag}" if args.tag else ""))
     root = data_dir().parent
     store_path = root / "ks" / f"dedale_{run}.sqlite"
     run_dir = root / "runs" / f"dedale_{run}"

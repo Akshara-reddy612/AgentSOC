@@ -96,3 +96,25 @@
   - An analyst's "benign" verdict teaches the pattern at once: 309 lineage keys were learned with provenance `analyst`.
   - An NCE dismissal waits in the learning gate: only 4 keys were learned `closed_benign`, and the gate dropped 29.
   - So a dismissed pattern can open new cases until it clears the gate.
+
+## Learning gate: analyst-closed escalations release their hold (2026-10-11)
+
+- **Cause found:**
+  - The updater kept only the latest escalation per endpoint, and for host alerts the endpoint is the whole host. So any review on a host blocked gated learning there, even after the analyst had closed that review as benign.
+  - Now escalations are kept per case, and an analyst's `benign` verdict lifts that case's hold. Unreviewed and confirmed-malicious escalations still block.
+  - NCE dismissals still learn only through the gate. NCE reads attacker-influenced text, so its dismissal must not teach the store directly.
+- **Replays** (`--tag lift`, 0 new API calls):
+
+  | | NCE + analyst (before) | NCE + analyst (after) |
+  |:--|--:|--:|
+  | Test-week cases | 455 | 450 |
+  | Reviews / day | 30.0 | 30.0 |
+  | Benign dismissed | 35 | 30 |
+  | Gate drops / `closed_benign` keys | 29 / 4 | 21 / 7 |
+  | Malicious reviewed / attack keys learned | 72 of 72 / 0 | 72 of 72 / 0 |
+
+  - Analyst alone (host) and Phase 1 gated + analyst (network) are **identical** before and after.
+- **What remains:**
+  - Dismissed patterns that recur daily (Mail sync, OneDrive) reopen before the 24 h gate releases them. Sometimes a review on the same host is still waiting for its verdict.
+  - The repeats cost **no analyst reviews**, because they are dismissed again: 15 of 30 via the decision cache and 15 through the pipeline.
+  - In live use the pipeline repeats would cost NCE calls (about 1 per day here). Not worth weakening the gate for.

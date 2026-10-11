@@ -1580,3 +1580,30 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `experiments/DEDALE_PHASE3_RESULTS.md`, `experiments/dedale_results/phase3_scores.json`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 3 — learning gate released by analyst verdicts
+
+### What was tried
+- `KnowledgeUpdater._last_escalation` (latest escalation time per endpoint) replaced by escalations per case (`_escalations`). `analyst_closed_benign` removes that case's escalation before learning it.
+- 2 tests: a cleared escalation no longer blocks; another open escalation still does.
+- Replays with `--tag lift`:
+  - host gated + analyst (offline);
+  - host gated + NCE + analyst (`--max-calls 60`; 0 live calls used);
+  - network (Phase 1) gated + analyst.
+- `dedale_replay.py --tag` and `dedale_score.py --out` added.
+
+### What was found
+- **Host NCE + analyst:**
+  - 450 cases (was 455): REVIEW 420, NO_ACTIONABLE 30 (was 35). Reviews / day 30.0 (unchanged).
+  - Gate dropped 21 (was 29); `closed_benign` SPAWNED 7 (was 4).
+  - Attack steps unchanged; 0 attack keys learned.
+- **Host analyst only:** identical (432 cases, 30.9 / day, 0 drops).
+- **Network analyst** (`phase1_gate_release.json`): identical (20.9 / day, attacker contained after 240 min, 290 benign / 3 malicious verdicts).
+- **Remaining NO_ACTIONABLE repeats:** HxTsr.exe / FileCoAuth.exe keys on CLIENT5 / 10 / 12 / 14 / 24 (3-4 cases each); paths cache 15, pipeline 15.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 698 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/dedale_results/phase1_gate_release.json`
+- Modified: `perception/knowledge_updater.py`, `tests/test_knowledge_updater.py`, `experiments/dedale_replay.py`, `experiments/dedale_score.py`, `experiments/DEDALE_PHASE3_RESULTS.md`, `experiments/dedale_results/phase3_scores.json`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
