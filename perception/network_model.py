@@ -36,6 +36,8 @@ INTERNAL = "internal"
 #   mode "proxy":     outbound web via the corporate proxy; reputations in
 #                     `deny` are blocked, everything else is allowed (and logged).
 #   mode "allowlist": only reputations in `allow` may be reached.
+#   mode "open":      routed to the internet with no egress filtering (added
+#                     2026-10-11 for environments that document none, e.g. DEDALE).
 #   mode "none":      no internet route at all.
 ZONE_EGRESS_POLICY: dict[str, dict] = {
     "WORKSTATION": {"mode": "proxy", "deny": [KNOWN_BAD]},
@@ -96,6 +98,8 @@ def policy_permits(policy: dict, reputation: str) -> bool:
     mode = policy["mode"]
     if mode == "none":
         return False
+    if mode == "open":
+        return True
     if mode == "proxy":
         return reputation not in policy.get("deny", [])
     if mode == "allowlist":

@@ -64,6 +64,26 @@ The current `network_model.is_internal_address()` (RFC 1918) would classify ever
 
 The novel groups are mostly new external mail servers talking to 172.17.0.5 and new external IPs hitting clients — i.e. benign novelty — plus the attack's ZIP download.
 
+### Alert directions (design step S3, 2026-10-11)
+
+These counts come from all 1,465,627 alerts through `dedale.suricata.iter_alerts` + `perception.network_alert.with_entities`, using the DEDALE profile and inventory (39 s).
+
+| Direction | Alerts |
+|:--|--:|
+| internal -> internal | 1,396,291 (95.3%) |
+| outbound (internal -> external) | 64,835 (4.4%) |
+| inbound (external -> internal) | 4,433 |
+| external -> external | 68 |
+
+- Every internal address in the file belongs to a documented inventory host (30 clients, 5 servers, 2 routers). All traffic is TCP/UDP over IPv4.
+- The outbound alerts go to only 28 distinct external addresses:
+  - 172.18.0.1 (Internet Router, where the clients' DNS queries go): 52,535;
+  - 2.21.225.158: 9,790;
+  - 34.117.59.81 (ipinfo.io): 1,202.
+- Top outbound signatures: DNS query to .cloud TLD 34,830, .biz 14,341, Microsoft Device Metadata user agent 9,886.
+
+With no learned baseline, each outbound alert becomes a telemetry C2 check on an unknown destination, and an unknown destination is auto-blocked (BLOCK_DESTINATION). So a static store would auto-block the DNS resolver. It is deliberately not put on an allow-list in the profile: recognising routine destinations is what the learned baseline (design steps S5/S6) is supposed to do, and comparison C0 vs C1 measures it.
+
 ## User behaviour (`userbehaviour_logs.zip`)
 
 - 45 VMs × (`<ip>_<role>_ub.log`, `<ip>_<role>_timeline.csv`). The timeline is the benign activity plan: `ts, date_str, inter_event_delay, action_duration, action_type` (e.g. browsing, mailing). IPs here are on 192.168.56.0/24 (management network), not the 172.16.x addresses seen in Suricata.

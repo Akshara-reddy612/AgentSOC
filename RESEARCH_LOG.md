@@ -1195,3 +1195,26 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/knowledge_db.py`, `tests/test_knowledge_db.py`
 - Modified: `perception/environment.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S3 — DEDALE environment, inventory, Suricata adapter
+
+### What was tried
+- Checked the data before fixing the inventory. The Suricata file is strictly time-ordered (0 out-of-order records). Endpoints are IPv4 with a port, protocols TCP/UDP only, and every internal address is one of 30 clients + 7 documented servers / router interfaces. There are 30 internal Windows clients (AURA logs `internal_company_client_windows_1..30`). Non-company addresses are 172.18/16, 172.19/16, public internet addresses and 192.28.x (public).
+- New `dedale/` package:
+  - `environment.py`: profile, 37-host inventory, `seed_store`;
+  - `suricata.py`: `to_alert` / `iter_alerts` streaming from the zip, with a time window.
+- New `perception/network_alert.py` (`with_entities`). `KnowledgeDB` got an address index (`host_for_address`, kept in sync on writes, refusing an address owned by two hosts).
+- New host classes for inventory roles, and egress mode "open" (`policy_permits`).
+- Ran the full file through adapter + lookup, read-only (scratch script).
+
+### What was found
+- 1,465,627 alerts in 39 s: internal 1,396,291, outbound 64,835, inbound 4,433, external 68. Outbound alerts reach only 28 external addresses; 52,535 go to 172.18.0.1 (internet router, DNS). Without a learned baseline these become telemetry C2 checks on unknown destinations that are auto-blocked, so the static store would block the DNS resolver. Recorded in `experiments/DEDALE_DATA_NOTES.md`; it is what comparison C0 vs C1 measures.
+- NCE's technique vocabulary = SSE's 7 constrained techniques. Most of DEDALE's attack steps cannot be named (design decision D6, for the host-log phase).
+- Synthetic environment unchanged by the shared-code changes: historical re-score diff 0 vs `s8_env_profile`; 6,282 corpus-v2 live / mock records identical.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 638 passed, 1 deselected (630 + 8 new in `tests/test_dedale.py`; one reads the real file and is skipped when the data is absent).
+
+### Files created/modified
+- Created: `dedale/__init__.py`, `dedale/environment.py`, `dedale/suricata.py`, `perception/network_alert.py`, `tests/test_dedale.py`
+- Modified: `perception/knowledge_db.py`, `perception/knowledge_graph.py`, `perception/network_model.py`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

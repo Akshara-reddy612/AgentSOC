@@ -41,6 +41,13 @@ class HostClass(Enum):
     LAPTOP_CORP = "LAPTOP_CORP"
     DOMAIN_CONTROLLER = "DOMAIN_CONTROLLER"
     DB_SERVER = "DB_SERVER"
+    # Roles of real environments' inventories (added 2026-10-11, design step S3).
+    # No host-name rule maps to them; they come from an environment's CMDB.
+    LOG_SERVER = "LOG_SERVER"
+    MAIL_SERVER = "MAIL_SERVER"
+    WEB_SERVER = "WEB_SERVER"
+    VPN_GATEWAY = "VPN_GATEWAY"
+    ROUTER = "ROUTER"
     UNKNOWN = "UNKNOWN"
 
 
@@ -182,6 +189,12 @@ _HOST_CLASS_DEFAULTS: dict[HostClass, dict[str, Any]] = {
         "zone_id": "DATABASE",
         "exposed_services": ["SQL", "SMB"],
     },
+    # Inventory-only roles: a host created without inventory data has no known zone.
+    HostClass.LOG_SERVER: {"criticality_tier": 2, "zone_id": "UNKNOWN", "exposed_services": ["HTTP"]},
+    HostClass.MAIL_SERVER: {"criticality_tier": 2, "zone_id": "UNKNOWN", "exposed_services": ["SMTP", "IMAP"]},
+    HostClass.WEB_SERVER: {"criticality_tier": 1, "zone_id": "UNKNOWN", "exposed_services": ["HTTP", "HTTPS"]},
+    HostClass.VPN_GATEWAY: {"criticality_tier": 2, "zone_id": "UNKNOWN", "exposed_services": ["VPN"]},
+    HostClass.ROUTER: {"criticality_tier": 2, "zone_id": "UNKNOWN", "exposed_services": []},
     HostClass.UNKNOWN: {
         "criticality_tier": 0,
         "zone_id": "UNKNOWN",
