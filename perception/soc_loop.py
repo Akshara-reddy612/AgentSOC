@@ -166,7 +166,9 @@ class SocLoop:
             self.db.set_fact(node, "reputation", KNOWN_BAD, confidence=1.0, source=SourceSystem.SYSTEM,
                              writer=writer, at=at)
         self.monitor.register(d, at, approved_by=writer)
-        if a.get("source_host") and self.db.profile.is_internal_address(str(a["src_ip"])):
+        if a.get("kind") == "host":                 # the host where the confirmed activity happened
+            self.monitor.flag_host(str(a["target_host"]), case.case_id, at)
+        elif a.get("source_host") and self.db.profile.is_internal_address(str(a["src_ip"])):
             self.monitor.flag_host(str(a["source_host"]), case.case_id, at)
 
     def _end_training(self) -> None:
