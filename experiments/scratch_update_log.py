@@ -1,6 +1,9 @@
 import sys
+import os
 
-with open('c:/agentsoc/RESEARCH_LOG.md', 'r', encoding='utf-8') as f:
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+with open(os.path.join(ROOT, 'RESEARCH_LOG.md'), 'r', encoding='utf-8') as f:
     content = f.read()
 
 new_log_entry = """
@@ -16,6 +19,6 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins confirm
 
 content += new_log_entry
 
-with open('c:/agentsoc/RESEARCH_LOG.md', 'w', encoding='utf-8') as f:
+with open(os.path.join(ROOT, 'RESEARCH_LOG.md'), 'w', encoding='utf-8') as f:
     f.write(content)
 print("Updated RESEARCH_LOG.md")

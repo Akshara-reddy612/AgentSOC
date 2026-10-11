@@ -1,7 +1,9 @@
 import sys
 import os
 
-with open('c:/agentsoc/PROJECT_STATUS.md', 'r', encoding='utf-8') as f:
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+with open(os.path.join(ROOT, 'PROJECT_STATUS.md'), 'r', encoding='utf-8') as f:
     ps = f.read()
 
 # Step 2: "Current State" block rewrites
@@ -98,11 +100,11 @@ new_wnby = """## What's NOT Built Yet & Immediate Next Steps (Replaced)
 """
 ps = ps.replace(old_wnby, new_wnby)
 
-with open('c:/agentsoc/PROJECT_STATUS.md', 'w', encoding='utf-8') as f:
+with open(os.path.join(ROOT, 'PROJECT_STATUS.md'), 'w', encoding='utf-8') as f:
     f.write(ps)
 
 # Step 4: RESEARCH_LOG.md
-with open('c:/agentsoc/RESEARCH_LOG.md', 'r', encoding='utf-8') as f:
+with open(os.path.join(ROOT, 'RESEARCH_LOG.md'), 'r', encoding='utf-8') as f:
     rl = f.read()
 
 rl = rl.replace('## 2026-10-06 — Session: Experiment 1', '## 2026-10-03 & 2026-10-05 — Session: Experiment 1')
@@ -133,5 +135,5 @@ new_entries = """
 """
 rl += new_entries
 
-with open('c:/agentsoc/RESEARCH_LOG.md', 'w', encoding='utf-8') as f:
+with open(os.path.join(ROOT, 'RESEARCH_LOG.md'), 'w', encoding='utf-8') as f:
     f.write(rl)

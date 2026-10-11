@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 import sys
 
-sys.path.insert(0, r"c:\agentsoc")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from perception.nce_engine import (
     _apply_t1071_evidentiary_filter,

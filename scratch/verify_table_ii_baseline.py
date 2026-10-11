@@ -7,7 +7,7 @@ Directly verify Table II's per-family baseline rates from the merged 400-alert c
 import json
 from pathlib import Path
 
-ROOT = Path(r"c:\agentsoc")
+ROOT = Path(__file__).resolve().parents[1]
 
 # 1. Load data
 data7  = json.loads((ROOT / "agent" / "nce7_scale_results.json").read_text(encoding="utf-8"))

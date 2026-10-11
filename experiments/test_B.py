@@ -16,7 +16,7 @@ def get_alert_info():
     with open('GUIDE_Dataset/processed/guide_sample_500_alerts.json', encoding='utf-8') as f:
         clean = {str(a['alert_id']): a for a in json.load(f)}
         
-    import sys; sys.path.insert(0, 'c:/agentsoc')
+    import sys; from pathlib import Path; sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     from experiments.analyze_filter_flips import check_predicates
     
     def get_ev(a):

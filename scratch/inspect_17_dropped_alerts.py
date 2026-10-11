@@ -1,7 +1,7 @@
 import sys
-sys.path.insert(0, r"c:\agentsoc")
-import json
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+import json
 from perception.nce_engine import alert_to_nce_input
 
 heldout = {str(a["alert_id"]): a for a in json.loads(Path("GUIDE_Dataset/processed/guide_heldout_140_alerts.json").read_text(encoding="utf-8"))}
