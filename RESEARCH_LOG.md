@@ -1092,3 +1092,18 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - All four zips on disk match the MD5s in the dataset metadata (`system_logs_labels` 455d0a70…, `suricata_alerts` 3e824b09…, `userbehaviour_logs` 25c89144…, `system_logs_syslog` 8223168b…).
 - Contents (listed, not extracted): labels = 4 JSONL files of malicious events, class 1 and class 1+2, for clients_1_and_2 and internal_server (59 MB); suricata = one 699 MB JSONL; userbehaviour = 90 files, per-VM `_ub.log` + `_timeline.csv` for internal/external Windows and Linux clients (148 MB); syslog = 673 hourly `.jsonl.bz2` files (126.6 MB still bz2-compressed).
 - Next: inspect record formats and label semantics before designing the converter.
+
+## 2026-10-11 — Session: DEDALE record inspection (read-only)
+
+### What was tried
+- Streamed every record of the labels, Suricata, user-behaviour and one hour of syslog straight from the zips (scratch scripts, `python -I`, nothing extracted). Lined up the Suricata alerts whose signatures first appear after the benign weeks with labelled host events (±5 min). Details: `experiments/DEDALE_DATA_NOTES.md`.
+
+### What was found
+- Host labels are positives only (lists of malicious raw events), for 3 hosts: CLIENT2 8,440, CLIENT1 2,153 (winlogbeat, mostly Sysmon FileCreate/ImageLoad; 121 ProcessCreate; 195/10,593 with a command line) and internalserver 5,190 (auditd, all 2025-01-10). Class 1 ⊂ class 1+2; the class meaning is not in the downloaded README.
+- Suricata: 1,465,627 unlabelled alerts, 33 signatures; 3 signatures = 88% and fire at the same rate in the benign weeks. Only 6 alerts carry signatures first seen after the benign weeks; 3 of them match labelled CLIENT2 activity (ZIP download 01-06 10:01 seen by both routers; SMB executable transfer 01-08 15:05), 3 come from hosts the labels do not cover.
+- `experiments/REAL_TELEMETRY_PLAN.md` was wrong that DEDALE ships labelled Sigma alerts; added a dated correction there.
+- Consequence: a labelled host-alert evaluation needs (a) the full winlogbeat log (27.1 GB compressed) for negatives and the benign-week baseline, and (b) alert generation (e.g. Sigma rules) — decision pending with the user.
+
+### Files created/modified
+- Created: `experiments/DEDALE_DATA_NOTES.md`
+- Modified: `experiments/REAL_TELEMETRY_PLAN.md` (correction), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
