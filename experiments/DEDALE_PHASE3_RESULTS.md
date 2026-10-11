@@ -59,10 +59,21 @@
 - The decision cache reuses a dismissal for later cases on the same endpoints, so one wrong dismissal can repeat (here: 57 of the 89 benign dismissals came from the cache; the malicious ones were not repeated).
 - The NCE input includes command lines (attacker-influenced free text); DEDALE's attack contains no prompt injection, so this run does not test contamination.
 
-## Possible next steps (open decision)
+## Decision (a): open world for hosts without telemetry (implemented 2026-10-11)
 
-- **(a) Open-world check for unobserved assets:** where the store has no telemetry for an entity, the feasibility check should return CONDITIONALLY_FEASIBLE ("not known"), not INFEASIBLE. This targets the observed failure. Every hypothesis on the benign dismissals targets an observed client, so they would stay dismissed (to be confirmed by the replay).
-- **(b) Never dismiss a host alert on infeasibility alone:** route to REVIEW. This is safe, but gives back the 16% (≈ 65 / day).
-- **(c) Keep as is** and report the trade-off.
+- **Decision:** option (a), user-approved. The alternatives were (b) never dismiss a host alert on infeasibility alone, and (c) keep as is.
+- **Change:** the environment profile now lists the hosts the store learns from (`EnvironmentProfile.observed_hosts`; for DEDALE, the 30 Windows clients). If SSE finds no access path to a host outside that list, it returns CONDITIONALLY_FEASIBLE ("access cannot be ruled out"), not INFEASIBLE, and the case goes to review. An address is resolved to the inventory host that owns it. Profiles without the list (the synthetic enterprise) are unchanged.
+- **Replay:** `--mode gated --nce live --max-calls 50 --tag openworld`. **0 new API calls** (all 416 from the cache), 1.8 min.
 
-A replay of (a) or (b) uses the cached hypotheses: few or no new API calls.
+| | gated + NCE (before) | **gated + NCE, open world** |
+|:--|--:|--:|
+| Reviews / day | 54.6 | **54.8** |
+| Benign cases dismissed | 89 | **89** |
+| Malicious cases dismissed | 2 of 72 | **0 of 72** |
+| Collection-window cases surfaced | 9 | **11** |
+| Attack keys learned as routine | 0 | 0 |
+
+- **Effect:** both scp cases now go to review. The benign dismissals and the other attack-step timings are unchanged. The cost is 2 reviews over 14 days.
+- **Remaining limits:**
+  - Only the target host is checked against coverage. Account and source host are not, because there was no measured case.
+  - The log-source list is configuration and must be kept current. A host that stops sending logs but stays on the list is still treated as fully known.

@@ -240,7 +240,11 @@
   - **Finding — verdicts and targets:**
     - SSE verdicts do not separate benign from malicious: a FEASIBLE hypothesis appears on 18 of 70 malicious and 60 of 695 benign REVIEW cases.
     - The **target** NCE names does separate them. 405 of the 416 results name only the alerting client. The 11 that name another host (attacker 172.19.x, internal server, `Z:`) are 10 labelled malicious events plus 1 unlabelled record next to them.
-  - **Open decision:** (a) open-world SSE for entities the store has no telemetry for (CONDITIONALLY_FEASIBLE -> review); (b) never dismiss host alerts on infeasibility alone; (c) keep as is. A replay reuses the cached hypotheses.
+  - **Decision (a), user-approved, implemented:**
+    - `EnvironmentProfile.observed_hosts` is a log-source list (DEDALE: the 30 clients; None = closed world, synthetic profile unchanged).
+    - `SSE.check` answers CONDITIONALLY_FEASIBLE when there is no path to a target outside that list.
+    - Replay (`--tag openworld`, 0 new calls): reviews / day 54.8; malicious dismissed 0 of 72 (was 2); benign dismissed 89 (unchanged); collection-window cases 11 (was 9).
+    - Tests: `tests/test_open_world_sse.py` (6); suite 696 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
