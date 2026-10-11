@@ -22,7 +22,11 @@ When (invariant I3, the learning gate):
     `gate_delay` after they closed, and only if no case involving one of the
     same endpoints was escalated (REVIEW / AUTO_APPROVED) since the case
     opened; provenance "closed_benign".  Escalated cases are never learned
-    automatically; an analyst can close one as benign (provenance "analyst");
+    automatically; an analyst can close one as benign (provenance "analyst"),
+    which also lifts its hold: an escalation an analyst has closed as benign no
+    longer blocks learning about its endpoints (added 2026-10-11; before, every
+    escalation blocked them, and on host alerts -- where the endpoint is the
+    whole host -- reviews on a host blocked nearly all learning there);
   - with the gate switched off (ablation C3): every closed case at once,
     provenance "ungated".
 Network cases only for now (the case's first alert has src_ip / dst_ip /
@@ -60,7 +64,7 @@ class KnowledgeUpdater:
         self.writer = writer
         self._pending: list[tuple[datetime, int, Case]] = []     # heap by release time
         self._seq = itertools.count()
-        self._last_escalation: dict[str, datetime] = {}          # address -> latest escalation time
+        self._escalations: dict[str, dict[str, datetime]] = {}   # address -> {case id: escalation time}
         self.dropped = 0                                         # benign cases not learned (escalation nearby)
 
     # -- inputs from the triage loop ------------------------------------------
@@ -69,8 +73,7 @@ class KnowledgeUpdater:
         """Every triage decision.  An escalated case stops learning about its endpoints for now."""
         if outcome in ESCALATED_OUTCOMES:
             for address in _addresses(case):
-                prev = self._last_escalation.get(address)
-                self._last_escalation[address] = at if prev is None else max(prev, at)
+                self._escalations.setdefault(address, {})[case.case_id] = at
 
     def case_closed(self, case: Case, outcome: str, *, training: bool) -> None:
         if training:
@@ -97,11 +100,13 @@ class KnowledgeUpdater:
         return learned
 
     def _escalated_since(self, case: Case) -> bool:
-        """Was a case involving one of this case's endpoints escalated after it opened?"""
-        return any((t := self._last_escalation.get(a)) is not None and t >= case.opened
-                   for a in _addresses(case))
+        """Was a case involving one of this case's endpoints escalated after it opened (and not closed benign)?"""
+        return any(t >= case.opened for a in _addresses(case) for t in self._escalations.get(a, {}).values())
 
     def analyst_closed_benign(self, case: Case, at: datetime, analyst: str) -> None:
+        """The analyst closed an escalated case as benign: learn it, and lift its hold on its endpoints."""
+        for address in _addresses(case):
+            self._escalations.get(address, {}).pop(case.case_id, None)
         self._learn(case, "analyst", at, writer=f"analyst:{analyst}")
 
     @property
