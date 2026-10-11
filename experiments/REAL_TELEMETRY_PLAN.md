@@ -16,6 +16,8 @@ Availability, licence and format below come from web search on 2026-10-11 and ha
 | **Splunk BOTS v3** | CTF dataset, CC0, ~320 MB, pre-indexed for Splunk | Q&A-style, not per-event labels | Realistic but needs Splunk Enterprise and manual labelling | High |
 | **Precinct6 (WitFoo)** | 1.96 M sanitized events from real enterprise monitoring | Malicious/benign labelling intended | Sanitized text may remove the free-text evidence NCE needs | Unknown |
 
+[Correction 2026-10-11] After downloading and inspecting part of DEDALE (`experiments/DEDALE_DATA_NOTES.md`): DEDALE does **not** ship Sigma-rule alerts labelled true/false — neither its README nor the downloaded files contain them (that description likely belongs to the other paper linked under Sources). Host labels are lists of malicious raw events only (positives; 3 labelled hosts), network labels are in Zeek conn.log, and the shipped alerts are unlabelled Suricata alerts. The README says "about 40" VMs, not 55. Step 1 below ("DEDALE ships these") is therefore wrong: alerts must be generated or taken from Suricata.
+
 ## How real data would enter the pipeline (no leakage by design)
 
 1. **Alerts**: run Sigma rules over the raw logs (DEDALE ships these); one alert = rule hit + the original event(s).
