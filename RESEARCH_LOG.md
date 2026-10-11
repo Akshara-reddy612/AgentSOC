@@ -1082,3 +1082,13 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: 17 scripts listed above, `PROJECT_STATUS.md` (Environment Setup: venv recreation, project location; links), `RESEARCH_LOG.md` (links, this entry)
+
+## 2026-10-11 — Session: DEDALE small-tier download (real-telemetry step A)
+
+### What was tried
+- User approved downloading userbehaviour_logs + syslog (~150 MB) into `D:\agentsoc_data\dedale\`. Deleted the truncated `userbehaviour_logs.zip` from the earlier stopped download, then fetched Dataverse file ids 717880 (`userbehaviour_logs.zip`) and 717890 (`system_logs_syslog.zip`) via `https://entrepot.recherche.data.gouv.fr/api/access/datafile/<id>`.
+
+### What was found
+- All four zips on disk match the MD5s in the dataset metadata (`system_logs_labels` 455d0a70…, `suricata_alerts` 3e824b09…, `userbehaviour_logs` 25c89144…, `system_logs_syslog` 8223168b…).
+- Contents (listed, not extracted): labels = 4 JSONL files of malicious events, class 1 and class 1+2, for clients_1_and_2 and internal_server (59 MB); suricata = one 699 MB JSONL; userbehaviour = 90 files, per-VM `_ub.log` + `_timeline.csv` for internal/external Windows and Linux clients (148 MB); syslog = 673 hourly `.jsonl.bz2` files (126.6 MB still bz2-compressed).
+- Next: inspect record formats and label semantics before designing the converter.
