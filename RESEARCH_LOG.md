@@ -1728,3 +1728,35 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/analyst_sim.py`, `tests/test_analyst_sim.py`, `experiments/REVIEW_LOOP_RESULTS.md`, `experiments/dedale_results/review_eval_host.json`, `experiments/dedale_results/review_eval_network.json`
 - Modified: `experiments/dedale_host_replay.py`, `experiments/dedale_replay.py`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Decision B5 (a) — unlearn on confirmed compromise
+
+### What was tried
+- User approved option (a) ("ok").
+- **Code:**
+  - `KnowledgeDB.retract_edge` (ks_log op `retract_edge`, handled by `replay_log`; config edges refused) and `KnowledgeDB.learned_edges(provenances)`;
+  - `KnowledgeUpdater.retract_host_learning(host, since, at, writer)`: edges incident to the host node, or lineage edges keyed `host:<h>`, learned closed_benign / analyst / ungated since `since`;
+  - `OutcomeMonitor.host_confirmed`;
+  - `SocLoop(unlearn_on_confirm=True)`: `_confirmed_malicious` retracts the last 7 days (`UNLEARN_LOOKBACK`); `apply_verdict("benign")` on a confirmed host learns nothing.
+- Host replays with the oracle through the inbox (`--tag b5_d4 / b5_m5 / b5_m20 / b5_fa5`) and network `b5_d4`, compared with the `ev_*` runs (before B5).
+- **FastAPI:** dry run `pip install --dry-run --report` -> would install fastapi 0.143.0 (MIT; requires starlette>=0.46.0, so the installed 1.6.0 stays) and opentelemetry-api 1.45.1 (Apache-2.0; requires typing-extensions only). The install command was denied by the Claude Code auto-mode classifier; not retried.
+
+### What was found
+- **Host:**
+
+  | Run | Cases | Reviews / day | Malicious reviewed | Attack cases' keys learned | Labelled events alerted |
+  |:--|--:|--:|--:|--:|--:|
+  | perfect | 432 -> 477 | 30.9 -> 34.1 | 72 / 72 | 0 | 400 |
+  | misses 5% | 429 -> 477 | 30.6 -> 34.1 | 69 -> 72 | 8 -> 0 | 397 -> 400 |
+  | misses 20% | 421 -> 477 | 30.1 -> 34.1 | 61 -> 72 | 20 -> 0 | 256 -> 400 |
+  | false alarms 5% | 439 -> 625 | 31.4 -> 44.6 | 72 / 72 | 0 | 400 |
+
+- With B5, the miss runs are identical in these numbers to the perfect run.
+- **Network perfect analyst:** identical before and after (20.9 / day, attacker contained after 240 min).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 738 passed, 1 deselected (734 + 4 in `tests/test_unlearning.py`).
+
+### Files created/modified
+- Created: `tests/test_unlearning.py`, `experiments/dedale_results/b5_eval_host.json`, `experiments/dedale_results/b5_eval_network.json`
+- Modified: `perception/knowledge_db.py`, `perception/knowledge_updater.py`, `perception/outcome_monitor.py`, `perception/soc_loop.py`, `perception/review_service.py`, `experiments/REVIEW_LOOP_RESULTS.md`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

@@ -273,6 +273,8 @@ class KnowledgeDB:
                 g.nodes[p["node_id"]][p["name"]] = decode_value(p["fact"])
             elif op == "update_edge":
                 g.edges[p["src"], p["dst"], decode_value(p["key"])].update(decode_value(p["changes"]))
+            elif op == "retract_edge":
+                g.remove_edge(p["src"], p["dst"], decode_value(p["key"]))
         return g
 
     # -- writing ------------------------------------------------------------
@@ -317,6 +319,30 @@ class KnowledgeDB:
             self._con.execute("UPDATE edges SET attrs = ?, updated_seq = ? WHERE src = ? AND dst = ? AND key = ?",
                               (_dumps(attrs), seq, src, dst, _dumps(key)))
             self._graph.edges[src, dst, key].update(_stored_copy(changes))
+
+    def retract_edge(self, src: str, dst: str, key: Any, *, writer: str, at: datetime, reason: str) -> None:
+        """
+        Remove a learned edge, e.g. a pattern learned from a verdict later found
+        wrong (decision B5).  The log keeps both the addition and the retraction,
+        so every earlier state can still be rebuilt.  Configuration is not retracted.
+        """
+        with self.batch():
+            if not self._graph.has_edge(src, dst, key):
+                raise KeyError(f"unknown edge {src!r} -[{key!r}]-> {dst!r}")
+            if self.edge_learned_from(src, dst, key) == "config":
+                raise ValueError("configuration edges are not retracted")
+            self._log(writer, at, "retract_edge", {"src": src, "dst": dst, "key": encode_value(key),
+                                                   "reason": reason})
+            self._con.execute("DELETE FROM edges WHERE src = ? AND dst = ? AND key = ?", (src, dst, _dumps(key)))
+            self._graph.remove_edge(src, dst, key)
+
+    def learned_edges(self, provenances: set[str] | frozenset[str]) -> list[tuple[str, str, Any, str, datetime]]:
+        """(src, dst, key, learned_from, time first learned) of the edges learned with these provenances."""
+        marks = ",".join("?" * len(provenances))
+        rows = self._con.execute(
+            f"SELECT e.src, e.dst, e.key, e.learned_from, l.ts FROM edges e JOIN ks_log l ON l.seq = e.created_seq"
+            f" WHERE e.learned_from IN ({marks}) ORDER BY e.created_seq", tuple(provenances)).fetchall()
+        return [(s, d, _loads(k), lf, datetime.fromisoformat(ts)) for s, d, k, lf, ts in rows]
 
     def set_fact(self, node_id: str, name: str, value: Any, *, confidence: float, source: SourceSystem,
                  writer: str, at: datetime) -> KnowledgeFact:

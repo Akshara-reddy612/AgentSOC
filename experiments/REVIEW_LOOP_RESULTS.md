@@ -57,6 +57,34 @@
    - **(b) Benign on a risky host needs a second look:** if the host has other open or confirmed cases, `benign` (learn) needs a second analyst, or defaults to `benign_once`.
 3. **False alarms matter where actions execute:** four-eyes on critical hosts (B4) covers part of it. Blocking benign destinations on a single wrong verdict is the remaining risk.
 
+## Decision B5 (a): unlearn on confirmed compromise (implemented 2026-10-11)
+
+- **Decision:** option (a), user-approved; option (b) was a second analyst for `benign` on busy hosts.
+- **Change:** when an analyst confirms a host compromised (`malicious` verdict):
+  - the patterns learned on that host after training (provenance closed_benign / analyst / ungated) in the 7 days before are **retracted**: they alert again;
+  - while the host stays confirmed (its 7-day watch), a `benign` verdict on it is **not learned**.
+- Retraction is a logged Knowledge Store operation (`retract_edge`), so every earlier state can still be rebuilt. `SocLoop(unlearn_on_confirm=True)` is the default.
+- **Replays** (host, 4 h, oracle through the inbox; `dedale_results/b5_eval_{host,network}.json`):
+
+| Analyst | Attack cases' patterns learned as routine (off -> on) | Labelled attack events alerted | Reviews / day |
+|:--|--:|--:|--:|
+| always right | 0 -> 0 | 400 -> 400 | 30.9 -> **34.1** |
+| misses 5% | 8 -> **0** | 397 -> **400** | 30.6 -> 34.1 |
+| misses 20% | 20 -> **0** | 256 -> **400** | 30.1 -> 34.1 |
+| false alarms 5% | 0 -> 0 | 400 -> 400 | 31.4 -> **44.6** |
+
+- **Missed attacks no longer teach the store.**
+  - With B5, the miss runs end in the same state as the perfect analyst: all 72 malicious cases reviewed, 400 / 400 labelled events alerted.
+  - Each attacked host got at least one correct malicious verdict early. That retracted earlier learning, and the wrong benign verdicts after it learned nothing.
+  - B5 cannot help a host on which every malicious case is missed.
+- **Costs:**
+  - **Perfect analyst:** +10% reviews (benign activity on the two compromised hosts keeps alerting).
+  - **False alarms:** they now cost much more (+42% reviews at 5%), because a false confirmation stops learning on a healthy host for 7 days and retracts its recent patterns.
+  - **Network:** no change (20.9 reviews / day, attacker contained after 240 min).
+- **Open:**
+  - The 7-day window and watch are a first choice.
+  - A way to withdraw a wrong `malicious` verdict (which would restore the host's learning) does not exist yet.
+
 ## Caveats
 
 - The analyst is a simulation: mistakes are random per case. Real mistakes cluster on hard cases, which are exactly the stealthy ones.

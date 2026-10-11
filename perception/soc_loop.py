@@ -29,7 +29,10 @@ is the only path by which a verdict changes the Knowledge Store:
     frozen or static mode) and lifts its hold on gated learning;
   - "benign_once" -> the hold is lifted, nothing is learned;
   - "malicious" -> an external destination is marked known-bad in the store
-    and the host is put under watch.  Containment is approved per action
+    and the host is put under watch; with `unlearn_on_confirm` (decision B5,
+    default on) the patterns learned on that host in the UNLEARN_LOOKBACK
+    before are retracted, and while the host stays confirmed a "benign"
+    verdict on it is not learned (a missed attack must not become routine).  Containment is approved per action
     (case store, step 4: one approval, or two under the four-eyes rule); the
     loop executes approved actions (simulated: watched by the outcome
     monitor) and rolls them back on request.  The simulated analyst, being
@@ -69,6 +72,7 @@ LEARNING_MODES = ("static", "frozen", "gated", "ungated")
 ANALYST_DELAY = timedelta(hours=4)
 SIMULATED_ANALYST = "oracle"
 SIMULATED_APPROVERS = ("oracle", "oracle-2")          # the simulated team (four-eyes needs two)
+UNLEARN_LOOKBACK = timedelta(days=7)                    # decision B5 (a)
 Analyst = Callable[[Case, Decision, datetime], "str | None"]
 
 
@@ -82,13 +86,14 @@ class SocLoop:
                  analyst_delay: timedelta = ANALYST_DELAY,
                  detectors: tuple[str, ...] = tuple(DETECTORS),
                  on_alert: Callable[[Case, dict], None] | None = None,
-                 case_store: CaseStore | None = None) -> None:
+                 case_store: CaseStore | None = None, unlearn_on_confirm: bool = True) -> None:
         if mode not in LEARNING_MODES:
             raise ValueError(f"mode must be one of {LEARNING_MODES}")
         self.analyst = analyst
         self.analyst_delay = analyst_delay
         self.case_store = case_store                # test-window cases, decisions, alerts (review loop)
         self._awaiting: dict[str, tuple[Case, Decision]] = {}             # REVIEW cases without a verdict yet
+        self.unlearn_on_confirm = unlearn_on_confirm
         self._reviews: list[tuple[datetime, int, Case, Decision]] = []    # heap by verdict time
         self._review_seq = itertools.count()
         self.verdicts: list[tuple[str, datetime, str]] = []                # (case_id, time, verdict)
@@ -195,6 +200,10 @@ class SocLoop:
         case, d = entry
         done: dict = {"applied": True, "verdict": verdict}
         if verdict == "benign":
+            host = case.first_alert.get("target_host")
+            if self.unlearn_on_confirm and host and self.monitor.host_confirmed(str(host), at):
+                done.update(learned=False, reason=f"host {host} is confirmed compromised; nothing is learned on it")
+                return done
             done["learned"] = self.updater is not None and self.mode != "frozen"
             if done["learned"]:
                 self.updater.analyst_closed_benign(case, at, analyst)
@@ -262,6 +271,9 @@ class SocLoop:
             done["flagged_host"] = str(a["source_host"])
         if done["flagged_host"]:
             self.monitor.flag_host(done["flagged_host"], case.case_id, at)
+            if self.unlearn_on_confirm and self.updater is not None:
+                done["retracted"] = self.updater.retract_host_learning(
+                    done["flagged_host"], at - UNLEARN_LOOKBACK, at, writer)
         return done
 
     def _end_training(self) -> None:

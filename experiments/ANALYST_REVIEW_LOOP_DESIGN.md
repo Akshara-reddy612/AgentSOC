@@ -122,7 +122,8 @@ The Python API the HTTP layer and tests call:
   3. Review service. The queue priority was revised once after the DEDALE queue check: v2 adds other targets and host peers. In-sample; see `experiments/dedale_queue_eval.py`.
   4. Actions with four-eyes and rollback; a verdict no longer executes containment.
   6. Evaluations: analyst delay and analyst mistakes (`experiments/REVIEW_LOOP_RESULTS.md`). A missed attack teaches the attacker's pattern; this led to open decision B5 (guard on analyst feedback).
-- **Next:** 5. HTTP API (FastAPI, after install approval).
+  - **B5 decided (a), implemented:** unlearn on confirmed compromise. With it, missed attacks no longer become routine on DEDALE: 0 attack patterns learned at 20% misses, against 20 without. Costs: +10% reviews with a perfect analyst, +42% with 5% false alarms.
+- **Next:** 5. HTTP API. FastAPI approved; the install from Claude Code was blocked by the auto-mode check, so the user installs it: `.venv\Scripts\python -m pip install fastapi==0.143.0`, which adds only fastapi and opentelemetry-api; Starlette unchanged per the dry run.
 
 ## Order of work
 

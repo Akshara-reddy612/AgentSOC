@@ -135,6 +135,11 @@ class OutcomeMonitor:
         """An analyst confirmed malicious activity from this host: watch it (no containment effect)."""
         return self.start(case_id, "ANALYST_CONFIRMED", host, "host", at)
 
+    def host_confirmed(self, host: str, at: datetime) -> bool:
+        """Is the host under an analyst's confirmed-compromise watch at `at`?"""
+        return any(w.action == "ANALYST_CONFIRMED" and w.since <= at <= w.until
+                   for w in self._by_target.get(("host", host), ()))
+
     def observe(self, alert: dict, at: datetime) -> None:
         """Count one alert against every active watch it touches."""
         for w in self._matching(alert, at):

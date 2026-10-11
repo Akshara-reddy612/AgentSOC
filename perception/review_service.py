@@ -127,10 +127,11 @@ def learning_preview(case: dict) -> dict[str, str]:
     """What each verdict would do (decision B2)."""
     return {
         "benign": (f"Teaches the store that \"{case['title']}\" is routine: it stops alerting. "
-                   f"{SCOPE[_pattern_type(case)]}"),
+                   f"{SCOPE[_pattern_type(case)]} Nothing is learned while the host is confirmed compromised."),
         "benign_once": "Closes this case without teaching the store: the next occurrence alerts again.",
-        "malicious": ("Confirms an attack: an external destination involved is marked known-bad and the host is put "
-                      "under watch. Proposed containment is not executed by the verdict: approve each action."),
+        "malicious": ("Confirms an attack: an external destination involved is marked known-bad, the host is put "
+                      "under watch, and patterns learned on it in the last 7 days are retracted (they alert again). "
+                      "Proposed containment is not executed by the verdict: approve each action."),
         "needs_info": "Puts the case back in the queue; it keeps blocking automatic learning on its host.",
     }
 
