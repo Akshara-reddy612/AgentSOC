@@ -178,6 +178,19 @@
   - **Analyst run:** 290 benign / 3 malicious verdicts; the 3 are the real attack cases. The attacker server is contained after 4 h (the analyst delay); no attacker pattern is learned. Ungated learning, at a similar load, stored the dropper pattern as routine.
   - **Exact network labels:** 84 attack flows; only the dropper download (2 router copies) raised a Suricata alert. 83 of 84 labelled flows went unalerted, including all 57 other C2 flows and the exfiltration.
   - **First contacts:** 4,400-9,300 outbound pairs per weekday were never seen in training (all 5 attack pairs among them), so first contact alone is not a usable detector.
+- **Phase 2 started (2026-10-11): host logs.** Design: `experiments/PHASE2_HOST_LOGS_DESIGN.md` (P2-1..P2-7, open decisions E1-E3).
+  - **P2-1 extraction (running).** `dedale/winlogbeat.py` + `experiments/dedale_extract_winlogbeat.py`: a parallel one-time pass that keeps process creation, LSASS access, executable / script / macro / archive file writes, named pipes, DNS, logons, PowerShell and service installs. Output: gzip JSONL per hour outside the repo, ~1 MB per hour; one busy hour = 650k records -> 46k events.
+    - Speed: a byte-level prefilter (search from the line end) cut 53 s to 34 s per busy hour, with identical output and counts (verified on a full hour). bz2 decompression (~29 s per busy hour) is the floor, and the 20-thread laptop scales only ~2.6x, so the full pass takes ~2 h.
+  - **Data facts:**
+    - winlogbeat covers only the 30 Windows clients (the internal server is Linux / auditbeat, not downloaded);
+    - ~1 TB uncompressed over four weeks;
+    - no Sysmon registry, network-connection or 4688 events in the inspected hour, and no registry events in the labels, so registry persistence may be invisible.
+  - **D6 implemented:**
+    - `sse.TECHNIQUE_TABLE` gains T1021.004, T1039, T1003, T1210, T1105, T1041 (structural checks), plus T1566, T1204, T1059, T1547, T1005 as `unconstrained` (CONDITIONALLY_FEASIBLE -> review, never auto-approved, never dropped);
+    - the NCE prompt's vocabulary is now a parameter (`nce_instructions`, `build_nce_prompt_package(..., techniques)`, `generate_hypotheses(..., techniques)`). The default stays the legacy 7 IDs, byte-identical to the corpus-v2 prompt (SHA-256 pinned in a test);
+    - `test_technique_ids_match_technique_table` updated to the new rule: the full-vocabulary prompt lists the whole table, and the legacy list is a subset of it;
+    - 0 changes on all stored runs.
+  - **Tests:** `tests/test_technique_coverage.py` (5), `tests/test_dedale_winlogbeat.py` (5), one new prompt test. Suite: 682 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
