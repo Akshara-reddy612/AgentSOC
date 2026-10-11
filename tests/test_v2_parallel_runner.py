@@ -7,6 +7,7 @@ never called: the call helper is replaced.
 from __future__ import annotations
 
 import threading
+import time
 from types import SimpleNamespace
 
 import agent.run_v2_eval as runner
@@ -21,7 +22,7 @@ def test_parallel_runner(monkeypatch, tmp_path):
     calls: list[tuple[str, str]] = []
     lock = threading.Lock()
 
-    def fake_call(fn, alert, active_key="", all_keys=None, timeout=0):
+    def fake_call(fn, alert, active_key="", all_keys=None, timeout=0, **kw):
         with lock:
             calls.append((alert["alert_id"], active_key))
             n = sum(1 for a, _ in calls if a == alert["alert_id"])
@@ -50,3 +51,25 @@ def test_parallel_runner(monkeypatch, tmp_path):
     assert sum(1 for a, _ in calls if a == "dead") == runner.MAX_ATTEMPTS
     log = (tmp_path / "api.jsonl").read_text().splitlines()
     assert len(log) == len(calls) and all("k0aaaa" not in line for line in log)  # last-4 only
+
+
+def test_parallel_runner_groq_rotates_groq_keys(monkeypatch, tmp_path):
+    gkeys = ["g0wwww", "g1xxxx", "g2yyyy", "g3zzzz", "g4vvvv"]
+    monkeypatch.setattr("agent.key_pool.load_groq_pool", lambda: SimpleNamespace(keys=gkeys))
+    monkeypatch.setattr(runner, "LIVE_DELAY_S", 0)
+    seen: list[tuple[str, list[str], str | None]] = []
+    lock = threading.Lock()
+
+    def fake_call(fn, alert, active_key="", all_keys=None, timeout=0, **kw):
+        with lock:
+            seen.append((kw.get("model"), kw.get("groq_keys"), active_key or None))
+        time.sleep(0.1)   # keep each worker busy so every worker takes one alert
+        return ([], None, "{}", 1), ""
+
+    monkeypatch.setattr(helpers, "_call_with_timeout", fake_call)
+    todo = [{"alert_id": f"a{i}"} for i in range(5)]
+    runner._run_parallel(todo, 5, lambda aid, res: None, tmp_path / "api.jsonl", model="groq:openai/gpt-oss-20b")
+    assert all(m == "groq:openai/gpt-oss-20b" and a is None for m, _, a in seen)   # Gemini env untouched
+    assert {g[0] for _, g, _ in seen} == set(gkeys)                                 # each worker starts on its own key
+    assert all(sorted(g) == sorted(gkeys) for _, g, _ in seen)
+    assert all(json_line.count("****") == 0 for json_line in (tmp_path / "api.jsonl").read_text().splitlines())

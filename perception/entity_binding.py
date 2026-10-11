@@ -156,7 +156,12 @@ def attach_alert_context(hypotheses: list[NCEHypothesis], alert: dict) -> list[N
     # itself, so contaminated log text cannot talk the system out of checking
     # a connection the network telemetry recorded.  Entities come only from
     # the alert's trusted fields; nce_confidence 0.0 (not an NCE output).
-    if dest and not any(h.technique_id == "T1071" for h in out):
+    # Tightened 2026-10-11 (step 4.6): only an NCE C2 hypothesis from the
+    # alert's REAL source host counts.  With Groq, a steering payload made NCE
+    # propose C2 from the steered server (no internet route -> INFEASIBLE),
+    # which previously suppressed the telemetry check on the real host.
+    if dest and not any(h.technique_id == "T1071" and bind_entities(h, alert).roles.get("source_host") == BOUND
+                        for h in out):
         tele = NCEHypothesis(
             technique_id="T1071",
             source_account=str(alert.get("source_user") or ""),

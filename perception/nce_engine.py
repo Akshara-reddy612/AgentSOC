@@ -215,6 +215,59 @@ def _parse_single_hypothesis(
 
 
 # ---------------------------------------------------------------------------
+# LLM call — Groq (second provider) with key rotation and JSON mode
+# ---------------------------------------------------------------------------
+
+def _call_groq_nce(prompt: str, model: str) -> dict:
+    """
+    Groq call for NCE (Phase 4 step 4.6, 2026-10-11), mirroring the Gemini
+    path: JSON-only output (response_format=json_object, as Gemini uses
+    response_mime_type=application/json), key rotation on rate limits, back-off
+    when every key is limited.  agent.baseline_agent.call_agent_groq_rotating
+    is not used because it requests free-form text (a first attempt with it
+    returned truncated/empty JSON on 3 of 42 calls) and it backs the published
+    baseline experiments, so it is left unchanged.
+
+    Returns {"raw_response", "parsed", "parse_error"} like _call_gemini_nce.
+    """
+    from openai import OpenAI
+
+    from agent.key_pool import load_groq_pool
+    from agent.llm_utils import RETRY_DELAYS, is_rate_limit_error, strip_code_fence
+
+    pool = load_groq_pool()
+    if not pool.keys:
+        return {"raw_response": None, "parsed": None,
+                "parse_error": "API_ERROR: KeyPool is empty — no GROQ_API_KEY(S) set"}
+    last_exc: Exception | None = None
+    for delay in [0] + RETRY_DELAYS:
+        if delay:
+            time.sleep(delay)
+        for _ in range(len(pool.keys)):
+            try:
+                client = OpenAI(base_url="https://api.groq.com/openai/v1", api_key=pool.current())
+                resp = client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    response_format={"type": "json_object"},
+                )
+                raw = resp.choices[0].message.content or ""
+                try:
+                    return {"raw_response": raw, "parsed": json.loads(strip_code_fence(raw)), "parse_error": None}
+                except json.JSONDecodeError as je:
+                    return {"raw_response": raw, "parsed": None, "parse_error": f"JSON_PARSE_ERROR: {je}"}
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                if is_rate_limit_error(exc):
+                    pool.rotate()
+                    continue
+                return {"raw_response": None, "parsed": None,
+                        "parse_error": f"API_ERROR: {type(exc).__name__}: {exc}"}
+    return {"raw_response": None, "parsed": None,
+            "parse_error": f"API_ERROR: all Groq keys rate limited: {last_exc}"}
+
+
+# ---------------------------------------------------------------------------
 # LLM call — Gemini with key rotation and JSON mode
 # ---------------------------------------------------------------------------
 
@@ -591,7 +644,11 @@ def generate_hypotheses(
 
     for attempt in range(1 + max_retries):
         api_call_count += 1
-        result = _call_gemini_nce(prompt, model=model)
+        if model.startswith("groq:"):
+            # Second provider (2026-10-11, Phase 4 step 4.6), JSON mode like Gemini.
+            result = _call_groq_nce(prompt, model=model[len("groq:"):])
+        else:
+            result = _call_gemini_nce(prompt, model=model)
 
         last_raw_response = result.get("raw_response")
         parse_error = result.get("parse_error")
