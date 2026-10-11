@@ -460,12 +460,24 @@ class TestClosedVocabularyInInstructions:
             )
 
     def test_technique_ids_match_technique_table(self) -> None:
-        """All TECHNIQUE_TABLE keys must be listed in the instructions."""
+        """
+        The full-vocabulary instructions list every TECHNIQUE_TABLE key.  Since
+        design decision D6 (2026-10-11) the table is larger than the default
+        prompt's vocabulary, which stays the legacy list NCE was evaluated with;
+        every legacy ID must still be a table key.
+        """
+        from perception.sse import LEGACY_TECHNIQUES
+        from prompt_construction.nce_prompt_builder import nce_instructions
+        full = nce_instructions(sorted(TECHNIQUE_TABLE))
         for tid in sorted(TECHNIQUE_TABLE.keys()):
-            assert tid in _NCE_INSTRUCTIONS, (
-                f"TECHNIQUE_TABLE key '{tid}' not found in NCE instructions — "
-                f"mismatch between TECHNIQUE_TABLE and instruction text."
-            )
+            assert tid in full, f"TECHNIQUE_TABLE key '{tid}' missing from the full-vocabulary instructions."
+        assert set(LEGACY_TECHNIQUES) <= set(TECHNIQUE_TABLE)
+
+    def test_default_instructions_unchanged_since_corpus_v2(self) -> None:
+        """The default (legacy) instruction text is byte-identical to the one used for corpus v2."""
+        import hashlib
+        assert hashlib.sha256(_NCE_INSTRUCTIONS.encode("utf-8")).hexdigest() == (
+            "07959e1df19592ee8baaba487e5f18aa300657deb7cd89861c5e646d6666621d")
 
     def test_instructions_contain_data_framing(self) -> None:
         """Instructions must contain the 'DATA TO ANALYZE' injection-resistant framing."""

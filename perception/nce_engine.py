@@ -51,7 +51,7 @@ import logging
 import re
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Sequence
 
 from perception.environment import DEFAULT_PROFILE, EnvironmentProfile
 from perception.nce_contract import (
@@ -598,6 +598,7 @@ def generate_hypotheses(
     model: str = "gemini-3.1-flash-lite",
     max_retries: int = 1,
     apply_evidentiary_filter: bool = True,
+    techniques: Sequence[str] | None = None,
 ) -> NCECallResult:
     """
     Generate competing attack-narrative hypotheses for an incident.
@@ -631,7 +632,7 @@ def generate_hypotheses(
     """
     # --- Step 1: Build the prompt ---
     try:
-        pkg = build_nce_prompt_package(nce_input)
+        pkg = build_nce_prompt_package(nce_input, techniques)   # None -> legacy vocabulary (design decision D6)
         prompt = serialize_nce_xml(pkg)
     except Exception as exc:
         return NCECallResult(

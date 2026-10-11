@@ -124,6 +124,11 @@ class TechniqueConstraint:
     valid_sequences: tuple[tuple[EdgeConstraint, ...], ...]
     egress_ports: tuple[int, ...] | None = None
     egress_to_any: bool = False
+    # Added 2026-10-11 (design decision D6): no structural precondition the
+    # graph can check (e.g. phishing, scripting).  SSE returns
+    # CONDITIONALLY_FEASIBLE with a note, which routes to analyst review --
+    # never ruled out structurally, never auto-approved.
+    unconstrained: bool = False
 
 
 # ---------------------------------------------------------------------------
@@ -332,7 +337,90 @@ TECHNIQUE_TABLE: dict[str, TechniqueConstraint] = {
              EdgeConstraint("GRANTS", min_access_level=AccessLevel.ADMIN)),
         ),
     ),
+
+    # --- Added 2026-10-11 (Phase 2, design decision D6): techniques host logs show ---
+
+    # T1021.004 — Remote Services: SSH.  Account access + port 22 between zones.
+    "T1021.004": TechniqueConstraint(
+        technique_id="T1021.004",
+        description="Remote Services: SSH — lateral movement over SSH",
+        valid_sequences=(
+            (EdgeConstraint("GRANTS", min_access_level=AccessLevel.READ),),
+            (EdgeConstraint("MEMBER_OF"),
+             EdgeConstraint("GRANTS", min_access_level=AccessLevel.READ)),
+        ),
+        egress_ports=(22,),
+    ),
+
+    # T1039 — Data from Network Shared Drive.  READ on the share host + SMB.
+    "T1039": TechniqueConstraint(
+        technique_id="T1039",
+        description="Data from Network Shared Drive — collection from a file share",
+        valid_sequences=(
+            (EdgeConstraint("GRANTS", min_access_level=AccessLevel.READ),),
+            (EdgeConstraint("MEMBER_OF"),
+             EdgeConstraint("GRANTS", min_access_level=AccessLevel.READ)),
+        ),
+        egress_ports=(445,),
+    ),
+
+    # T1003 — OS Credential Dumping (e.g. LSASS memory).  ADMIN on the host.
+    "T1003": TechniqueConstraint(
+        technique_id="T1003",
+        description="OS Credential Dumping — read credentials from memory or stores",
+        valid_sequences=(
+            (EdgeConstraint("GRANTS", min_access_level=AccessLevel.ADMIN),),
+            (EdgeConstraint("MEMBER_OF"),
+             EdgeConstraint("GRANTS", min_access_level=AccessLevel.ADMIN)),
+        ),
+    ),
+
+    # T1210 — Exploitation of Remote Services (e.g. PrintNightmare).  A network
+    # path to an exposed service; no account access is needed.
+    "T1210": TechniqueConstraint(
+        technique_id="T1210",
+        description="Exploitation of Remote Services — exploit a service reachable on the network",
+        valid_sequences=(),
+        egress_ports=(445, 135, 139, 3389),
+    ),
+
+    # T1105 — Ingress Tool Transfer, T1041 — Exfiltration Over C2 Channel.
+    # Need an internet route from the source host, like T1071.  (Trusted
+    # destination handling and destination blocks remain T1071-only.)
+    "T1105": TechniqueConstraint(
+        technique_id="T1105",
+        description="Ingress Tool Transfer — download tools from outside",
+        valid_sequences=(),
+        egress_ports=(443, 80),
+        egress_to_any=True,
+    ),
+    "T1041": TechniqueConstraint(
+        technique_id="T1041",
+        description="Exfiltration Over C2 Channel — send collected data out",
+        valid_sequences=(),
+        egress_ports=(443, 80),
+        egress_to_any=True,
+    ),
+
+    # No structural precondition the graph can check: decided on evidence,
+    # routed to review (see TechniqueConstraint.unconstrained).
+    "T1566": TechniqueConstraint(technique_id="T1566", description="Phishing — initial access by email",
+                                 valid_sequences=(), unconstrained=True),
+    "T1204": TechniqueConstraint(technique_id="T1204", description="User Execution — user opens a malicious file",
+                                 valid_sequences=(), unconstrained=True),
+    "T1059": TechniqueConstraint(technique_id="T1059",
+                                 description="Command and Scripting Interpreter — PowerShell, cmd, scripts",
+                                 valid_sequences=(), unconstrained=True),
+    "T1547": TechniqueConstraint(technique_id="T1547",
+                                 description="Boot or Logon Autostart Execution — persistence (e.g. Run keys)",
+                                 valid_sequences=(), unconstrained=True),
+    "T1005": TechniqueConstraint(technique_id="T1005", description="Data from Local System — local collection",
+                                 valid_sequences=(), unconstrained=True),
 }
+
+# The vocabulary NCE was evaluated with until 2026-10-11 (corpus v2 results);
+# prompts keep it unless a caller asks for the full table (design decision D6).
+LEGACY_TECHNIQUES = ("T1078", "T1021.001", "T1021.002", "T1550", "T1484", "T1071", "T1562")
 
 
 # ---------------------------------------------------------------------------
@@ -442,6 +530,17 @@ class StructuralSimulationEngine:
                 path_confidence=0.0,
                 edge_path=[],
                 dependency_note=f"Unknown technique: {technique_id!r}",
+            )]
+        if constraint.unconstrained:
+            return [PathResult(
+                verdict=SSEVerdict.CONDITIONALLY_FEASIBLE,
+                path_confidence=0.0,
+                edge_path=[],
+                dependency_note=(
+                    f"{technique_id} ({constraint.description}) has no structural "
+                    f"precondition the graph can check; it cannot be ruled in or "
+                    f"out structurally. Requires analyst review."
+                ),
             )]
 
         # --- Resolve nodes (lazy creation) ---

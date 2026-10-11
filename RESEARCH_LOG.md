@@ -1414,3 +1414,33 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/dedale_zeek_labels.py`
 - Modified: `perception/environment.py`, `perception/action_playbook.py`, `perception/outcome_monitor.py`, `perception/soc_loop.py`, `dedale/environment.py`, `experiments/dedale_replay.py`, `experiments/dedale_score.py`, `experiments/dedale_results/phase1_scores.json`, `experiments/DEDALE_PHASE1_RESULTS.md`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, tests (`test_dedale`, `test_triage_gate`, `test_outcome_monitor`, `test_soc_loop`), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 2 start — winlogbeat extraction, technique vocabulary (D6)
+
+### What was tried
+- Inspected one hour of winlogbeat (2025-01-06 10:00): fields, event types, volume.
+- Wrote the Phase 2 design (`experiments/PHASE2_HOST_LOGS_DESIGN.md`).
+- Built the compact extractor (`dedale/winlogbeat.py`, `experiments/dedale_extract_winlogbeat.py`).
+- Implemented D6:
+  - new SSE technique entries + the `unconstrained` review path;
+  - the NCE prompt vocabulary as a parameter, legacy default.
+- Wrote the P2-3 novelty measurement (`experiments/dedale_host_novelty.py`, not run yet).
+
+### What was found
+- **Volume:** one busy hour = 650,004 records, 1.72 GB uncompressed, 99.8% Sysmon. Event types: file create 182k, image load 170k, file delete 144k, process access 112k, DNS 24k, pipes 8k, process create 3.1k, logons 392, PowerShell ~70.
+- **Coverage:** only the 30 Windows clients; AURA's benign user simulation appears as Python / geckodriver / Firefox processes.
+- **Absent:** no Sysmon 3 / 12 / 13 and no 4688 / 7045 in that hour; registry persistence may be invisible in this dataset.
+- **Extraction speed:**
+  - first parallel run (16 workers): ~8-9 min per busy hour, since the CPU was saturated (91%; i7-12700H, NVMe disk, so not I/O);
+  - a byte-level prefilter found by searching from the end of each line: 53 s -> 34 s per hour single-threaded, with output and counts verified identical on a full hour;
+  - bz2 decompression is ~29 s of that; 12 parallel workers take 150-175 s per hour each, so the full pass is ~2 h.
+- **Bug fixed before any data was lost:** the member-name parsing broke on the folder name `daily_winlogbeat/` (underscore).
+- **D6 checks:** the default NCE instruction text is byte-identical (SHA-256 07959e1d…); 0 changes on all stored runs (historical diff 0; 6,282 v2 / mock records identical).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 682 passed, 1 deselected (672 — already including the new prompt test — + 5 `test_technique_coverage` + 5 `test_dedale_winlogbeat`).
+- `test_technique_ids_match_technique_table` was changed to the new rule (full-vocabulary prompt lists every table key; legacy IDs remain table keys).
+
+### Files created/modified
+- Created: `experiments/PHASE2_HOST_LOGS_DESIGN.md`, `dedale/winlogbeat.py`, `experiments/dedale_extract_winlogbeat.py`, `experiments/dedale_host_novelty.py`, `tests/test_technique_coverage.py`, `tests/test_dedale_winlogbeat.py`
+- Modified: `perception/sse.py`, `prompt_construction/nce_prompt_builder.py`, `perception/nce_engine.py`, `tests/test_nce_prompt_builder.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
