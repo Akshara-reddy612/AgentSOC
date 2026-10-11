@@ -1236,3 +1236,21 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/case_builder.py`, `tests/test_case_builder.py`
 - Modified: `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S5 — knowledge updater and learning gate
+
+### What was tried
+- New `perception/knowledge_updater.py`:
+  - learns `ALERT_PATTERN` / `COMMUNICATES_WITH` edges from closed cases;
+  - gate: training direct; benign test cases after 24 h unless an endpoint was escalated; escalated cases only via an analyst; ablation without the gate.
+- `KnowledgeDB.update_edge` / `edge_attrs` added; provenance label "ungated" (ablation only).
+
+### What was found
+- Design choice, recorded in the module: an escalation blocks learning for every pending case that shares an endpoint with the escalated case. Traffic of a possibly compromised host is therefore not learned as normal during that period, at the cost of slower learning around hub hosts (e.g. the log server).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 651 passed, 1 deselected (644 + 7 new in `tests/test_knowledge_updater.py`).
+
+### Files created/modified
+- Created: `perception/knowledge_updater.py`, `tests/test_knowledge_updater.py`
+- Modified: `perception/knowledge_db.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

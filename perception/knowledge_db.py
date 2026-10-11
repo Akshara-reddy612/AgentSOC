@@ -50,7 +50,8 @@ SCHEMA_VERSION = 1
 #   training      - learned as normal during the training window
 #   closed_benign - learned as normal from a case closed as benign after the gate delay
 #   analyst       - entered or confirmed by an analyst
-LEARNED_FROM = frozenset({"config", "telemetry", "training", "closed_benign", "analyst"})
+#   ungated       - learned with the learning gate switched off (ablation C3 only)
+LEARNED_FROM = frozenset({"config", "telemetry", "training", "closed_benign", "analyst", "ungated"})
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -221,6 +222,12 @@ class KnowledgeDB:
         row = self._con.execute("SELECT learned_from FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
         return row[0] if row else None
 
+    def edge_attrs(self, src: str, dst: str, key: Any) -> dict | None:
+        """A copy of an edge's attributes, or None if the edge does not exist."""
+        if not self._graph.has_edge(src, dst, key):
+            return None
+        return _stored_copy(dict(self._graph.edges[src, dst, key]))
+
     def edge_learned_from(self, src: str, dst: str, key: Any) -> str | None:
         row = self._con.execute("SELECT learned_from FROM edges WHERE src = ? AND dst = ? AND key = ?",
                                 (src, dst, _dumps(key))).fetchone()
@@ -254,6 +261,8 @@ class KnowledgeDB:
                 g.add_edge(p["src"], p["dst"], key=decode_value(p["key"]), **decode_value(p["attrs"]))
             elif op == "set_fact":
                 g.nodes[p["node_id"]][p["name"]] = decode_value(p["fact"])
+            elif op == "update_edge":
+                g.edges[p["src"], p["dst"], decode_value(p["key"])].update(decode_value(p["changes"]))
         return g
 
     # -- writing ------------------------------------------------------------
@@ -284,6 +293,20 @@ class KnowledgeDB:
                  learned_from: str) -> None:
         with self.batch():
             self._add_edge(src, dst, key, attrs, writer, at, learned_from)
+
+    def update_edge(self, src: str, dst: str, key: Any, changes: dict, *, writer: str, at: datetime) -> None:
+        """Set plain attributes (e.g. counters, last_seen) on an existing edge; its type cannot change."""
+        with self.batch():
+            if not self._graph.has_edge(src, dst, key):
+                raise KeyError(f"unknown edge {src!r} -[{key!r}]-> {dst!r}")
+            if "edge_type" in changes:
+                raise ValueError("an edge's type cannot change")
+            seq = self._log(writer, at, "update_edge", {"src": src, "dst": dst, "key": encode_value(key),
+                                                        "changes": encode_value(changes)})
+            attrs = {**self._graph.edges[src, dst, key], **changes}
+            self._con.execute("UPDATE edges SET attrs = ?, updated_seq = ? WHERE src = ? AND dst = ? AND key = ?",
+                              (_dumps(attrs), seq, src, dst, _dumps(key)))
+            self._graph.edges[src, dst, key].update(_stored_copy(changes))
 
     def set_fact(self, node_id: str, name: str, value: Any, *, confidence: float, source: SourceSystem,
                  writer: str, at: datetime) -> KnowledgeFact:
