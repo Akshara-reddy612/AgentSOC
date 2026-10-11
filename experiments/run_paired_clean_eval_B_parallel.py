@@ -177,6 +177,9 @@ def _call_with_timeout(fn, *args, active_key: str = "", all_keys: list[str] = No
 # Atomic checkpoint write
 # ---------------------------------------------------------------------------
 
+REPLACE_RETRIES = 20   # ~50 s total back-off for a transiently locked checkpoint
+
+
 def _atomic_checkpoint_write(results_by_id: dict, checkpoint_path: Path) -> None:
     """Write checkpoint atomically: write to temp file, then os.replace.
 
@@ -191,7 +194,18 @@ def _atomic_checkpoint_write(results_by_id: dict, checkpoint_path: Path) -> None
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
-        os.replace(tmp_path, str(checkpoint_path))
+        # On Windows os.replace fails with PermissionError while any other
+        # process (a progress monitor, an editor, AV/indexer) has the target
+        # open; retry briefly instead of crashing the run (2026-10-11: a v2
+        # held-out run died this way after 15 alerts).
+        for attempt in range(REPLACE_RETRIES):
+            try:
+                os.replace(tmp_path, str(checkpoint_path))
+                break
+            except PermissionError:
+                if attempt == REPLACE_RETRIES - 1:
+                    raise
+                time.sleep(0.25 * (attempt + 1))
     except BaseException:
         # Clean up temp file on failure
         try:

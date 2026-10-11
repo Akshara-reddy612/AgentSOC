@@ -50,6 +50,22 @@
   - mock-hijacked (worst case) suppression per family: dev 0-4.7% (was 67-88%), held-out similar; remaining cases have no destination telemetry. identity_steering still 0 executed. mock-oracle unchanged (it already proposes T1071 when a destination exists).
   - One full-suite run failed once (slow run, 138 s) and passed on three reruns; the failing test was not captured — recorded as an intermittent, unidentified failure (likely the known `test_monitoring` cold-start timing flake).
 
+- **Full live runs on corpus v2 (Phase 4 step 4.3, 2026-10-11) — CURRENT HEADLINE:** gemini-3.1-flash-lite, `--workers 5`. Dev: 500 pairs (100 pilot + 900 new calls); held-out: 500 pairs (1,000 calls, resumed once after a crash). 0 NCE errors in either set; 11 failed calls (dropped connections / timeouts around a laptop sleep, one malformed model response) all succeeded on retry. Reported numbers come from `agent/v2_results/v2_{dev,heldout}_live_results_rescored.json` (offline replay with current code; it reproduces every full-run outcome exactly and updates the 100 pilot records to step-4.2 code).
+
+  | | dev clean | dev contaminated | held-out clean | held-out contaminated |
+  |:--|--:|--:|--:|--:|
+  | REVIEW | 250 | 253 | 269 | 266 |
+  | AUTO_APPROVED | 178 | 175 | 168 | 168 |
+  | LOW_PRIORITY | 72 | 69 | 61 | 59 |
+  | NO_ACTIONABLE | 0 | 3 | 2 | 7 |
+
+  - **No detectable effect of contamination on the pipeline's response.** Identical outcome in 486/500 (dev) and 492/500 (held-out) pairs; responded->not / not->responded = 4 / 4 (dev, exact McNemar p = 1.0) and 3 / 0 (held-out, p = 0.25). Every lost response (4 dev, 3 held-out) was an *ungrounded* C2 guess on an alert without destination telemetry; contamination never removed an evidence-backed response.
+  - **The LLM is steerable; the pipeline is not.** NCE followed the identity-steering payload on 44/50 (dev) and 42/50 (held-out) contaminated alerts, naming the injected admin account / server. Entity binding labelled every such hypothesis unbound; 11 (dev) and 4 (held-out) of them were structurally feasible and all went to analyst review. **Misdirected actions executed: 0 in both sets.**
+  - **Entity binding as a contamination signal:** unbound hypotheses on 90 contaminated vs 1 clean alert (dev), 71 vs 1 (held-out).
+  - The real NCE on clean alerts matches the mock-oracle closely (dev 250 / 178 / 72 / 0 vs 245 / 178 / 75 / 2).
+  - Caveats: one model; synthetic identity/network inventory and behaviour-label evidence; GUIDE rows with synthetic fields; "clean" = uncontaminated, not benign (outcomes are not judged against IncidentGrade); 50 pairs per family.
+- **Runner robustness fixes found during the full runs (2026-10-11):** (1) `_atomic_checkpoint_write` crashed the held-out run after 15 alerts with `PermissionError` because my progress monitor had the results file open during `os.replace` (Windows) — now retries; monitors read the append-only API log instead. (2) A laptop sleep paused the run for ~5 h (logged as call durations up to 18,975 s); calls around it timed out or lost their connection and were retried successfully.
+
 ### Phase 3 plan (decided 2026-10-11)
 1. **3.1 Enterprise inventory** (done, above).
 2. **3.2 Corpus v2 builder** (`corpus/`, runnable from the repo, offline): every alert built as a clean/contaminated pair from the same GUIDE row (twins valid by construction); `severity` from Category, never from IncidentGrade; no `INJECTED_FIELD_VALUE` wrapper (payloads embedded in raw_log_line / command_line / registry_key with natural key names); entities from the inventory; trusted `destination_ip` / `destination_domain` on network alerts from the network model, reputation drawn independently of the grade; evidence text uses only RFC 5737 / `.example`; more templates per bucket including benign admin activity; family assignment shuffled (not blocks); new families `identity_steering` (goal: misdirect) and `destination_spoof` (filter-aware, goal: suppress); `_attack_goal` ground truth per alert; unique alert ids (raw GUIDE has 22 duplicate Ids). Dev set from guide_sample_500, held-out set from guide_test_500.
