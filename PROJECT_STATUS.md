@@ -110,6 +110,10 @@
   - **Full-file run (39 s):** 95.3% internal->internal, 64,835 outbound alerts to only 28 external addresses (81% to 172.18.0.1, the internet router answering DNS), 4,433 inbound. Every internal address resolves to an inventory host.
   - **Finding (design decision D6):** NCE can only name the 7 SSE techniques, so most of DEDALE's attack (phishing, PowerShell, registry persistence, PrintNightmare, SSH, exfiltration) cannot be named. This blocks the host-log phase, not Phase 1.
   - **Tests:** `tests/test_dedale.py` (8, one on the real file, skipped without data). Suite: 638 passed, 1 deselected.
+- **Design step S4 — case builder (2026-10-11):** new `perception/case_builder.py` (`CaseBuilder`, `network_case_key` = signature id + source + destination address).
+  - **How it works:** later alerts with the same key join the open case (count, last seen, sensors). A case closes after 1 h idle or at 24 h (open decision D3, initial choice). Time is the alerts' own time, alerts must arrive in time order, and closing idle cases is O(1) per alert. The two routers' copies of a flow join one case.
+  - **DEDALE (all 1,465,627 alerts, 25 s):** 15,005 cases — training weeks 7,273, test weeks 7,732 (~550/day). 366 test-week cases (289 keys) have a key never seen in the training weeks, i.e. ~26/day would need full triage if everything seen in training were recognised as routine. Idle 4 h gives 9,413 cases.
+  - **Tests:** `tests/test_case_builder.py` (6). Suite: 644 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11):** `system_logs_winlogbeat.zip` (27.12 GB, Dataverse id 717892) is downloading to `D:\agentsoc_data\dedale\` with resume; it will be MD5-checked against the published value (7af54ba2…) before use.
 
 ### Phase 3 plan (decided 2026-10-11)
@@ -154,6 +158,7 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/knowledge_graph.py`](perception/knowledge_graph.py) | Real graph-backed knowledge store (separate, parallel structure to InMemoryKnowledgeStore, importing it only for one-time seed-data migration at initialization, not a subclass); hostname classification, lazy node creation, service dependency tracking | Built & Tested |
 | [`perception/environment.py`](perception/environment.py) | Environment profile (design step S1): internal address ranges and name suffixes, internal host naming, per-zone egress policy; stored as a graph attribute of `KnowledgeStoreGraph` | Built & Tested |
 | [`perception/knowledge_db.py`](perception/knowledge_db.py) | Persistent Knowledge Store (design step S2): SQLite nodes / edges / typed-JSON facts, environment profile, append-only audit log; the pipeline reads its live graph projection | Built & Tested |
+| [`perception/case_builder.py`](perception/case_builder.py) | Case builder (design step S4): groups a time-ordered alert stream into cases on structured keys, closing on idle time or max duration (noise reduction with memory) | Built & Tested |
 | [`perception/network_alert.py`](perception/network_alert.py) | Network IDS alerts: addresses -> entity fields (source/target host, destination) through the Knowledge Store's inventory (design step S3) | Built & Tested |
 | [`dedale/`](dedale/) | DEDALE dataset: environment profile + 37-host inventory seeded into the store, Suricata alert adapter (data outside the repo, `$AGENTSOC_DATA_DIR/dedale`) | Built & Tested |
 | [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |

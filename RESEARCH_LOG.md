@@ -1218,3 +1218,21 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `dedale/__init__.py`, `dedale/environment.py`, `dedale/suricata.py`, `perception/network_alert.py`, `tests/test_dedale.py`
 - Modified: `perception/knowledge_db.py`, `perception/knowledge_graph.py`, `perception/network_model.py`, `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S4 — case builder
+
+### What was tried
+- New `perception/case_builder.py`: cases over a time-ordered stream keyed on structured fields; close on idle (1 h) or max duration (24 h).
+- Ran it over all DEDALE Suricata alerts with three window settings (read-only scratch script).
+
+### What was found
+- Idle 1 h / max 24 h: 1,465,627 alerts -> 15,005 cases (training weeks 7,273, test weeks 7,732). Close reasons: idle 14,864, max duration 135, end of stream 6. 366 test-week cases (289 keys) have a key never seen in the training weeks, consistent with the earlier group-day count (357 / 289).
+- Idle 4 h / max 24 h: 9,413 cases (training 4,529, test 4,884; 360 test cases with new keys). Idle 1 h / max 168 h: 14,885 cases.
+- The counts are descriptive. The windows remain open decision D3, to be tuned on the training weeks only.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 644 passed, 1 deselected (638 + 6 new in `tests/test_case_builder.py`).
+
+### Files created/modified
+- Created: `perception/case_builder.py`, `tests/test_case_builder.py`
+- Modified: `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

@@ -127,7 +127,10 @@ Each step is a commit with tests and tracking-doc updates.
 3. **S3 DEDALE Suricata adapter + DEDALE profile.** The profile is built from DEDALE's documented architecture: zones, subnets and server roles, recorded in `experiments/DEDALE_DATA_NOTES.md`. The attacker addresses shown in that diagram are left out (I4). **Done 2026-10-11:**
    - `dedale/environment.py` (profile, inventory of 37 hosts, `seed_store`), `dedale/suricata.py` (adapter), `perception/network_alert.py` (addresses -> entity fields through the store's address index).
    - New host classes for inventory roles, and egress mode "open" for undocumented egress.
-4. **S4 Case builder with memory.** Extends `NoiseReducer` rather than replacing it.
+4. **S4 Case builder with memory.** Extends `NoiseReducer` rather than replacing it. **Done 2026-10-11:** `perception/case_builder.py`.
+   - It sits next to `NoiseReducer` rather than extending it, because `NoiseReducer` works on one batch of Perception incidents while the case builder keeps open cases across a time-ordered stream of alert dicts. Same rule: the key uses structured fields only.
+   - Windows (D3, initial choice): idle 1 h, max 24 h.
+   - DEDALE: 1,465,627 alerts -> 15,005 cases (training weeks 7,273, test weeks 7,732). 366 test-week cases have a key never seen in training.
 5. **S5 KnowledgeUpdater + learning gate (I1, I3).**
 6. **S6 Triage gate, decision cache, NCE budget queue.**
 7. **S7 Outcome monitor (watches).**
