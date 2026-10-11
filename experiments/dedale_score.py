@@ -265,6 +265,7 @@ def main() -> None:
     ap.add_argument("--runs", nargs="+",
                     default=["static", "frozen", "gated", "ungated", "gated_noact", "gated_analyst"])
     ap.add_argument("--explore", action="store_true", help="print the ground-truth case lists of the first run")
+    ap.add_argument("--out", default="phase1_scores.json", help="file name under experiments/dedale_results/")
     args = ap.parse_args()
     labels = load_label_times()
     tiers = ground_truth(load_cases(args.runs[0]), labels)   # same cases (ids, keys, times) in every run
@@ -280,7 +281,7 @@ def main() -> None:
                                 "zeek_router1": zeek_check()},
                "runs": {run: score_run(run, tiers, labels) for run in args.runs}}
     RESULTS.mkdir(exist_ok=True)
-    out = RESULTS / "phase1_scores.json"
+    out = RESULTS / args.out
     out.write_text(json.dumps(results, indent=1, default=str), encoding="utf-8")
     for run, r in results["runs"].items():
         rpd = r["reviews_per_day"]

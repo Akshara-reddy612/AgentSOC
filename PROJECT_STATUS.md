@@ -249,6 +249,13 @@
     - 39 new calls (project total 455, 0 errors).
     - 455 cases, 30.0 reviews / day (analyst alone: 30.9); 35 benign dismissed, 0 of 72 malicious; 0 attack keys learned.
     - NCE dismissals learn slowly through the gate (4 `closed_benign` keys, 29 dropped; the analyst taught 309), so dismissed patterns recur: 23 more cases than with the analyst alone.
+  - **Learning gate fix:**
+    - `KnowledgeUpdater` keeps escalations per case; an analyst's benign verdict lifts that case's hold (before, any review on a host blocked gated learning there).
+    - NCE + analyst: 455 -> 450 cases, gate drops 29 -> 21, reviews / day unchanged (30.0), 72 / 72 malicious reviewed.
+    - Analyst-only host run and Phase 1 network analyst run identical.
+    - Remaining recurrences cost no reviews (dismissed again).
+    - Tests 698 passed, 1 deselected.
+    - Replay CLIs: `dedale_replay --tag`, `dedale_score --out`.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
