@@ -187,6 +187,10 @@ class ReviewError(ValueError):
     """An analyst action that is not allowed in the case's current state."""
 
 
+class NotFoundError(ReviewError):
+    """No case or action with that id."""
+
+
 class ConflictError(ReviewError):
     """The case is claimed by another analyst."""
 
@@ -308,6 +312,10 @@ def approvals_needed(db: KnowledgeDB, response: ProposedResponse) -> int:
         return 1
     tier = host_tier(db, response.target)
     return 2 if tier is not None and tier >= min_tier else 1
+
+
+def is_valid_analyst_id(analyst: object) -> bool:
+    return isinstance(analyst, str) and bool(_ANALYST_ID.fullmatch(analyst))
 
 
 def _check_analyst(analyst: str) -> str:
@@ -443,7 +451,7 @@ class CaseStore:
         row = self._con.execute("SELECT review_status, claimed_by FROM cases WHERE case_id = ?",
                                 (case_id,)).fetchone()
         if row is None:
-            raise ReviewError(f"no case {case_id!r}")
+            raise NotFoundError(f"no case {case_id!r}")
         return row
 
     def claim(self, case_id: str, analyst: str, at: datetime) -> None:
@@ -515,7 +523,7 @@ class CaseStore:
         cur = self._con.execute("SELECT * FROM actions WHERE action_id = ?", (action_id,))
         row = cur.fetchone()
         if row is None:
-            raise ReviewError(f"no action {action_id!r}")
+            raise NotFoundError(f"no action {action_id!r}")
         a = dict(zip([d[0] for d in cur.description], row))
         a["approvals"] = json.loads(a["approvals"])
         return a

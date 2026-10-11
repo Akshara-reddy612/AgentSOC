@@ -7,6 +7,9 @@ python-dotenv
 google-genai==2.18.1
 openai==3.3.1
 streamlit>=1.38
+# Analyst review API (review_api/, decision B1; Starlette comes with FastAPI)
+fastapi==0.143.0
+uvicorn>=0.52
 # Used by GUIDE_Dataset generators and experiments/ analysis scripts
 # (minimums = versions verified in the project .venv on 2026-10-10)
 pandas>=3.0

@@ -326,7 +326,18 @@
     - network unchanged.
   - Protection needs one correct malicious verdict per attacked host. A wrong `malicious` verdict cannot be withdrawn yet.
   - **Tests:** `tests/test_unlearning.py` (4).
-- **FastAPI (B1):** approved by the user; the install from Claude Code was blocked by the auto-mode check. The user runs `.venv\Scripts\python -m pip install fastapi==0.143.0` (dry run: adds fastapi 0.143.0 MIT + opentelemetry-api 1.45.1 Apache-2.0; Starlette 1.6.0 kept). Step 5 (HTTP API) waits for it.
+- **FastAPI (B1):** installed by the user (fastapi 0.143.0, MIT, 144 kB; opentelemetry-api 1.45.1, Apache-2.0, 60 kB; Starlette 1.6.0 kept), after the install from Claude Code was blocked by the auto-mode check. Pinned in `requirements.txt` / `requirements-lock.txt`.
+- **Analyst review loop, step 5: HTTP API (2026-10-11): `review_api/`.**
+  - **Run:** `python -m review_api --case-store <cases.sqlite>`; binds 127.0.0.1:8000 by default; reference at `/docs`.
+  - **Endpoints:** `/health`, `/me`, `/queue`, `/cases/{id}`, claim / release / verdict / notes, `/verdicts` (bulk, explicit list), `/actions/{id}/approve|reject|rollback`, `/audit`.
+  - **Security:**
+    - Identity comes only from the bearer token: `AGENTSOC_ANALYST_TOKENS="alice:<token>,..."`, at least 24 characters, compared as SHA-256 digests in constant time, never logged or returned.
+    - Request bodies are validated and unknown fields rejected (no "analyst" field accepted).
+    - Responses are marked no-store and nosniff. Untrusted text is delivered as JSON strings for the client to render as text.
+    - Analysts never write the Knowledge Store: everything becomes case-store commands for the loop.
+  - **Error codes:** 401 / 404 / 409 (claimed) / 400 (state) / 422 (body).
+  - **Smoke test:** a real server on localhost over the DEDALE gated + NCE case store. The top of the queue was the real CLIENT2 attack (the `scvhost.exe` implant from PowerShell, `svcmon.exe` naming 172.19.x), priority 99. The token was not in the server log.
+  - **Tests:** `tests/test_review_api.py` (6); suite 744 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
@@ -376,6 +387,9 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/triage_gate.py`](perception/triage_gate.py) | Triage gate (design step S6): escalation rules, learned pattern -> LOW_PRIORITY, decision cache, pipeline with NCE behind a daily budget | Built & Tested |
 | [`perception/outcome_monitor.py`](perception/outcome_monitor.py) | Outcome monitor (design step S7): watches targets of auto-approved responses, counts what they would have stopped (simulated), escalates new activity, writes the result back to the store | Built & Tested |
 | [`perception/soc_loop.py`](perception/soc_loop.py) | The store-backed Sense-Reason-Act loop over an alert stream (design step S8): enrichment, monitor, cases, triage, gated learning; modes static / frozen / gated / ungated | Built & Tested |
+| [`perception/case_store.py`](perception/case_store.py) | Analyst review loop, step 1: persistent cases, alerts (trusted / untrusted), decisions, proposed actions (four-eyes), claims, verdicts, notes, the loop's command inbox, append-only audit | Built & Tested |
+| [`perception/review_service.py`](perception/review_service.py) | Analyst review loop, step 3: prioritised queue with reasons, case view (trusted / untrusted / LLM groups), learning preview, related cases, verdicts and actions | Built & Tested |
+| [`review_api/`](review_api/) | Analyst review loop, step 5: FastAPI HTTP API over the review service (bearer tokens per analyst; `python -m review_api --case-store ...`) | Built & Tested |
 | [`experiments/dedale_replay.py`](experiments/dedale_replay.py) | Phase 1 DEDALE replay (offline, NCE off): one run per learning mode, store + per-case records outside the repo | Built & Run |
 | [`experiments/dedale_score.py`](experiments/dedale_score.py) | Phase 1 scorer (design step S9): the only reader of DEDALE ground truth; workload, attack coverage, false positives, learning safety per replay run | Built & Run |
 | [`perception/network_alert.py`](perception/network_alert.py) | Network IDS alerts: addresses -> entity fields (source/target host, destination) through the Knowledge Store's inventory (design step S3) | Built & Tested |
