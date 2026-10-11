@@ -1007,3 +1007,40 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created/updated: `agent/v2_results/v2_dev_live_results.json` (+900), `v2_dev_live_api_log.jsonl`, `v2_heldout_live_results.json`, `v2_heldout_live_api_log.jsonl`, `v2_dev_live_results_rescored.json`, `v2_heldout_live_results_rescored.json`
 - Modified: `experiments/run_paired_clean_eval_B_parallel.py` (retry), `tests/test_atomic_checkpoint_retry.py` (new), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Phase 4 steps 4.4-4.5 — accuracy vs grade; structured-field tampering (offline)
+
+### What was tried
+- Pushed `main` (f414544) at user request. New `experiments/accuracy_by_grade.py` and `experiments/tamper_structured.py`; `tests/test_tamper_and_accuracy.py` (2 tests). No API calls.
+
+### What was found
+- Accuracy: clean-alert response rate by grade — dev TP 161/175 (92.0%), BP 182/222 (82.0%), FP 83/99 (83.8%); held-out TP 143/161 (88.8%), BP 189/224 (84.4%), FP 105/115 (91.3%). By Category (dev): InitialAccess 220 alerts 100% responded (TP 56%), Exfiltration 84 / 100% (TP 11%), CommandAndControl 51 / 100% (TP 16%), SuspiciousActivity 52 / 40% (TP 29%). Expected given corpus design (grade-independent evidence and reputation); detection accuracy is not measurable on corpus v2.
+- Tampering (dev / held-out): steer_identity 50 / 50 alerts, executed 0 / 0, gated 7 / 2, AUTO_APPROVED->REVIEW 12 / 17; drop_destination 417 / 428 alerts, suppressed 25 / 24 (AUTO->NO_ACTIONABLE 12 / 9, REVIEW->NO_ACTIONABLE 13 / 13), AUTO->REVIEW 163 / 159; launder_destination suppressed 0 / 0, AUTO->REVIEW 175 / 168. Misdirection judged against the original (untampered) fields.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 529 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/accuracy_by_grade.py`, `experiments/tamper_structured.py`, `tests/test_tamper_and_accuracy.py`
+- Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: Phase 4 step 4.6 — second model (Groq gpt-oss-20b), partial
+
+### What was tried
+- `perception/nce_engine.py`: `groq:` model prefix routes to new `_call_groq_nce` (JSON mode, rotation, back-off). `agent/run_v2_eval.py`: `--model`, provider-aware `_run_parallel` (Groq keys rotated per worker via `live_nce(..., groq_keys=...)` in the child process), per-model output files, `model` recorded per row. Tests: `tests/test_v2_parallel_runner.py` (+ Groq rotation test; first test's fake now accepts the model kwarg), `tests/test_telemetry_c2_hypothesis.py` (+ steered-source-host case).
+- User asked why the run was slow and whether the 5 Groq keys run in parallel (they do, same system as Gemini). First attempt (old free-text caller): median call 17.7 s, 6/42 failures (3 timeouts, 3 truncated/empty JSON) -> stopped, archived to `logs/discarded/`, switched to JSON mode (median ~7 s, ~25% `json_validate_failed`, all retried).
+- User asked whether runs use the whole pipeline: they start at NCE; Perception and ERA are skipped, but NCE's input is built by the same `alert_to_nce_input` in the full Monitoring pipeline and ERA is not a decision gate there, so outcomes are the same (perception rejected 0/200 v2 alerts earlier). ERA as a review signal is a possible improvement, unmeasured.
+- Full Groq dev run hit the free-tier daily token cap (TPD 200,000 per key; message "Used 199878, Requested 2855") on all 5 keys after ~400 calls; stopped.
+
+### What was found
+- 282 records: 259 scored, 23 NCE errors (rate-limit period), 125 complete pairs.
+- Before the fix: Groq lost 5 / gained 0 (p = 0.062), one lost response grounded (v2d-979252545689: NCE's only T1071 came from steered SRV-DB02, INFEASIBLE, so no telemetry hypothesis was added). After tightening the rule (bound source host required): lost 4 / gained 0 (p = 0.125), all ungrounded (v2d-1589137900116, v2d-1520418424160, v2d-1460288881362, v2d-240518173128).
+- Gemini on the same 125 pairs: 1 / 2 (p = 1.0). Steering followed: Groq 5/9, Gemini 8/9. Misdirect executed 0 for both.
+- Gemini dev/held-out and mock results unchanged after the rule change.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 531 passed, 1 deselected.
+
+### Files created/modified
+- Created: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json`, `_api_log.jsonl`, `_results_rescored.json`
+- Modified: `perception/nce_engine.py`, `perception/entity_binding.py`, `agent/run_v2_eval.py`, `tests/test_v2_parallel_runner.py`, `tests/test_telemetry_c2_hypothesis.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

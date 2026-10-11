@@ -45,3 +45,12 @@ def test_fully_suppressed_nce_still_gets_response():
     res = run_downstream([], ALERT)
     assert res["outcome"] == "AUTO_APPROVED"            # BLOCK_DESTINATION on the unknown destination
     assert res["hypotheses"][0]["top_action"] == "BLOCK_DESTINATION"
+
+
+def test_added_when_nce_c2_names_a_different_source_host():
+    """Steering made NCE propose C2 from the steered server; the real host must still be checked."""
+    steered = NCEHypothesis(technique_id="T1071", source_account="sa.x", source_host="SRV-DB02",
+                            target_host="cdn321.example", nce_confidence=0.8, supporting_evidence_refs=["raw_log_line"])
+    out = attach_alert_context([steered], ALERT)
+    tele = [h for h in out if h.supporting_evidence_refs == [TELEMETRY_REF]]
+    assert len(tele) == 1 and tele[0].source_host == U.home_host

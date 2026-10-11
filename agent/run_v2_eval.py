@@ -90,9 +90,13 @@ def mock_hijacked(alert: dict) -> list[NCEHypothesis]:
     return []  # suppression families: NCE fully talked out of any hypothesis
 
 
-def live_nce(alert: dict) -> tuple[list[NCEHypothesis] | None, str | None, str | None, int]:
+def live_nce(alert: dict, model: str = "gemini-3.1-flash-lite",
+             groq_keys: list[str] | None = None) -> tuple[list[NCEHypothesis] | None, str | None, str | None, int]:
     from perception.nce_engine import alert_to_nce_input, generate_hypotheses
-    res = generate_hypotheses(alert_to_nce_input(_public(alert)), apply_evidentiary_filter=True)
+    if groq_keys:   # runs in the worker's child process: start the Groq pool on this worker's key
+        import os
+        os.environ["GROQ_API_KEYS"] = ",".join(groq_keys)
+    res = generate_hypotheses(alert_to_nce_input(_public(alert)), model=model, apply_evidentiary_filter=True)
     if res.success and res.output is not None:
         return list(res.output.hypotheses), None, res.raw_response, res.api_call_count
     return None, res.error or "NCE failed", res.raw_response, res.api_call_count
@@ -104,7 +108,11 @@ RETRY_BACKOFF = [5, 10, 20]
 MODEL = "gemini-3.1-flash-lite"
 
 
-def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path) -> None:
+def _is_groq(model: str) -> bool:
+    return model.startswith("groq:")
+
+
+def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path, model: str = MODEL) -> None:
     """
     One thread per worker, each starting on its own key; every NCE call runs in
     a child process with a hard timeout.  Reuses the tested helpers of the
@@ -114,12 +122,13 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path) ->
     """
     import queue
     import threading
-    from agent.key_pool import load_gemini_pool
+    from agent.key_pool import load_gemini_pool, load_groq_pool
     from experiments.run_paired_clean_eval_B_parallel import _call_with_timeout, _log_api_call
 
-    keys = load_gemini_pool().keys
+    groq = _is_groq(model)
+    keys = (load_groq_pool() if groq else load_gemini_pool()).keys
     if not keys:
-        raise SystemExit("No GEMINI_API_KEYS configured")
+        raise SystemExit(f"No {'GROQ' if groq else 'GEMINI'}_API_KEYS configured")
     work: queue.Queue = queue.Queue()
     for a in todo:
         work.put(a)
@@ -140,9 +149,14 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path) ->
                     time.sleep(wait)
                 t0 = last = time.time()
                 try:
-                    out, last4 = _call_with_timeout(live_nce, alert, active_key=keys[k], all_keys=keys,
+                    if groq:
+                        out, _ = _call_with_timeout(live_nce, alert, model=model, groq_keys=keys[k:] + keys[:k],
                                                     timeout=CALL_TIMEOUT_S)
-                    _log_api_call(api_log, alert_id=alert["alert_id"], model=MODEL, key_index=k,
+                        last4 = keys[k][-4:]
+                    else:
+                        out, last4 = _call_with_timeout(live_nce, alert, model=model, active_key=keys[k],
+                                                        all_keys=keys, timeout=CALL_TIMEOUT_S)
+                    _log_api_call(api_log, alert_id=alert["alert_id"], model=model, key_index=k,
                                   child_key_last4=last4, success=out[0] is not None, api_call_count=out[3],
                                   error=out[1], wall_clock_s=round(time.time() - t0, 2))
                     res = out
@@ -151,7 +165,7 @@ def _run_parallel(todo: list[dict], workers: int, finish_live, api_log: Path) ->
                     err = out[1]
                 except Exception as exc:  # noqa: BLE001  (timeout or child failure)
                     err = f"{type(exc).__name__}: {exc}"
-                    _log_api_call(api_log, alert_id=alert["alert_id"], model=MODEL, key_index=k,
+                    _log_api_call(api_log, alert_id=alert["alert_id"], model=model, key_index=k,
                                   child_key_last4="", success=False, api_call_count=0, error=err,
                                   wall_clock_s=round(time.time() - t0, 2))
                 if attempt < MAX_ATTEMPTS - 1:
@@ -176,6 +190,8 @@ def main() -> None:
     ap.add_argument("--nce", required=True, choices=["mock-oracle", "mock-hijacked", "live"])
     ap.add_argument("--set", default="dev", choices=["dev", "heldout"])
     ap.add_argument("--limit", type=int, default=None, help="process at most N new alerts")
+    ap.add_argument("--model", default=MODEL,
+                    help="live only: Gemini model name, or groq:<model> (e.g. groq:openai/gpt-oss-20b)")
     ap.add_argument("--workers", type=int, default=1,
                     help="live only: parallel NCE workers (one per key; per-call timeout, retries)")
     ap.add_argument("--out", default=None)
@@ -185,7 +201,8 @@ def main() -> None:
     if args.out:
         out = Path(args.out)
     elif args.nce == "live":
-        out = PROJECT_ROOT / "agent" / "v2_results" / f"v2_{args.set}_live_results.json"
+        tag = "" if args.model == MODEL else "_" + args.model.replace("groq:", "groq-").replace("/", "-")
+        out = PROJECT_ROOT / "agent" / "v2_results" / f"v2_{args.set}_live{tag}_results.json"
     else:
         out = PROJECT_ROOT / "logs" / f"v2_{args.set}_{args.nce}_results.json"
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -203,7 +220,8 @@ def main() -> None:
 
     def base(alert: dict) -> dict:
         return {"alert_id": alert["alert_id"], "pair_id": alert["_pair_id"],
-                "variant": alert["_variant"], "nce_mode": args.nce}
+                "variant": alert["_variant"], "nce_mode": args.nce,
+                "model": args.model if args.nce == "live" else None}
 
     def finish_live(aid: str, result) -> None:
         hyps, err, raw, n_calls = result
@@ -224,10 +242,11 @@ def main() -> None:
         out.write_text(json.dumps(list(done.values()), indent=1), encoding="utf-8")
     elif args.workers <= 1:
         for alert in todo:
-            finish_live(alert["alert_id"], live_nce(alert))
+            finish_live(alert["alert_id"], live_nce(alert, model=args.model))
             time.sleep(LIVE_DELAY_S)
     else:
-        _run_parallel(todo, args.workers, finish_live, out.with_name(out.stem.replace("_results", "") + "_api_log.jsonl"))
+        _run_parallel(todo, args.workers, finish_live,
+                      out.with_name(out.stem.replace("_results", "") + "_api_log.jsonl"), model=args.model)
     print(f"{len(todo)} new alerts processed; {len(done)} stored -> {out}")
 
 
