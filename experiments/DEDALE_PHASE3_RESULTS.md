@@ -77,3 +77,22 @@
 - **Remaining limits:**
   - Only the target host is checked against coverage. Account and source host are not, because there was no measured case.
   - The log-source list is configuration and must be kept current. A host that stops sending logs but stays on the list is still treated as fully known.
+
+## NCE + analyst (2026-10-11)
+
+- **Run:** `--mode gated --nce live --analyst oracle --max-calls 150`, with the open-world rule. 39 new live calls and 383 from the cache, 0 errors, 5.0 min. The project total is now 455 live calls.
+
+| | gated + analyst (Phase 2) | **gated + NCE + analyst** |
+|:--|--:|--:|
+| Test-week cases | 432 | **455** |
+| Reviews / day | 30.9 (wk1 25.0, wk2 36.7) | **30.0** (wk1 24.6, wk2 35.4) |
+| Benign cases dismissed by NCE | – | 35 |
+| Malicious cases dismissed | 0 of 72 | **0 of 72** |
+| Analyst verdicts benign / malicious | 360 / 72 | 348 / 72 |
+| Attack keys learned as routine | 0 | 0 |
+
+- **On top of the analyst, NCE saves 3% of reviews.** All 72 malicious cases are reviewed, the attack-step timings are unchanged, and no attack key was learned.
+- **NCE dismissals teach the store less than analyst verdicts, so cases recur.** There are 23 more cases than with the analyst alone.
+  - An analyst's "benign" verdict teaches the pattern at once: 309 lineage keys were learned with provenance `analyst`.
+  - An NCE dismissal waits in the learning gate: only 4 keys were learned `closed_benign`, and the gate dropped 29.
+  - So a dismissed pattern can open new cases until it clears the gate.

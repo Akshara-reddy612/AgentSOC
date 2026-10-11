@@ -245,6 +245,10 @@
     - `SSE.check` answers CONDITIONALLY_FEASIBLE when there is no path to a target outside that list.
     - Replay (`--tag openworld`, 0 new calls): reviews / day 54.8; malicious dismissed 0 of 72 (was 2); benign dismissed 89 (unchanged); collection-window cases 11 (was 9).
     - Tests: `tests/test_open_world_sse.py` (6); suite 696 passed, 1 deselected.
+  - **Gated + NCE + analyst (oracle), open world:**
+    - 39 new calls (project total 455, 0 errors).
+    - 455 cases, 30.0 reviews / day (analyst alone: 30.9); 35 benign dismissed, 0 of 72 malicious; 0 attack keys learned.
+    - NCE dismissals learn slowly through the gate (4 `closed_benign` keys, 29 dropped; the analyst taught 309), so dismissed patterns recur: 23 more cases than with the analyst alone.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
