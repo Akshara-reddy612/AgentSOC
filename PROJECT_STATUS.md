@@ -191,6 +191,20 @@
     - `test_technique_ids_match_technique_table` updated to the new rule: the full-vocabulary prompt lists the whole table, and the legacy list is a subset of it;
     - 0 changes on all stored runs.
   - **Tests:** `tests/test_technique_coverage.py` (5), `tests/test_dedale_winlogbeat.py` (5), one new prompt test. Suite: 682 passed, 1 deselected.
+- **Phase 2 — host alerts from the Knowledge Store (2026-10-11, built, not yet run on the test weeks):**
+  - **`perception/host_detection.py`:** detectors turn host events into structured keys and store them as graph edges.
+    - lineage: parent -> child program per host, `SPAWNED`;
+    - logon: account, host, type, source, `LOGON`, plus `HAS_PRIOR_ACCESS` on a first logon;
+    - LSASS reader per host, `READS_LSASS`.
+
+    Command lines and script text are never keys and never learned (I1); they travel in the alert as NCE evidence.
+  - **`SocLoop.process_host_event`:**
+    - training weeks: every key learned (shadow mode);
+    - test weeks: an unknown key becomes a host alert on the shared path (case builder keyed by detector + key, triage gate, monitor, gated learning, analyst condition).
+  - **Shared helper:** `knowledge_updater.pattern_edge` / `pattern_learned` names the learned-pattern edge for network and host alerts alike. Phase 1 outputs are byte-identical after the refactor (gated and gated + analyst cases / watches re-run and compared).
+  - **New experiment code:** `experiments/dedale_host_replay.py` (`alerts.jsonl.gz` maps every host alert's event to its case for exact scoring) and `experiments/dedale_host_score.py` (exact host labels, host oracle for the analyst condition).
+  - **Smoke run (3 training days):** 4,109 lineage keys, 359 logon keys (240 prior-access edges), 92 LSASS readers learned in 53 s.
+  - **Tests:** `tests/test_host_detection.py` (6). Suite: 688 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)

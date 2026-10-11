@@ -40,7 +40,8 @@ from collections import Counter
 from datetime import datetime, timedelta
 from typing import Callable
 
-from perception.case_builder import Case, CaseBuilder
+from perception.case_builder import Case, CaseBuilder, alert_case_key
+from perception.host_detection import DETECTORS, host_alert, learn_key, novel_keys
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, ensure_endpoint
 from perception.network_alert import with_entities
@@ -62,7 +63,9 @@ class SocLoop:
                  cases: CaseBuilder | None = None, gate_delay: timedelta = GATE_DELAY,
                  on_case: Callable[[Case, Decision | None, bool], None] | None = None,
                  gate_options: dict | None = None, analyst: Analyst | None = None,
-                 analyst_delay: timedelta = ANALYST_DELAY) -> None:
+                 analyst_delay: timedelta = ANALYST_DELAY,
+                 detectors: tuple[str, ...] = tuple(DETECTORS),
+                 on_alert: Callable[[Case, dict], None] | None = None) -> None:
         if mode not in LEARNING_MODES:
             raise ValueError(f"mode must be one of {LEARNING_MODES}")
         self.analyst = analyst
@@ -73,7 +76,9 @@ class SocLoop:
         self.db = db
         self.mode = mode
         self.training_end = training_end
-        self.cases = cases or CaseBuilder()
+        self.cases = cases or CaseBuilder(key=alert_case_key)
+        self.detectors = detectors
+        self.on_alert = on_alert
         self.monitor = OutcomeMonitor(db)
         self.gate = TriageGate(db, watch=self.monitor.reasons, **(gate_options or {}))
         self.updater = (None if mode == "static"
@@ -84,18 +89,46 @@ class SocLoop:
         self._in_training = True
 
     def process(self, alert: dict, at: datetime) -> None:
+        """One network alert (src_ip / dst_ip): entity fields from the store, then the shared alert path."""
+        self._advance(at)
+        a = with_entities(alert, self.db)
+        self.monitor.observe(a, at)
+        self._handle_alert(a, at)
+
+    def process_host_event(self, event: dict, at: datetime) -> None:
+        """
+        One host event (Phase 2).  Training window: every key the detectors see is
+        learned (shadow mode).  Afterwards: a key the store has not learned becomes a
+        host alert on the shared alert path (perception/host_detection.py).
+        """
+        self._advance(at)
+        if self._in_training:
+            self.counts["events_training"] += 1
+            if self.updater is not None:
+                for name, key in novel_keys(self.db, event, self.detectors):
+                    learn_key(self.db, name, key, provenance="training", at=at, writer=self.updater.writer)
+            return
+        self.counts["events_test"] += 1
+        self.monitor.observe({"source_host": event["host"], "target_host": event["host"],
+                              "source_user": event.get("user")}, at)
+        for name, key in novel_keys(self.db, event, self.detectors):
+            self._handle_alert(host_alert(event, name, key, self.db), at)
+
+    def _advance(self, at: datetime) -> None:
         if self._in_training and at >= self.training_end:
             self._end_training()
         if self.updater is not None:
             self.updater.advance(at)
         self.monitor.advance(at)
         self._analyst_due(at)
-        a = with_entities(alert, self.db)
-        self.monitor.observe(a, at)
+
+    def _handle_alert(self, a: dict, at: datetime) -> None:
         closed, event, case = self.cases.add(a, at)
         for c in closed:
             self._closed(c)
         self.counts["alerts"] += 1
+        if self.on_alert is not None:
+            self.on_alert(case, a)
         if event == "opened":
             self.counts["cases_training" if self._in_training else "cases_test"] += 1
             if not self._in_training:
