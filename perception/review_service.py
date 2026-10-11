@@ -36,7 +36,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Callable
 
-from perception.case_store import CaseStore, ReviewError
+from perception.case_store import CaseStore, NotFoundError
 
 QUEUE_STATUSES = ("open", "claimed", "needs_info")
 UNTRUSTED_NOTICE = ("Untrusted text: recorded by sensors but chosen or influenced by whoever ran the activity. "
@@ -168,7 +168,7 @@ class ReviewService:
     def case_view(self, case_id: str) -> dict:
         c = self.store.case(case_id)
         if c is None:
-            raise ReviewError(f"no case {case_id!r}")
+            raise NotFoundError(f"no case {case_id!r}")
         d = self.store.decision(case_id)
         alerts = self.store.alerts(case_id)
         actions = self.store.actions(case_id)

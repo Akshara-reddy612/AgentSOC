@@ -1,0 +1,186 @@
+"""
+review_api/app.py
+
+HTTP API of the analyst review loop (step 5, 2026-10-11; decision B1:
+FastAPI).  A thin layer over perception/review_service.py: the review logic
+lives there, this module maps it to HTTP and adds authentication.
+
+Security rules:
+  - Who acts is decided by the bearer token, never by the request body: one
+    token per analyst (AGENTSOC_ANALYST_TOKENS="alice:<token>,bob:<token>",
+    at least 24 characters each), compared as SHA-256 digests in constant
+    time.  Tokens are never logged or returned.  Accounts come with the
+    frontend (frontend plan); until then tokens are the accounts.
+  - Request bodies are validated (fixed verdict vocabulary, length limits) and
+    unknown fields are rejected, so a client cannot smuggle an "analyst"
+    field.
+  - Responses carry case data, including untrusted text (command lines, raw
+    events) exactly as recorded: a client must render it as text, never as
+    HTML.  Responses are marked no-store and nosniff.
+  - Analysts never write the Knowledge Store: verdicts, approvals and
+    rollbacks become commands in the case store, which the SOC loop applies
+    (single writer, invariant I6).
+Errors: 401 no / wrong token; 404 unknown case or action; 409 the case is
+claimed by another analyst; 400 an action not allowed in the current state;
+422 an invalid request body.
+"""
+from __future__ import annotations
+
+import hashlib
+import hmac
+from datetime import datetime
+from typing import Callable, Literal
+
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
+
+from perception.case_store import CaseStore, ConflictError, NotFoundError, ReviewError, is_valid_analyst_id
+from perception.review_service import ReviewService
+
+MIN_TOKEN_LENGTH = 24
+Verdict = Literal["malicious", "benign", "benign_once", "needs_info"]
+
+
+def load_tokens(spec: str) -> dict[str, str]:
+    """
+    "alice:<token>,bob:<token>" -> {token: analyst}.  Raises ValueError (without
+    echoing any token) for a malformed list, a short or repeated token, or an
+    invalid analyst id.
+    """
+    tokens: dict[str, str] = {}
+    for part in (p.strip() for p in (spec or "").split(",")):
+        if not part:
+            continue
+        analyst, sep, token = part.partition(":")
+        if not sep or not is_valid_analyst_id(analyst):
+            raise ValueError("AGENTSOC_ANALYST_TOKENS must be comma-separated analyst:token pairs "
+                             "(analyst ids: letters, digits, _ . @ -)")
+        if len(token) < MIN_TOKEN_LENGTH:
+            raise ValueError(f"the token of analyst {analyst!r} is shorter than {MIN_TOKEN_LENGTH} characters")
+        if token in tokens or analyst in tokens.values():
+            raise ValueError("each analyst needs exactly one, distinct token")
+        tokens[token] = analyst
+    if not tokens:
+        raise ValueError("no analyst tokens configured (AGENTSOC_ANALYST_TOKENS)")
+    return tokens
+
+
+class _Body(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class VerdictIn(_Body):
+    verdict: Verdict
+    note: str | None = Field(default=None, max_length=10_000)
+
+
+class BulkVerdictIn(VerdictIn):
+    case_ids: list[str] = Field(min_length=1, max_length=500)
+
+
+class NoteIn(_Body):
+    text: str = Field(min_length=1, max_length=10_000)
+
+
+class ReasonIn(_Body):
+    reason: str = Field(min_length=1, max_length=1_000)
+
+
+def create_app(store: CaseStore, tokens: dict[str, str], *,
+               clock: Callable[[], datetime] | None = None) -> FastAPI:
+    """The review API over `store`; `tokens` from load_tokens; `clock` for replays and tests."""
+    service = ReviewService(store, clock=clock)
+    digests = {hashlib.sha256(t.encode("utf-8")).digest(): a for t, a in tokens.items()}
+    app = FastAPI(title="AgentSOC review API", version="1",
+                  description="Analyst review loop: queue, cases, verdicts, actions, audit.")
+
+    @app.middleware("http")
+    async def _headers(request: Request, call_next):
+        response = await call_next(request)
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        return response
+
+    @app.exception_handler(ReviewError)
+    async def _review_error(request: Request, exc: ReviewError):
+        status = 404 if isinstance(exc, NotFoundError) else 409 if isinstance(exc, ConflictError) else 400
+        return JSONResponse({"detail": str(exc)}, status_code=status)
+
+    def analyst(authorization: str | None = Header(default=None)) -> str:
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(401, "a bearer token is required", headers={"WWW-Authenticate": "Bearer"})
+        given = hashlib.sha256(authorization[len("Bearer "):].encode("utf-8")).digest()
+        who = None
+        for digest, name in digests.items():        # every digest is compared: no early exit
+            if hmac.compare_digest(given, digest):
+                who = name
+        if who is None:
+            raise HTTPException(401, "unknown token", headers={"WWW-Authenticate": "Bearer"})
+        return who
+
+    @app.get("/health")
+    def health() -> dict:
+        return {"status": "ok"}
+
+    @app.get("/me")
+    def me(who: str = Depends(analyst)) -> dict:
+        return {"analyst": who}
+
+    @app.get("/queue")
+    def queue(limit: int = Query(50, ge=1, le=500), host: str | None = None, include_claimed: bool = True,
+              who: str = Depends(analyst)) -> list[dict]:
+        return service.queue(limit=limit, host=host, include_claimed=include_claimed)
+
+    @app.get("/cases/{case_id}")
+    def case(case_id: str, who: str = Depends(analyst)) -> dict:
+        return service.case_view(case_id)
+
+    @app.post("/cases/{case_id}/claim")
+    def claim(case_id: str, who: str = Depends(analyst)) -> dict:
+        service.claim(case_id, who)
+        return {"case_id": case_id, "claimed_by": who}
+
+    @app.post("/cases/{case_id}/release")
+    def release(case_id: str, who: str = Depends(analyst)) -> dict:
+        service.release(case_id, who)
+        return {"case_id": case_id, "released_by": who}
+
+    @app.post("/cases/{case_id}/verdict")
+    def verdict(case_id: str, body: VerdictIn, who: str = Depends(analyst)) -> dict:
+        return {"case_id": case_id, "verdict": body.verdict,
+                "command_id": service.verdict(case_id, body.verdict, who, body.note)}
+
+    @app.post("/verdicts")
+    def verdicts(body: BulkVerdictIn, who: str = Depends(analyst)) -> dict:
+        ids = service.verdicts(body.case_ids, body.verdict, who, body.note)
+        return {"verdict": body.verdict, "command_ids": dict(zip(body.case_ids, ids))}
+
+    @app.post("/cases/{case_id}/notes")
+    def note(case_id: str, body: NoteIn, who: str = Depends(analyst)) -> dict:
+        service.note(case_id, who, body.text)
+        return {"case_id": case_id, "added_by": who}
+
+    @app.post("/actions/{action_id}/approve")
+    def approve(action_id: str, who: str = Depends(analyst)) -> dict:
+        cmd = service.approve(action_id, who)
+        act = store.action(action_id)
+        return {"action_id": action_id, "status": act["status"], "approvals": act["approvals"],
+                "approvals_needed": act["approvals_needed"], "command_id": cmd}
+
+    @app.post("/actions/{action_id}/reject")
+    def reject(action_id: str, body: ReasonIn, who: str = Depends(analyst)) -> dict:
+        service.reject(action_id, who, body.reason)
+        return {"action_id": action_id, "status": "rejected"}
+
+    @app.post("/actions/{action_id}/rollback")
+    def rollback(action_id: str, body: ReasonIn, who: str = Depends(analyst)) -> dict:
+        return {"action_id": action_id, "status": "rollback_requested",
+                "command_id": service.rollback(action_id, who, body.reason)}
+
+    @app.get("/audit")
+    def audit(since_seq: int = Query(0, ge=0), case_id: str | None = None,
+              who: str = Depends(analyst)) -> list[dict]:
+        return store.audit(since_seq=since_seq, case_id=case_id)
+
+    return app

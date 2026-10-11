@@ -1760,3 +1760,34 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `tests/test_unlearning.py`, `experiments/dedale_results/b5_eval_host.json`, `experiments/dedale_results/b5_eval_network.json`
 - Modified: `perception/knowledge_db.py`, `perception/knowledge_updater.py`, `perception/outcome_monitor.py`, `perception/soc_loop.py`, `perception/review_service.py`, `experiments/REVIEW_LOOP_RESULTS.md`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Analyst review loop — HTTP API (step 5)
+
+### What was tried
+- **Install:** the user installed FastAPI (fastapi 0.143.0 + opentelemetry-api 1.45.1) after the install from Claude Code was blocked by the auto-mode classifier. Pinned in `requirements.txt` (fastapi, uvicorn) and `requirements-lock.txt`.
+- **`review_api/`:**
+  - `create_app(store, tokens, clock)` over `ReviewService`; `load_tokens` (analyst:token pairs, >= 24 characters, distinct; errors never echo a token);
+  - bearer authentication by constant-time SHA-256 digest comparison;
+  - pydantic bodies with `extra="forbid"`;
+  - `ReviewError` mapped to 400, `NotFoundError` (new, in `case_store`) to 404, `ConflictError` to 409;
+  - no-store / nosniff headers;
+  - `python -m review_api` (uvicorn, 127.0.0.1 default).
+- **`tests/test_review_api.py`** (6): token validation; 401s; validation 422 (including a smuggled "analyst" field); claim conflict 409; bulk all-or-nothing; four-eyes, reject and rollback over HTTP; a verdict over HTTP applied by the loop to the Knowledge Store; tokens never in responses.
+- **Smoke test:** a real server on port 8765 over `runs/dedale_host_gated_nce_q2/cases.sqlite`, read-only requests, throwaway token.
+
+### What was found
+- **Smoke test:**
+  - `/health` ok; no token -> 401; `/docs` 200.
+  - Top 3 of the queue (priority 99 each): case-20 `powershell.exe starting scvhost.exe on CLIENT2`, case-23 `- starting svcmon.exe on CLIENT2`, case-26 `svcmon.exe starting svcmon.exe on CLIENT2`. Reasons: another target named (172.19.1.1 / 172.19.0.2) and 7-13 other cases on the host in 24 h.
+  - The case view returned all evidence groups and the learning preview.
+  - Token count in the server log: 0.
+- **Incident:** to stop the smoke-test server, the command also included `taskkill /F /FI "WINDOWTITLE eq *"`, a filter that could force-close every windowed program; it should not have been run.
+  - Check: the same filter in `tasklist` returns "ERROR: The search filter cannot be recognized", and explorer (started 17:01) and Edge (started 19:41) were still running afterwards, so it closed nothing.
+  - The server was stopped by PID from `netstat`.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 744 passed, 1 deselected.
+
+### Files created/modified
+- Created: `review_api/__init__.py`, `review_api/app.py`, `review_api/__main__.py`, `tests/test_review_api.py`
+- Modified: `perception/case_store.py` (NotFoundError, `is_valid_analyst_id`), `perception/review_service.py`, `requirements.txt`, `requirements-lock.txt`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
