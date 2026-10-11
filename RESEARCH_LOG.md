@@ -1646,3 +1646,52 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/case_store.py`, `tests/test_case_store.py`, `tests/test_review_loop.py`
 - Modified: `perception/soc_loop.py`, `perception/outcome_monitor.py`, `perception/knowledge_updater.py`, `perception/environment.py`, `dedale/environment.py`, `experiments/dedale_host_replay.py`, `experiments/dedale_replay.py`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Analyst review loop — review service, actions, queue order
+
+### What was tried
+- **Step 3, `perception/review_service.py`:**
+  - queue with transparent priority points and reasons;
+  - case view with trusted / untrusted / system-reasoning groups, related cases (B3), notes, audit, learning preview (B2).
+  - `Decision.escalations`; the case store records the host tier and escalations at triage.
+- **Step 4:**
+  - case store `approve_action` (four-eyes, B4) / `reject_action` / `request_rollback`;
+  - loop executes `execute` / `rollback` commands (`OutcomeMonitor.roll_back`, `Watch.status`);
+  - auto-approved responses recorded with their watch ids;
+  - a malicious verdict no longer executes containment;
+  - the simulated analyst team (`oracle`, `oracle-2`) approves proposals before its malicious verdict.
+- **Step 4 regression** (`--tag s4` / `s4cs`): host gated + NCE (cached, `--max-calls 5`) + analyst against `det1`, and network gated + analyst against `lift`.
+- **Queue check:**
+  - `dedale_host_replay --mode gated --nce live --max-calls 5 --case-store --tag q` (0 live calls).
+  - Daily queues ordered at end of day, labels for scoring only.
+  - Then the features of malicious vs benign REVIEW cases.
+- **Queue priority v2:**
+  - +25 when the hypotheses name another host than the alerting one (resolved against the inventory at triage, `case_store.other_targets`);
+  - +5 per other open / confirmed-malicious case on the same host in the previous 24 h (max 25; risk-based alerting).
+  - Replay `--tag q2`; `experiments/dedale_queue_eval.py`.
+
+### What was found
+- **Regression:** all 4 byte-identical (cases, watches, analyst files, summaries). Through the inbox, the host run executed 19 approved actions and the network run 1.
+- **Queue v1:**
+  - mean percentile rank of the 72 malicious cases 0.50 (oldest first 0.59); 27 / 72 in their day's top 10 (oldest first 18).
+  - **Features** (malicious vs benign REVIEW cases):
+
+    | Feature | Malicious | Benign |
+    |:--|--:|--:|
+    | FEASIBLE hypothesis | 25% | 9% |
+    | Proposed action | 25% | 8% |
+    | More than one alert | 28% | 27% |
+    | Another target named | 24% (17 / 72) | 0.1% (1 / 695) |
+    | Same-host case within 1 h | 100% | 78% |
+    | 3+ same-host cases in the previous 24 h | 89% | 46% |
+
+- **Queue v2:** mean percentile rank 0.25; 42 / 72 in the top 10 of their day.
+  - Per-day v2 ranks of the malicious cases: 01-06 top 4 of 31; 01-08 top 3 of 86; 01-10 top 7 of 47.
+  - In-sample (factors chosen on this data; 2 attacked hosts).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 732 passed, 1 deselected.
+
+### Files created/modified
+- Created: `perception/review_service.py`, `tests/test_review_service.py`, `tests/test_review_actions.py`, `experiments/dedale_queue_eval.py`, `experiments/dedale_results/queue_order.json`
+- Modified: `perception/case_store.py`, `perception/soc_loop.py`, `perception/outcome_monitor.py`, `perception/triage_gate.py`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

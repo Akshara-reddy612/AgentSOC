@@ -275,6 +275,31 @@
     - **Regression:** oracle-analyst replays are byte-identical to the pre-refactor runs, with and without the inbox (host and network). The NCE + analyst run is identical apart from the order of escalation reasons.
   - **Determinism fix:** `OutcomeMonitor._matching` iterated a set, so the order of escalation reasons in case records changed between identical runs (Python string-hash randomisation). It now uses a fixed order; counts were never affected.
   - **Tests:** `tests/test_case_store.py` (14), `tests/test_review_loop.py` (7); suite 719 passed, 1 deselected.
+- **Analyst review loop, steps 3-4 (2026-10-11):**
+  - **Step 3, review service (`perception/review_service.py`):**
+    - The queue is ordered by transparent priority points, and every item lists its reasons.
+    - The case view groups evidence as trusted fields, untrusted text (with a warning about attacker-written instructions) and system reasoning (NCE output labelled as LLM output).
+    - It shows related cases (same pattern, same host; never auto-closed, B3) and a learning preview per verdict (B2: what `benign` would make routine, e.g. that a lineage pattern ignores the command line).
+    - It reads only the case store: the loop records the host's tier, the escalations (`Decision.escalations`) and the other targets at triage.
+  - **Step 4, actions:**
+    - approve: one approval, or two different analysts under four-eyes (B4) -> execute command;
+    - reject (with a reason);
+    - rollback of executed actions, including auto-approved ones;
+    - the loop executes (simulated, watched) and rolls back (`OutcomeMonitor.roll_back`);
+    - a `malicious` verdict no longer executes containment itself, and the simulated analyst team approves its proposals.
+    - **Regression:** host NCE + analyst and network analyst replays are byte-identical, with and without the inbox. Executed through approvals: host 19 actions, network 1.
+  - **Queue order on DEDALE** (`experiments/dedale_queue_eval.py` -> `dedale_results/queue_order.json`; daily queues of the gated + NCE run, labels for scoring only):
+
+    | Order | Mean percentile rank of the 72 malicious cases (0 = top) | In their day's top 10 |
+    |:--|--:|--:|
+    | v1 (escalation, tier, feasible, proposed, alerts, waiting) | 0.50 | 27 |
+    | **v2** (+25 hypotheses name another target, +5 per other case on the host in 24 h) | **0.25** | **42** |
+    | Oldest first | 0.59 | 18 |
+
+    - v1 was barely better than oldest first. Without an analyst, escalations never fire on host data, every client is tier 0, and a feasible hypothesis is weak (25% malicious vs 9% benign).
+    - The v2 factors: another target named in 24% of malicious vs 0.1% of benign cases; 3+ other host cases in 24 h in 89% vs 46%.
+    - **In-sample:** the v2 factors were chosen after seeing this data, and only 2 hosts were attacked. A fair test needs another dataset.
+  - **Tests:** `tests/test_review_service.py` (6), `tests/test_review_actions.py` (7); suite 732 passed, 1 deselected.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)

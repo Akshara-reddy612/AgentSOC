@@ -114,6 +114,17 @@ The Python API the HTTP layer and tests call:
 - The simulated analyst of the experiments uses the same path, so a replay exercises the real mechanism.
 - **Not yet handled:** a crash between applying a command and marking it applied would apply it twice after a restart. Restart recovery of the loop (its open cases are in memory) is future work.
 
+## Progress (2026-10-11)
+
+- **Done:**
+  1. Case store.
+  2. `apply_verdict` + inbox + regression replays (byte-identical).
+  3. Review service. The queue priority was revised once after the DEDALE queue check: v2 adds other targets and host peers. In-sample; see `experiments/dedale_queue_eval.py`.
+  4. Actions with four-eyes and rollback; a verdict no longer executes containment.
+- **Next:**
+  - 6. Evaluations (analyst delay, noisy analyst), moved before 5 because they need no install.
+  - 5. HTTP API (FastAPI, after install approval).
+
 ## Order of work
 
 1. Case store.
