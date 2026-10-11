@@ -314,6 +314,19 @@
   - **Finding:** analyst feedback is the larger poisoning route. A `benign` verdict is learned at once, without the gate, and nothing corrects it later.
   - **Open decision B5:** (a) retroactive unlearning when a host is confirmed malicious; (b) `benign` on a risky host needs a second analyst or defaults to `benign_once`.
   - **Tests:** `tests/test_analyst_sim.py` (2); suite 734 passed, 1 deselected.
+- **Decision B5 (a), user-approved: unlearn on confirmed compromise (2026-10-11).**
+  - **Change:**
+    - `KnowledgeDB.retract_edge` (logged, replayable; never config) and `learned_edges`;
+    - `KnowledgeUpdater.retract_host_learning`;
+    - `SocLoop(unlearn_on_confirm=True)`: a malicious verdict retracts the patterns learned on the host in the previous 7 days, and no `benign` verdict is learned on a host under an ANALYST_CONFIRMED watch;
+    - `OutcomeMonitor.host_confirmed`.
+  - **Replays** (host, oracle 4 h; `dedale_results/b5_eval_{host,network}.json`):
+    - attack cases' patterns learned at misses 5% / 20%: 8 / 20 -> **0 / 0**; labelled attack events alerted 397 / 256 -> **400 / 400**;
+    - reviews / day: perfect 30.9 -> 34.1; misses 34.1; false alarms 5% 31.4 -> 44.6;
+    - network unchanged.
+  - Protection needs one correct malicious verdict per attacked host. A wrong `malicious` verdict cannot be withdrawn yet.
+  - **Tests:** `tests/test_unlearning.py` (4).
+- **FastAPI (B1):** approved by the user; the install from Claude Code was blocked by the auto-mode check. The user runs `.venv\Scripts\python -m pip install fastapi==0.143.0` (dry run: adds fastapi 0.143.0 MIT + opentelemetry-api 1.45.1 Apache-2.0; Starlette 1.6.0 kept). Step 5 (HTTP API) waits for it.
 - **DEDALE winlogbeat download (user-approved 2026-10-11): done and verified.** `D:\agentsoc_data\dedale\system_logs_winlogbeat.zip`, 27,123,250,952 bytes, MD5 matches the published value. It took 3 attempts (two connection resets, resumed). Contents: 672 hourly `.jsonl.bz2` files, which can be read without extracting. Record formats not inspected yet.
 
 ### Phase 3 plan (decided 2026-10-11)
