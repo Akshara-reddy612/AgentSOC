@@ -17,6 +17,7 @@ from dedale.suricata import iter_alerts, to_alert
 from perception.defended_pipeline import run_downstream
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import host_node_id
+from perception.nce_contract import NCEHypothesis
 from perception.network_alert import with_entities
 
 T0 = datetime(2024, 12, 23, tzinfo=timezone.utc)
@@ -98,10 +99,15 @@ def test_entities_from_addresses(db):
 
 def test_pipeline_on_dedale_alerts(db):
     outbound = with_entities(to_alert(_record(0, _line("172.16.1.3:52885", f"{EXTERNAL}:80")), 1), db)
-    res = run_downstream([], outbound, db.graph)
+    res = run_downstream([], outbound, db.graph)                  # telemetry alone: C2 check, no reasoning
     h = res["hypotheses"][0]
     assert h["technique_id"] == "T1071" and h["sse_verdict"] == "FEASIBLE"
-    assert h["top_action"] == "BLOCK_DESTINATION" and res["outcome"] == "AUTO_APPROVED"
+    assert h["top_action"] == "BLOCK_DESTINATION" and h["playbook_status"] == "PENDING_ANALYST_REVIEW"
+    assert res["outcome"] == "REVIEW" and "telemetry alone" in h["guardrail_reason"]
+    reasoned = NCEHypothesis(technique_id="T1071", source_account="", source_host="CLIENT2", target_host=EXTERNAL,
+                             nce_confidence=0.7, supporting_evidence_refs=["raw_log_line"])
+    res = run_downstream([reasoned], outbound, db.graph)          # NCE named the C2: containment may run
+    assert res["outcome"] == "AUTO_APPROVED" and res["hypotheses"][0]["top_action"] == "BLOCK_DESTINATION"
     internal = with_entities(to_alert(_record(0, _line("172.16.1.3:5000", "172.16.0.3:9200")), 1), db)
     assert run_downstream([], internal, db.graph)["outcome"] == "NO_ACTIONABLE"
     assert db.projection_matches_store()

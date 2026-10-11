@@ -13,8 +13,10 @@ Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agent
     runs/dedale_<run>/cases.jsonl    one record per closed case (what the scorer reads)
     runs/dedale_<run>/watches.jsonl  outcome-monitor watches
     runs/dedale_<run>/summary.json   counts and timing
-where <run> is the mode, plus "_noact" for --unreasoned no_actionable.
-Ground truth (labels, attack timeline) is never read here; only the scorer is.
+where <run> is the mode, plus "_noact" for --unreasoned no_actionable and
+"_analyst" for --analyst oracle (then also runs/dedale_<run>/analyst.jsonl).
+Ground truth (labels, attack timeline) is read only by the scorer, and by the
+simulated analyst of the separate --analyst oracle condition.
 Training window: 2024-12-23 .. 2025-01-05, the weeks the dataset documents as
 benign and recommends for training; the test window starts 2025-01-06 00:00 UTC.
 """
@@ -70,11 +72,14 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--mode", required=True, choices=LEARNING_MODES)
     ap.add_argument("--unreasoned", default="review", choices=["review", "no_actionable"])
+    ap.add_argument("--analyst", default="none", choices=["none", "oracle"],
+                    help="oracle: simulated analyst that reads ground truth (separate condition, open decision D1)")
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD), for quick runs")
     ap.add_argument("--overwrite", action="store_true", help="replace this run's store and records")
     args = ap.parse_args()
 
-    run = args.mode + ("_noact" if args.unreasoned == "no_actionable" else "")
+    run = (args.mode + ("_noact" if args.unreasoned == "no_actionable" else "")
+           + ("_analyst" if args.analyst == "oracle" else ""))
     root = data_dir().parent
     store_path = root / "ks" / f"dedale_{run}.sqlite"
     run_dir = root / "runs" / f"dedale_{run}"
@@ -90,14 +95,21 @@ def main() -> None:
     db = KnowledgeDB(store_path, DEDALE_PROFILE, created_at=TRAINING_START)
     seed_store(db, TRAINING_START)
     outcomes: Counter[str] = Counter()
+    truth, analyst = None, None
+    if args.analyst == "oracle":       # the only place the replay touches ground truth (separate condition)
+        from experiments.dedale_score import GroundTruth, analyst_oracle, load_label_times
+        truth = GroundTruth(load_label_times())
+        analyst = analyst_oracle(truth)
     with open(run_dir / "cases.jsonl", "w", encoding="utf-8") as out:
         def on_case(case: Case, decision: Decision | None, training: bool) -> None:
             out.write(json.dumps(case_record(case, decision, training)) + "\n")
             if decision is not None:
                 outcomes[decision.outcome] += 1
+            if training and truth is not None:
+                truth.add_training_key(case.key)
 
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case,
-                       gate_options={"unreasoned": args.unreasoned})
+                       gate_options={"unreasoned": args.unreasoned}, analyst=analyst)
         alerts = iter_alerts(end=until)
         last = TRAINING_START
         while chunk := list(islice(alerts, CHUNK)):
@@ -113,8 +125,12 @@ def main() -> None:
             out.write(json.dumps({"watch_id": w.watch_id, "case_id": w.case_id, "action": w.action,
                                   "target": w.target, "target_kind": w.target_kind, "since": _iso(w.since),
                                   "until": _iso(w.until), "hits": w.hits, "would_block": w.would_block}) + "\n")
+    with open(run_dir / "analyst.jsonl", "w", encoding="utf-8") as out:
+        for case_id, at, verdict in loop.verdicts:
+            out.write(json.dumps({"case_id": case_id, "at": _iso(at), "verdict": verdict}) + "\n")
     summary = {
-        "run": run, "mode": args.mode, "unreasoned": args.unreasoned, "until": args.until,
+        "run": run, "mode": args.mode, "unreasoned": args.unreasoned, "analyst": args.analyst,
+        "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)), "until": args.until,
         "training_end": _iso(TRAINING_END), "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "nce_backlog": loop.gate.backlog,
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,

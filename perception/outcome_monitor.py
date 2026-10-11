@@ -34,7 +34,7 @@ from datetime import datetime, timedelta
 from perception.environment import parse_ipv4
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import account_node_id, host_node_id
-from perception.knowledge_updater import ensure_endpoint
+from perception.knowledge_updater import endpoint_node_id, ensure_endpoint
 from perception.outcome import AUTO_APPROVED
 from perception.source_systems import SourceSystem
 from perception.triage_gate import Decision
@@ -75,14 +75,18 @@ class OutcomeMonitor:
         self._ids = itertools.count(1)
         self.finished: list[Watch] = []
 
-    def register(self, decision: Decision, at: datetime) -> list[Watch]:
-        """Start watching the targets of the responses this decision auto-approved."""
-        if decision.outcome != AUTO_APPROVED:
+    def register(self, decision: Decision, at: datetime, *, approved_by: str | None = None) -> list[Watch]:
+        """
+        Start watching the targets of the responses this decision auto-approved,
+        or, with `approved_by`, the responses an analyst approved from review.
+        """
+        if approved_by is None and decision.outcome != AUTO_APPROVED:
             return []
+        executed = {AUTO_APPROVED} if approved_by is None else {AUTO_APPROVED, "PENDING_ANALYST_REVIEW"}
         started = []
         for row in decision.hypotheses:
             action = row.get("top_action")
-            if row.get("playbook_status") != AUTO_APPROVED or action not in _TARGET_KIND:
+            if row.get("playbook_status") not in executed or action not in _TARGET_KIND:
                 continue
             kind = _TARGET_KIND[action]
             target = row.get("top_target_account") if kind == "account" else row.get("top_target_host")
@@ -95,6 +99,14 @@ class OutcomeMonitor:
             started.append(w)
         return started
 
+    def flag_host(self, host: str, case_id: str, at: datetime) -> Watch:
+        """An analyst confirmed malicious activity from this host: watch it (no containment effect)."""
+        w = Watch(f"watch-{next(self._ids)}", case_id, "ANALYST_CONFIRMED", host, "host", at, at + self.duration)
+        self._by_target.setdefault(("host", host), []).append(w)
+        heapq.heappush(self._expiry, (w.until, next(self._ids), w))
+        self._write_back(w, at, "active")
+        return w
+
     def observe(self, alert: dict, at: datetime) -> None:
         """Count one alert against every active watch it touches."""
         for w in self._matching(alert, at):
@@ -103,11 +115,17 @@ class OutcomeMonitor:
                 w.would_block += 1
 
     def reasons(self, alert: dict, at: datetime) -> list[str]:
-        """Escalation reasons for a newly opened case (the triage gate's watch hook)."""
+        """
+        Escalation reasons for a newly opened case (the triage gate's watch hook).
+        A containment watch escalates any activity on its target (the response
+        should have ended it); an analyst's investigation flag on a host escalates
+        only activity that is not a learned routine pattern.
+        """
         return [f"{w.target_kind.capitalize()} {w.target} is under watch after the {w.action} response "
                 f"to {w.case_id} ({w.since:%Y-%m-%d %H:%M}); activity continues "
                 f"({w.hits} alerts since, {w.would_block} of them the response would have stopped)."
-                for w in self._matching(alert, at)]
+                for w in self._matching(alert, at)
+                if not (w.action == "ANALYST_CONFIRMED" and self._routine(alert))]
 
     def advance(self, now: datetime) -> list[Watch]:
         """End the watches whose time is over and record their result in the store."""
@@ -132,6 +150,14 @@ class OutcomeMonitor:
         return ended
 
     # -- internals ------------------------------------------------------------
+
+    def _routine(self, alert: dict) -> bool:
+        """Is this network alert's pattern learned as routine for its endpoints?"""
+        if "signature_id" not in alert:
+            return False
+        src = endpoint_node_id(self.db, str(alert["src_ip"]))
+        dst = endpoint_node_id(self.db, str(alert["dst_ip"]))
+        return self.db.graph.graph.has_edge(src, dst, f"sid:{alert['signature_id']}")
 
     def _matching(self, alert: dict, at: datetime) -> list[Watch]:
         keys = {("destination", str(alert.get("destination_ip") or "")),

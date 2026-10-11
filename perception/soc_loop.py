@@ -22,21 +22,37 @@ During the training window the loop runs in shadow mode: cases are built and
 learned from but not triaged or acted on (DEDALE's authors recommend the
 benign weeks for training and calibration).  At the end of the window every
 open case is closed, so the test window starts with fresh cases.
+
+Analyst feedback (optional, open decision D1): `analyst(case, decision, at)`
+gives a verdict on each REVIEW case `analyst_delay` after it was raised.
+"benign" -> the updater learns the case (provenance "analyst"; not in frozen
+or static mode).  "malicious" -> the analyst approves the proposed
+containment (watched by the outcome monitor), marks an external destination
+known-bad in the store, and puts the source host under watch.  None -> no
+verdict.  In the DEDALE experiments the analyst is an oracle that reads ground
+truth; it is a separate condition, never part of the system itself.
 """
 from __future__ import annotations
 
+import heapq
+import itertools
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Callable
 
 from perception.case_builder import Case, CaseBuilder
 from perception.knowledge_db import KnowledgeDB
-from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater
+from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, ensure_endpoint
 from perception.network_alert import with_entities
+from perception.network_model import KNOWN_BAD
+from perception.outcome import REVIEW
 from perception.outcome_monitor import OutcomeMonitor
+from perception.source_systems import SourceSystem
 from perception.triage_gate import Decision, TriageGate
 
 LEARNING_MODES = ("static", "frozen", "gated", "ungated")
+ANALYST_DELAY = timedelta(hours=4)
+Analyst = Callable[[Case, Decision, datetime], "str | None"]
 
 
 class SocLoop:
@@ -45,9 +61,15 @@ class SocLoop:
     def __init__(self, db: KnowledgeDB, *, mode: str, training_end: datetime,
                  cases: CaseBuilder | None = None, gate_delay: timedelta = GATE_DELAY,
                  on_case: Callable[[Case, Decision | None, bool], None] | None = None,
-                 gate_options: dict | None = None) -> None:
+                 gate_options: dict | None = None, analyst: Analyst | None = None,
+                 analyst_delay: timedelta = ANALYST_DELAY) -> None:
         if mode not in LEARNING_MODES:
             raise ValueError(f"mode must be one of {LEARNING_MODES}")
+        self.analyst = analyst
+        self.analyst_delay = analyst_delay
+        self._reviews: list[tuple[datetime, int, Case, Decision]] = []    # heap by verdict time
+        self._review_seq = itertools.count()
+        self.verdicts: list[tuple[str, datetime, str]] = []                # (case_id, time, verdict)
         self.db = db
         self.mode = mode
         self.training_end = training_end
@@ -67,6 +89,7 @@ class SocLoop:
         if self.updater is not None:
             self.updater.advance(at)
         self.monitor.advance(at)
+        self._analyst_due(at)
         a = with_entities(alert, self.db)
         self.monitor.observe(a, at)
         closed, event, case = self.cases.add(a, at)
@@ -81,6 +104,8 @@ class SocLoop:
                 if self.updater is not None:
                     self.updater.record_outcome(case, d.outcome, at)
                 self.monitor.register(d, at)
+                if self.analyst is not None and d.outcome == REVIEW:
+                    heapq.heappush(self._reviews, (at + self.analyst_delay, next(self._review_seq), case, d))
 
     def finish(self, at: datetime) -> None:
         """End of the stream: close the open cases and end the watches."""
@@ -89,6 +114,27 @@ class SocLoop:
         for c in self.cases.close_all(at):
             self._closed(c)
         self.monitor.finish(at)
+
+    def _analyst_due(self, now: datetime) -> None:
+        while self._reviews and self._reviews[0][0] <= now:
+            due, _, case, d = heapq.heappop(self._reviews)
+            verdict = self.analyst(case, d, due)
+            self.verdicts.append((case.case_id, due, verdict or "none"))
+            if verdict == "benign" and self.updater is not None and self.mode != "frozen":
+                self.updater.analyst_closed_benign(case, due, "oracle")
+            elif verdict == "malicious":
+                self._confirmed_malicious(case, d, due)
+
+    def _confirmed_malicious(self, case: Case, d: Decision, at: datetime) -> None:
+        a = case.first_alert
+        writer = "analyst:oracle"
+        if a.get("destination_ip"):
+            node = ensure_endpoint(self.db, str(a["destination_ip"]), at, writer)
+            self.db.set_fact(node, "reputation", KNOWN_BAD, confidence=1.0, source=SourceSystem.SYSTEM,
+                             writer=writer, at=at)
+        self.monitor.register(d, at, approved_by=writer)
+        if a.get("source_host") and self.db.profile.is_internal_address(str(a["src_ip"])):
+            self.monitor.flag_host(str(a["source_host"]), case.case_id, at)
 
     def _end_training(self) -> None:
         for c in self.cases.close_all(self.training_end, reason="end_of_training"):

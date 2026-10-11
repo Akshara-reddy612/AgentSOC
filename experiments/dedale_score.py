@@ -92,26 +92,51 @@ def load_cases(run: str) -> list[dict]:
         return [json.loads(line) for line in f]
 
 
-def ground_truth(cases: list[dict], label_times: dict[str, list[datetime]]) -> dict[str, str]:
-    """case_id -> "confirmed" / "probable" for the test-window cases that are attack-related."""
-    training_keys = {(c["signature_id"], c["src_ip"], c["dst_ip"]) for c in cases if c["training"]}
-    tiers = {}
-    for c in cases:
-        if c["training"]:
-            continue
-        ends = (c["src_ip"], c["dst_ip"])
-        if any(a in ATTACKER for a in ends):
-            tiers[c["case_id"]] = "confirmed"
-            continue
-        if (c["signature_id"], c["src_ip"], c["dst_ip"]) in training_keys:
-            continue
-        opened, last = _t(c["opened"]), _t(c["last_seen"])
-        for a in ends:
+class GroundTruth:
+    """Tier of a case (see module docstring); usable while a replay runs (analyst oracle) or afterwards."""
+
+    def __init__(self, label_times: dict[str, list[datetime]]) -> None:
+        self.label_times = label_times
+        self.training_keys: set[tuple] = set()
+
+    def add_training_key(self, key: tuple) -> None:
+        self.training_keys.add(tuple(key))
+
+    def tier(self, sid: int, src: str, dst: str, opened: datetime, last_seen: datetime) -> str | None:
+        if src in ATTACKER or dst in ATTACKER:
+            return "confirmed"
+        if (sid, src, dst) in self.training_keys:
+            return None
+        for a in (src, dst):
             if a in COMPROMISED:
                 host, start, end = COMPROMISED[a]
-                if start <= opened <= end and _labelled_near(label_times.get(host, []), opened, last):
-                    tiers[c["case_id"]] = "probable"
+                if start <= opened <= end and _labelled_near(self.label_times.get(host, []), opened, last_seen):
+                    return "probable"
+        return None
+
+
+def ground_truth(cases: list[dict], label_times: dict[str, list[datetime]]) -> dict[str, str]:
+    """case_id -> "confirmed" / "probable" for the test-window cases that are attack-related."""
+    truth = GroundTruth(label_times)
+    for c in cases:
+        if c["training"]:
+            truth.add_training_key((c["signature_id"], c["src_ip"], c["dst_ip"]))
+    tiers = {}
+    for c in cases:
+        if not c["training"]:
+            tier = truth.tier(c["signature_id"], c["src_ip"], c["dst_ip"], _t(c["opened"]), _t(c["last_seen"]))
+            if tier:
+                tiers[c["case_id"]] = tier
     return tiers
+
+
+def analyst_oracle(truth: GroundTruth):
+    """Simulated analyst for the replay's analyst condition: attack-related -> malicious, otherwise benign."""
+    def verdict(case, decision, at):
+        a = case.first_alert
+        tier = truth.tier(a["signature_id"], a["src_ip"], a["dst_ip"], case.opened, case.last_seen)
+        return "malicious" if tier else "benign"
+    return verdict
 
 
 def _nearest_label_s(c: dict, label_times: dict[str, list[datetime]]) -> float | None:
@@ -170,18 +195,29 @@ def score_run(run: str, tiers: dict[str, str], label_times: dict[str, list[datet
         steps.append({"step": name, "time": t.isoformat(), "cases_near": len(near),
                       "surfaced": [_brief(c) for c in surfaced]})
     auto = [c for c in test if c["outcome"] == "AUTO_APPROVED"]
+    run_dir = data_dir().parent / "runs" / f"dedale_{run}"
     watches = []
-    wpath = data_dir().parent / "runs" / f"dedale_{run}" / "watches.jsonl"
-    with open(wpath, encoding="utf-8") as f:
+    with open(run_dir / "watches.jsonl", encoding="utf-8") as f:
         for line in f:
             w = json.loads(line)
             w["target_is_attacker"] = w["target"] in ATTACKER
             watches.append(w)
+    verdicts: Counter[str] = Counter()
+    if (run_dir / "analyst.jsonl").exists():
+        with open(run_dir / "analyst.jsonl", encoding="utf-8") as f:
+            verdicts.update(json.loads(line)["verdict"] for line in f)
+    first_attack = min((_t(c["opened"]) for c in attack if tiers[c["case_id"]] == "confirmed"), default=None)
+    contained = min((_t(w["since"]) for w in watches if w["target_is_attacker"]), default=None)
+    by_day = [per_day[(TEST_START + timedelta(days=i)).date().isoformat()]["REVIEW"] for i in range(TEST_DAYS)]
     return {
         "run": run,
         "test_cases": len(test),
         "outcomes": dict(outcomes),
-        "reviews_per_day": {"mean": round(sum(reviews) / TEST_DAYS, 1), "max": max(reviews), "by_day": reviews},
+        "reviews_per_day": {"mean": round(sum(reviews) / TEST_DAYS, 1), "max": max(reviews), "by_day": by_day,
+                            "week_1_mean": round(sum(by_day[:7]) / 7, 1), "week_2_mean": round(sum(by_day[7:]) / 7, 1)},
+        "attacker_server_contained_after_min": (round((contained - first_attack).total_seconds() / 60, 1)
+                                                if contained and first_attack else None),
+        "analyst_verdicts": dict(verdicts),
         "low_priority_share": round(outcomes["LOW_PRIORITY"] / len(test), 4),
         "attack_related": [{**_brief(c), "tier": tiers[c["case_id"]],
                             "nearest_label_s": _nearest_label_s(c, label_times)}
@@ -205,9 +241,29 @@ def score_run(run: str, tiers: dict[str, str], label_times: dict[str, list[datet
     }
 
 
+def zeek_check() -> dict | None:
+    """Exact network labels (router 1 Zeek flows): which Suricata alerts hit labelled attack flows."""
+    from experiments.dedale_zeek_labels import OUT, load_attack_flows, suricata_matches
+
+    if not (data_dir() / OUT).exists():
+        return None
+    flows = load_attack_flows()
+    pairs = suricata_matches(flows)
+    matched = {fl["uid"] for _, fl in pairs}
+    return {
+        "labelled_flows": len(flows),
+        "by_step": dict(Counter(fl["attack_step"] for fl in flows)),
+        "suricata_alerts_matching": [{"timestamp": a["timestamp"], "sensor": a["sensor"], "signature": a["signature"],
+                                      "flow": f"{a['src_ip']} -> {a['dst_ip']}:{a['dst_port']}",
+                                      "step": fl["attack_step"], "technique": fl["technique"]} for a, fl in pairs],
+        "labelled_flows_without_alert": dict(Counter(fl["attack_step"] for fl in flows if fl["uid"] not in matched)),
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--runs", nargs="+", default=["static", "frozen", "gated", "ungated", "gated_noact"])
+    ap.add_argument("--runs", nargs="+",
+                    default=["static", "frozen", "gated", "ungated", "gated_noact", "gated_analyst"])
     ap.add_argument("--explore", action="store_true", help="print the ground-truth case lists of the first run")
     args = ap.parse_args()
     labels = load_label_times()
@@ -220,17 +276,20 @@ def main() -> None:
                   "| alerts", c["alert_count"], "|", c.get("outcome"), "| nearest label s",
                   _nearest_label_s(c, labels))
         return
-    results = {"ground_truth": {"tiers": dict(Counter(tiers.values())), "case_ids": tiers},
+    results = {"ground_truth": {"tiers": dict(Counter(tiers.values())), "case_ids": tiers,
+                                "zeek_router1": zeek_check()},
                "runs": {run: score_run(run, tiers, labels) for run in args.runs}}
     RESULTS.mkdir(exist_ok=True)
     out = RESULTS / "phase1_scores.json"
     out.write_text(json.dumps(results, indent=1, default=str), encoding="utf-8")
     for run, r in results["runs"].items():
-        print(f"{run:12s} reviews/day {r['reviews_per_day']['mean']:6.1f} (max {r['reviews_per_day']['max']:4d}) "
-              f"| LOW_PRIORITY {r['low_priority_share']:.1%} | auto {r['auto_approved']['cases']:3d} "
-              f"(attacker {r['auto_approved']['on_attacker_infrastructure']}) | attack-related hidden "
-              f"{r['attack_related_hidden']}/{len(r['attack_related'])} | would-block benign "
-              f"{r['watches']['would_block_on_benign_targets']} attacker {r['watches']['would_block_on_attacker']}")
+        rpd = r["reviews_per_day"]
+        print(f"{run:14s} reviews/day {rpd['mean']:6.1f} (wk1 {rpd['week_1_mean']:6.1f}, wk2 {rpd['week_2_mean']:6.1f}, "
+              f"max {rpd['max']:4d}) | LOW_PRIORITY {r['low_priority_share']:.1%} | auto "
+              f"{r['auto_approved']['cases']:3d} (attacker {r['auto_approved']['on_attacker_infrastructure']}) "
+              f"| hidden {r['attack_related_hidden']}/{len(r['attack_related'])} | would-block benign "
+              f"{r['watches']['would_block_on_benign_targets']} | attacker contained after "
+              f"{r['attacker_server_contained_after_min']} min | verdicts {r['analyst_verdicts']}")
     print(f"-> {out}")
 
 

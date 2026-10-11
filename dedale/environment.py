@@ -49,6 +49,11 @@ DEDALE_PROFILE = EnvironmentProfile(
     internal_domain_suffixes=(".breach.local",),
     internal_hostname_pattern=r"^(CLIENT\d+|internalserver|logserver|dmzserver|webserver|vpnserver|companyrouter2?)$",
     zone_egress_policy={zone: OPEN for zone in COMPANY_ZONES},
+    # Response policy decided 2026-10-11 from the Phase 1 replay: auto-blocking every
+    # never-seen destination on telemetry alone hit 34 benign destinations (STUN
+    # servers) for 1 attacker server, and the blocks' watches caused a third of all
+    # reviews.  Containment now needs reasoning (NCE) or threat intelligence.
+    auto_contain_unreasoned_c2=False,
 )
 
 

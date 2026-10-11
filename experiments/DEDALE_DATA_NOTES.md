@@ -93,6 +93,26 @@ With no learned baseline, each outbound alert becomes a telemetry C2 check on an
 
 - 45 VMs × (`<ip>_<role>_ub.log`, `<ip>_<role>_timeline.csv`). The timeline is the benign activity plan: `ts, date_str, inter_event_delay, action_duration, action_type` (e.g. browsing, mailing). IPs here are on 192.168.56.0/24 (management network), not the 172.16.x addresses seen in Suricata.
 
+## Zeek, router 1 (`zeek_router1.zip`, downloaded and MD5-verified 2026-10-11)
+
+- **File:** 4,396,439,880 bytes, MD5 c5f237d2cbc5afc4946cb2a766cf7d7e. 1,385 members (17.7 GB), `router1/<green|orange|red>/<day>_output_router1_<interface>_Zeek/`: conn, dns, http, ssl, x509, files, smtp, ssh, ... logs per interface and day, plus `conn_labeled.csv` (84 files).
+- **Label format:** `conn_labeled.csv` is semicolon-separated: Zeek conn fields + `label` (0 benign / 1 attack / 2 attack-related), `step`, `attack_step`, `tactic`, `technique`, `comments`.
+- **Labelled flows (all four weeks, all 3 interfaces): 84** (label 1: 64, label 2: 20). Extracted by `experiments/dedale_zeek_labels.py`.
+
+  | Step | Technique | Flows |
+  |:--|:--|--:|
+  | command_and_control | T1104 | 38 |
+  | command_and_control | T1102 | 19 |
+  | command_and_control | T1105 (the dropper download) | 1 |
+  | initial_access | T1566 | 4 |
+  | exfiltration | T1041 | 2 |
+  | attack_related_activity | — | 20 |
+
+  Main pairs: 172.16.1.2 -> 172.19.2.1:443 (36 flows), 172.16.1.3 -> 172.19.1.1:80 (21), 172.16.1.2 -> 172.19.0.2:443 (13), 172.16.1.3 -> 172.19.0.2:443 (8), 172.19.0.2 -> 172.17.0.2:25 (phishing mail, 2).
+- **Matched to Suricata** (same 5-tuple either way, inside the flow's time ±60 s): only 2 alerts hit a labelled flow — the two router copies of the dropper download, i.e. exactly the "confirmed" ground-truth case. 83 of the 84 labelled flows raised no Suricata alert.
+- **First contacts:** outbound (internal -> external) pairs not seen in the training weeks number 4,400-9,300 per weekday and 93-153 per weekend day. All 5 attack pairs are among them on their first day.
+- **Coverage:** router 1 is company <-> internet / DMZ only; traffic between internal zones (e.g. client -> domain controller) passes router 2, whose Zeek files (green_internal / orange_servers) are not downloaded.
+
 ## Windows logs (`system_logs_winlogbeat.zip`, downloaded and MD5-verified 2026-10-11)
 
 - 27,123,250,952 bytes, MD5 7af54ba2977f7535d4c07beb6b1ec657 (matches the Dataverse metadata).

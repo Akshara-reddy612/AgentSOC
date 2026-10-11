@@ -16,6 +16,7 @@ from perception.case_builder import Case, network_case_key
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import destination_node_id, host_node_id
 from perception.knowledge_updater import KnowledgeUpdater
+from perception.nce_contract import NCEHypothesis
 from perception.network_alert import with_entities
 from perception.source_systems import SourceSystem
 from perception.triage_gate import DailyBudget, TriageGate
@@ -61,10 +62,21 @@ def test_learned_pattern_is_low_priority_without_running_the_pipeline(db):
     assert (d.path, d.outcome, d.pipeline_outcome, d.hypotheses) == ("baseline", "LOW_PRIORITY", None, [])
 
 
+def reasoned_c2(alert):
+    """Stand-in for NCE: names C2 from the alert's source host to its destination."""
+    if not alert.get("destination_ip"):
+        return []
+    return [NCEHypothesis(technique_id="T1071", source_account="", source_host=alert["source_host"],
+                          target_host=alert["destination_ip"], nce_confidence=0.7,
+                          supporting_evidence_refs=["raw_log_line"])]
+
+
 def test_outbound_to_unknown_destination_versus_routine_destination(db):
     a = _alert(db, dst=EXT, sid=2027262, port=80)
-    d = TriageGate(db).triage(_case(a), a, T0)
-    assert d.outcome == "AUTO_APPROVED" and d.hypotheses[0]["top_action"] == "BLOCK_DESTINATION"
+    d = TriageGate(db).triage(_case(a), a, T0)                    # telemetry alone: block proposed, not executed
+    assert d.outcome == "REVIEW" and d.hypotheses[0]["top_action"] == "BLOCK_DESTINATION"
+    assert d.hypotheses[0]["playbook_status"] == "PENDING_ANALYST_REVIEW"
+    assert TriageGate(db, nce=reasoned_c2).triage(_case(a), a, T0).outcome == "AUTO_APPROVED"
     _learn(db, a)
     assert TriageGate(db).triage(_case(a, 2), a, T0).outcome == "LOW_PRIORITY"
 

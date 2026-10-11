@@ -13,6 +13,7 @@ from dedale.environment import DEDALE_PROFILE, seed_store
 from dedale.suricata import to_alert
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import destination_node_id, host_node_id
+from perception.nce_contract import NCEHypothesis
 from perception.soc_loop import SocLoop
 
 TRAIN_END = datetime(2025, 1, 6, tzinfo=timezone.utc)
@@ -40,11 +41,20 @@ def _stream():
     return [_alert(at, s, d, p, sid, i) for i, (at, s, d, p, sid) in enumerate(items, 1)]
 
 
-def _run(tmp_path, mode):
+def _reasoned_c2(alert):
+    """Stand-in for NCE: names C2 for every outbound alert."""
+    if not alert.get("destination_ip"):
+        return []
+    return [NCEHypothesis(technique_id="T1071", source_account="", source_host=alert["source_host"],
+                          target_host=alert["destination_ip"], nce_confidence=0.7,
+                          supporting_evidence_refs=["raw_log_line"])]
+
+
+def _run(tmp_path, mode, nce=None):
     records = []
     db = KnowledgeDB(tmp_path / f"{mode}.sqlite", DEDALE_PROFILE, created_at=TRAIN_END - timedelta(days=14))
     seed_store(db, TRAIN_END - timedelta(days=14))
-    loop = SocLoop(db, mode=mode, training_end=TRAIN_END,
+    loop = SocLoop(db, mode=mode, training_end=TRAIN_END, gate_options={"nce": nce},
                    on_case=lambda case, d, training: records.append((case, d, training)))
     last = None
     for a in _stream():
@@ -67,21 +77,50 @@ def test_training_is_shadow_and_learned(tmp_path):
     assert db.edge_learned_from(host_node_id("CLIENT2"), host_node_id("logserver"), "sid:1") == "training"
 
 
-def test_gated_run_decisions(tmp_path):
+def test_gated_run_decisions_without_reasoning(tmp_path):
     _, loop, _, d = _run(tmp_path, "gated")
     assert (d[1].path, d[1].outcome) == ("baseline", "LOW_PRIORITY")
     assert (d[2].path, d[2].outcome) == ("baseline", "LOW_PRIORITY")          # routine DNS resolver: not blocked
+    assert d[3].outcome == "REVIEW" and d[3].hypotheses[0]["top_action"] == "BLOCK_DESTINATION"
+    assert "telemetry alone" in d[3].hypotheses[0]["guardrail_reason"]       # proposed, not executed (policy)
+    assert d[5].outcome == "REVIEW"                                            # novel, not reasoned about (NCE off)
+    assert loop.monitor.finished == []                                         # nothing was executed
+
+
+def test_reasoned_c2_is_contained_and_watched(tmp_path):
+    _, loop, _, d = _run(tmp_path, "gated", nce=_reasoned_c2)
     assert d[3].outcome == "AUTO_APPROVED" and d[3].hypotheses[0]["top_action"] == "BLOCK_DESTINATION"
     assert d[4].outcome == "REVIEW" and "under watch" in d[4].reasons[0]      # contained destination contacted again
-    assert d[5].outcome == "REVIEW"                                            # novel, not reasoned about (NCE off)
     assert [w.would_block for w in loop.monitor.finished] == [1]
 
 
-def test_static_store_blocks_a_routine_destination_and_reviews_routine_traffic(tmp_path):
-    """A client (criticality 0) contacting the resolver; in the real data that DNS comes from forwarders."""
+def test_static_store_reviews_routine_traffic_and_does_not_block_on_telemetry_alone(tmp_path):
     _, _, _, d = _run(tmp_path, "static")
     assert d[1].outcome == "REVIEW"
-    assert d[2].outcome == "AUTO_APPROVED" and d[2].hypotheses[0]["top_action"] == "BLOCK_DESTINATION"
+    assert d[2].outcome == "REVIEW" and d[2].hypotheses[0]["playbook_status"] == "PENDING_ANALYST_REVIEW"
+
+
+def test_analyst_verdicts_teach_the_store(tmp_path):
+    """Benign verdict -> the pattern is learned (provenance analyst); malicious -> known-bad + approved block."""
+    db = KnowledgeDB(tmp_path / "a.sqlite", DEDALE_PROFILE, created_at=TRAIN_END - timedelta(days=14))
+    seed_store(db, TRAIN_END - timedelta(days=14))
+    analyst = lambda case, d, at: "malicious" if case.first_alert["dst_ip"] == "172.19.0.77" else "benign"  # noqa: E731
+    decisions = {}
+    loop = SocLoop(db, mode="gated", training_end=TRAIN_END, analyst=analyst,
+                   on_case=lambda case, d, training: decisions.setdefault(case.first_alert["alert_id"], d))
+    day = TRAIN_END
+    stream = [(day + timedelta(hours=9), "172.16.1.5", "172.16.0.3", 9200, 7),       # novel internal: REVIEW
+              (day + timedelta(hours=10), "172.16.1.3", "172.19.0.77", 80, 8),        # telemetry C2: REVIEW
+              (day + timedelta(days=1, hours=9), "172.16.1.5", "172.16.0.3", 9200, 7)]  # after the verdicts
+    for i, (at, s, dst, port, sid) in enumerate(stream, 1):
+        loop.process(_alert(at, s, dst, port, sid, i), at)
+    loop.finish(day + timedelta(days=1, hours=10))
+    assert [v for _, _, v in loop.verdicts] == ["benign", "malicious"]
+    assert db.edge_learned_from(host_node_id("CLIENT4"), host_node_id("logserver"), "sid:7") == "analyst"
+    assert decisions["dedale-suricata-3"].outcome == "LOW_PRIORITY"            # learned from the verdict
+    assert db.graph.get_destination_reputation("172.19.0.77")[0] == "known_bad"
+    assert sorted((w.action, w.target) for w in loop.monitor.finished) == [
+        ("ANALYST_CONFIRMED", "CLIENT2"), ("BLOCK_DESTINATION", "172.19.0.77")]
 
 
 @pytest.mark.parametrize("mode, expected", [("frozen", 1), ("gated", 2)])
