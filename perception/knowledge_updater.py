@@ -105,9 +105,13 @@ class KnowledgeUpdater:
 
     def analyst_closed_benign(self, case: Case, at: datetime, analyst: str) -> None:
         """The analyst closed an escalated case as benign: learn it, and lift its hold on its endpoints."""
+        self.lift_hold(case)
+        self._learn(case, "analyst", at, writer=f"analyst:{analyst}")
+
+    def lift_hold(self, case: Case) -> None:
+        """The analyst resolved this escalated case as not malicious: it stops blocking gated learning."""
         for address in _addresses(case):
             self._escalations.get(address, {}).pop(case.case_id, None)
-        self._learn(case, "analyst", at, writer=f"analyst:{analyst}")
 
     @property
     def pending(self) -> int:

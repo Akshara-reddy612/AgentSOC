@@ -1,4 +1,4 @@
-# Analyst review loop — design (plan item B, 2026-10-11, draft)
+# Analyst review loop — design (plan item B, 2026-10-11; decisions B1-B4 approved)
 
 **Goal:** real analysts can work the cases the system raises. They see a queue, open a case with its evidence, give a verdict, and approve, reject or roll back the proposed actions. Everything they do is stored and audited, and their verdicts teach the Knowledge Store exactly as the simulated analyst does today. This is the backend the future frontend will call; no UI here.
 
@@ -70,7 +70,7 @@ The Python API the HTTP layer and tests call:
 
 ### 5. HTTP API (`api/`)
 
-- JSON over HTTP with **Starlette + uvicorn, both already installed** (no download).
+- JSON over HTTP with **FastAPI** (decision B1) on uvicorn. FastAPI needs an approved install.
 - **Endpoints:**
   - `GET /queue`;
   - `GET /cases/{id}`;
@@ -87,12 +87,32 @@ The Python API the HTTP layer and tests call:
 3. **Noisy analyst:** a share of wrong verdicts (e.g. 5% malicious called benign). How much attack activity is learned as routine, and does the gate or the outcome monitor catch it? This is the poisoning risk of analyst feedback.
 4. **API tests:** auth, the audit trail, invalid transitions (e.g. roll back an action that was never executed), concurrency (two analysts claim the same case).
 
-## Open decisions
+## Decisions (2026-10-11, user-approved)
 
-- **B1 API framework:** Starlette (installed, recommended) or FastAPI (a download; adds automatic OpenAPI docs for the frontend team). Switching later is cheap, because the service layer holds the logic.
-- **B2 Verdict vocabulary:** the four above, or only malicious / benign.
-- **B3 Should `benign` on a case also clear similar open cases** (same key, same host)? This saves work but can hide a second, malicious instance. Proposal: no; show them as related cases instead.
-- **B4 Who may approve containment:** any analyst, or a second analyst for hard-floor actions (four-eyes)? Proposal: any analyst, with four-eyes as a profile option.
+- **B1 API framework: FastAPI.**
+  - Starlette and uvicorn are installed only because Streamlit needs them, and Streamlit is being retired, so "already installed" is no advantage.
+  - FastAPI validates every request and generates an always-current API reference the frontend team can build against.
+  - Installing it is a download: size, licence and the effect on the installed Starlette (1.6.0, used by Streamlit) are reported for approval before step 5. Steps 1-4 do not need it.
+- **B2 Verdicts: `malicious`, `benign`, `benign_once`, `needs_info`.**
+  - They map to the usual SOC labels: true positive, false positive, benign positive (not learned), undetermined.
+  - **Why `benign_once` matters:** a host pattern key leaves out the command line. For example, the lineage key is host + parent program + program. So `benign` on one `cmd.exe -> scp.exe` on CLIENT1 would silence every later scp started from cmd there, including one like the scp in DEDALE's attack.
+  - **Learning preview:** before a verdict is submitted, the case view states what `benign` would teach the store (e.g. "on CLIENT1, cmd.exe starting scp.exe becomes routine and stops alerting").
+  - **Effects on the learning hold:** `benign_once` closes the case and lifts its hold, but learns nothing. `needs_info` keeps the case open and keeps its hold.
+- **B3 No automatic closing of similar cases.** Two cases with the same pattern can differ in what the key leaves out. Instead:
+  - the case view lists related open cases side by side;
+  - a verdict can be applied to several cases only through an explicit list;
+  - each case still gets its own audited verdict.
+- **B4 Approvals: one analyst, except four-eyes for high-impact containment of critical hosts.**
+  - The hard-floor actions targeting a host (QUARANTINE_ACCESS, BLOCK_EGRESS) need a second, different analyst when the host's criticality tier is at least `EnvironmentProfile.four_eyes_min_tier`. For DEDALE that is 2: internal, log, mail and VPN servers and the routers. Default None = off, so earlier profiles are unchanged.
+  - Account-targeted actions (REVOKE_SESSION etc.) need one approval for now. Extending four-eyes to privileged accounts is a follow-up.
+  - Rollback: any analyst, always audited.
+
+## Refinement: the case store is the loop's inbox
+
+- Analysts act through the API, possibly in another process, while the loop processes the alert stream. The Knowledge Store must keep a single writer (invariant I6).
+- So the review service never writes the Knowledge Store. Verdicts, approved actions and rollbacks are written to the case store as **commands**. The loop applies them in order as its clock passes their time (`SocLoop._advance`), then marks each one applied, with what it did.
+- The simulated analyst of the experiments uses the same path, so a replay exercises the real mechanism.
+- **Not yet handled:** a crash between applying a command and marking it applied would apply it twice after a restart. Restart recovery of the loop (its open cases are in memory) is future work.
 
 ## Order of work
 

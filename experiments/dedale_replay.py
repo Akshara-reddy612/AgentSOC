@@ -6,13 +6,14 @@ the store-backed SOC loop (perception/soc_loop.py), fully offline (NCE off, no
 API calls).  One run per learning mode:
 
     python -m experiments.dedale_replay --mode gated [--overwrite] [--until 2025-01-08]
-                                        [--unreasoned review|no_actionable]
+                                        [--unreasoned review|no_actionable] [--tag NAME] [--case-store]
 
 Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agentsoc_data):
     ks/dedale_<run>.sqlite           the run's Knowledge Store (design decision D4)
     runs/dedale_<run>/cases.jsonl    one record per closed case (what the scorer reads)
     runs/dedale_<run>/watches.jsonl  outcome-monitor watches
     runs/dedale_<run>/summary.json   counts and timing
+    runs/dedale_<run>/cases.sqlite   with --case-store: the review loop's case store (test window)
 where <run> is the mode, plus "_noact" for --unreasoned no_actionable and
 "_analyst" for --analyst oracle (then also runs/dedale_<run>/analyst.jsonl).
 Ground truth (labels, attack timeline) is read only by the scorer, and by the
@@ -26,6 +27,7 @@ import argparse
 import json
 import time
 from collections import Counter
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from itertools import islice
 from pathlib import Path
@@ -34,6 +36,7 @@ from dedale import data_dir
 from dedale.environment import DEDALE_PROFILE, seed_store
 from dedale.suricata import alert_time, iter_alerts
 from perception.case_builder import Case
+from perception.case_store import CaseStore
 from perception.knowledge_db import KnowledgeDB
 from perception.soc_loop import LEARNING_MODES, SocLoop
 from perception.triage_gate import Decision
@@ -76,6 +79,7 @@ def main() -> None:
                     help="oracle: simulated analyst that reads ground truth (separate condition, open decision D1)")
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD), for quick runs")
     ap.add_argument("--tag", default=None, help="suffix for the run name (keeps earlier runs of the same condition)")
+    ap.add_argument("--case-store", action="store_true", help="also record cases in a case store (review loop)")
     ap.add_argument("--overwrite", action="store_true", help="replace this run's store and records")
     args = ap.parse_args()
 
@@ -91,6 +95,13 @@ def main() -> None:
     store_path.parent.mkdir(parents=True, exist_ok=True)
     run_dir.mkdir(parents=True, exist_ok=True)
     until = datetime.fromisoformat(args.until).replace(tzinfo=timezone.utc) if args.until else None
+
+    case_store = None
+    if args.case_store:
+        cs_path = run_dir / "cases.sqlite"
+        for p in (cs_path, Path(f"{cs_path}-wal"), Path(f"{cs_path}-shm")):
+            p.unlink(missing_ok=True)
+        case_store = CaseStore(cs_path, created_at=TRAINING_START)
 
     t0 = time.perf_counter()
     db = KnowledgeDB(store_path, DEDALE_PROFILE, created_at=TRAINING_START)
@@ -110,15 +121,15 @@ def main() -> None:
                 truth.add_training_key(case.key)
 
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case,
-                       gate_options={"unreasoned": args.unreasoned}, analyst=analyst)
+                       gate_options={"unreasoned": args.unreasoned}, analyst=analyst, case_store=case_store)
         alerts = iter_alerts(end=until)
         last = TRAINING_START
         while chunk := list(islice(alerts, CHUNK)):
-            with db.batch():
+            with db.batch(), (case_store.batch() if case_store else nullcontext()):
                 for alert in chunk:
                     last = alert_time(alert)
                     loop.process(alert, last)
-        with db.batch():
+        with db.batch(), (case_store.batch() if case_store else nullcontext()):
             loop.finish(last)
 
     with open(run_dir / "watches.jsonl", "w", encoding="utf-8") as out:
@@ -142,6 +153,8 @@ def main() -> None:
     }
     (run_dir / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
     db.close()
+    if case_store is not None:
+        case_store.close()
     print(json.dumps(summary, indent=1))
 
 

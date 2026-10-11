@@ -59,6 +59,9 @@ DEDALE_PROFILE = EnvironmentProfile(
     # ingested, so the store cannot rule out access to them.  Phase 3 found the
     # attacker's scp from internalserver dismissed as "infeasible" for that reason.
     observed_hosts=tuple(f"CLIENT{i}" for i in range(1, 31)),
+    # Four-eyes (decision B4): cutting off a server or router (tier >= 2: internalserver,
+    # logserver, dmzserver, vpnserver, routers) needs two different analysts.
+    four_eyes_min_tier=2,
 )
 
 
