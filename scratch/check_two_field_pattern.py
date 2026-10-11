@@ -3,7 +3,7 @@ from pathlib import Path
 import re
 import sys
 
-sys.path.insert(0, r"c:\agentsoc")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from risk_assessment.detectors.approval_claim_detector import (
     _TICKET_PATTERN,

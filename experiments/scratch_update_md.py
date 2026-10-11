@@ -1,6 +1,9 @@
 import sys
+import os
 
-with open('c:/agentsoc/PROJECT_STATUS.md', 'r', encoding='utf-8') as f:
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+with open(os.path.join(ROOT, 'PROJECT_STATUS.md'), 'r', encoding='utf-8') as f:
     content = f.read()
 
 new_section = """
@@ -43,6 +46,6 @@ new_wnby = """## What's NOT Built Yet & Immediate Next Steps (Replaced)
 """
 content = content.replace(old_wnby, new_wnby)
 
-with open('c:/agentsoc/PROJECT_STATUS.md', 'w', encoding='utf-8') as f:
+with open(os.path.join(ROOT, 'PROJECT_STATUS.md'), 'w', encoding='utf-8') as f:
     f.write(content)
 print("Updated PROJECT_STATUS.md")

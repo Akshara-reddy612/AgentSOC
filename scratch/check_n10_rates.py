@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-ROOT = Path(r"c:\agentsoc")
+ROOT = Path(__file__).resolve().parents[1]
 file_path = ROOT / "agent" / "nce7_scale_results.json"
 
 with open(file_path, "r", encoding="utf-8") as f:

@@ -5,7 +5,7 @@
 ### What was tried:
 - **Real-data integration check** of the Action/Playbook Layer (`build_playbook()` → `evaluate_guardrails()` → `execute_playbook_dry_run()`) using all 32 real FEASIBLE hypotheses from completed evaluation runs — 18 from `nce7_scale_results.json` (16 contaminated + 2 clean, matching the 16 structural defense failures in the NCE-7-SCALE section) and 14 from `nce8_clean_fp_results.json` (all clean). Each FEASIBLE alert has exactly one FEASIBLE hypothesis (1:1), so 32 hypotheses = 32 alerts. All 32 are T1071/network-egress cases, consistent with the already-documented Factor 1/2 breakdown.
 - This was the first time the Action/Playbook Layer received hypotheses from actual completed evaluation runs, as opposed to hand-constructed test fixtures or demo scenarios. The prior session built and unit-tested the layer (366/366 tests, 3 demo scenarios confirming all guardrail paths), but every input was a hand-built `NCEHypothesis`/`ScoredAction` object — never a hypothesis reconstructed from real pipeline output.
-- Verification script: [`scratch/action_playbook_real_data_check.py`](file:///c:/agentsoc/scratch/action_playbook_real_data_check.py). Two-phase design: Phase 1 runs SSE + RSEM (which legitimately adds nodes/edges via lazy host creation), Phase 2 runs the Action/Playbook Layer and checks that it adds zero nodes/edges to the live graph.
+- Verification script: [`scratch/action_playbook_real_data_check.py`](scratch/action_playbook_real_data_check.py). Two-phase design: Phase 1 runs SSE + RSEM (which legitimately adds nodes/edges via lazy host creation), Phase 2 runs the Action/Playbook Layer and checks that it adds zero nodes/edges to the live graph.
 
 ### What was found:
 1. **Zero exceptions, zero crashes** across all 32 cases. Every target shape — external 185.x.x.x IPs (19 cases), `unknown`/`N/A` strings (5), duckdns.org domains (1), example-cdn.net domains (2), numeric-only strings (1), internal WKSTN-*/LT-* hostnames (4) — handled correctly.
@@ -36,10 +36,10 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Modified:**
-  - [`PROJECT_STATUS.md`](file:///c:/agentsoc/PROJECT_STATUS.md) (Added "Action/Playbook Layer" section with build summary + T1071 Guardrail-Silence finding; updated "What's NOT Built Yet" to mark Action/Playbook as DONE; added technique-specific guardrail heuristics future-work bullet; updated "Immediate Next Step")
-  - [`RESEARCH_LOG.md`](file:///c:/agentsoc/RESEARCH_LOG.md) (Added this session entry)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Added "Action/Playbook Layer" section with build summary + T1071 Guardrail-Silence finding; updated "What's NOT Built Yet" to mark Action/Playbook as DONE; added technique-specific guardrail heuristics future-work bullet; updated "Immediate Next Step")
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (Added this session entry)
 - **Created (prior session):**
-  - [`scratch/action_playbook_real_data_check.py`](file:///c:/agentsoc/scratch/action_playbook_real_data_check.py) (Real-data verification script, 32 cases, two-phase graph integrity checking)
+  - [`scratch/action_playbook_real_data_check.py`](scratch/action_playbook_real_data_check.py) (Real-data verification script, 32 cases, two-phase graph integrity checking)
 
 ## 2026-09-13 — Session: Knowledge Store Data Lineage Verification (Pre-Review Accuracy Check)
 
@@ -62,8 +62,8 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Modified:**
-  - [`PROJECT_STATUS.md`](file:///c:/agentsoc/PROJECT_STATUS.md) (Architecture Map: factual correction clarifying `KnowledgeStoreGraph` is a separate parallel structure to `InMemoryKnowledgeStore`, not a subclass)
-  - [`RESEARCH_LOG.md`](file:///c:/agentsoc/RESEARCH_LOG.md) (Added session entry for Knowledge Store data lineage verification)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Architecture Map: factual correction clarifying `KnowledgeStoreGraph` is a separate parallel structure to `InMemoryKnowledgeStore`, not a subclass)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (Added session entry for Knowledge Store data lineage verification)
 
 ## 2026-09-12/13 — Session: Phase NCE-8 — Clean-Alert False-Positive Assessment at Scale (n=50) + Individual Investigation
 
@@ -103,13 +103,13 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`agent/run_nce8_clean_fp_eval.py`](file:///C:/agentsoc/agent/run_nce8_clean_fp_eval.py) (Evaluation script, modeled on `run_nce7_scale_eval.py`)
-  - [`agent/nce8_clean_fp_results.json`](file:///C:/agentsoc/agent/nce8_clean_fp_results.json) (Full per-alert results, 50 entries)
-  - [`agent/nce8_clean_fp_api_call_log.jsonl`](file:///C:/agentsoc/agent/nce8_clean_fp_api_call_log.jsonl) (API audit log, 50 entries)
-  - [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md) (Full per-alert evidence review and classification, 14 cases)
+  - [`agent/run_nce8_clean_fp_eval.py`](agent/run_nce8_clean_fp_eval.py) (Evaluation script, modeled on `run_nce7_scale_eval.py`)
+  - [`agent/nce8_clean_fp_results.json`](agent/nce8_clean_fp_results.json) (Full per-alert results, 50 entries)
+  - [`agent/nce8_clean_fp_api_call_log.jsonl`](agent/nce8_clean_fp_api_call_log.jsonl) (API audit log, 50 entries)
+  - [`nce8_clean_fp_investigation.md`](nce8_clean_fp_investigation.md) (Full per-alert evidence review and classification, 14 cases)
 - **Modified:**
-  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Expanded Clean-Alert FP section with Factor breakdown, measured/theoretical distinction, Case 13 callout, DuckDNS/WKSTN deep-dives, nuanced summary)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This session entry)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Expanded Clean-Alert FP section with Factor breakdown, measured/theoretical distinction, Case 13 callout, DuckDNS/WKSTN deep-dives, nuanced summary)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (This session entry)
 
 ### Test verification:
 - `pytest tests/ -q`: 343 passed, 1 deselected (0 failures). No regressions.
@@ -143,8 +143,8 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 - **Created:**
   - `t1071_mislabeling_investigation.md` (Full per-alert evidence analysis and classification report)
 - **Modified:**
-  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Replaced Open Design Question with Resolved Three Factors section; updated What's NOT Built Yet and Immediate Next Step)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This session entry)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Replaced Open Design Question with Resolved Three Factors section; updated What's NOT Built Yet and Immediate Next Step)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (This session entry)
 
 ## 2026-09-06 — Session: Phase NCE-7-SCALE — Structural Pipeline Evaluation at Scale (n=90)
 
@@ -175,12 +175,12 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`agent/run_nce7_scale_eval.py`](file:///C:/agentsoc/agent/run_nce7_scale_eval.py) (Full n=90 evaluation script with checkpointing, audit logging, dry-run)
-  - [`agent/nce7_scale_results.json`](file:///C:/agentsoc/agent/nce7_scale_results.json) (Full 90-alert results)
-  - [`agent/nce7_scale_api_call_log.jsonl`](file:///C:/agentsoc/agent/nce7_scale_api_call_log.jsonl) (API audit log, 80 entries)
+  - [`agent/run_nce7_scale_eval.py`](agent/run_nce7_scale_eval.py) (Full n=90 evaluation script with checkpointing, audit logging, dry-run)
+  - [`agent/nce7_scale_results.json`](agent/nce7_scale_results.json) (Full 90-alert results)
+  - [`agent/nce7_scale_api_call_log.jsonl`](agent/nce7_scale_api_call_log.jsonl) (API audit log, 80 entries)
 - **Modified:**
-  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Phase NCE-7-SCALE section, updated What's NOT Built Yet, updated Immediate Next Step)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This session entry)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Phase NCE-7-SCALE section, updated What's NOT Built Yet, updated Immediate Next Step)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (This session entry)
 
 ## 2026-09-05 — Session: Phase NCE-7 — Structural Pipeline Comparative Evaluation
 
@@ -213,11 +213,11 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Modified:**
-  - [`agent/run_nce7_comparative_eval.py`](file:///C:/agentsoc/agent/run_nce7_comparative_eval.py) (MONITOR_ONLY bug fix, ScoredAction field fix, resume-safety, incremental persistence)
-  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Phase NCE-7 section, updated What's NOT Built Yet, updated Immediate Next Step)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This session entry)
+  - [`agent/run_nce7_comparative_eval.py`](agent/run_nce7_comparative_eval.py) (MONITOR_ONLY bug fix, ScoredAction field fix, resume-safety, incremental persistence)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Phase NCE-7 section, updated What's NOT Built Yet, updated Immediate Next Step)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (This session entry)
 - **Created:**
-  - [`agent/nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce7_comparative_results.json) (Full 10-slot results)
+  - [`agent/nce7_comparative_results.json`](agent/nce7_comparative_results.json) (Full 10-slot results)
 
 ## 2026-08-19 — Session: Subtle payload discovery + cross-model validation
 
@@ -243,25 +243,25 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`GUIDE_Dataset/processed/generate_hardersubtle_ambiguous_9.py`](file:///C:/agentsoc/GUIDE_Dataset/processed/generate_hardersubtle_ambiguous_9.py) (Generation script for ambiguous harder-subtle alerts)
-  - [`GUIDE_Dataset/processed/guide_hardersubtle_ambiguous_9_alerts.json`](file:///C:/agentsoc/GUIDE_Dataset/processed/guide_hardersubtle_ambiguous_9_alerts.json) (Generated dataset)
-  - [`agent/run_hardersubtle_ambiguous_eval.py`](file:///C:/agentsoc/agent/run_hardersubtle_ambiguous_eval.py) (Evaluation loop script)
-  - [`agent/hardersubtle_ambiguous_eval_results_flashlite.json`](file:///C:/agentsoc/agent/hardersubtle_ambiguous_eval_results_flashlite.json) (Results file)
-  - [`agent/measure_clean_confidence.py`](file:///C:/agentsoc/agent/measure_clean_confidence.py) (Confidence measurement script)
-  - [`agent/clean_confidence_measurements.json`](file:///C:/agentsoc/agent/clean_confidence_measurements.json) (Saved confidence results)
-  - [`agent/run_fabricated_evidence_scale_eval.py`](file:///C:/agentsoc/agent/run_fabricated_evidence_scale_eval.py) (Fabricated evidence scale evaluation script)
-  - [`agent/fabricated_evidence_scale_results.json`](file:///C:/agentsoc/agent/fabricated_evidence_scale_results.json) (Scaled evaluation results)
-  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Status overview)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (Chronological log)
+  - [`GUIDE_Dataset/processed/generate_hardersubtle_ambiguous_9.py`](GUIDE_Dataset/processed/generate_hardersubtle_ambiguous_9.py) (Generation script for ambiguous harder-subtle alerts)
+  - [`GUIDE_Dataset/processed/guide_hardersubtle_ambiguous_9_alerts.json`](GUIDE_Dataset/processed/guide_hardersubtle_ambiguous_9_alerts.json) (Generated dataset)
+  - [`agent/run_hardersubtle_ambiguous_eval.py`](agent/run_hardersubtle_ambiguous_eval.py) (Evaluation loop script)
+  - [`agent/hardersubtle_ambiguous_eval_results_flashlite.json`](agent/hardersubtle_ambiguous_eval_results_flashlite.json) (Results file)
+  - [`agent/measure_clean_confidence.py`](agent/measure_clean_confidence.py) (Confidence measurement script)
+  - [`agent/clean_confidence_measurements.json`](agent/clean_confidence_measurements.json) (Saved confidence results)
+  - [`agent/run_fabricated_evidence_scale_eval.py`](agent/run_fabricated_evidence_scale_eval.py) (Fabricated evidence scale evaluation script)
+  - [`agent/fabricated_evidence_scale_results.json`](agent/fabricated_evidence_scale_results.json) (Scaled evaluation results)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Status overview)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (Chronological log)
 - **Modified:**
-  - [`agent/run_hardersubtle_eval.py`](file:///C:/agentsoc/agent/run_hardersubtle_eval.py) (SMOKE_TEST_ONLY = False)
+  - [`agent/run_hardersubtle_eval.py`](agent/run_hardersubtle_eval.py) (SMOKE_TEST_ONLY = False)
 
 ## 2026-08-20 — Session: Defended Pipeline Recovery Evaluation & Groq Re-evaluation
 
 ### What was tried:
-- **Defended Agent Implementation:** Built [`agent/defended_agent.py`](file:///C:/agentsoc/agent/defended_agent.py), combining Evidence Risk Assessment (ERA), Security Policy Constraints (SPC) XML wrapping, strict JSON-mode instructions, and a Schema Gate with safe fallback for invalid responses.
-- **Recovery Evaluation:** Built [`agent/run_defended_recovery_eval.py`](file:///C:/agentsoc/agent/run_defended_recovery_eval.py) to re-evaluate all 27 hijacked alerts compiled across prior undefended runs (11 Gemini, 16 Groq).
-- **Network Failure & Re-evaluation:** Encountered 403 `PermissionDeniedError` on all 16 Groq calls during initial execution (caused by network environment block, initially misdiagnosed as code error). After switching network connections, implemented `--groq-only` selective re-execution to re-run and merge the 16 Groq calls into [`agent/defended_recovery_results.json`](file:///C:/agentsoc/agent/defended_recovery_results.json) without touching valid Gemini results.
+- **Defended Agent Implementation:** Built [`agent/defended_agent.py`](agent/defended_agent.py), combining Evidence Risk Assessment (ERA), Security Policy Constraints (SPC) XML wrapping, strict JSON-mode instructions, and a Schema Gate with safe fallback for invalid responses.
+- **Recovery Evaluation:** Built [`agent/run_defended_recovery_eval.py`](agent/run_defended_recovery_eval.py) to re-evaluate all 27 hijacked alerts compiled across prior undefended runs (11 Gemini, 16 Groq).
+- **Network Failure & Re-evaluation:** Encountered 403 `PermissionDeniedError` on all 16 Groq calls during initial execution (caused by network environment block, initially misdiagnosed as code error). After switching network connections, implemented `--groq-only` selective re-execution to re-run and merge the 16 Groq calls into [`agent/defended_recovery_results.json`](agent/defended_recovery_results.json) without touching valid Gemini results.
 
 ### What worked:
 - **Pipeline Execution:** The defended pipeline executed cleanly for all 27 entries after resolving network connectivity, achieving 100% valid schema generation (`schema_valid = True`) with 0 API failures.
@@ -278,18 +278,18 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`agent/defended_agent.py`](file:///C:/agentsoc/agent/defended_agent.py) (Defended agent architecture with ERA, SPC, JSON-mode, schema gate)
-  - [`agent/run_defended_recovery_eval.py`](file:///C:/agentsoc/agent/run_defended_recovery_eval.py) (27-alert recovery evaluation framework with `--groq-only` filter)
-  - [`agent/defended_recovery_results.json`](file:///C:/agentsoc/agent/defended_recovery_results.json) (27-entry merged recovery results)
-  - [`risk_assessment/detectors/approval_claim_detector.py`](file:///C:/agentsoc/risk_assessment/detectors/approval_claim_detector.py) (Dedicated structural co-occurrence detector)
+  - [`agent/defended_agent.py`](agent/defended_agent.py) (Defended agent architecture with ERA, SPC, JSON-mode, schema gate)
+  - [`agent/run_defended_recovery_eval.py`](agent/run_defended_recovery_eval.py) (27-alert recovery evaluation framework with `--groq-only` filter)
+  - [`agent/defended_recovery_results.json`](agent/defended_recovery_results.json) (27-entry merged recovery results)
+  - [`risk_assessment/detectors/approval_claim_detector.py`](risk_assessment/detectors/approval_claim_detector.py) (Dedicated structural co-occurrence detector)
 - **Modified:**
-  - [`risk_assessment/exemplars.py`](file:///C:/agentsoc/risk_assessment/exemplars.py) (Added Category 8: Fabricated evidence & false approval claims)
-  - [`risk_assessment/registry.py`](file:///C:/agentsoc/risk_assessment/registry.py) (Registered ApprovalClaimDetector)
+  - [`risk_assessment/exemplars.py`](risk_assessment/exemplars.py) (Added Category 8: Fabricated evidence & false approval claims)
+  - [`risk_assessment/registry.py`](risk_assessment/registry.py) (Registered ApprovalClaimDetector)
 
 ## 2026-08-21 — Session: Dual-Signal False Positive Testing & Unit Test Suite Finalization
 
 ### What was tried:
-- **Dual-Signal Suppression List & Keyword Tightening Implementation:** Added a distancing-language suppression list (`"prior"`, `"previous"`, `"last quarter"`, `"last year"`, `"historical"`, `"unrelated to"`, `"earlier"`, `"in the past"`) to [`risk_assessment/detectors/approval_claim_detector.py`](file:///C:/agentsoc/risk_assessment/detectors/approval_claim_detector.py).
+- **Dual-Signal Suppression List & Keyword Tightening Implementation:** Added a distancing-language suppression list (`"prior"`, `"previous"`, `"last quarter"`, `"last year"`, `"historical"`, `"unrelated to"`, `"earlier"`, `"in the past"`) to [`risk_assessment/detectors/approval_claim_detector.py`](risk_assessment/detectors/approval_claim_detector.py).
 - **Keyword List Tightening:** Removed generic operational words like `"verified"` and standalone `"approved"` from the disposition keyword list; prioritized specific security override structures like `"disposition="`, `"classification=trusted"`, `"false positive"`, `"benign-fp"`, `"no further action"`, `"closed-resolved"`, `"authorized-admin-triage"`.
 - **Validation Run:** Wrote `scratch/run_full_validation.py` to evaluate the detector updates against the 10 unique attacks and 3 benign logs.
 - **Unit Test Suite Finalization:** Updated unit tests in `tests/test_risk_assessment_session2.py` to verify suppressed cases and ran the full pytest suite.
@@ -330,14 +330,14 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`scratch/test_dual_signal.py`](file:///c:/agentsoc/scratch/test_dual_signal.py) (Benign dual-signal validation script)
-  - [`scratch/run_full_validation.py`](file:///c:/agentsoc/scratch/run_full_validation.py) (Validation script generating scores)
-  - [`agent/benign_log_corpus.json`](file:///c:/agentsoc/agent/benign_log_corpus.json) (Generated n=30 benign logs corpus)
-  - [`agent/generate_and_eval_benign_corpus.py`](file:///c:/agentsoc/agent/generate_and_eval_benign_corpus.py) (Corpus generator and evaluator script)
+  - [`scratch/test_dual_signal.py`](scratch/test_dual_signal.py) (Benign dual-signal validation script)
+  - [`scratch/run_full_validation.py`](scratch/run_full_validation.py) (Validation script generating scores)
+  - [`agent/benign_log_corpus.json`](agent/benign_log_corpus.json) (Generated n=30 benign logs corpus)
+  - [`agent/generate_and_eval_benign_corpus.py`](agent/generate_and_eval_benign_corpus.py) (Corpus generator and evaluator script)
 - **Modified:**
-  - [`risk_assessment/detectors/approval_claim_detector.py`](file:///c:/agentsoc/risk_assessment/detectors/approval_claim_detector.py) (Added suppression list and tightened keywords)
-  - [`tests/test_risk_assessment_session2.py`](file:///c:/agentsoc/tests/test_risk_assessment_session2.py) (Added TestApprovalClaimDetector unit tests with suppression checks)
-  - [`agent/test_gemini_connection.py`](file:///c:/agentsoc/agent/test_gemini_connection.py) (Wrapped connection logic in main block)
+  - [`risk_assessment/detectors/approval_claim_detector.py`](risk_assessment/detectors/approval_claim_detector.py) (Added suppression list and tightened keywords)
+  - [`tests/test_risk_assessment_session2.py`](tests/test_risk_assessment_session2.py) (Added TestApprovalClaimDetector unit tests with suppression checks)
+  - [`agent/test_gemini_connection.py`](agent/test_gemini_connection.py) (Wrapped connection logic in main block)
 
 ## 2026-08-22 — Session: Large-Scale Evaluation & Methodological Small-Sample Bias Discovery
 
@@ -371,18 +371,18 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`GUIDE_Dataset/processed/generate_strongblunt_hardersubtle_scale_42.py`](file:///C:/agentsoc/GUIDE_Dataset/processed/generate_strongblunt_hardersubtle_scale_42.py) (Scale-up generation script)
-  - [`GUIDE_Dataset/processed/guide_strongblunt_hardersubtle_scale_42_alerts.json`](file:///C:/agentsoc/GUIDE_Dataset/processed/guide_strongblunt_hardersubtle_scale_42_alerts.json) (42 scale alerts dataset)
-  - [`agent/run_subtle_scale_eval.py`](file:///C:/agentsoc/agent/run_subtle_scale_eval.py) (Subtle scale evaluation loop)
-  - [`agent/subtle_scale_results.json`](file:///C:/agentsoc/agent/subtle_scale_results.json) (Subtle scale results)
-  - [`agent/run_strongblunt_hardersubtle_scale_eval.py`](file:///C:/agentsoc/agent/run_strongblunt_hardersubtle_scale_eval.py) (Strongblunt & Hardersubtle scale evaluation loop)
-  - [`agent/strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) (Results file)
-  - [`agent/run_defended_recovery_delta_eval.py`](file:///C:/agentsoc/agent/run_defended_recovery_delta_eval.py) (Delta recovery evaluation loop)
-  - [`agent/defended_recovery_delta_results.json`](file:///C:/agentsoc/agent/defended_recovery_delta_results.json) (Delta recovery results)
+  - [`GUIDE_Dataset/processed/generate_strongblunt_hardersubtle_scale_42.py`](GUIDE_Dataset/processed/generate_strongblunt_hardersubtle_scale_42.py) (Scale-up generation script)
+  - [`GUIDE_Dataset/processed/guide_strongblunt_hardersubtle_scale_42_alerts.json`](GUIDE_Dataset/processed/guide_strongblunt_hardersubtle_scale_42_alerts.json) (42 scale alerts dataset)
+  - [`agent/run_subtle_scale_eval.py`](agent/run_subtle_scale_eval.py) (Subtle scale evaluation loop)
+  - [`agent/subtle_scale_results.json`](agent/subtle_scale_results.json) (Subtle scale results)
+  - [`agent/run_strongblunt_hardersubtle_scale_eval.py`](agent/run_strongblunt_hardersubtle_scale_eval.py) (Strongblunt & Hardersubtle scale evaluation loop)
+  - [`agent/strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) (Results file)
+  - [`agent/run_defended_recovery_delta_eval.py`](agent/run_defended_recovery_delta_eval.py) (Delta recovery evaluation loop)
+  - [`agent/defended_recovery_delta_results.json`](agent/defended_recovery_delta_results.json) (Delta recovery results)
 - **Modified:**
-  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Updated Master Results Table, added small-sample bias finding, updated recovery stats and abort findings)
-  - [`agent/defended_recovery_results.json`](file:///C:/agentsoc/agent/defended_recovery_results.json) (Merged 58 recovery results)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (Added today's session log)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Updated Master Results Table, added small-sample bias finding, updated recovery stats and abort findings)
+  - [`agent/defended_recovery_results.json`](agent/defended_recovery_results.json) (Merged 58 recovery results)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (Added today's session log)
 
 ## 2026-08-29 — Session: Knowledge Graph, SSE, RSEM, and NCE Contract (Scope Expansion Phase 1)
 
@@ -409,18 +409,18 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`perception/knowledge_graph.py`](file:///C:/agentsoc/perception/knowledge_graph.py) (NetworkX MultiDiGraph-backed knowledge store)
-  - [`perception/sse.py`](file:///C:/agentsoc/perception/sse.py) (Structural Simulation Engine)
-  - [`perception/rsem.py`](file:///C:/agentsoc/perception/rsem.py) (Risk Scoring and Evaluation Module)
-  - [`perception/nce_contract.py`](file:///C:/agentsoc/perception/nce_contract.py) (NCE data contract + mock generator)
-  - [`tests/test_knowledge_graph.py`](file:///C:/agentsoc/tests/test_knowledge_graph.py) (Knowledge graph tests including TestServiceNodeAccessors)
-  - [`tests/test_sse.py`](file:///C:/agentsoc/tests/test_sse.py) (SSE tests)
-  - [`tests/test_rsem.py`](file:///C:/agentsoc/tests/test_rsem.py) (RSEM tests including action-type differentiation)
-  - [`tests/test_nce_contract.py`](file:///C:/agentsoc/tests/test_nce_contract.py) (NCE contract tests including E2E NCE→SSE→RSEM integration)
+  - [`perception/knowledge_graph.py`](perception/knowledge_graph.py) (NetworkX MultiDiGraph-backed knowledge store)
+  - [`perception/sse.py`](perception/sse.py) (Structural Simulation Engine)
+  - [`perception/rsem.py`](perception/rsem.py) (Risk Scoring and Evaluation Module)
+  - [`perception/nce_contract.py`](perception/nce_contract.py) (NCE data contract + mock generator)
+  - [`tests/test_knowledge_graph.py`](tests/test_knowledge_graph.py) (Knowledge graph tests including TestServiceNodeAccessors)
+  - [`tests/test_sse.py`](tests/test_sse.py) (SSE tests)
+  - [`tests/test_rsem.py`](tests/test_rsem.py) (RSEM tests including action-type differentiation)
+  - [`tests/test_nce_contract.py`](tests/test_nce_contract.py) (NCE contract tests including E2E NCE→SSE→RSEM integration)
 - **Modified:**
-  - [`requirements.txt`](file:///C:/agentsoc/requirements.txt) (Added networkx>=3.4)
-  - [`perception/knowledge_graph.py`](file:///C:/agentsoc/perception/knowledge_graph.py) (Post-build: added HOSTED_ON edge fix for seeded db-primary, added service node accessor methods)
-  - [`perception/rsem.py`](file:///C:/agentsoc/perception/rsem.py) (Post-build: action-type differentiation fix — REVOKE/RESTRICT/QUARANTINE now produce genuinely different graph mutations)
+  - [`requirements.txt`](requirements.txt) (Added networkx>=3.4)
+  - [`perception/knowledge_graph.py`](perception/knowledge_graph.py) (Post-build: added HOSTED_ON edge fix for seeded db-primary, added service node accessor methods)
+  - [`perception/rsem.py`](perception/rsem.py) (Post-build: action-type differentiation fix — REVOKE/RESTRICT/QUARANTINE now produce genuinely different graph mutations)
 
 ## 2026-09-15 — Session: ApprovalClaimDetector Structural Fix (Field-Injection vs. Narrative Shape)
 
@@ -452,8 +452,8 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Modified:**
-  - [`risk_assessment/detectors/approval_claim_detector.py`](file:///C:/agentsoc/risk_assessment/detectors/approval_claim_detector.py) (Structural redesign: field-injection vs. narrative tiers, proximity-scoped suppression, nested-quote parsing fix, `closed as fp` keyword addition — committed as `e25e3b0`, combining what were intended as two separate commits)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This entry)
+  - [`risk_assessment/detectors/approval_claim_detector.py`](risk_assessment/detectors/approval_claim_detector.py) (Structural redesign: field-injection vs. narrative tiers, proximity-scoped suppression, nested-quote parsing fix, `closed as fp` keyword addition — committed as `e25e3b0`, combining what were intended as two separate commits)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (This entry)
 
 ### n=100 Scale Validation (same-day follow-up)
 
@@ -496,13 +496,13 @@ This is not a bug in any layer — each is behaving correctly given its inputs. 
 
 ### Files created/modified:
 - **Created:**
-  - [`tests/test_nce_evidentiary_threshold.py`](file:///C:/agentsoc/tests/test_nce_evidentiary_threshold.py) (39 unit tests for NCE evidentiary threshold filter)
-  - [`scratch/check_t1071_filter_on_records.py`](file:///C:/agentsoc/scratch/check_t1071_filter_on_records.py) (Offline replay evaluation script)
-  - [`scratch/inspect_17_dropped_alerts.py`](file:///C:/agentsoc/scratch/inspect_17_dropped_alerts.py) (17-case evidence inspection script)
+  - [`tests/test_nce_evidentiary_threshold.py`](tests/test_nce_evidentiary_threshold.py) (39 unit tests for NCE evidentiary threshold filter)
+  - [`scratch/check_t1071_filter_on_records.py`](scratch/check_t1071_filter_on_records.py) (Offline replay evaluation script)
+  - [`scratch/inspect_17_dropped_alerts.py`](scratch/inspect_17_dropped_alerts.py) (17-case evidence inspection script)
 - **Modified:**
-  - [`perception/nce_engine.py`](file:///C:/agentsoc/perception/nce_engine.py) (Added `_apply_t1071_evidentiary_filter`, `_has_external_ip`, `_has_non_internal_domain` with positive public TLD regex, `_has_beaconing_command`)
-  - [`PROJECT_STATUS.md`](file:///C:/agentsoc/PROJECT_STATUS.md) (Documented NCE evidentiary threshold results, updated clean FP section, marked item resolved)
-  - [`RESEARCH_LOG.md`](file:///C:/agentsoc/RESEARCH_LOG.md) (This entry)
+  - [`perception/nce_engine.py`](perception/nce_engine.py) (Added `_apply_t1071_evidentiary_filter`, `_has_external_ip`, `_has_non_internal_domain` with positive public TLD regex, `_has_beaconing_command`)
+  - [`PROJECT_STATUS.md`](PROJECT_STATUS.md) (Documented NCE evidentiary threshold results, updated clean FP section, marked item resolved)
+  - [`RESEARCH_LOG.md`](RESEARCH_LOG.md) (This entry)
 
 ## 2026-09-15 — Session: Detector FPR Scale-up & Nested-Quote Bug Fix
 ### What was tried
@@ -1065,3 +1065,20 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Pending (quota-bound, resume when caps reset)
 - Groq dev run: ~740 alerts + 23 NCE errors (Groq TPD 200k/key/day).
 - Undefended Gemini dev baseline: ~630 alerts (Gemini 500 requests/key/day).
+
+## 2026-10-11 — Session: project moved C:\agentsoc -> D:\agentsoc; post-move checks
+
+### What was tried
+- Recreated the venv on D: (`python -m venv .venv`, `pip install -r requirements-lock.txt`; torch 2.13.0+cpu; `pip check` clean).
+- Replaced hard-coded `C:\agentsoc` paths in 17 ad-hoc scripts (11 in `experiments/`: `test_*.py`, `scratch_*.py`, `analyze_*.py`; 6 in `scratch/`) with roots derived from `Path(__file__).resolve().parents[1]` (or the `os.path` equivalent). The three `experiments/scratch_*update*.py` scripts rewrite the tracking docs when run; only their paths were changed, they were not run.
+- Rewrote 162 `file:///C:/agentsoc/...` links (81 in `PROJECT_STATUS.md`, 81 in `RESEARCH_LOG.md`; 13 of them lowercase `c:`) to repo-relative links. Every rewritten target exists. The handoff had estimated 61 / 81 / 4 (incl. `agentsoc_context_v2.md`); the real counts were 81 / 81 / 0.
+
+### What was found
+- Imports OK (torch, sentence_transformers, google.genai, openai, networkx); `.env` present with 5 Gemini + 5 Groq keys (counts only).
+- `D:\agentsoc_data\dedale\` holds, besides `README.md`, three zips from the download stopped earlier on 2026-10-11 (the handoff said only the README was downloaded): `system_logs_labels.zip` (2.7 MB, valid, 8 entries), `suricata_alerts.zip` (24.6 MB, valid, 1 entry), `userbehaviour_logs.zip` (1.2 MB, **truncated — not a valid zip**). Left in place pending the user's dataset choice.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 538 passed, 1 deselected (unchanged).
+
+### Files created/modified
+- Modified: 17 scripts listed above, `PROJECT_STATUS.md` (Environment Setup: venv recreation, project location; links), `RESEARCH_LOG.md` (links, this entry)

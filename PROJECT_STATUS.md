@@ -122,19 +122,19 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 
 | Directory / Module | Description | Build & Test Status |
 |---|---|---|
-| [`perception/`](file:///C:/agentsoc/perception/) | Maps raw alerts to a unified schema, classifies fields into structured/free-text (trust separation), enriches context, noise reduction (clustering), and logs execution. | Built & Tested |
-| [`prompt_construction/`](file:///C:/agentsoc/prompt_construction/) | Constructs prompts, enforces length budgets (truncation), and serializes context and untrusted evidence securely via XML entity escaping to prevent delimiter breakouts. | Built & Tested |
-| [`risk_assessment/`](file:///C:/agentsoc/risk_assessment/) | Implements the Evidence Risk Assessment (ERA) including homoglyph/base64 normalization, Regex and Semantic FieldDetectors, SplitField IncidentDetector, orchestrator risk fusion, and integration adapter. | Built & Tested |
-| [`agent/`](file:///C:/agentsoc/agent/) | Contains undefended baseline agents, evaluation scripts, and measurement tools for running triage simulations and measuring hijack rates. | Built & Tested |
-| [`GUIDE_Dataset/`](file:///C:/agentsoc/GUIDE_Dataset/) | Stores processed/raw incident telemetry datasets, CSV records, and generated evaluation subsets (subtle, hardersubtle, strongblunt, ambiguous). | Built & Tested |
-| [`perception/knowledge_graph.py`](file:///C:/agentsoc/perception/knowledge_graph.py) | Real graph-backed knowledge store (separate, parallel structure to InMemoryKnowledgeStore, importing it only for one-time seed-data migration at initialization, not a subclass); hostname classification, lazy node creation, service dependency tracking | Built & Tested |
-| [`perception/sse.py`](file:///C:/agentsoc/perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
-| [`perception/rsem.py`](file:///C:/agentsoc/perception/rsem.py) | Risk Scoring and Evaluation Module — real graph-based containment simulation and business-impact scoring, action ranking | Built & Tested |
-| [`perception/nce_contract.py`](file:///C:/agentsoc/perception/nce_contract.py) | NCE output data contract + LLM-free mock generator (the real LLM NCE is in nce_engine.py) | Built & Tested |
-| [`perception/nce_engine.py`](file:///C:/agentsoc/perception/nce_engine.py) | NCE LLM implementation and evidentiary threshold filter for T1071 | Built & Tested |
-| [`perception/action_playbook.py`](file:///C:/agentsoc/perception/action_playbook.py) | Action/Playbook Layer with guardrails and simulated execution (there is no `action/` directory) | Built & Tested |
-| [`monitoring/`](file:///C:/agentsoc/monitoring/) | Streamlit Live Monitoring interface (replay of archived alerts) | Built & Tested |
-| [`experiments/`](file:///C:/agentsoc/experiments/) | Experiment 1 harnesses, analysis scripts (`analyze_paired`, `filter_sensitivity`, `t1071_noise_floor`), metrics, tests | Built; test hygiene issues (see Known limitations) |
+| [`perception/`](perception/) | Maps raw alerts to a unified schema, classifies fields into structured/free-text (trust separation), enriches context, noise reduction (clustering), and logs execution. | Built & Tested |
+| [`prompt_construction/`](prompt_construction/) | Constructs prompts, enforces length budgets (truncation), and serializes context and untrusted evidence securely via XML entity escaping to prevent delimiter breakouts. | Built & Tested |
+| [`risk_assessment/`](risk_assessment/) | Implements the Evidence Risk Assessment (ERA) including homoglyph/base64 normalization, Regex and Semantic FieldDetectors, SplitField IncidentDetector, orchestrator risk fusion, and integration adapter. | Built & Tested |
+| [`agent/`](agent/) | Contains undefended baseline agents, evaluation scripts, and measurement tools for running triage simulations and measuring hijack rates. | Built & Tested |
+| [`GUIDE_Dataset/`](GUIDE_Dataset/) | Stores processed/raw incident telemetry datasets, CSV records, and generated evaluation subsets (subtle, hardersubtle, strongblunt, ambiguous). | Built & Tested |
+| [`perception/knowledge_graph.py`](perception/knowledge_graph.py) | Real graph-backed knowledge store (separate, parallel structure to InMemoryKnowledgeStore, importing it only for one-time seed-data migration at initialization, not a subclass); hostname classification, lazy node creation, service dependency tracking | Built & Tested |
+| [`perception/sse.py`](perception/sse.py) | Structural Simulation Engine — non-LLM multi-hop graph-feasibility checker for 7 MITRE ATT&CK techniques | Built & Tested |
+| [`perception/rsem.py`](perception/rsem.py) | Risk Scoring and Evaluation Module — real graph-based containment simulation and business-impact scoring, action ranking | Built & Tested |
+| [`perception/nce_contract.py`](perception/nce_contract.py) | NCE output data contract + LLM-free mock generator (the real LLM NCE is in nce_engine.py) | Built & Tested |
+| [`perception/nce_engine.py`](perception/nce_engine.py) | NCE LLM implementation and evidentiary threshold filter for T1071 | Built & Tested |
+| [`perception/action_playbook.py`](perception/action_playbook.py) | Action/Playbook Layer with guardrails and simulated execution (there is no `action/` directory) | Built & Tested |
+| [`monitoring/`](monitoring/) | Streamlit Live Monitoring interface (replay of archived alerts) | Built & Tested |
+| [`experiments/`](experiments/) | Experiment 1 harnesses, analysis scripts (`analyze_paired`, `filter_sensitivity`, `t1071_noise_floor`), metrics, tests | Built; test hygiene issues (see Known limitations) |
 
 The Perception Layer's Situational Contextualization component reads the flat `InMemoryKnowledgeStore` for ImmutableContext facts (user role, asset criticality). The evaluation harness (Section V) constructs NCE input directly and does not invoke PerceptionPipeline or Contextualizer; the flat `InMemoryKnowledgeStore` therefore plays no role in any reported result. It is exercised by the Live Monitoring tab (which runs PerceptionPipeline on replayed records; a replay, NOT real-time monitoring) and by the defended triage agent. Streamlit "Live Mode" is a separate panel that makes real NCE API calls and does not run Perception.
 
@@ -152,6 +152,8 @@ The Internal Knowledge Store is a NetworkX-backed multi-hop directed graph (`Kno
   ```powershell
   .venv\Scripts\activate
   ```
+  To recreate it (e.g. after moving the project): `python -m venv .venv`, then `.venv\Scripts\python -m pip install -r requirements-lock.txt` (exact versions used for all results; `requirements.txt` holds the minimums).
+- **Project location (2026-10-11):** moved from `C:\agentsoc` to `D:\agentsoc`; downloaded datasets live outside the repo in `D:\agentsoc_data\`. No code depends on the location: core code uses `Path(__file__)`-relative paths, and links in this file and `RESEARCH_LOG.md` are repo-relative.
 - **API Keys Required (Names Only):**
   - `GEMINI_API_KEYS` (comma-separated; falls back to singular `GEMINI_API_KEY`)
   - `GROQ_API_KEYS` (comma-separated; falls back to singular `GROQ_API_KEY`)
@@ -175,49 +177,49 @@ This table lists overall and per-category hijack rates (where a hijack is define
 
 | Model | Payload Family | n | Hijack Rate (Verdict Flip / Any Hijack) | Source File |
 |---|---|---|---|---|
-| `gemini-3.6-flash` | `role_play` (Baseline)* | 3 | 0.0% / 0.0% | [`baseline_eval_results.json`](file:///C:/agentsoc/agent/baseline_eval_results.json) |
-| `gemini-3.6-flash` | `encoded` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results.json`](file:///C:/agentsoc/agent/baseline_eval_results.json) |
-| `gemini-3.6-flash` | `nested_instruction` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results.json`](file:///C:/agentsoc/agent/baseline_eval_results.json) |
-| `gemini-3.6-flash` | `fake_system_tag` (Baseline)* | 2 | 0.0% / 0.0% | [`baseline_eval_results.json`](file:///C:/agentsoc/agent/baseline_eval_results.json) |
-| `gemini-3.6-flash` | `direct_override` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results.json`](file:///C:/agentsoc/agent/baseline_eval_results.json) |
-| `gemini-3.1-flash-lite` | `role_play` (Baseline)* | 4 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](file:///C:/agentsoc/agent/baseline_eval_results_flashlite.json) |
-| `gemini-3.1-flash-lite` | `encoded` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](file:///C:/agentsoc/agent/baseline_eval_results_flashlite.json) |
-| `gemini-3.1-flash-lite` | `nested_instruction` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](file:///C:/agentsoc/agent/baseline_eval_results_flashlite.json) |
-| `gemini-3.1-flash-lite` | `fake_system_tag` (Baseline)* | 2 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](file:///C:/agentsoc/agent/baseline_eval_results_flashlite.json) |
-| `gemini-3.1-flash-lite` | `direct_override` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](file:///C:/agentsoc/agent/baseline_eval_results_flashlite.json) |
-| `openai/gpt-oss-20b` (Groq) | `role_play` (Baseline)* | 4 | 50.0% / 50.0% | [`baseline_eval_results_groq.json`](file:///C:/agentsoc/agent/baseline_eval_results_groq.json) |
-| `openai/gpt-oss-20b` (Groq) | `encoded` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_groq.json`](file:///C:/agentsoc/agent/baseline_eval_results_groq.json) |
-| `openai/gpt-oss-20b` (Groq) | `nested_instruction` (Baseline)* | 1 | 100.0% / 100.0% | [`baseline_eval_results_groq.json`](file:///C:/agentsoc/agent/baseline_eval_results_groq.json) |
-| `openai/gpt-oss-20b` (Groq) | `fake_system_tag` (Baseline)* | 2 | 0.0% / 0.0% | [`baseline_eval_results_groq.json`](file:///C:/agentsoc/agent/baseline_eval_results_groq.json) |
-| `openai/gpt-oss-20b` (Groq) | `direct_override` (Baseline)* | 1 | 0.0% / 100.0% | [`baseline_eval_results_groq.json`](file:///C:/agentsoc/agent/baseline_eval_results_groq.json) |
-| `gemini-3.6-flash` | `fabricated_evidence` (Subtle) | 3 | INVALID (RESOURCE_EXHAUSTED) | [`subtle_eval_results.json`](file:///C:/agentsoc/agent/subtle_eval_results.json) |
-| `gemini-3.6-flash` | `cross_field_split` (Subtle) | 3 | INVALID (RESOURCE_EXHAUSTED) | [`subtle_eval_results.json`](file:///C:/agentsoc/agent/subtle_eval_results.json) |
-| `gemini-3.6-flash` | `fake_output_injection` (Subtle) | 3 | INVALID (RESOURCE_EXHAUSTED) | [`subtle_eval_results.json`](file:///C:/agentsoc/agent/subtle_eval_results.json) |
-| `gemini-3.1-flash-lite` | `fabricated_evidence` (Subtle + Scale) | 10 | 90.0% / 90.0% | [`subtle_eval_results_flashlite.json`](file:///C:/agentsoc/agent/subtle_eval_results_flashlite.json) + [`fabricated_evidence_scale_results.json`](file:///C:/agentsoc/agent/fabricated_evidence_scale_results.json) |
-| `gemini-3.1-flash-lite` | `cross_field_split` (Subtle + Scale) | 10 | 0.0% / 0.0% | [`subtle_eval_results_flashlite.json`](file:///C:/agentsoc/agent/subtle_eval_results_flashlite.json) + [`subtle_scale_results.json`](file:///C:/agentsoc/agent/subtle_scale_results.json) |
-| `gemini-3.1-flash-lite` | `fake_output_injection` (Subtle + Scale) | 10 | 0.0% / 0.0% | [`subtle_eval_results_flashlite.json`](file:///C:/agentsoc/agent/subtle_eval_results_flashlite.json) + [`subtle_scale_results.json`](file:///C:/agentsoc/agent/subtle_scale_results.json) |
-| `openai/gpt-oss-20b` (Groq) | `fabricated_evidence` (Subtle)* | 3 | 100.0% / 100.0% | [`subtle_eval_results_groq.json`](file:///C:/agentsoc/agent/subtle_eval_results_groq.json) |
-| `openai/gpt-oss-20b` (Groq) | `cross_field_split` (Subtle + Scale) | 10 | 40.0% / 40.0% | [`subtle_eval_results_groq.json`](file:///C:/agentsoc/agent/subtle_eval_results_groq.json) + [`subtle_scale_results.json`](file:///C:/agentsoc/agent/subtle_scale_results.json) |
-| `openai/gpt-oss-20b` (Groq) | `fake_output_injection` (Subtle + Scale) | 10 | 60.0% / 60.0% | [`subtle_eval_results_groq.json`](file:///C:/agentsoc/agent/subtle_eval_results_groq.json) + [`subtle_scale_results.json`](file:///C:/agentsoc/agent/subtle_scale_results.json) |
-| `gemini-3.1-flash-lite` | `authority_escalation` (Blunt + Scale) | 10 | 20.0% / 20.0% | [`strongblunt_eval_results_flashlite.json`](file:///C:/agentsoc/agent/strongblunt_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `gemini-3.1-flash-lite` | `technique_stack` (Blunt + Scale) | 10 | 0.0% / 0.0% | [`strongblunt_eval_results_flashlite.json`](file:///C:/agentsoc/agent/strongblunt_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `gemini-3.1-flash-lite` | `obfuscated_trigger` (Blunt + Scale) | 10 | 0.0% / 0.0% | [`strongblunt_eval_results_flashlite.json`](file:///C:/agentsoc/agent/strongblunt_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `openai/gpt-oss-20b` (Groq) | `authority_escalation` (Blunt + Scale) | 10 | 70.0% / 70.0% | [`strongblunt_eval_results_groq.json`](file:///C:/agentsoc/agent/strongblunt_eval_results_groq.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `openai/gpt-oss-20b` (Groq) | `technique_stack` (Blunt + Scale) | 10 | 60.0% / 60.0% | [`strongblunt_eval_results_groq.json`](file:///C:/agentsoc/agent/strongblunt_eval_results_groq.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `openai/gpt-oss-20b` (Groq) | `obfuscated_trigger` (Blunt + Scale) | 10 | 70.0% / 70.0% | [`strongblunt_eval_results_groq.json`](file:///C:/agentsoc/agent/strongblunt_eval_results_groq.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `gemini-3.1-flash-lite` | `zero_imperative_evidence` (Harder-Subtle + Scale) | 10 | 20.0% / 20.0% | [`hardersubtle_eval_results_flashlite.json`](file:///C:/agentsoc/agent/hardersubtle_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `gemini-3.1-flash-lite` | `native_format_mimicry` (Harder-Subtle + Scale) | 10 | 0.0% / 0.0% | [`hardersubtle_eval_results_flashlite.json`](file:///C:/agentsoc/agent/hardersubtle_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `gemini-3.1-flash-lite` | `multi_source_corroboration` (Harder-Subtle + Scale) | 10 | 0.0% / 0.0% | [`hardersubtle_eval_results_flashlite.json`](file:///C:/agentsoc/agent/hardersubtle_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) |
-| `openai/gpt-oss-20b` (Groq) | `zero_imperative_evidence` (Harder-Subtle + Scale)* | 7 | 57.1% / 57.1% | [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) (Never tested originally) |
-| `openai/gpt-oss-20b` (Groq) | `native_format_mimicry` (Harder-Subtle + Scale)* | 7 | 42.9% / 42.9% | [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) (Never tested originally) |
-| `openai/gpt-oss-20b` (Groq) | `multi_source_corroboration` (Harder-Subtle + Scale)* | 7 | 14.3% / 14.3% | [`strongblunt_hardersubtle_scale_results.json`](file:///C:/agentsoc/agent/strongblunt_hardersubtle_scale_results.json) (Never tested originally) |
+| `gemini-3.6-flash` | `role_play` (Baseline)* | 3 | 0.0% / 0.0% | [`baseline_eval_results.json`](agent/baseline_eval_results.json) |
+| `gemini-3.6-flash` | `encoded` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results.json`](agent/baseline_eval_results.json) |
+| `gemini-3.6-flash` | `nested_instruction` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results.json`](agent/baseline_eval_results.json) |
+| `gemini-3.6-flash` | `fake_system_tag` (Baseline)* | 2 | 0.0% / 0.0% | [`baseline_eval_results.json`](agent/baseline_eval_results.json) |
+| `gemini-3.6-flash` | `direct_override` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results.json`](agent/baseline_eval_results.json) |
+| `gemini-3.1-flash-lite` | `role_play` (Baseline)* | 4 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](agent/baseline_eval_results_flashlite.json) |
+| `gemini-3.1-flash-lite` | `encoded` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](agent/baseline_eval_results_flashlite.json) |
+| `gemini-3.1-flash-lite` | `nested_instruction` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](agent/baseline_eval_results_flashlite.json) |
+| `gemini-3.1-flash-lite` | `fake_system_tag` (Baseline)* | 2 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](agent/baseline_eval_results_flashlite.json) |
+| `gemini-3.1-flash-lite` | `direct_override` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_flashlite.json`](agent/baseline_eval_results_flashlite.json) |
+| `openai/gpt-oss-20b` (Groq) | `role_play` (Baseline)* | 4 | 50.0% / 50.0% | [`baseline_eval_results_groq.json`](agent/baseline_eval_results_groq.json) |
+| `openai/gpt-oss-20b` (Groq) | `encoded` (Baseline)* | 1 | 0.0% / 0.0% | [`baseline_eval_results_groq.json`](agent/baseline_eval_results_groq.json) |
+| `openai/gpt-oss-20b` (Groq) | `nested_instruction` (Baseline)* | 1 | 100.0% / 100.0% | [`baseline_eval_results_groq.json`](agent/baseline_eval_results_groq.json) |
+| `openai/gpt-oss-20b` (Groq) | `fake_system_tag` (Baseline)* | 2 | 0.0% / 0.0% | [`baseline_eval_results_groq.json`](agent/baseline_eval_results_groq.json) |
+| `openai/gpt-oss-20b` (Groq) | `direct_override` (Baseline)* | 1 | 0.0% / 100.0% | [`baseline_eval_results_groq.json`](agent/baseline_eval_results_groq.json) |
+| `gemini-3.6-flash` | `fabricated_evidence` (Subtle) | 3 | INVALID (RESOURCE_EXHAUSTED) | [`subtle_eval_results.json`](agent/subtle_eval_results.json) |
+| `gemini-3.6-flash` | `cross_field_split` (Subtle) | 3 | INVALID (RESOURCE_EXHAUSTED) | [`subtle_eval_results.json`](agent/subtle_eval_results.json) |
+| `gemini-3.6-flash` | `fake_output_injection` (Subtle) | 3 | INVALID (RESOURCE_EXHAUSTED) | [`subtle_eval_results.json`](agent/subtle_eval_results.json) |
+| `gemini-3.1-flash-lite` | `fabricated_evidence` (Subtle + Scale) | 10 | 90.0% / 90.0% | [`subtle_eval_results_flashlite.json`](agent/subtle_eval_results_flashlite.json) + [`fabricated_evidence_scale_results.json`](agent/fabricated_evidence_scale_results.json) |
+| `gemini-3.1-flash-lite` | `cross_field_split` (Subtle + Scale) | 10 | 0.0% / 0.0% | [`subtle_eval_results_flashlite.json`](agent/subtle_eval_results_flashlite.json) + [`subtle_scale_results.json`](agent/subtle_scale_results.json) |
+| `gemini-3.1-flash-lite` | `fake_output_injection` (Subtle + Scale) | 10 | 0.0% / 0.0% | [`subtle_eval_results_flashlite.json`](agent/subtle_eval_results_flashlite.json) + [`subtle_scale_results.json`](agent/subtle_scale_results.json) |
+| `openai/gpt-oss-20b` (Groq) | `fabricated_evidence` (Subtle)* | 3 | 100.0% / 100.0% | [`subtle_eval_results_groq.json`](agent/subtle_eval_results_groq.json) |
+| `openai/gpt-oss-20b` (Groq) | `cross_field_split` (Subtle + Scale) | 10 | 40.0% / 40.0% | [`subtle_eval_results_groq.json`](agent/subtle_eval_results_groq.json) + [`subtle_scale_results.json`](agent/subtle_scale_results.json) |
+| `openai/gpt-oss-20b` (Groq) | `fake_output_injection` (Subtle + Scale) | 10 | 60.0% / 60.0% | [`subtle_eval_results_groq.json`](agent/subtle_eval_results_groq.json) + [`subtle_scale_results.json`](agent/subtle_scale_results.json) |
+| `gemini-3.1-flash-lite` | `authority_escalation` (Blunt + Scale) | 10 | 20.0% / 20.0% | [`strongblunt_eval_results_flashlite.json`](agent/strongblunt_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `gemini-3.1-flash-lite` | `technique_stack` (Blunt + Scale) | 10 | 0.0% / 0.0% | [`strongblunt_eval_results_flashlite.json`](agent/strongblunt_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `gemini-3.1-flash-lite` | `obfuscated_trigger` (Blunt + Scale) | 10 | 0.0% / 0.0% | [`strongblunt_eval_results_flashlite.json`](agent/strongblunt_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `openai/gpt-oss-20b` (Groq) | `authority_escalation` (Blunt + Scale) | 10 | 70.0% / 70.0% | [`strongblunt_eval_results_groq.json`](agent/strongblunt_eval_results_groq.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `openai/gpt-oss-20b` (Groq) | `technique_stack` (Blunt + Scale) | 10 | 60.0% / 60.0% | [`strongblunt_eval_results_groq.json`](agent/strongblunt_eval_results_groq.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `openai/gpt-oss-20b` (Groq) | `obfuscated_trigger` (Blunt + Scale) | 10 | 70.0% / 70.0% | [`strongblunt_eval_results_groq.json`](agent/strongblunt_eval_results_groq.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `gemini-3.1-flash-lite` | `zero_imperative_evidence` (Harder-Subtle + Scale) | 10 | 20.0% / 20.0% | [`hardersubtle_eval_results_flashlite.json`](agent/hardersubtle_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `gemini-3.1-flash-lite` | `native_format_mimicry` (Harder-Subtle + Scale) | 10 | 0.0% / 0.0% | [`hardersubtle_eval_results_flashlite.json`](agent/hardersubtle_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `gemini-3.1-flash-lite` | `multi_source_corroboration` (Harder-Subtle + Scale) | 10 | 0.0% / 0.0% | [`hardersubtle_eval_results_flashlite.json`](agent/hardersubtle_eval_results_flashlite.json) + [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) |
+| `openai/gpt-oss-20b` (Groq) | `zero_imperative_evidence` (Harder-Subtle + Scale)* | 7 | 57.1% / 57.1% | [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) (Never tested originally) |
+| `openai/gpt-oss-20b` (Groq) | `native_format_mimicry` (Harder-Subtle + Scale)* | 7 | 42.9% / 42.9% | [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) (Never tested originally) |
+| `openai/gpt-oss-20b` (Groq) | `multi_source_corroboration` (Harder-Subtle + Scale)* | 7 | 14.3% / 14.3% | [`strongblunt_hardersubtle_scale_results.json`](agent/strongblunt_hardersubtle_scale_results.json) (Never tested originally) |
 
 \* *Note: Baseline families, Groq subtle fabricated_evidence, and Groq harder-subtle families marked with an asterisk remain at low sample sizes (n=1 to n=7) due to original baseline limits or lack of previous evaluations. This is a known remaining limitation.*
 
 ---
 
 ## Defended Pipeline Recovery Results
-Evaluated on the 58 hijacked alerts compiled across prior undefended runs using [`defended_agent.py`](file:///C:/agentsoc/agent/defended_agent.py) (ERA + SPC XML wrapping + JSON mode + schema gate):
+Evaluated on the 58 hijacked alerts compiled across prior undefended runs using [`defended_agent.py`](agent/defended_agent.py) (ERA + SPC XML wrapping + JSON mode + schema gate):
 
 - **Primary Metric (Recovery Rate on `benign_washing` hijacks):** **21/38 (55.3%)** overall recovery.
   - **Gemini (`gemini-3.1-flash-lite`):** **9/13 (69.2%)** recovered.
@@ -228,7 +230,7 @@ Evaluated on the 58 hijacked alerts compiled across prior undefended runs using 
 
 ---
 ## Held-Out Validation (guide_test_500.csv, n=10 per family, both models)
-This section reports the results of evaluating the undefended baseline agent on the genuinely held-out telemetry set ([`guide_heldout_140_alerts.json`](file:///C:/agentsoc/GUIDE_Dataset/processed/guide_heldout_140_alerts.json)), which was never used during any prompt/payload construction or testing. It tests 10 alerts per family across all 14 families for both Gemini and Groq (total 280 alerts / 560 API calls).
+This section reports the results of evaluating the undefended baseline agent on the genuinely held-out telemetry set ([`guide_heldout_140_alerts.json`](GUIDE_Dataset/processed/guide_heldout_140_alerts.json)), which was never used during any prompt/payload construction or testing. It tests 10 alerts per family across all 14 families for both Gemini and Groq (total 280 alerts / 560 API calls).
 
 | Model | Payload Family | n (Held-out) | Hijack Rate (Held-out) | n (Dev-set) | Hijack Rate (Dev-set) | Delta / Trend |
 |---|---|---|---|---|---|---|
@@ -481,17 +483,17 @@ One clean-alert case deserved individual mention in the original evaluation: ale
 
 #### DuckDNS Target Pattern
 
-The one alert where NCE extracted `6105.duckdns.org` as the target host (alert 1382979471619) is not a structurally distinct or ambiguous case. Investigation shows that `{N}.duckdns.org/gate.php` URLs are a standard component of the `category=CommandAndControl` alert template generated by `synth_fields.py` [Correction 2026-10-10: this is the project's own synthetic template, not GUIDE data] — at least 4 of the 8 REASONABLE cases contain duckdns URLs in their `raw_log_line`. In 3 of those cases NCE extracted the numeric IP (from `command_line`) as the target; in this one case NCE extracted the URL hostname (from `raw_log_line`) instead. Both the IP and the duckdns hostname appear in the same alert. Classification: REASONABLE — same Factor 1 mechanism, cosmetically different target extraction. Full per-alert evidence in [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md).
+The one alert where NCE extracted `6105.duckdns.org` as the target host (alert 1382979471619) is not a structurally distinct or ambiguous case. Investigation shows that `{N}.duckdns.org/gate.php` URLs are a standard component of the `category=CommandAndControl` alert template generated by `synth_fields.py` [Correction 2026-10-10: this is the project's own synthetic template, not GUIDE data] — at least 4 of the 8 REASONABLE cases contain duckdns URLs in their `raw_log_line`. In 3 of those cases NCE extracted the numeric IP (from `command_line`) as the target; in this one case NCE extracted the URL hostname (from `raw_log_line`) instead. Both the IP and the duckdns hostname appear in the same alert. Classification: REASONABLE — same Factor 1 mechanism, cosmetically different target extraction. Full per-alert evidence in [`nce8_clean_fp_investigation.md`](nce8_clean_fp_investigation.md).
 
 #### Self-Referencing WKSTN Target
 
-Alert 566935684681 has `target_host = source_host = WKSTN-2278` — NCE generated a T1071 hypothesis pointing at the alert's own device. Investigation traced the mechanism: the alert converter (`guide_to_alerts.py:75`, not GUIDE itself) sets `target_host = source_host` for every alert because GUIDE has no distinct target, and NCE reused that field value as a network target despite the underlying alert being a local file-exfiltration event (`category=Exfiltration`, `archive_9380.zip`) with zero network indicators. SSE then correctly confirmed that WKSTN-2278's zone has outbound web egress (which it does), producing FEASIBLE. This is not an SSE bug — SSE answered the structural question asked — but an NCE extraction artifact. Low confidence (0.45) and `missing_context_flags=['network_reachability']` both signal NCE's own uncertainty. Classification: QUESTIONABLE (Factor 2). Full analysis in [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md).
+Alert 566935684681 has `target_host = source_host = WKSTN-2278` — NCE generated a T1071 hypothesis pointing at the alert's own device. Investigation traced the mechanism: the alert converter (`guide_to_alerts.py:75`, not GUIDE itself) sets `target_host = source_host` for every alert because GUIDE has no distinct target, and NCE reused that field value as a network target despite the underlying alert being a local file-exfiltration event (`category=Exfiltration`, `archive_9380.zip`) with zero network indicators. SSE then correctly confirmed that WKSTN-2278's zone has outbound web egress (which it does), producing FEASIBLE. This is not an SSE bug — SSE answered the structural question asked — but an NCE extraction artifact. Low confidence (0.45) and `missing_context_flags=['network_reachability']` both signal NCE's own uncertainty. Classification: QUESTIONABLE (Factor 2). Full analysis in [`nce8_clean_fp_investigation.md`](nce8_clean_fp_investigation.md).
 
 #### Summary
 
 The literal claim "0/60 non-T1071 false positives" remains factually accurate and citable as-is. However, individual investigation of all 14 NCE-8 FEASIBLE cases (mirroring the rigor applied to the contaminated-side T1071 investigation) shows the 28.0% alert-level FEASIBLE rate is not a pure measurement of SSE's architectural limitation — 43% of these cases (6/14) reflect NCE hypothesis-generation over-reach (Factor 2), the same phenomenon already documented on the contaminated side. This strengthens, rather than undermines, the case for the NCE evidentiary threshold already flagged as future work: the improvement it would offer is not limited to attack scenarios.
 
-Results: [`nce8_clean_fp_results.json`](file:///C:/agentsoc/agent/nce8_clean_fp_results.json). API audit log: [`nce8_clean_fp_api_call_log.jsonl`](file:///C:/agentsoc/agent/nce8_clean_fp_api_call_log.jsonl). Script: [`run_nce8_clean_fp_eval.py`](file:///C:/agentsoc/agent/run_nce8_clean_fp_eval.py). Per-alert investigation: [`nce8_clean_fp_investigation.md`](file:///C:/agentsoc/nce8_clean_fp_investigation.md).
+Results: [`nce8_clean_fp_results.json`](agent/nce8_clean_fp_results.json). API audit log: [`nce8_clean_fp_api_call_log.jsonl`](agent/nce8_clean_fp_api_call_log.jsonl). Script: [`run_nce8_clean_fp_eval.py`](agent/run_nce8_clean_fp_eval.py). Per-alert investigation: [`nce8_clean_fp_investigation.md`](nce8_clean_fp_investigation.md).
 
 ### nce_confidence Invariant (Re-confirmed)
 
@@ -504,7 +506,7 @@ Results: [`nce8_clean_fp_results.json`](file:///C:/agentsoc/agent/nce8_clean_fp_
 - **SSE/RSEM:** All SSE and RSEM computations are deterministic graph-based operations requiring zero LLM API calls.
 - **Total API calls for NCE-7-SCALE:** 80. Run time: ~29 minutes (2 transient API hangs resolved by kill-and-resume; per-alert checkpointing ensured zero lost work).
 
-Results saved to [`nce7_scale_results.json`](file:///C:/agentsoc/agent/nce7_scale_results.json). API audit log: [`nce7_scale_api_call_log.jsonl`](file:///C:/agentsoc/agent/nce7_scale_api_call_log.jsonl).
+Results saved to [`nce7_scale_results.json`](agent/nce7_scale_results.json). API audit log: [`nce7_scale_api_call_log.jsonl`](agent/nce7_scale_api_call_log.jsonl).
 
 ---
 
@@ -516,7 +518,7 @@ The Action/Playbook Layer is the final pipeline stage completing the Perception 
 2. **Policy and Safety Guardrails** (`evaluate_guardrails()`) — routes playbooks to AUTO_APPROVED or PENDING_ANALYST_REVIEW based on two rules: (a) a **hard floor** for the most disruptive actions (QUARANTINE_ACCESS, REVOKE_SESSION → mandatory analyst review), and (b) a **business-impact threshold** (BI > 0.35 → analyst review).
 3. **Execution Interface** (`execute_playbook_dry_run()`) — simulates approved playbooks on a deep copy of the knowledge graph, producing before/after state diffs with rollback instructions and append-only JSONL audit logging. The live graph is NEVER mutated.
 
-The layer is fully built and tested: **366/366 tests pass** (including the full existing suite + new action_playbook tests), all 12 locked files untouched, and three hand-constructed demo scenarios ([`scratch/action_playbook_demo.py`](file:///C:/agentsoc/scratch/action_playbook_demo.py)) confirm all guardrail paths:
+The layer is fully built and tested: **366/366 tests pass** (including the full existing suite + new action_playbook tests), all 12 locked files untouched, and three hand-constructed demo scenarios ([`scratch/action_playbook_demo.py`](scratch/action_playbook_demo.py)) confirm all guardrail paths:
 
 | Demo Scenario | Top Action | Target | BI | Guardrail Rule | Final Status | Dry-Run |
 |:---|:---|:---|:---:|:---|:---|:---:|
@@ -526,11 +528,11 @@ The layer is fully built and tested: **366/366 tests pass** (including the full 
 
 **The guardrail logic demonstrably works** — the hard floor fires on REVOKE_SESSION (Scenario B), the threshold fires on BI=0.75 (Scenario C), and auto-approval occurs when neither rule triggers (Scenario A).
 
-Implementation: [`perception/action_playbook.py`](file:///C:/agentsoc/perception/action_playbook.py) (681 lines, 25KB). Design: ENABLE_MFA is added as a policy-layer action (not RSEM-ranked), appended only for credential-relevant techniques.
+Implementation: [`perception/action_playbook.py`](perception/action_playbook.py) (681 lines, 25KB). Design: ENABLE_MFA is added as a policy-layer action (not RSEM-ranked), appended only for credential-relevant techniques.
 
 ### Real-Data Verification: The T1071 Guardrail-Silence Finding
 
-A real-data integration check ([`scratch/action_playbook_real_data_check.py`](file:///C:/agentsoc/scratch/action_playbook_real_data_check.py)) fed all 32 real FEASIBLE hypotheses from completed evaluations — 18 from [`nce7_scale_results.json`](file:///C:/agentsoc/agent/nce7_scale_results.json) (16 contaminated + 2 clean, matching the 16 structural defense failures documented above), 14 from [`nce8_clean_fp_results.json`](file:///C:/agentsoc/agent/nce8_clean_fp_results.json) (all clean) — through the full Action/Playbook pipeline (`build_playbook()` → `evaluate_guardrails()` → `execute_playbook_dry_run()`). Each FEASIBLE alert has exactly one FEASIBLE hypothesis (1:1), so 32 hypotheses = 32 alerts. **Zero exceptions, zero crashes** across all 32 cases and all target shapes (external 185.x.x.x IPs, `unknown`, duckdns.org domains, CDN domains, numeric-only strings, internal WKSTN-*/LT-* hostnames).
+A real-data integration check ([`scratch/action_playbook_real_data_check.py`](scratch/action_playbook_real_data_check.py)) fed all 32 real FEASIBLE hypotheses from completed evaluations — 18 from [`nce7_scale_results.json`](agent/nce7_scale_results.json) (16 contaminated + 2 clean, matching the 16 structural defense failures documented above), 14 from [`nce8_clean_fp_results.json`](agent/nce8_clean_fp_results.json) (all clean) — through the full Action/Playbook pipeline (`build_playbook()` → `evaluate_guardrails()` → `execute_playbook_dry_run()`). Each FEASIBLE alert has exactly one FEASIBLE hypothesis (1:1), so 32 hypotheses = 32 alerts. **Zero exceptions, zero crashes** across all 32 cases and all target shapes (external 185.x.x.x IPs, `unknown`, duckdns.org domains, CDN domains, numeric-only strings, internal WKSTN-*/LT-* hostnames).
 
 **Finding:** All 32 real cases resolved identically:
 
@@ -573,9 +575,9 @@ A production system would likely want technique-specific response recommendation
 
 > **Superseded by Phase NCE-7-SCALE above.** This section is preserved as the historical baseline per this project's convention of keeping small-sample numbers visible alongside scaled-up results (same precedent as `fabricated_evidence` n=3 → n=10).
 
-Original result: **7/8 (87.5%)** structural defense success rate on 8 contaminated alerts (1 per family) + 2 clean baselines. The single failure was Slot 8 (`fake_output_injection`, T1071 to external IP 185.53.192.8) — now understood as the first instance of the T1071/network-egress limitation documented in full in Phase NCE-7-SCALE above. Full details including the 10-slot results table are preserved in the [RESEARCH_LOG.md](file:///C:/agentsoc/RESEARCH_LOG.md) session entry for 2026-09-05.
+Original result: **7/8 (87.5%)** structural defense success rate on 8 contaminated alerts (1 per family) + 2 clean baselines. The single failure was Slot 8 (`fake_output_injection`, T1071 to external IP 185.53.192.8) — now understood as the first instance of the T1071/network-egress limitation documented in full in Phase NCE-7-SCALE above. Full details including the 10-slot results table are preserved in the [RESEARCH_LOG.md](RESEARCH_LOG.md) session entry for 2026-09-05.
 
-Results saved to [`nce7_comparative_results.json`](file:///C:/agentsoc/agent/nce7_comparative_results.json).
+Results saved to [`nce7_comparative_results.json`](agent/nce7_comparative_results.json).
 
 ---
 
@@ -616,7 +618,7 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - Ablation study (note: "no NCE" cannot just leave SSE running).
 - Technique-specific guardrail heuristics for T1071 (network-perimeter responses). **Partly done (step 2.5):** BLOCK_EGRESS (host egress). BLOCK_DESTINATION: **done 2026-10-11 (Phase 3 step 3.3)**.
 - Real-time monitoring / Real SOAR integration.
-- (Added 2026-10-10) Paper fix pass: all pending paper changes are tracked in [`experiments/PAPER_CLAIMS_TO_REVISE.md`](file:///C:/agentsoc/experiments/PAPER_CLAIMS_TO_REVISE.md) (section (g) lists the 13 items found in the 2026-10-10 audit; the conclusion rewrite previously marked APPLIED is NOT applied in the `.tex`).
+- (Added 2026-10-10) Paper fix pass: all pending paper changes are tracked in [`experiments/PAPER_CLAIMS_TO_REVISE.md`](experiments/PAPER_CLAIMS_TO_REVISE.md) (section (g) lists the 13 items found in the 2026-10-10 audit; the conclusion rewrite previously marked APPLIED is NOT applied in the `.tex`).
 - ~~(Added 2026-10-10) Rebuild Experiment 1 clean twins from `raw_log_text_clean` (re-score or re-run the 116 affected clean alerts) and restate paired results.~~ **DONE 2026-10-10 (Phase 1, offline):** verified twins built by replaying the generator; results restated on the 206 valid pairs; clean harnesses now read the twins file; `experiments/test_clean_twins.py` guards it. Note: the clean checkpoints already contain all 320 ids, so a future clean re-run must write to a new results file or it will skip everything. Still open: by-id lookups of nce8 clean alerts (5 duplicated ids, 1 with a contaminated last row) in offline replays.
 - ~~(Added 2026-10-10) De-duplicate `SSE.check()` path results (parallel-edge duplicates inflate RSEM containment) — `sse.py` is a locked file, needs team approval.~~ **DONE 2026-10-10 (Phase 2 step 2.2).**
 - (Added 2026-10-10) Treat a filter-emptied NCE output as "no actionable hypothesis" rather than `success=False` (Streamlit Live Mode shows "NCE failed"); fix the latent harness bug where an NCE failure scores as defense success in `agent/run_nce_n50_scaleup_eval.py`. **Both DONE 2026-10-10:** filter-emptied output is now a label, not a drop (step 2.4); the harness stores NCE failures unscored (`structural_defense_*` = None, retried on resume, excluded from tallies) (step 2.6, `tests/test_scaleup_harness_nce_failure.py`). Runs A/B had 0 NCE failures, so no published number changes. The other harnesses and analysis scripts already exclude `nce_error` records.

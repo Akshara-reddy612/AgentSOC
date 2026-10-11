@@ -1,4 +1,4 @@
-import sys; sys.path.insert(0, 'c:/agentsoc')
+import sys; from pathlib import Path; sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import json
 from perception.nce_engine import _has_external_ip, _has_non_internal_domain, _has_beaconing_command, _BEACONING_PATTERNS, _DOMAIN_RE, _IPV4_RE, _is_private_ip, _INTERNAL_HOSTNAME_PATTERNS, _INTERNAL_DOMAIN_SUFFIXES
 

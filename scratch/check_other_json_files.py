@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-ROOT = Path(r"c:\agentsoc")
+ROOT = Path(__file__).resolve().parents[1]
 json_files = [
     "agent/subtle_scale_results.json",
     "agent/strongblunt_hardersubtle_scale_results.json",
