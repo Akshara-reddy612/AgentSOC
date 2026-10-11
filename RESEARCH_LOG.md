@@ -1107,3 +1107,17 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/DEDALE_DATA_NOTES.md`
 - Modified: `experiments/REAL_TELEMETRY_PLAN.md` (correction), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: DEDALE ground truth from the website; alert grouping
+
+### What was tried
+- Read dedale.inria.fr `download.html` and `attack_scenario.html` (label classes, attack timeline, attacker IPs). Re-checked the attack-window Suricata alerts against the timeline. Counted SOC-style alert groups and the groups in weeks 3-4 not seen in the benign weeks (scratch script, read-only).
+
+### What was found
+- Class 1 = malicious, class 2 = malicious-related (consequences); Zeek flow labels 0/1/2 with MITRE tactic/technique. Attacker IPs 172.19.1.1 / 172.19.2.1 / 172.19.0.2; victims client 2 = 172.16.1.3 (01-06 10:00), client 1 = 172.16.1.2 (01-08 15:00), DC 172.16.0.2 (01-10 11:00); exfiltration 01-11; extinction 01-12..13.
+- [Correction 2026-10-11 to the entry above] The 3 attack-window alerts "from hosts the labels do not cover" are **false positives**: process-list exfil from 172.16.1.15 at 08:10 on 01-06 (before the infection) and 2 PCRat/Gh0st alerts from 172.16.1.30 / .6 (never part of the attack).
+- Only 2 Suricata alerts touch attacker IPs (the ZIP download); C2 and reverse-shell traffic raised none.
+- Grouping: 1,465,627 raw -> 1,195,507 after dropping the second router's copy -> 8,461 (signature, src, dst, day) groups -> 1,042 (signature, src, dst). Weeks 3-4: 4,413 group-days, 357 of them with a (signature, src, dst) never seen in weeks 1-2.
+
+### Files created/modified
+- Modified: `experiments/DEDALE_DATA_NOTES.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
