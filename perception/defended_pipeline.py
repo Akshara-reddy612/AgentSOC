@@ -26,7 +26,8 @@ def run_downstream(hypotheses: list[NCEHypothesis], alert: dict,
     kg = kg or KnowledgeStoreGraph()
     sse = StructuralSimulationEngine(kg)
     evidence = {f: str(alert[f]) for f in _NCE_EVIDENCE_FIELD_NAMES if alert.get(f) is not None}
-    hyps = attach_alert_context(label_t1071_grounding(hypotheses, evidence), alert)
+    profile = kg.profile   # which addresses are internal (design step S1)
+    hyps = attach_alert_context(label_t1071_grounding(hypotheses, evidence, profile), alert, profile)
 
     rows, statuses = [], []
     for h in hyps:
@@ -35,7 +36,7 @@ def run_downstream(hypotheses: list[NCEHypothesis], alert: dict,
             "technique_id": h.technique_id, "source_account": h.source_account,
             "source_host": h.source_host, "target_host": h.target_host,
             "evidence_grounding": h.evidence_grounding, "entity_binding": h.entity_binding,
-            "binding_roles": bind_entities(h, alert).roles,
+            "binding_roles": bind_entities(h, alert, profile).roles,
             "trusted_destination": h.trusted_destination,
             "sse_verdict": vh.best_sse_verdict.value, "path_confidence": round(vh.best_path_confidence, 6),
         }

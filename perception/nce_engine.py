@@ -53,6 +53,7 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
+from perception.environment import DEFAULT_PROFILE, EnvironmentProfile
 from perception.nce_contract import (
     HypothesisStatus,
     MissingContextFlag,
@@ -407,50 +408,30 @@ _IPV4_RE = re.compile(
     r"\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b"
 )
 
-# Internal/reserved IP ranges (RFC 1918, loopback, link-local).
-# Returns True if the IP is private/reserved (NOT external).
-def _is_private_ip(ip_str: str) -> bool:
-    """Check if an IPv4 address is private/reserved (not external)."""
-    try:
-        parts = [int(p) for p in ip_str.split(".")]
-    except (ValueError, AttributeError):
+# Internal ranges come from the environment profile since design step S1
+# (perception/environment.py); the default profile is RFC 1918 + loopback +
+# link-local, as before.  Returns True if the IP is internal (NOT external).
+def _is_private_ip(ip_str: str, profile: EnvironmentProfile | None = None) -> bool:
+    """Check if an IPv4 address is internal/reserved (not external)."""
+    if not isinstance(ip_str, str):
         return True  # fail-safe: unparseable → treat as non-external
-    if len(parts) != 4 or any(p < 0 or p > 255 for p in parts):
-        return True
-    a, b = parts[0], parts[1]
-    # 10.0.0.0/8
-    if a == 10:
-        return True
-    # 172.16.0.0/12
-    if a == 172 and 16 <= b <= 31:
-        return True
-    # 192.168.0.0/16
-    if a == 192 and b == 168:
-        return True
-    # 127.0.0.0/8 (loopback)
-    if a == 127:
-        return True
-    # 169.254.0.0/16 (link-local)
-    if a == 169 and b == 254:
-        return True
-    return False
+    internal = (profile or DEFAULT_PROFILE).ipv4_is_internal(ip_str)
+    return True if internal is None else internal  # fail-safe: unparseable → treat as non-external
 
 
-def _has_external_ip(evidence_fields: dict[str, str]) -> bool:
+def _has_external_ip(evidence_fields: dict[str, str], profile: EnvironmentProfile | None = None) -> bool:
     """Check if any evidence field contains an external (non-private) IPv4 address."""
     for value in evidence_fields.values():
         for m in _IPV4_RE.finditer(value):
-            if not _is_private_ip(m.group(0)):
+            if not _is_private_ip(m.group(0), profile):
                 return True
     return False
 
 
-# Known-internal hostname/domain patterns.
-_INTERNAL_HOSTNAME_PATTERNS = re.compile(
-    r"^(WKSTN-|SRV-|LT-.*-CORP$)",
-    re.IGNORECASE,
-)
-_INTERNAL_DOMAIN_SUFFIXES = (".corp.local", ".internal")
+# Known-internal hostname/domain patterns of the default profile (kept as
+# module names for the analysis scripts that import them).
+_INTERNAL_HOSTNAME_PATTERNS = DEFAULT_PROFILE.hostname_regex
+_INTERNAL_DOMAIN_SUFFIXES = DEFAULT_PROFILE.internal_domain_suffixes
 
 # Recognizable domain pattern ending in a plausible public TLD.
 # Grounded in public TLDs seen in the corpus (duckdns.org, example-cdn.net,
@@ -470,19 +451,17 @@ _DOMAIN_RE = re.compile(
 )
 
 
-def _has_non_internal_domain(evidence_fields: dict[str, str]) -> bool:
+def _has_non_internal_domain(evidence_fields: dict[str, str], profile: EnvironmentProfile | None = None) -> bool:
     """Check if any evidence field contains a non-internal domain/hostname."""
+    p = profile or DEFAULT_PROFILE
     for value in evidence_fields.values():
         for m in _DOMAIN_RE.finditer(value):
             candidate = m.group(0)
             # Skip if it's a pure IPv4 address
             if _IPV4_RE.fullmatch(candidate):
                 continue
-            # Skip known-internal hostname patterns
-            if _INTERNAL_HOSTNAME_PATTERNS.match(candidate):
-                continue
-            # Skip known-internal domain suffixes
-            if any(candidate.lower().endswith(s) for s in _INTERNAL_DOMAIN_SUFFIXES):
+            # Skip known-internal hostname patterns and domain suffixes
+            if p.is_internal_hostname(candidate):
                 continue
             # Found a non-internal domain
             return True
@@ -579,6 +558,7 @@ def _apply_t1071_evidentiary_filter(
 def label_t1071_grounding(
     hypotheses: list[NCEHypothesis],
     evidence_fields: dict[str, str],
+    profile: EnvironmentProfile | None = None,
 ) -> list[NCEHypothesis]:
     """
     Label every T1071 hypothesis "grounded" or "ungrounded" instead of
@@ -592,12 +572,14 @@ def label_t1071_grounding(
     auto-approved (Action/Playbook guardrail routes it to analyst review).
 
     The legacy dropping filter is kept for reproducing historical results.
+    `profile` (design step S1): which addresses / names are internal; default
+    profile if None.
     """
     import dataclasses
 
     grounded = (
-        _has_external_ip(evidence_fields)
-        or _has_non_internal_domain(evidence_fields)
+        _has_external_ip(evidence_fields, profile)
+        or _has_non_internal_domain(evidence_fields, profile)
         or _has_beaconing_command(evidence_fields)
     )
     label = "grounded" if grounded else "ungrounded"

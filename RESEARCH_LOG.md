@@ -1149,3 +1149,27 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `experiments/DEDALE_DATA_NOTES.md`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md` (S3), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S1 — environment profile; winlogbeat download started
+
+### What was tried
+- User approved the winlogbeat download and Phase 1. Started `system_logs_winlogbeat.zip` (27,123,250,952 bytes, MD5 7af54ba2977f7535d4c07beb6b1ec657) into `D:\agentsoc_data\dedale\` as a resumable `.part` file; it is renamed only after the size and MD5 match.
+- Implemented S1:
+  - new `perception/environment.py` (`EnvironmentProfile`, `DEFAULT_PROFILE`, `profile_of`);
+  - `KnowledgeStoreGraph(profile=...)` stores the profile as a graph attribute;
+  - `get_destination_reputation`, `_seed_network_model`, SSE's T1071 reputation check (now `policy_permits(policy_from_graph, rep)`), the NCE grounding predicates, entity binding, `run_downstream` and `MonitoringPipelineAdapter(profile=...)` all read it.
+- Before/after check: `rescore_all` snapshots, `rescore_v2` on the three live result files, and fresh offline mock runs (oracle / hijacked, dev / held-out), compared record by record.
+
+### What was found
+- 0 changes. The historical re-score diff is `TOTAL CHANGES: 0` (pre-S1 snapshot byte-identical to `s8_env_profile.json`). Corpus v2: 282 + 1000 + 1000 live re-scored records and 4 × 1000 mock records are identical.
+- Pre-S1 SSE checked the internet route with the zone policy stored in the graph but the reputation with the module table (`egress_permits(zone_id, rep)`). That made no difference while both held the same synthetic policy, but a different environment's policy would have been half ignored. Now both checks use the graph's policy.
+- One intended behaviour difference: a malformed dotted quad such as "10.300.1.1" used to count as an internal address (only the leading octets were compared); now it is not an address at all. The fail-safe for the NCE grounding check (unparseable -> not external) is unchanged.
+- Stale `__pycache__` folders compiled at `C:\agentsoc` made tracebacks show the old path; the 13 repo folders were cleared (gitignored, regenerated).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 619 passed, 1 deselected (538 + 81 new in `tests/test_environment_profile.py`).
+- `test_helper_functions_take_only_dict` was updated: the two address helpers may take an optional `profile` (environment configuration, not alert context); the rule that they get no trusted or derived alert context is unchanged.
+
+### Files created/modified
+- Created: `perception/environment.py`, `tests/test_environment_profile.py`, `experiments/rescore_snapshots/s8_env_profile.json`
+- Modified: `perception/knowledge_graph.py`, `perception/network_model.py`, `perception/sse.py`, `perception/nce_engine.py`, `perception/entity_binding.py`, `perception/defended_pipeline.py`, `monitoring/pipeline_adapter.py`, `tests/test_nce_evidentiary_threshold.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

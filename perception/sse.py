@@ -693,7 +693,7 @@ class StructuralSimulationEngine:
            Without one: FEASIBLE, destination_status="unverified".
         """
         from perception.knowledge_graph import zone_node_id
-        from perception.network_model import INTERNAL, egress_permits
+        from perception.network_model import INTERNAL, policy_permits
 
         g = self._graph_store.graph
         src_zone = self._source_zone(source_host_id)
@@ -762,7 +762,9 @@ class StructuralSimulationEngine:
                 dependency_note=f"Destination {trusted_destination!r} is internal; not external C2.",
                 destination_status="verified", destination_reputation=rep,
             )
-        if rep == "blocked" or not egress_permits(zone_id, rep):
+        # The zone's policy as stored in the graph (from the environment profile),
+        # the same one that allowed the internet route above.
+        if rep == "blocked" or not policy_permits(policy, rep):
             return PathResult(
                 verdict=SSEVerdict.INFEASIBLE, path_confidence=0.0, edge_path=[best_desc],
                 dependency_note=(
