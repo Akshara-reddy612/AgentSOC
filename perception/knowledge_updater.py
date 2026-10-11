@@ -123,18 +123,16 @@ class KnowledgeUpdater:
                              case, provenance, at, writer)
 
     def _endpoint(self, address: str, at: datetime, writer: str) -> str:
-        host = self.db.host_for_address(address)
-        if host is not None:
-            return host_node_id(host)
-        if self.db.profile.is_internal_address(address):
-            node, attrs = f"addr:{address}", {"node_type": "AddressNode", "address": address}
+        node = endpoint_node_id(self.db, address)
+        if node in self.db.graph.graph:
+            return node
+        if node.startswith("addr:"):
+            attrs = {"node_type": "AddressNode", "address": address}
         else:
-            node = destination_node_id(address)
             attrs = {"node_type": "ExternalDestination", "address": address, "kind": "ip", "source": "observed",
                      "reputation": KnowledgeFact(value=UNKNOWN, version=1, confidence=1.0,
                                                  source=SourceSystem.KNOWLEDGE_STORE, timestamp=at)}
-        if node not in self.db.graph.graph:
-            self.db.add_node(node, attrs, writer=writer, at=at, learned_from="telemetry")
+        self.db.add_node(node, attrs, writer=writer, at=at, learned_from="telemetry")
         return node
 
     def _count_edge(self, src: str, dst: str, key: str, base: dict, case: Case, provenance: str,
@@ -153,6 +151,14 @@ class KnowledgeUpdater:
             "case_count": old["case_count"] + 1, "alert_count": old["alert_count"] + case.alert_count,
             "provenance_counts": counts,
         }, writer=writer, at=at)
+
+
+def endpoint_node_id(db: KnowledgeDB, address: str) -> str:
+    """The node that stands for an address: its inventory host, else an internal address or external destination."""
+    host = db.host_for_address(address)
+    if host is not None:
+        return host_node_id(host)
+    return f"addr:{address}" if db.profile.is_internal_address(address) else destination_node_id(address)
 
 
 def _addresses(case: Case) -> tuple[str, str]:
