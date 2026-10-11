@@ -136,7 +136,11 @@ Each step is a commit with tests and tracking-doc updates.
    - **Gate:** training cases are learned directly. Test cases are learned only if LOW_PRIORITY / NO_ACTIONABLE, released 24 h after closing (D3, initial choice), and dropped if a case involving either endpoint was escalated since the case opened. Escalated cases are learned only through `analyst_closed_benign`.
    - **Ablation C3:** gate off, provenance "ungated".
    - **Store:** `KnowledgeDB.update_edge` (logged and replayable) was added.
-6. **S6 Triage gate, decision cache, NCE budget queue.**
+6. **S6 Triage gate, decision cache, NCE budget queue.** **Done 2026-10-11:** `perception/triage_gate.py`.
+   - **Order:** escalations first (known-bad destination, watched entities), then the learned pattern (`LOW_PRIORITY`), then the decision cache (valid while the store's versions of both endpoints are unchanged), then the pipeline.
+   - **Two simplifications against the plan above:**
+     - the budget is first-come-first-served per day, not priority-ordered. A priority queue needs decisions to be deferred; it is planned for when live NCE runs (Phase 3);
+     - there is no NCE evidence-hash cache. Each alert line carries its own ports, so identical evidence hardly recurs; repeats are caught by the decision cache instead.
 7. **S7 Outcome monitor (watches).**
 8. **S8 Replay runner** (synchronous, virtual clock). It reuses the pipeline adapter; the threaded `monitoring/` worker can later consume the same components for live mode.
 9. **S9 Scorer + report** (conditions C0-C3).
@@ -159,6 +163,7 @@ Each step is a commit with tests and tracking-doc updates.
   - exfiltration over C2 T1041.
 
   Only C2 (T1071) and the key-based logon (T1078) can be named. Before host logs are evaluated, the vocabulary and the SSE constraints need to be extended to the techniques host telemetry can show, or hypotheses outside the table must get a defined "cannot be checked structurally -> review" path. This is the user's decision.
+- **D7 Unreasoned novel cases (added 2026-10-11, step S6).** When NCE did not run (switched off, budget used up, or failed) and the pipeline finds nothing actionable for a pattern the store has not learned, the pipeline alone would end the case NO_ACTIONABLE, so a novel pattern would vanish unseen. The default `unreasoned="review"` sends it to an analyst. Each decision stores the pipeline's own outcome, so the scorer reports both policies.
 
 ## 9. Dataset choice
 

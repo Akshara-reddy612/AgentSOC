@@ -1254,3 +1254,20 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/knowledge_updater.py`, `tests/test_knowledge_updater.py`
 - Modified: `perception/knowledge_db.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-11 — Session: design step S6 — triage gate
+
+### What was tried
+- New `perception/triage_gate.py`: escalations -> learned pattern -> decision cache -> pipeline with NCE behind a daily budget.
+- `endpoint_node_id` shared by the gate and the updater; `KnowledgeDB.node_version` for cache validity.
+
+### What was found
+- Policy gap made explicit as open decision D7. With NCE off (Phase 1) or out of budget, the pipeline has no hypotheses for internal / inbound network cases and would end every one NO_ACTIONABLE, including never-seen patterns. Default now: such cases go to REVIEW; the pipeline's own outcome is stored for scoring both ways.
+- Simplifications vs the design plan: FCFS daily budget instead of a priority queue; no NCE evidence-hash cache (alert lines carry ports, so evidence rarely repeats; the decision cache covers repeats).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 658 passed, 1 deselected (651 + 7 new in `tests/test_triage_gate.py`).
+
+### Files created/modified
+- Created: `perception/triage_gate.py`, `tests/test_triage_gate.py`
+- Modified: `perception/knowledge_updater.py`, `perception/knowledge_db.py`, `experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

@@ -218,6 +218,11 @@ class KnowledgeDB:
         """Host id (as alerts name hosts) of the inventory host that owns this address, else None."""
         return self._address_index.get(address.strip())
 
+    def node_version(self, node_id: str) -> int:
+        """Audit-log sequence number of the node's last change (0 if the node does not exist)."""
+        row = self._con.execute("SELECT updated_seq FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
+        return row[0] if row else 0
+
     def learned_from(self, node_id: str) -> str | None:
         row = self._con.execute("SELECT learned_from FROM nodes WHERE node_id = ?", (node_id,)).fetchone()
         return row[0] if row else None
