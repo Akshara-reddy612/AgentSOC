@@ -30,7 +30,7 @@ import json
 import time
 from collections import Counter
 from contextlib import nullcontext
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from itertools import islice
 from pathlib import Path
 
@@ -90,6 +90,11 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--mode", required=True, choices=LEARNING_MODES)
     ap.add_argument("--analyst", default="none", choices=["none", "oracle"])
+    ap.add_argument("--analyst-delay", type=float, default=4.0, help="hours from a REVIEW case to its verdict")
+    ap.add_argument("--analyst-miss", type=float, default=0.0, help="share of malicious verdicts given as benign")
+    ap.add_argument("--analyst-false-alarm", type=float, default=0.0,
+                    help="share of benign verdicts given as malicious")
+    ap.add_argument("--analyst-seed", type=int, default=0, help="seed of the analyst's mistakes (reproducible)")
     ap.add_argument("--nce", default="off", choices=["off", "live"],
                     help="live: Gemini NCE on cases reaching the pipeline (API calls; cached; needs budget approval)")
     ap.add_argument("--max-calls", type=int, default=950, help="hard cap on live NCE calls in this run")
@@ -113,10 +118,13 @@ def main() -> None:
     run_dir.mkdir(parents=True, exist_ok=True)
     until = datetime.fromisoformat(args.until).replace(tzinfo=timezone.utc) if args.until else None
 
-    analyst = None
+    analyst = oracle = None
     if args.analyst == "oracle":       # the only place the replay touches ground truth (separate condition)
+        from experiments.analyst_sim import noisy
         from experiments.dedale_host_score import host_oracle
-        analyst = host_oracle()
+        oracle = host_oracle()
+        analyst = (noisy(oracle, miss=args.analyst_miss, false_alarm=args.analyst_false_alarm, seed=args.analyst_seed)
+                   if args.analyst_miss or args.analyst_false_alarm else oracle)
 
     case_store = None
     if args.case_store:
@@ -138,8 +146,8 @@ def main() -> None:
 
         def on_alert(case: Case, alert: dict) -> None:
             alerts_out.write(json.dumps([case.case_id, *alert["event_ref"]]) + "\n")
-            if analyst is not None:
-                analyst.observe_alert(case, alert)
+            if oracle is not None:
+                oracle.observe_alert(case, alert)
 
         gate_options, nce = {}, None
         if args.nce == "live":
@@ -148,6 +156,7 @@ def main() -> None:
             nce = LiveNCE(cap)
             gate_options = {"nce": nce, "budget": cap}
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
+                       analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
                        case_store=case_store)
         last = TRAINING_START
@@ -170,6 +179,9 @@ def main() -> None:
             out.write(json.dumps({"case_id": case_id, "at": _iso(at), "verdict": verdict}) + "\n")
     summary = {
         "run": run, "mode": args.mode, "analyst": args.analyst, "detectors": args.detectors, "until": args.until,
+        **({"analyst_delay_h": args.analyst_delay, "analyst_miss": args.analyst_miss,
+            "analyst_false_alarm": args.analyst_false_alarm, "analyst_seed": args.analyst_seed}
+           if args.analyst == "oracle" else {}),
         "nce": args.nce, "nce_live_calls": nce.live_calls if nce else 0, "nce_cache_hits": nce.cache_hits if nce else 0,
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),

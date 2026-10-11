@@ -1695,3 +1695,36 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `perception/review_service.py`, `tests/test_review_service.py`, `tests/test_review_actions.py`, `experiments/dedale_queue_eval.py`, `experiments/dedale_results/queue_order.json`
 - Modified: `perception/case_store.py`, `perception/soc_loop.py`, `perception/outcome_monitor.py`, `perception/triage_gate.py`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-11 — Session: Analyst review loop — evaluation (delay, mistakes)
+
+### What was tried
+- `experiments/analyst_sim.py`: `noisy(analyst, miss, false_alarm, seed)`, reproducible per-case flips of the oracle's verdicts.
+- Replay options `--analyst-delay/-miss/-false-alarm/-seed` (host and network).
+- 12 replays (oracle through the case-store inbox, NCE off, gated):
+  - host delays 1 / 4 / 24 / 72 h; host misses 5% / 20%; host false alarms 5%;
+  - network delays 1 / 4 / 24 / 72 h; network false alarms 5%.
+- Scored with `dedale_host_score --out review_eval_host.json` and `dedale_score --out review_eval_network.json`.
+
+### What was found
+- **Host delays** 1 / 4 / 24 / 72 h:
+  - cases 417 / 432 / 491 / 696;
+  - reviews / day 29.8 / 30.9 / 35.1 / 49.7;
+  - benign verdicts 345 / 360 / 416 / 516; malicious 72 each;
+  - attack steps 20 / 11 / 11 / 4 cases at +1.2 / +28.5 / +30.0 / +1265 min in all four; 0 attack keys learned.
+- **Network delays:**
+  - reviews / day 20.6 / 20.9 / 21.5 / 22.6;
+  - attacker contained after 60 / 240 / 1440 / 4320 min;
+  - hidden attack-related cases 4 / 4 / 4 / 2 of 7;
+  - verdicts 286 + 3, 290 + 3, 297 + 3, 276 + 5 (benign + malicious).
+- **Host misses 5%:** malicious verdicts 65 (4 flipped); 69 malicious cases surfaced; attack cases whose key was learned (`analyst`) 8; labelled events alerted 397.
+- **Host misses 20%:** malicious verdicts 50 (11 flipped); 61 malicious cases surfaced; 20 learned; labelled events alerted 256; exfiltration-window step 1 case (was 4).
+- **Host false alarms 5%:** malicious verdicts 92 (20 false); 439 cases; 31.4 reviews / day; detection unchanged.
+- **Network false alarms 5%:** 15 malicious verdicts (12 false); would-block hits on benign targets 8 (was 0).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 734 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/analyst_sim.py`, `tests/test_analyst_sim.py`, `experiments/REVIEW_LOOP_RESULTS.md`, `experiments/dedale_results/review_eval_host.json`, `experiments/dedale_results/review_eval_network.json`
+- Modified: `experiments/dedale_host_replay.py`, `experiments/dedale_replay.py`, `experiments/ANALYST_REVIEW_LOOP_DESIGN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
