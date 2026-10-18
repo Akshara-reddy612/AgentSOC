@@ -78,7 +78,7 @@ def test_authentication_and_headers(env):
     assert client.get("/queue").status_code == 401
     assert client.get("/queue", headers=_h("wrong-token-0123456789abcdef")).status_code == 401
     r = client.get("/me", headers=_h(ALICE))
-    assert r.json() == {"analyst": "alice"}
+    assert r.json() == {"analyst": "alice", "role": "analyst"}
     assert r.headers["cache-control"] == "no-store" and r.headers["x-content-type-options"] == "nosniff"
 
 

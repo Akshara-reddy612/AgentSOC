@@ -87,11 +87,28 @@ class ReasonIn(_Body):
     reason: str = Field(min_length=1, max_length=1_000)
 
 
-def create_app(store: CaseStore, tokens: dict[str, str], *,
+class LoginIn(_Body):
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=1_000)
+
+
+class NewUserIn(_Body):
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=1_000)
+    role: Literal["analyst", "lead", "admin"] = "analyst"
+
+
+def create_app(store: CaseStore, tokens: dict[str, str] | None = None, *, accounts=None,
                clock: Callable[[], datetime] | None = None) -> FastAPI:
-    """The review API over `store`; `tokens` from load_tokens; `clock` for replays and tests."""
+    """
+    The review API over `store`.  Authentication: `accounts` (review_api.accounts.AccountStore:
+    users, roles, sessions) and/or fixed per-analyst `tokens` from load_tokens (role analyst;
+    for tests and scripts).  `clock` for replays and tests.
+    """
+    if not tokens and accounts is None:
+        raise ValueError("configure accounts or analyst tokens")
     service = ReviewService(store, clock=clock)
-    digests = {hashlib.sha256(t.encode("utf-8")).digest(): a for t, a in tokens.items()}
+    digests = {hashlib.sha256(t.encode("utf-8")).digest(): a for t, a in (tokens or {}).items()}
     app = FastAPI(title="AgentSOC review API", version="1",
                   description="Analyst review loop: queue, cases, verdicts, actions, audit.")
 
@@ -107,25 +124,83 @@ def create_app(store: CaseStore, tokens: dict[str, str], *,
         status = 404 if isinstance(exc, NotFoundError) else 409 if isinstance(exc, ConflictError) else 400
         return JSONResponse({"detail": str(exc)}, status_code=status)
 
-    def analyst(authorization: str | None = Header(default=None)) -> str:
+    def principal(authorization: str | None = Header(default=None)) -> tuple[str, str]:
+        """(username, role) of the bearer token: a session, or a fixed analyst token."""
         if not authorization or not authorization.startswith("Bearer "):
             raise HTTPException(401, "a bearer token is required", headers={"WWW-Authenticate": "Bearer"})
-        given = hashlib.sha256(authorization[len("Bearer "):].encode("utf-8")).digest()
+        raw = authorization[len("Bearer "):]
+        if accounts is not None and (found := accounts.resolve(raw)) is not None:
+            return found
+        given = hashlib.sha256(raw.encode("utf-8")).digest()
         who = None
         for digest, name in digests.items():        # every digest is compared: no early exit
             if hmac.compare_digest(given, digest):
                 who = name
         if who is None:
-            raise HTTPException(401, "unknown token", headers={"WWW-Authenticate": "Bearer"})
-        return who
+            raise HTTPException(401, "unknown or expired token", headers={"WWW-Authenticate": "Bearer"})
+        return who, "analyst"
+
+    def analyst(p: tuple[str, str] = Depends(principal)) -> str:
+        return p[0]
+
+    def role(*allowed: str):
+        def check(p: tuple[str, str] = Depends(principal)) -> tuple[str, str]:
+            if p[1] not in allowed:
+                raise HTTPException(403, f"needs role {' or '.join(allowed)}")
+            return p
+        return check
+
+    app.state.principal, app.state.role = principal, role      # for routers added by soc_server
+
+    @app.post("/auth/login")
+    def login(body: LoginIn) -> dict:
+        if accounts is None:
+            raise HTTPException(404, "accounts are not configured")
+        found = accounts.login(body.username, body.password)
+        if found is None:
+            raise HTTPException(401, "wrong username or password")
+        token, user_role, expires = found
+        return {"token": token, "username": body.username, "role": user_role, "expires": expires.isoformat()}
+
+    @app.post("/auth/logout")
+    def logout(authorization: str | None = Header(default=None), p: tuple[str, str] = Depends(principal)) -> dict:
+        if accounts is not None and authorization:
+            accounts.logout(authorization[len("Bearer "):])
+        return {"logged_out": p[0]}
+
+    @app.get("/admin/users")
+    def list_users(p: tuple[str, str] = Depends(role("admin"))) -> list[dict]:
+        return accounts.users() if accounts is not None else []
+
+    @app.post("/admin/users")
+    def new_user(body: NewUserIn, p: tuple[str, str] = Depends(role("admin"))) -> dict:
+        from review_api.accounts import AccountError
+        if accounts is None:
+            raise HTTPException(404, "accounts are not configured")
+        try:
+            accounts.create_user(body.username, body.password, body.role)
+        except AccountError as e:
+            raise HTTPException(400, str(e)) from None
+        return {"created": body.username, "role": body.role}
+
+    @app.post("/admin/users/{username}/disable")
+    def disable_user(username: str, p: tuple[str, str] = Depends(role("admin"))) -> dict:
+        from review_api.accounts import AccountError
+        if username == p[0]:
+            raise HTTPException(400, "admins cannot disable themselves")
+        try:
+            accounts.set_disabled(username, True)
+        except (AccountError, AttributeError) as e:
+            raise HTTPException(404, str(e)) from None
+        return {"disabled": username}
 
     @app.get("/health")
     def health() -> dict:
         return {"status": "ok"}
 
     @app.get("/me")
-    def me(who: str = Depends(analyst)) -> dict:
-        return {"analyst": who}
+    def me(p: tuple[str, str] = Depends(principal)) -> dict:
+        return {"analyst": p[0], "role": p[1]}
 
     @app.get("/queue")
     def queue(limit: int = Query(50, ge=1, le=500), host: str | None = None, include_claimed: bool = True,
