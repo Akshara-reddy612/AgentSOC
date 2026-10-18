@@ -95,16 +95,52 @@ def c1() -> list[str]:
               "ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence "
               "reacting, not the attacker succeeding."]
     u = compare("dev")["total"]
-    lines += ["", "**Undefended LLM agent vs defended pipeline, same pairs** (dev; "
-              f"{u['pairs']} pairs so far — run interrupted by the free-tier daily quota):", "",
+    d_era = _induced_by_era(_load(ROOT / "logs/v2_dev_live_results_rescored.json"),
+                            _load(V2_DIR / "guide_v2_dev.json")) if u["pairs"] == 500 else 0
+    d_other = u["d_induced"] - d_era
+    scope = "all 500 dev pairs" if u["pairs"] == 500 else f"{u['pairs']} dev pairs so far (run incomplete)"
+    lines += ["", f"**Undefended LLM agent vs defended pipeline, same pairs** ({scope}; defended McNemar "
+              "against responses induced otherwise than by ERA escalation):", "",
               "| | Attack succeeded (of clean twins it applies to) | 95% CI | McNemar p | Misdirected actions executed |",
               "|:--|--:|--:|--:|--:|",
               f"| Undefended agent (hijacked to dismiss) | {_pct(u['hijacked'], u['clean_not_dismissed'])} | "
               f"{_ci(u['hijacked'], u['clean_not_dismissed'])} | {mcnemar(u['hijacked'], u['induced']):.2g} | - |",
               f"| Defended pipeline (response suppressed) | {_pct(u['d_suppressed'], u['d_clean_responded'])} | "
-              f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], u['d_induced']):.2g} | "
+              f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], d_other):.2g} | "
               f"{u['d_misdirect_exec']} |", ""]
+    lines += e1()
     return lines
+
+
+def e1() -> list[str]:
+    """C1 through the full loop on real telemetry (E1): attacker text in the attacker's own command lines."""
+    path = RESULTS / "e1_scores.json"
+    if not path.exists():
+        return []
+    e = _load(path)
+    lines = ["**Through the full loop on real telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the "
+             "attacker appends text to the command lines of their own processes (84 events; 38 cases whose first "
+             "alert carries it).", "",
+             "| Attacker text | Condition | Attack cases dismissed | Attack cases' patterns learned as routine | "
+             "Labelled attack events alerted | Injected cases where NCE named the steered host | "
+             "Steered hypotheses flagged unbound | Containment against the steered host |",
+             "|:--|:--|--:|--:|--:|--:|--:|--:|"]
+    names = {"clean": "none (clean)", "suppress": "\"routine maintenance\"", "fake_approval": "fake SOC approval",
+             "steer": "\"isolate the domain controller\""}
+    for fam, label in names.items():
+        for cond, cname in (("no_analyst", "no analyst"), ("analyst", "analyst 4 h, B5 on")):
+            r = e.get(f"{fam}/{cond}")
+            if r is None:
+                continue
+            mal, inj = r["malicious_cases"], r["injected_first_alert_cases"]
+            steered = inj.get("cases_with_steered_hypothesis", 0)
+            flagged = sum(v for k, v in inj.items() if k == "steered_binding_unbound")
+            total = sum(v for k, v in inj.items() if k.startswith("steered_binding_"))
+            actions = sum(v for k, v in inj.items() if k.startswith("steered_action_"))
+            lines.append(f"| {label} | {cname} | {mal.get('NO_ACTIONABLE', 0)} / {sum(mal.values())} | "
+                         f"{sum(r['attack_keys_learned'].values())} | {r['labelled_events_alerted']} | "
+                         f"{steered} / {inj.get('cases', '-')} | {flagged} / {total} | {actions} |")
+    return lines + [""]
 
 
 # -- DEDALE ------------------------------------------------------------------------------
@@ -221,7 +257,7 @@ def main() -> None:
              "- **Analyst:** simulated (an oracle that follows the labels, with random per-case mistakes).",
              "- **LLM:** one model on DEDALE. On GUIDE, gpt-oss-20b covered only part of the dev set.",
              "- **GUIDE v2:** its entities, payloads and evidence are synthetic.",
-             "- **Comparisons:** the undefended-agent comparison is interim, as the table states.", ""]
+             "- **Second model:** the gpt-oss-20b run covers only part of the dev set (Groq free-tier daily cap).", ""]
     OUT.write_text("\n".join(lines), encoding="utf-8")
     print(f"-> {OUT}")
 

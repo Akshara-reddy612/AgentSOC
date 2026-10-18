@@ -9,7 +9,7 @@ becomes a host alert -> cases -> triage gate -> gated learning.
 
     python -m experiments.dedale_host_replay --mode gated [--analyst oracle]
             [--nce live|cache --max-calls N] [--detectors lineage logon lsass_access] [--until 2025-01-08]
-            [--no-unlearn] [--closed-world]
+            [--no-unlearn] [--closed-world] [--inject suppress|fake_approval|steer]
             [--tag NAME] [--case-store] --overwrite
 
 Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agentsoc_data):
@@ -101,6 +101,8 @@ def main() -> None:
                     help="live: Gemini NCE on cases reaching the pipeline (API calls; cached; needs budget approval); "
                          "cache: cached NCE results only, never an API call")
     ap.add_argument("--no-unlearn", action="store_true", help="switch off decision B5 (unlearn on confirmation)")
+    ap.add_argument("--inject", default=None, choices=["suppress", "fake_approval", "steer"],
+                    help="E1: append attacker-written text to the attacker's command lines (labels pick them)")
     ap.add_argument("--closed-world", action="store_true",
                     help="profile without observed_hosts: SSE treats every missing path as infeasible (pre-Phase-3)")
     ap.add_argument("--max-calls", type=int, default=950, help="hard cap on live NCE calls in this run")
@@ -123,6 +125,12 @@ def main() -> None:
     store_path.parent.mkdir(parents=True, exist_ok=True)
     run_dir.mkdir(parents=True, exist_ok=True)
     until = datetime.fromisoformat(args.until).replace(tzinfo=timezone.utc) if args.until else None
+
+    injector = None
+    if args.inject:                    # E1 attacker simulation: labels pick the attacker's own commands
+        from experiments.dedale_host_score import load_host_labels
+        from experiments.dedale_inject import Injector
+        injector = Injector(args.inject, load_host_labels())
 
     analyst = oracle = None
     if args.analyst == "oracle":       # the only place the replay touches ground truth (separate condition)
@@ -157,14 +165,23 @@ def main() -> None:
                 oracle.observe_alert(case, alert)
 
         gate_options, nce = {}, None
+        from experiments.dedale_nce import CACHE as nce_cache
+        if args.inject:
+            nce_cache = nce_cache.with_name(f"nce_cache_host_{args.inject}.jsonl")
         if args.nce == "live":
             from experiments.dedale_nce import CallCap, LiveNCE
             cap = CallCap(args.max_calls)
             nce = LiveNCE(cap)
+            if args.inject:
+                from experiments.dedale_inject import InjectedRouter
+                nce = InjectedRouter(args.inject, nce, LiveNCE(cap, cache_path=nce_cache))
             gate_options = {"nce": nce, "budget": cap}
         elif args.nce == "cache":
             from experiments.dedale_nce import LiveNCE
             nce = LiveNCE(None, cache_only=True)
+            if args.inject:
+                from experiments.dedale_inject import InjectedRouter
+                nce = InjectedRouter(args.inject, nce, LiveNCE(None, cache_only=True, cache_path=nce_cache))
             gate_options = {"nce": nce}
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
@@ -175,6 +192,8 @@ def main() -> None:
         while chunk := list(islice(events, CHUNK)):
             with db.batch(), (case_store.batch() if case_store else nullcontext()):   # one transaction per chunk
                 for at, event in chunk:
+                    if injector is not None:
+                        event = injector(event)
                     last = max(at, last)
                     loop.process_host_event(event, last)
         with db.batch(), (case_store.batch() if case_store else nullcontext()):
@@ -195,7 +214,8 @@ def main() -> None:
            if args.analyst == "oracle" else {}),
         "nce": args.nce, "nce_live_calls": nce.live_calls if nce else 0, "nce_cache_hits": nce.cache_hits if nce else 0,
         "nce_cache_misses": nce.cache_misses if nce else 0, "unlearn_on_confirm": not args.no_unlearn,
-        "closed_world": args.closed_world,
+        "closed_world": args.closed_world, "inject": args.inject,
+        "injected_events": injector.injected if injector else 0,
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,

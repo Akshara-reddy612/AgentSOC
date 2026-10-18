@@ -22,6 +22,7 @@ from __future__ import annotations
 import json
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 
 from dedale import data_dir
 from perception.nce_contract import MissingContextFlag, NCEHypothesis
@@ -64,16 +65,18 @@ class CallCap:
 class LiveNCE:
     """Callable for TriageGate(nce=...): cached results first, otherwise one live call (counted against the cap)."""
 
-    def __init__(self, cap: CallCap | None, model: str = MODEL, *, cache_only: bool = False) -> None:
+    def __init__(self, cap: CallCap | None, model: str = MODEL, *, cache_only: bool = False,
+                 cache_path: Path = CACHE) -> None:
         if cap is None and not cache_only:
             raise ValueError("live NCE needs a call cap")
         self.cap = cap
         self.model = model
         self.cache_only = cache_only
         self.cache_misses = 0
+        self.cache_path = cache_path         # E1: one cache per payload family (same alert ids, other text)
         self.cache: dict[str, dict] = {}
-        if CACHE.exists():
-            with open(CACHE, encoding="utf-8") as f:
+        if cache_path.exists():
+            with open(cache_path, encoding="utf-8") as f:
                 for line in f:
                     rec = json.loads(line)
                     self.cache[rec["alert_id"]] = rec
@@ -106,8 +109,8 @@ class LiveNCE:
         rec = {"alert_id": alert["alert_id"], "model": self.model,
                "hypotheses": [_ser(h) for h in res.output.hypotheses] if ok else [],
                "error": None if ok else (res.error or "NCE failed"), "api_call_count": res.api_call_count}
-        CACHE.parent.mkdir(parents=True, exist_ok=True)
-        with open(CACHE, "a", encoding="utf-8") as f:
+        self.cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(self.cache_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(rec) + "\n")
         with open(API_LOG, "a", encoding="utf-8") as f:
             f.write(json.dumps({"ts": datetime.now(timezone.utc).isoformat(), "alert_id": alert["alert_id"],

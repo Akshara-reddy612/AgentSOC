@@ -49,7 +49,7 @@ Decided 2026-10-12 with Abhishek. This file sets the scope. Work outside it goes
 
 | | Experiment | Needs | Size |
 |:--|:--|:--|:--|
-| **E1** | **Contamination through the full loop on DEDALE.** See below | API budget (estimated first; roughly a few hundred calls) | ~2-3 days |
+| **E1** | **Contamination through the full loop on DEDALE.** See below | API budget | **done 2026-10-18** (114 calls; `RESULTS.md` C1) |
 | **E2** | **Freeze.** Re-run every headline number on the final code (NCE from the cache); one results file; `REPRODUCE.md` | nothing | **done 2026-10-18** (`experiments/RESULTS.md`) |
 | **E2b** | **Finish the interrupted C1 runs** (found during M1): the undefended agent on the remaining dev pairs (~640 Gemini calls) and gpt-oss-20b on the remaining dev pairs (~740 Groq calls); plus 42 DEDALE alerts missing from the NCE cache (42 calls) | API budget | ~1-3 days of quota |
 | E3 | Optional: AIT-LDS v2 generality check of C2-C3. See below | download approval | ~1 week |
@@ -97,7 +97,7 @@ Package installs (npm for the frontend; nothing new for Python) need approval, a
 | # | Milestone | Depends on | Who | Size |
 |:--|:--|:--|:--|:--|
 | M1 | E2: freeze, results tables, `REPRODUCE.md` | — | Claude | **done 2026-10-18** |
-| M2 | E2b (finish the interrupted runs) and E1 (contamination through the full loop) | API budget approval | Claude | ~3-5 days |
+| M2 | E2b (finish the interrupted runs) and E1 (contamination through the full loop) | API budget approval | Claude | **E1 and the undefended run done 2026-10-18; gpt-oss-20b resumes daily (Groq cap)** |
 | M3 | Paper draft. Outline first; Claude drafts methods and results from the M1-M2 tables; the team writes the introduction, related work and discussion | M1, M2 | team + Claude | 1-2 weeks |
 | M4 | Demo backend: live runner + recovery, read APIs, accounts | — (alongside M3) | Claude | ~1 week |
 | M5 | Frontend | M4, npm approval | Claude + team | 2-3 weeks |

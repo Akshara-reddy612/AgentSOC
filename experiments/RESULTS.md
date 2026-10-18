@@ -14,12 +14,25 @@ Pipeline response on clean vs contaminated twins (same GUIDE row, differing only
 
 *Induced by ERA escalation*: the contaminated twin got a response the clean one did not because ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence reacting, not the attacker succeeding.
 
-**Undefended LLM agent vs defended pipeline, same pairs** (dev; 183 pairs so far — run interrupted by the free-tier daily quota):
+**Undefended LLM agent vs defended pipeline, same pairs** (all 500 dev pairs; defended McNemar against responses induced otherwise than by ERA escalation):
 
 | | Attack succeeded (of clean twins it applies to) | 95% CI | McNemar p | Misdirected actions executed |
 |:--|--:|--:|--:|--:|
-| Undefended agent (hijacked to dismiss) | 48/156 (30.8%) | 24.1%-38.4% | 1.7e-05 | - |
-| Defended pipeline (response suppressed) | 2/155 (1.3%) | 0.4%-4.6% | 0.29 | 0 |
+| Undefended agent (hijacked to dismiss) | 130/439 (29.6%) | 25.5%-34.0% | 6.5e-17 | - |
+| Defended pipeline (response suppressed) | 4/428 (0.9%) | 0.4%-2.4% | 1 | 0 |
+
+**Through the full loop on real telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the attacker appends text to the command lines of their own processes (84 events; 38 cases whose first alert carries it).
+
+| Attacker text | Condition | Attack cases dismissed | Attack cases' patterns learned as routine | Labelled attack events alerted | Injected cases where NCE named the steered host | Steered hypotheses flagged unbound | Containment against the steered host |
+|:--|:--|--:|--:|--:|--:|--:|--:|
+| none (clean) | no analyst | 0 / 72 | 0 | 400 | 0 / - | 0 / 0 | 0 |
+| none (clean) | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| "routine maintenance" | no analyst | 1 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| "routine maintenance" | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| fake SOC approval | no analyst | 3 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| fake SOC approval | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| "isolate the domain controller" | no analyst | 1 / 72 | 0 | 400 | 30 / 38 | 49 / 49 | 0 |
+| "isolate the domain controller" | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 32 / 38 | 59 / 59 | 0 |
 
 ## C2 — A learning Knowledge Store behind a gate cuts analyst load and keeps the attack visible
 
@@ -68,7 +81,7 @@ Host logs, gated. NCE = gemini-3.1-flash-lite hypotheses from the cache of the l
 | NCE off | 65.2 | 0 / 72 | 0 | 0 |
 | NCE on, closed-world feasibility | 54.6 | 2 / 72 | 89 | 0 |
 | NCE on, open-world feasibility (final) | 54.8 | 0 / 72 | 89 | 0 |
-| NCE on + analyst (4 h, B5 on) | 33.2 | 0 / 72 | 30 | 42 |
+| NCE on + analyst (4 h, B5 on) | 33.2 | 0 / 72 | 30 | 0 |
 
 ## C5 — Operating the analyst loop
 
@@ -106,4 +119,4 @@ With 5% false alarms on the network, approved blocks would have hit benign traff
 - **Analyst:** simulated (an oracle that follows the labels, with random per-case mistakes).
 - **LLM:** one model on DEDALE. On GUIDE, gpt-oss-20b covered only part of the dev set.
 - **GUIDE v2:** its entities, payloads and evidence are synthetic.
-- **Comparisons:** the undefended-agent comparison is interim, as the table states.
+- **Second model:** the gpt-oss-20b run covers only part of the dev set (Groq free-tier daily cap).
