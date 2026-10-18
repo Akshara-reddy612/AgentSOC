@@ -1,6 +1,6 @@
 # Paper Claims to Revise
 
-> **2026-10-12:** the paper's thesis is decided: one paper, combined (both attack surfaces, full pipeline). `PROJECT_PLAN.md` section 3 maps claims C1-C5 to their evidence. This file still lists which earlier sentences must change and which claims are not supported.
+> **2026-10-12:** the paper's thesis is decided: one paper, combined (both attack surfaces, full pipeline). `PROJECT_PLAN.md` section 3 maps claims C1-C5 to their evidence; the frozen numbers are in `experiments/RESULTS.md` (2026-10-18). When citing C1 after ERA (Phase 4.8), separate responses induced by ERA escalation from other induced responses, or the McNemar test reads the defence's escalations as an attack effect (dev p = 0.012 pooled vs 1.0 separated). This file still lists which earlier sentences must change and which claims are not supported.
 
 The following sentences in the project documentation and paper require revision based on the clean-vs-contaminated evaluation findings.
 

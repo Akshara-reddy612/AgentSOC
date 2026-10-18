@@ -8,7 +8,8 @@ learned (shadow mode).  Test weeks: an event whose key the store has not learned
 becomes a host alert -> cases -> triage gate -> gated learning.
 
     python -m experiments.dedale_host_replay --mode gated [--analyst oracle]
-            [--nce live --max-calls N] [--detectors lineage logon lsass_access] [--until 2025-01-08]
+            [--nce live|cache --max-calls N] [--detectors lineage logon lsass_access] [--until 2025-01-08]
+            [--no-unlearn] [--closed-world]
             [--tag NAME] [--case-store] --overwrite
 
 Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agentsoc_data):
@@ -25,6 +26,7 @@ simulated analyst of the separate --analyst oracle condition.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import gzip
 import json
 import time
@@ -95,8 +97,12 @@ def main() -> None:
     ap.add_argument("--analyst-false-alarm", type=float, default=0.0,
                     help="share of benign verdicts given as malicious")
     ap.add_argument("--analyst-seed", type=int, default=0, help="seed of the analyst's mistakes (reproducible)")
-    ap.add_argument("--nce", default="off", choices=["off", "live"],
-                    help="live: Gemini NCE on cases reaching the pipeline (API calls; cached; needs budget approval)")
+    ap.add_argument("--nce", default="off", choices=["off", "live", "cache"],
+                    help="live: Gemini NCE on cases reaching the pipeline (API calls; cached; needs budget approval); "
+                         "cache: cached NCE results only, never an API call")
+    ap.add_argument("--no-unlearn", action="store_true", help="switch off decision B5 (unlearn on confirmation)")
+    ap.add_argument("--closed-world", action="store_true",
+                    help="profile without observed_hosts: SSE treats every missing path as infeasible (pre-Phase-3)")
     ap.add_argument("--max-calls", type=int, default=950, help="hard cap on live NCE calls in this run")
     ap.add_argument("--detectors", nargs="+", default=list(DETECTORS), choices=list(DETECTORS))
     ap.add_argument("--until", default=None, help="stop before this UTC date (YYYY-MM-DD)")
@@ -105,7 +111,7 @@ def main() -> None:
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
 
-    run = args.mode + ("_nce" if args.nce == "live" else "") + ("_analyst" if args.analyst == "oracle" else "")
+    run = args.mode + ("_nce" if args.nce != "off" else "") + ("_analyst" if args.analyst == "oracle" else "")
     run += f"_{args.tag}" if args.tag else ""
     root = data_dir().parent
     store_path = root / "ks" / f"dedale_host_{run}.sqlite"
@@ -134,7 +140,8 @@ def main() -> None:
         case_store = CaseStore(cs_path, created_at=TRAINING_START)
 
     t0 = time.perf_counter()
-    db = KnowledgeDB(store_path, DEDALE_PROFILE, created_at=TRAINING_START)
+    profile = dataclasses.replace(DEDALE_PROFILE, observed_hosts=None) if args.closed_world else DEDALE_PROFILE
+    db = KnowledgeDB(store_path, profile, created_at=TRAINING_START)
     seed_store(db, TRAINING_START)
     outcomes: Counter[str] = Counter()
     with open(run_dir / "cases.jsonl", "w", encoding="utf-8") as cases_out, \
@@ -155,10 +162,14 @@ def main() -> None:
             cap = CallCap(args.max_calls)
             nce = LiveNCE(cap)
             gate_options = {"nce": nce, "budget": cap}
+        elif args.nce == "cache":
+            from experiments.dedale_nce import LiveNCE
+            nce = LiveNCE(None, cache_only=True)
+            gate_options = {"nce": nce}
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
-                       case_store=case_store)
+                       case_store=case_store, unlearn_on_confirm=not args.no_unlearn)
         last = TRAINING_START
         events = iter_events(until)
         while chunk := list(islice(events, CHUNK)):
@@ -183,6 +194,8 @@ def main() -> None:
             "analyst_false_alarm": args.analyst_false_alarm, "analyst_seed": args.analyst_seed}
            if args.analyst == "oracle" else {}),
         "nce": args.nce, "nce_live_calls": nce.live_calls if nce else 0, "nce_cache_hits": nce.cache_hits if nce else 0,
+        "nce_cache_misses": nce.cache_misses if nce else 0, "unlearn_on_confirm": not args.no_unlearn,
+        "closed_world": args.closed_world,
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,

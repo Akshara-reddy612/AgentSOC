@@ -1814,3 +1814,45 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `PROJECT_PLAN.md`
 - Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-18 — Session: M1 freeze (PROJECT_PLAN.md)
+
+### What was tried
+- **Reproduction switches:**
+  - `LiveNCE(cache_only=True)` / host replay `--nce cache` (never an API call; misses counted in `summary.json`);
+  - `--no-unlearn` (host + network);
+  - `--closed-world` (host; profile without `observed_hosts`).
+- **`experiments/freeze_dedale.py`:** 18 host + 11 network conditions, 6 in parallel, `PYTHONHASHSEED=0`; scored into `dedale_results/final_{host,network}_scores.json`.
+  - The closed-world run first failed: `seed_store` required the exact DEDALE profile. Fixed (it ignores `observed_hosts`) and re-run.
+- **GUIDE v2:** `rescore_v2` on the dev / held-out / gpt-oss-20b live results with the final code; `attack_metrics`, `undefended_metrics`, `tamper_structured`, `era_offline --report` (outputs in `experiments/final_results/c1/`).
+- **`experiments/build_results.py`** -> `experiments/RESULTS.md`; `REPRODUCE.md`.
+
+### What was found
+- **GUIDE re-scores** are identical to `agent/v2_results/*_rescored.json` (dev, held-out, gpt-oss-20b).
+- **DEDALE**, final code (NCE off unless stated):
+  - host static / frozen / gated / ungated: 6,095.4 / 65.2 / 65.2 / 27.4 reviews / day; ungated learned 38 attack cases' patterns, 99 labelled events alerted (gated 400).
+  - Network static / frozen / gated / ungated / noact: 552.3 / 26.1 / 26.1 / 20.6 / 7.9.
+  - **Host analyst (B5 on):**
+    - delays 1 / 4 / 24 / 72 h: 33.1 / 34.1 / 38.1 / 51.5 reviews / day;
+    - B5 off at 4 h: 30.9;
+    - misses 5% / 20%, B5 off: 8 / 20 learned, 397 / 256 alerted; B5 on: 0 / 0, 400 / 400;
+    - false alarms 5%: 31.4 (off) / 44.6 (on).
+  - **Host NCE (cache):**
+    - closed world 54.6 / day, 2 / 72 malicious dismissed;
+    - open world 54.8, 0 / 72;
+    - NCE + analyst + B5: 33.2, 42 cache misses.
+  - **Network analyst:** delays 1 / 4 / 24 / 72 h -> 20.7 / 20.9 / 21.5 / 22.8, attacker contained after 60 / 240 / 1440 / 4320 min; B5 makes no difference on the network.
+- **C1 "induced" responses:** dev 16 = 12 with ERA MEDIUM / HIGH on the contaminated twin + 4 otherwise; held-out 10 = 10 ERA. Suppressed vs induced otherwise: dev 4 / 4 (p = 1.0), held-out 3 / 0 (p = 0.25), as reported before ERA was added.
+- **Undefended vs defended:** interim 183 dev pairs, 48 / 156 vs 2 / 155 (reproduced).
+- **Remaining API needs (E2b):**
+  - undefended dev about 640 Gemini calls (373 records stored, 5 errors);
+  - gpt-oss-20b dev about 740 Groq calls (282 records, 23 errors);
+  - 42 DEDALE cache misses.
+  - Keys configured: 8 Gemini, 5 Groq.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 744 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/freeze_dedale.py`, `experiments/build_results.py`, `experiments/RESULTS.md`, `REPRODUCE.md`, `experiments/final_results/c1/*.txt`, `experiments/dedale_results/final_{host,network}_scores.json`
+- Modified: `experiments/dedale_nce.py`, `experiments/dedale_host_replay.py`, `experiments/dedale_replay.py`, `dedale/environment.py`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

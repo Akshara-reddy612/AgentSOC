@@ -13,7 +13,8 @@
   - Paper: one paper, combined thesis (both attack surfaces, full pipeline); venue after the draft.
   - Datasets: at most 3 (GUIDE, DEDALE, optional AIT-LDS).
   - Demo: a real frontend with accounts showing the whole pipeline on the DEDALE attack.
-  - **Current milestone: M1** (freeze results, `REPRODUCE.md`).
+  - **M1 done (2026-10-18):** `experiments/RESULTS.md` (claims C1-C5, built only from frozen result files by `experiments/build_results.py`) and `REPRODUCE.md`. All DEDALE conditions were re-run on the final code (`experiments/freeze_dedale.py`, 29 replays, NCE from the cache, no API calls); the GUIDE v2 re-scores are identical to the reported files.
+  - **Current milestone: M2** (finish the interrupted C1 runs, E1); needs an API budget.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)
@@ -305,6 +306,16 @@
     - The v2 factors: another target named in 24% of malicious vs 0.1% of benign cases; 3+ other host cases in 24 h in 89% vs 46%.
     - **In-sample:** the v2 factors were chosen after seeing this data, and only 2 hosts were attacked. A fair test needs another dataset.
   - **Tests:** `tests/test_review_service.py` (6), `tests/test_review_actions.py` (7); suite 732 passed, 1 deselected.
+- **M1 freeze (2026-10-18):**
+  - **New tools:**
+    - replay options `--nce cache` (cached NCE only, misses counted), `--no-unlearn` and `--closed-world` (host);
+    - `experiments/freeze_dedale.py` (29 conditions, `PYTHONHASHSEED=0`);
+    - `experiments/build_results.py`.
+  - **Fix:** `dedale.seed_store` accepted only the exact DEDALE profile, which blocked closed-world runs; it now ignores `observed_hosts`.
+  - **Corrections found:**
+    - C1's "induced" responses after Phase 4.8 are mostly ERA escalating injected text (dev 12 of 16, held-out 10 of 10). Separated, the result is unchanged: suppressed vs induced otherwise 4 / 4 (dev, p = 1.0) and 3 / 0 (held-out, p = 0.25).
+    - The undefended-agent comparison (C1 headline) and gpt-oss-20b run are still interim (183 and 125 dev pairs).
+    - The NCE + analyst + B5 condition met 42 alerts not in the NCE cache (sent to review unreasoned).
 - **Analyst review loop, step 6: evaluation (2026-10-11): `experiments/REVIEW_LOOP_RESULTS.md`** (for the team), scores in `dedale_results/review_eval_{host,network}.json`.
   - Setup: oracle analyst through the inbox, NCE off (no API calls). New replay options `--analyst-delay`, `--analyst-miss`, `--analyst-false-alarm`, `--analyst-seed` (`experiments/analyst_sim.py`).
   - **Delay 1 / 4 / 24 / 72 h:**
