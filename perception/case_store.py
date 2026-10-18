@@ -348,6 +348,17 @@ class CaseStore:
     def close(self) -> None:
         self._con.close()
 
+    def backup_to(self, path: str | Path) -> None:
+        """A consistent copy of the store (SQLite backup API), taken under the store's lock."""
+        with self._lock:
+            if self._depth:
+                raise RuntimeError("backup inside a batch")
+            dst = sqlite3.connect(str(path))
+            try:
+                self._con.backup(dst)
+            finally:
+                dst.close()
+
     def __enter__(self) -> "CaseStore":
         return self
 
