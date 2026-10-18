@@ -108,7 +108,39 @@ def c1() -> list[str]:
               f"| Defended pipeline (response suppressed) | {_pct(u['d_suppressed'], u['d_clean_responded'])} | "
               f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], d_other):.2g} | "
               f"{u['d_misdirect_exec']} |", ""]
+    lines += e1()
     return lines
+
+
+def e1() -> list[str]:
+    """C1 through the full loop on real telemetry (E1): attacker text in the attacker's own command lines."""
+    path = RESULTS / "e1_scores.json"
+    if not path.exists():
+        return []
+    e = _load(path)
+    lines = ["**Through the full loop on real telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the "
+             "attacker appends text to the command lines of their own processes (84 events; 38 cases whose first "
+             "alert carries it).", "",
+             "| Attacker text | Condition | Attack cases dismissed | Attack cases' patterns learned as routine | "
+             "Labelled attack events alerted | Injected cases where NCE named the steered host | "
+             "Steered hypotheses flagged unbound | Containment against the steered host |",
+             "|:--|:--|--:|--:|--:|--:|--:|--:|"]
+    names = {"clean": "none (clean)", "suppress": "\"routine maintenance\"", "fake_approval": "fake SOC approval",
+             "steer": "\"isolate the domain controller\""}
+    for fam, label in names.items():
+        for cond, cname in (("no_analyst", "no analyst"), ("analyst", "analyst 4 h, B5 on")):
+            r = e.get(f"{fam}/{cond}")
+            if r is None:
+                continue
+            mal, inj = r["malicious_cases"], r["injected_first_alert_cases"]
+            steered = inj.get("cases_with_steered_hypothesis", 0)
+            flagged = sum(v for k, v in inj.items() if k == "steered_binding_unbound")
+            total = sum(v for k, v in inj.items() if k.startswith("steered_binding_"))
+            actions = sum(v for k, v in inj.items() if k.startswith("steered_action_"))
+            lines.append(f"| {label} | {cname} | {mal.get('NO_ACTIONABLE', 0)} / {sum(mal.values())} | "
+                         f"{sum(r['attack_keys_learned'].values())} | {r['labelled_events_alerted']} | "
+                         f"{steered} / {inj.get('cases', '-')} | {flagged} / {total} | {actions} |")
+    return lines + [""]
 
 
 # -- DEDALE ------------------------------------------------------------------------------

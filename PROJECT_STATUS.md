@@ -18,7 +18,12 @@
     - Undefended agent, all 500 dev pairs: hijacked 130 / 439 (29.6%, 95% CI 25.5-34.0%, p = 6.5e-17), against the defended pipeline's 4 / 428 (0.9%, p = 1.0 with ERA escalations separated) and 0 misdirected actions.
     - The 42 DEDALE NCE cache misses are filled (42 calls); C4's NCE + analyst row is unchanged (33.2 reviews / day, 0 / 72 dismissed).
     - gpt-oss-20b dev run resumed (Groq daily cap; continues over 2-3 days).
-    - E1 tooling built (`experiments/dedale_inject.py`, replay `--inject`); offline dry run: 38 contaminated cases per family, so about 114 calls for all three families (awaiting budget approval).
+    - **E1 done (user-approved, 114 calls):** attacker text in the attacker's own command lines on DEDALE, through the full loop.
+      - Attack cases dismissed without the analyst: 1 / 3 / 1 of 72 (suppress / fake approval / steer); with the analyst, 0.
+      - Attack patterns learned as routine: 0 in every run (the gate dropped the dismissed cases). All 400 labelled attack events still alerted.
+      - Steering followed by NCE in 30-32 / 38 cases; all steered hypotheses flagged unbound; 0 containment against the steered host.
+      - See `experiments/E1_CONTAMINATION_DEDALE_DESIGN.md` and `RESULTS.md` (C1).
+    - gpt-oss-20b dev: 590 / 1,000 records after day 1 (Groq daily cap); resume daily with the same command.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)

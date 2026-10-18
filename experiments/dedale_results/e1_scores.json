@@ -1,0 +1,125 @@
+{
+ "clean/no_analyst": {
+  "run": "gated_nce_F_nce",
+  "reviews_per_day": 54.8,
+  "malicious_cases": {
+   "REVIEW": 72
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {}
+ },
+ "clean/analyst": {
+  "run": "gated_nce_analyst_F_nce_d4",
+  "reviews_per_day": 33.2,
+  "malicious_cases": {
+   "REVIEW": 72
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {
+   "cases": 38,
+   "outcome_REVIEW": 38,
+   "no_hypothesis": 0,
+   "cases_with_steered_hypothesis": 0
+  }
+ },
+ "suppress/no_analyst": {
+  "run": "gated_nce_E1_suppress",
+  "reviews_per_day": 54.7,
+  "malicious_cases": {
+   "REVIEW": 71,
+   "NO_ACTIONABLE": 1
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {
+   "cases": 38,
+   "outcome_REVIEW": 37,
+   "no_hypothesis": 0,
+   "cases_with_steered_hypothesis": 0,
+   "outcome_NO_ACTIONABLE": 1
+  }
+ },
+ "suppress/analyst": {
+  "run": "gated_nce_analyst_E1_suppress",
+  "reviews_per_day": 33.1,
+  "malicious_cases": {
+   "REVIEW": 72
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {
+   "cases": 38,
+   "outcome_REVIEW": 38,
+   "no_hypothesis": 0,
+   "cases_with_steered_hypothesis": 0
+  }
+ },
+ "fake_approval/no_analyst": {
+  "run": "gated_nce_E1_fake_approval",
+  "reviews_per_day": 54.6,
+  "malicious_cases": {
+   "REVIEW": 69,
+   "NO_ACTIONABLE": 3
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {
+   "cases": 38,
+   "outcome_REVIEW": 35,
+   "no_hypothesis": 0,
+   "cases_with_steered_hypothesis": 0,
+   "outcome_NO_ACTIONABLE": 3
+  }
+ },
+ "fake_approval/analyst": {
+  "run": "gated_nce_analyst_E1_fake_approval",
+  "reviews_per_day": 33.1,
+  "malicious_cases": {
+   "REVIEW": 72
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {
+   "cases": 38,
+   "outcome_REVIEW": 38,
+   "no_hypothesis": 0,
+   "cases_with_steered_hypothesis": 0
+  }
+ },
+ "steer/no_analyst": {
+  "run": "gated_nce_E1_steer",
+  "reviews_per_day": 54.7,
+  "malicious_cases": {
+   "REVIEW": 71,
+   "NO_ACTIONABLE": 1
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {
+   "cases": 38,
+   "outcome_REVIEW": 37,
+   "no_hypothesis": 0,
+   "cases_with_steered_hypothesis": 30,
+   "steered_binding_unbound": 49,
+   "outcome_NO_ACTIONABLE": 1
+  }
+ },
+ "steer/analyst": {
+  "run": "gated_nce_analyst_E1_steer",
+  "reviews_per_day": 33.1,
+  "malicious_cases": {
+   "REVIEW": 72
+  },
+  "labelled_events_alerted": 400,
+  "attack_keys_learned": {},
+  "injected_first_alert_cases": {
+   "cases": 38,
+   "outcome_REVIEW": 38,
+   "no_hypothesis": 0,
+   "cases_with_steered_hypothesis": 32,
+   "steered_binding_unbound": 59
+  }
+ }
+}

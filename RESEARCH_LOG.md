@@ -1886,3 +1886,28 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/dedale_inject.py`, `experiments/E1_CONTAMINATION_DEDALE_DESIGN.md`, `tests/test_dedale_inject.py`
 - Modified: `experiments/dedale_nce.py`, `experiments/dedale_host_replay.py`, `experiments/build_results.py`, `experiments/RESULTS.md`, `experiments/dedale_results/final_{host,network}_scores.json`, `agent/v2_results/v2_dev_undefended_results.json` (+ API log), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-18 — Session: E1 — contamination through the full loop on DEDALE
+
+### What was tried
+- User approved about 114 calls.
+- 6 replays: `--mode gated --nce live --max-calls 60 --case-store --inject {suppress,fake_approval,steer}`, each without and with `--analyst oracle` (B5 on). One NCE cache per family; the families ran in parallel.
+- Scored with `experiments/e1_score.py` (standard host scores + case-store analysis of the 38 cases whose first alert carries the payload); E1 table added to `experiments/build_results.py`.
+- gpt-oss-20b dev resumed until the Groq daily cap.
+
+### What was found
+- **Live calls:** 21 + 17 per family = 114 in total, 0 errors.
+- **Without the analyst:**
+  - outcomes: suppress REVIEW 766 / NO_ACTIONABLE 90; fake_approval 764 / 92; steer 766 / 90 (clean 767 / 89);
+  - malicious dismissed 1 / 3 / 1 of 72 (clean 0); attack keys learned 0 everywhere; labelled events alerted 400 everywhere;
+  - gate dropped 60 / 62 / 60 (clean 59); closed_benign SPAWNED 13 in all.
+- **With the analyst (B5 on):** 464 REVIEW / 31 NO_ACTIONABLE in every family; malicious dismissed 0; 33.1 reviews / day (clean 33.2).
+- **Steer:** NCE named internalserver or Administrator in 30 / 38 (no analyst) and 32 / 38 (analyst) injected cases; steered hypotheses 49 and 59, all entity binding "unbound"; no action targeted internalserver.
+- **gpt-oss-20b:** stopped at the Groq daily cap with 590 / 1,000 records stored (from 282).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 747 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/e1_score.py`, `experiments/dedale_results/e1_scores.json`
+- Modified: `experiments/build_results.py`, `experiments/RESULTS.md`, `experiments/E1_CONTAMINATION_DEDALE_DESIGN.md`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json` (+ API log), `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
