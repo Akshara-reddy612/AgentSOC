@@ -197,6 +197,46 @@ class ReviewService:
             "audit": self.store.audit(case_id=case_id),
         }
 
+    def trace(self, case_id: str) -> dict:
+        """
+        The pipeline, stage by stage, for one case (the demo's case view, M4.3): what each layer
+        saw and decided, in order.  LLM output is marked; untrusted text stays separate.
+        """
+        c = self.store.case(case_id)
+        if c is None:
+            raise NotFoundError(f"no case {case_id!r}")
+        d = self.store.decision(case_id) or {}
+        alerts = self.store.alerts(case_id)
+        first = alerts[0] if alerts else {"trusted": {}, "untrusted": {}}
+        hyps = d.get("hypotheses", [])
+        stages = [
+            {"stage": "alert", "title": "Sensor alert",
+             "pattern": c["title"], "trusted": first["trusted"], "untrusted": first["untrusted"],
+             "untrusted_notice": UNTRUSTED_NOTICE, "alerts_in_case": c["alert_count"]},
+            {"stage": "triage_gate", "title": "Triage gate",
+             "path": d.get("path"), "escalations": d.get("escalations", []),
+             "explanation": {"baseline": "pattern already learned as routine: no reasoning needed",
+                             "cache": "same decision as an earlier identical case",
+                             "pipeline": "new pattern: full reasoning"}.get(d.get("path"), "")},
+            {"stage": "reasoning", "title": "LLM hypotheses (NCE)", "llm_output": True, "notice": LLM_NOTICE,
+             "nce_status": d.get("nce"),
+             "hypotheses": [{k: h.get(k) for k in ("technique_id", "source_account", "source_host", "target_host")}
+                            for h in hyps]},
+            {"stage": "structural_check", "title": "Structural feasibility (SSE) and entity binding",
+             "checks": [{k: h.get(k) for k in ("technique_id", "sse_verdict", "path_confidence", "entity_binding",
+                                               "binding_roles")} for h in hyps]},
+            {"stage": "response", "title": "Response ranking (RSEM) and guardrails",
+             "responses": [{k: h.get(k) for k in ("technique_id", "top_action", "top_target_host",
+                                                  "top_target_account", "top_composite", "playbook_status",
+                                                  "guardrail_reason")} for h in hyps if h.get("top_action")]},
+            {"stage": "decision", "title": "Decision", "outcome": d.get("outcome"),
+             "pipeline_outcome": d.get("pipeline_outcome"), "reasons": d.get("reasons", [])},
+            {"stage": "actions", "title": "Containment", "actions": self.store.actions(case_id)},
+            {"stage": "learning", "title": "What the store learns", "review_status": c["review_status"],
+             "verdict": c["verdict"], "preview": learning_preview(c)},
+        ]
+        return {"case_id": case_id, "stages": stages}
+
     def _peer_pool(self, host: str | None) -> list[dict]:
         """Cases that raise a host's risk: waiting for review, or confirmed malicious."""
         pool =self.store.cases(review_status=QUEUE_STATUSES, host=host, limit=100_000)

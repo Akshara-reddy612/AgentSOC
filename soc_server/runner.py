@@ -88,6 +88,7 @@ class LiveRunner:
         self._thread: threading.Thread | None = None
         self.events_processed = 0
         self.last_checkpoint: datetime | None = None
+        self._dirty = False                               # events processed since the last checkpoint
         ks, cs = self.home / "ks.sqlite", self.home / "cases.sqlite"
         cp = self.home / "checkpoint"
         if (cp / "state.pkl").exists():                   # restart: restore the latest checkpoint
@@ -190,6 +191,7 @@ class LiveRunner:
                 self.pos, self._pending = pos, None
                 n += 1
         self.events_processed += n
+        self._dirty = self._dirty or n > 0
         return n
 
     def run_until(self, t: datetime) -> int:
@@ -223,8 +225,8 @@ class LiveRunner:
             if state == "paused":
                 with self.db.batch(), self.cases.batch():
                     self.loop.tick(self.clock)            # analysts' commands apply while paused
-                if time.monotonic() - last_cp > self.checkpoint_every:
-                    self.checkpoint()
+                if self._dirty or time.monotonic() - last_cp > self.checkpoint_every:
+                    self.checkpoint()                     # pausing checkpoints right away
                     last_cp = time.monotonic()
                 with self._cond:
                     self._cond.wait(0.5)
@@ -271,7 +273,7 @@ class LiveRunner:
             cp.rename(old)
         tmp.rename(cp)
         shutil.rmtree(old, ignore_errors=True)
-        self.last_checkpoint = self.clock
+        self.last_checkpoint, self._dirty = self.clock, False
 
 
 def stream_after(events: list[tuple[datetime, dict]], after: int | None) -> Iterator[tuple[int, datetime, dict]]:

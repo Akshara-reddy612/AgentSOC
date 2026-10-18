@@ -24,6 +24,18 @@
       - Steering followed by NCE in 30-32 / 38 cases; all steered hypotheses flagged unbound; 0 containment against the steered host.
       - See `experiments/E1_CONTAMINATION_DEDALE_DESIGN.md` and `RESULTS.md` (C1).
     - gpt-oss-20b dev: 590 / 1,000 records after day 1 (Groq daily cap); resume daily with the same command.
+  - **M3 started:** `PAPER_OUTLINE.md` (sections mapped to claims C1-C5 and to `RESULTS.md` tables; who writes what).
+  - **M4 done (2026-10-18): demo backend** (`DEMO_BACKEND_DESIGN.md`, `soc_server/`, `review_api/accounts.py`).
+    - **Accounts:** scrypt passwords, hashed session tokens, roles analyst / lead / admin, admin endpoints.
+    - **Live runner:** the loop in a thread over a replay source, paced by stream time, pause / speed, analysts' commands applied while paused. Checkpoints copy both stores (SQLite backup), pickle the loop state and checkpoint on pause; restore equals an uninterrupted run (test).
+    - **Read APIs:** `/cases/{id}/trace` (8 pipeline stages), `/knowledge/*` (read-only connection), `/metrics` (with the frozen comparison runs), `/live/*` (lead / admin).
+    - **Run:** `python -m soc_server` (first start learns the benign weeks and fast-forwards to the attack morning).
+    - **Smoke test on DEDALE:**
+      - first start: 6,787,207 training events, then the replay from 08:00;
+      - by 12:22 on 2025-01-06: 271,380 events, 70 alerts, 29 cases, the CLIENT2 attack at the top of the queue;
+      - after a hard kill and restart it resumed from the checkpoint and reproduced the same counts and queue.
+    - **Tests:** `tests/test_accounts.py` (3), `tests/test_live_runner.py` (2), `tests/test_soc_server.py` (3); suite 755 passed, 1 deselected.
+  - **Next:** M3 drafting and M5 frontend (needs an npm install approval).
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)
@@ -414,6 +426,7 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/soc_loop.py`](perception/soc_loop.py) | The store-backed Sense-Reason-Act loop over an alert stream (design step S8): enrichment, monitor, cases, triage, gated learning; modes static / frozen / gated / ungated | Built & Tested |
 | [`perception/case_store.py`](perception/case_store.py) | Analyst review loop, step 1: persistent cases, alerts (trusted / untrusted), decisions, proposed actions (four-eyes), claims, verdicts, notes, the loop's command inbox, append-only audit | Built & Tested |
 | [`perception/review_service.py`](perception/review_service.py) | Analyst review loop, step 3: prioritised queue with reasons, case view (trusted / untrusted / LLM groups), learning preview, related cases, verdicts and actions | Built & Tested |
+| [`soc_server/`](soc_server/) | Demo server (M4): live runner with checkpoints over a replay source, review API + accounts, pipeline trace, read-only Knowledge Store views, metrics (`python -m soc_server`) | Built & Tested |
 | [`review_api/`](review_api/) | Analyst review loop, step 5: FastAPI HTTP API over the review service (bearer tokens per analyst; `python -m review_api --case-store ...`) | Built & Tested |
 | [`experiments/dedale_replay.py`](experiments/dedale_replay.py) | Phase 1 DEDALE replay (offline, NCE off): one run per learning mode, store + per-case records outside the repo | Built & Run |
 | [`experiments/dedale_score.py`](experiments/dedale_score.py) | Phase 1 scorer (design step S9): the only reader of DEDALE ground truth; workload, attack coverage, false positives, learning safety per replay run | Built & Run |
