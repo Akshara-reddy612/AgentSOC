@@ -1856,3 +1856,33 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/freeze_dedale.py`, `experiments/build_results.py`, `experiments/RESULTS.md`, `REPRODUCE.md`, `experiments/final_results/c1/*.txt`, `experiments/dedale_results/final_{host,network}_scores.json`
 - Modified: `experiments/dedale_nce.py`, `experiments/dedale_host_replay.py`, `experiments/dedale_replay.py`, `dedale/environment.py`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-18 — Session: M2 — finishing C1, E1 tooling
+
+### What was tried
+- **Approved by the user ("yes yes"):** the E2b budget (undefended dev ~640, gpt-oss-20b dev ~740, 42 DEDALE cache misses) and pushing `main` (`e467025..bc54e9e`).
+- **Runs:**
+  - `agent.run_v2_undefended --set dev --workers 8` (resumed);
+  - `agent.run_v2_eval --nce live --set dev --model groq:openai/gpt-oss-20b --workers 5` (resumed; stops at Groq's daily cap);
+  - `dedale_host_replay --mode gated --nce live --max-calls 60 --analyst oracle --case-store --tag F_nce_d4_fill`;
+  - then `F_nce_d4` re-run from the cache and `build_results` re-run.
+- **E1 tooling:**
+  - `experiments/dedale_inject.py`: `Injector` (3 payload families x 4 templates, shell comment syntax, only class-1 process events with a command line) and `InjectedRouter` (family cache vs clean cache);
+  - `LiveNCE(cache_path=...)`; replay `--inject`.
+- **E1 dry run** with `--nce cache --inject suppress`, without and with the analyst (no API calls).
+
+### What was found
+- **Undefended agent dev:** 632 calls, 1,000 records, 0 errors.
+  - Hijacked 130 / 439 (29.6%, 95% CI 25.5-34.0%, McNemar p = 6.5e-17).
+  - Defended pipeline on the same 500 pairs: suppressed 4 / 428 (0.9%, 0.4-2.4%); induced otherwise 4 (p = 1.0), plus 12 ERA escalations; misdirected actions executed 0.
+  - By family, undefended: cross_field_split 81.4%, authority_escalation 71.4%, fabricated_evidence 70.0%, zero_imperative_evidence 34.8%, destination_spoof 30.0%, fake_output_injection 6.7%, native_format_mimicry 2.2%, others 0%.
+- **Cache fill:** 42 live calls, 0 misses after; NCE + analyst + B5 unchanged at 33.2 reviews / day, 0 / 72 malicious dismissed, 30 benign dismissed.
+- **E1 dry run:** 84 injected events; NCE misses 38 without and 38 with the analyst (NCE runs on the first alert of a case only).
+- **gpt-oss-20b:** 180 / 741 new calls at the time of writing.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 747 passed, 1 deselected (`tests/test_dedale_inject.py` 3).
+
+### Files created/modified
+- Created: `experiments/dedale_inject.py`, `experiments/E1_CONTAMINATION_DEDALE_DESIGN.md`, `tests/test_dedale_inject.py`
+- Modified: `experiments/dedale_nce.py`, `experiments/dedale_host_replay.py`, `experiments/build_results.py`, `experiments/RESULTS.md`, `experiments/dedale_results/final_{host,network}_scores.json`, `agent/v2_results/v2_dev_undefended_results.json` (+ API log), `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

@@ -95,14 +95,18 @@ def c1() -> list[str]:
               "ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence "
               "reacting, not the attacker succeeding."]
     u = compare("dev")["total"]
-    lines += ["", "**Undefended LLM agent vs defended pipeline, same pairs** (dev; "
-              f"{u['pairs']} pairs so far — run interrupted by the free-tier daily quota):", "",
+    d_era = _induced_by_era(_load(ROOT / "logs/v2_dev_live_results_rescored.json"),
+                            _load(V2_DIR / "guide_v2_dev.json")) if u["pairs"] == 500 else 0
+    d_other = u["d_induced"] - d_era
+    scope = "all 500 dev pairs" if u["pairs"] == 500 else f"{u['pairs']} dev pairs so far (run incomplete)"
+    lines += ["", f"**Undefended LLM agent vs defended pipeline, same pairs** ({scope}; defended McNemar "
+              "against responses induced otherwise than by ERA escalation):", "",
               "| | Attack succeeded (of clean twins it applies to) | 95% CI | McNemar p | Misdirected actions executed |",
               "|:--|--:|--:|--:|--:|",
               f"| Undefended agent (hijacked to dismiss) | {_pct(u['hijacked'], u['clean_not_dismissed'])} | "
               f"{_ci(u['hijacked'], u['clean_not_dismissed'])} | {mcnemar(u['hijacked'], u['induced']):.2g} | - |",
               f"| Defended pipeline (response suppressed) | {_pct(u['d_suppressed'], u['d_clean_responded'])} | "
-              f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], u['d_induced']):.2g} | "
+              f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], d_other):.2g} | "
               f"{u['d_misdirect_exec']} |", ""]
     return lines
 
@@ -221,7 +225,7 @@ def main() -> None:
              "- **Analyst:** simulated (an oracle that follows the labels, with random per-case mistakes).",
              "- **LLM:** one model on DEDALE. On GUIDE, gpt-oss-20b covered only part of the dev set.",
              "- **GUIDE v2:** its entities, payloads and evidence are synthetic.",
-             "- **Comparisons:** the undefended-agent comparison is interim, as the table states.", ""]
+             "- **Second model:** the gpt-oss-20b run covers only part of the dev set (Groq free-tier daily cap).", ""]
     OUT.write_text("\n".join(lines), encoding="utf-8")
     print(f"-> {OUT}")
 

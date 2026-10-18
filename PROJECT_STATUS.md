@@ -14,7 +14,11 @@
   - Datasets: at most 3 (GUIDE, DEDALE, optional AIT-LDS).
   - Demo: a real frontend with accounts showing the whole pipeline on the DEDALE attack.
   - **M1 done (2026-10-18):** `experiments/RESULTS.md` (claims C1-C5, built only from frozen result files by `experiments/build_results.py`) and `REPRODUCE.md`. All DEDALE conditions were re-run on the final code (`experiments/freeze_dedale.py`, 29 replays, NCE from the cache, no API calls); the GUIDE v2 re-scores are identical to the reported files.
-  - **Current milestone: M2** (finish the interrupted C1 runs, E1); needs an API budget.
+  - **Current milestone: M2** (finish the interrupted C1 runs, E1). The user approved the E2b budget (2026-10-18).
+    - Undefended agent, all 500 dev pairs: hijacked 130 / 439 (29.6%, 95% CI 25.5-34.0%, p = 6.5e-17), against the defended pipeline's 4 / 428 (0.9%, p = 1.0 with ERA escalations separated) and 0 misdirected actions.
+    - The 42 DEDALE NCE cache misses are filled (42 calls); C4's NCE + analyst row is unchanged (33.2 reviews / day, 0 / 72 dismissed).
+    - gpt-oss-20b dev run resumed (Groq daily cap; continues over 2-3 days).
+    - E1 tooling built (`experiments/dedale_inject.py`, replay `--inject`); offline dry run: 38 contaminated cases per family, so about 114 calls for all three families (awaiting budget approval).
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)
