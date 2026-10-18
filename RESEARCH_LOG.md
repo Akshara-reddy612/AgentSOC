@@ -1911,3 +1911,37 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/e1_score.py`, `experiments/dedale_results/e1_scores.json`
 - Modified: `experiments/build_results.py`, `experiments/RESULTS.md`, `experiments/E1_CONTAMINATION_DEDALE_DESIGN.md`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json` (+ API log), `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-18 — Session: M3 outline, M4 demo backend
+
+### What was tried
+- `PAPER_OUTLINE.md` (M3) and `DEMO_BACKEND_DESIGN.md` (M4).
+- **M4.1 accounts** (`review_api/accounts.py`): scrypt (stdlib), session tokens stored as SHA-256 with 12 h expiry, roles, `/auth/login|logout`, `/admin/users`. Fixed analyst tokens kept for tests.
+- **M4.2 live runner** (`soc_server/runner.py`):
+  - paced replay with pause / speed / stop and `run_until`;
+  - `SocLoop.tick` applies analysts' commands while paused;
+  - checkpoints: `KnowledgeDB.backup_to`, `CaseStore.backup_to`, and a pickle of the loop with the database connections as persistent ids;
+  - the Knowledge Store connection may be handed between threads.
+- **M4.3 read APIs** (`soc_server/app.py`, `soc_server/reader.py`, `ReviewService.trace`).
+- **M4.4** `python -m soc_server` with `soc_server/sources.py` (DEDALE host events) and cached NCE.
+- **Smoke test** on DEDALE (port 8766, throwaway lead account, password never printed):
+  1. first start;
+  2. replay at 7,200x to 12:22;
+  3. queue / trace / knowledge;
+  4. hard kill by PID;
+  5. restart;
+  6. resume to the same time.
+
+### What was found
+- **First start:** 6,787,207 training events processed and checkpointed before serving.
+- **At 2025-01-06 12:22:49:** 271,380 test events, 70 alerts, 29 cases. Queue top: case-20 `powershell.exe starting scvhost.exe on CLIENT2`, case-23 and case-26 `svcmon.exe`, priority 77 each (another target 172.19.x named, 7-13 other cases on the host).
+- The trace returned all 8 stages (the NCE stage marked as LLM output).
+- **Gap found:** pausing did not checkpoint until the 30 s interval passed. Fixed: a pause after processing checkpoints at once (`_dirty`).
+- **Restart after the hard kill:** restored from the checkpoint at 12:22:49 (written while paused before the kill). Resuming to 12:23:13 gave the same 70 alerts, 29 cases and queue top; the new checkpoint matched the pause time.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 755 passed, 1 deselected.
+
+### Files created/modified
+- Created: `PAPER_OUTLINE.md`, `DEMO_BACKEND_DESIGN.md`, `review_api/accounts.py`, `soc_server/{__init__,__main__,app,reader,runner,sources}.py`, `tests/test_accounts.py`, `tests/test_live_runner.py`, `tests/test_soc_server.py`
+- Modified: `review_api/app.py`, `perception/review_service.py`, `perception/knowledge_db.py`, `perception/case_store.py`, `perception/soc_loop.py`, `tests/test_review_api.py`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

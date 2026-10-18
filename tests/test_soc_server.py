@@ -1,0 +1,97 @@
+"""
+M4.3 (2026-10-18): the demo server's routes -- live control by role, the
+pipeline trace, read-only Knowledge Store views, metrics, and analysts'
+actions stamped with the stream's clock.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timedelta, timezone
+
+import pytest
+
+pytest.importorskip("fastapi")
+from fastapi.testclient import TestClient  # noqa: E402
+
+from dedale.environment import DEDALE_PROFILE, seed_store  # noqa: E402
+from perception.soc_loop import SocLoop  # noqa: E402
+from review_api.accounts import AccountStore  # noqa: E402
+from soc_server.app import build_app  # noqa: E402
+from soc_server.runner import LiveRunner, stream_after  # noqa: E402
+
+START = datetime(2024, 12, 30, tzinfo=timezone.utc)
+TRAIN_END = datetime(2025, 1, 6, tzinfo=timezone.utc)
+PW = "correct horse battery"
+
+
+def _proc(t, image, rid):
+    return {"t": t.isoformat().replace("+00:00", "Z"), "host": "CLIENT2", "rid": rid, "ch": "sysmon", "code": 1,
+            "image": image, "parent_image": "C:\\Windows\\explorer.exe", "cmd": "x", "user": "BREACH\\client2"}
+
+
+def _events():
+    out, rid = [], 0
+    for day in range(9):
+        t = START + timedelta(days=day, hours=10)
+        for image in ("C:\\x\\word.exe", f"C:\\x\\new{day}.exe" if t >= TRAIN_END else "C:\\x\\tool.exe"):
+            rid += 1
+            out.append((t, _proc(t, image, rid)))
+    return out
+
+
+class _Src:
+    def events(self, after):
+        return stream_after(_events(), after)
+
+
+@pytest.fixture()
+def server(tmp_path):
+    runner = LiveRunner(tmp_path / "live", _Src(), profile=DEDALE_PROFILE, start=START,
+                        make_loop=lambda db, cs: SocLoop(db, mode="gated", training_end=TRAIN_END, case_store=cs),
+                        handle=lambda loop, ev, at: loop.process_host_event(ev, at),
+                        seed=lambda db: seed_store(db, START), speed=86_400)
+    runner.run_until(START + timedelta(days=8, hours=12))
+    accounts = AccountStore(tmp_path / "auth.sqlite")
+    accounts.create_user("lena", PW, "lead")
+    accounts.create_user("alice", PW)
+    client = TestClient(build_app(runner, accounts=accounts))
+    tok = {u: client.post("/auth/login", json={"username": u, "password": PW}).json()["token"] for u in ("lena", "alice")}
+    yield client, runner, {u: {"Authorization": f"Bearer {t}"} for u, t in tok.items()}
+    runner.stop()
+    accounts.close()
+
+
+def test_live_control_needs_a_lead(server):
+    client, runner, h = server
+    assert client.get("/live/status", headers=h["alice"]).json()["state"] == "paused"
+    assert client.post("/live/start", headers=h["alice"]).status_code == 403
+    assert client.post("/live/speed", json={"speed": 3600}, headers=h["lena"]).json()["speed"] == 3600
+    assert client.post("/live/speed", json={"speed": 0}, headers=h["lena"]).status_code == 422
+    assert client.post("/live/pause", headers=h["lena"]).status_code == 200
+
+
+def test_trace_knowledge_and_metrics(server):
+    client, runner, h = server
+    case_id = client.get("/queue", headers=h["alice"]).json()[0]["case_id"]
+    trace = client.get(f"/cases/{case_id}/trace", headers=h["alice"]).json()
+    assert [s["stage"] for s in trace["stages"]] == ["alert", "triage_gate", "reasoning", "structural_check",
+                                                      "response", "decision", "actions", "learning"]
+    assert trace["stages"][2]["llm_output"] is True and "instructions" in trace["stages"][0]["untrusted_notice"]
+    summary = client.get("/knowledge/summary", headers=h["alice"]).json()
+    assert summary["edges"]["SPAWNED"]["training"] >= 2
+    host = client.get("/knowledge/hosts/CLIENT2", headers=h["alice"]).json()
+    assert {e["learned_from"] for e in host} == {"training"} and all(e["type"] == "SPAWNED" for e in host)
+    graph = client.get("/knowledge/graph/CLIENT2", headers=h["alice"]).json()
+    assert graph["edges"] and any(n["id"] == "host:client2" for n in graph["nodes"])
+    m = client.get("/metrics", headers=h["alice"]).json()
+    assert set(m) >= {"cases_per_day", "review_status", "verdicts", "actions", "learning_per_day", "comparison"}
+    assert "learning behind the gate" in m["comparison"]                       # frozen DEDALE runs
+    assert client.get("/knowledge/summary").status_code == 401
+
+
+def test_analysts_actions_use_the_stream_clock(server):
+    client, runner, h = server
+    case_id = client.get("/queue", headers=h["alice"]).json()[0]["case_id"]
+    client.post(f"/cases/{case_id}/verdict", json={"verdict": "benign"}, headers=h["alice"])
+    (cmd,) = runner.cases.commands(case_id)
+    assert cmd["at"].startswith(runner.now().strftime("%Y-%m-%d"))          # 2025, not today's date
+    assert cmd["actor"] == "analyst:alice"

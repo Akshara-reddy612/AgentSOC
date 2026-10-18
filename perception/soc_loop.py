@@ -138,6 +138,11 @@ class SocLoop:
         for name, key in novel_keys(self.db, event, self.detectors):
             self._handle_alert(host_alert(event, name, key, self.db), at)
 
+    def tick(self, at: datetime) -> None:
+        """Let time pass without an event (live runner while paused or idle): gate releases, watches,
+        analysts' commands due by `at`."""
+        self._advance(at)
+
     def _advance(self, at: datetime) -> None:
         if self._in_training and at >= self.training_end:
             self._end_training()

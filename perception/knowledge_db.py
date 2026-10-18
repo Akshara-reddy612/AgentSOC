@@ -177,7 +177,9 @@ class KnowledgeDB:
         store is deterministic).  An existing store keeps its own profile.
         """
         self.path = str(path)
-        self._con = sqlite3.connect(self.path, isolation_level=None)   # autocommit; batch() groups writes
+        # autocommit; batch() groups writes.  One thread uses the store at a time (single writer, I6), but
+        # it may be handed over (the live runner fast-forwards in the caller's thread, then runs in its own).
+        self._con = sqlite3.connect(self.path, isolation_level=None, check_same_thread=False)
         if self.path != ":memory:":
             self._con.execute("PRAGMA journal_mode=WAL")
             self._con.execute("PRAGMA synchronous=NORMAL")
@@ -276,6 +278,16 @@ class KnowledgeDB:
             elif op == "retract_edge":
                 g.remove_edge(p["src"], p["dst"], decode_value(p["key"]))
         return g
+
+    def backup_to(self, path: str | Path) -> None:
+        """A consistent copy of the store's file (SQLite backup API); call outside a batch."""
+        if self._in_batch:
+            raise RuntimeError("backup inside a batch would copy uncommitted state only partly")
+        dst = sqlite3.connect(str(path))
+        try:
+            self._con.backup(dst)
+        finally:
+            dst.close()
 
     # -- writing ------------------------------------------------------------
 
