@@ -100,8 +100,10 @@ def _fact(value, at: datetime, confidence: float = 1.0) -> KnowledgeFact:
 
 def seed_store(db: KnowledgeDB, at: datetime) -> None:
     """Write DEDALE's zones, hosts and zone reachability into a store created with DEDALE_PROFILE."""
-    if db.profile.to_dict() != DEDALE_PROFILE.to_dict():
-        raise ValueError("seed_store needs a store created with DEDALE_PROFILE")
+    def network(profile) -> dict:            # the network description; observed_hosts may vary (closed-world runs)
+        return {k: v for k, v in profile.to_dict().items() if k != "observed_hosts"}
+    if network(db.profile) != network(DEDALE_PROFILE):
+        raise ValueError("seed_store needs a store created with DEDALE_PROFILE (observed_hosts may differ)")
     with db.batch():
         for zone in (*COMPANY_ZONES, "EXTERNAL"):
             attrs = {"node_type": "ZoneNode", "zone_id": zone, "security_zone": zone}

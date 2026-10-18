@@ -12,6 +12,9 @@ perception.nce_engine.generate_hypotheses with the full technique vocabulary
     live call (monitor runs with this file, never with result files).
   - Cap: after `max_calls` live calls, `budget.available()` is False and the
     triage gate marks further cases "budget_exhausted" (unreasoned -> review).
+  - Cache-only (`cache_only=True`, M1 reproduction): no live call is ever
+    made; an alert missing from the cache raises, the gate records NCE
+    "error" (unreasoned -> review), and `cache_misses` counts it.
 API keys are never printed or logged.
 """
 from __future__ import annotations
@@ -61,9 +64,13 @@ class CallCap:
 class LiveNCE:
     """Callable for TriageGate(nce=...): cached results first, otherwise one live call (counted against the cap)."""
 
-    def __init__(self, cap: CallCap, model: str = MODEL) -> None:
+    def __init__(self, cap: CallCap | None, model: str = MODEL, *, cache_only: bool = False) -> None:
+        if cap is None and not cache_only:
+            raise ValueError("live NCE needs a call cap")
         self.cap = cap
         self.model = model
+        self.cache_only = cache_only
+        self.cache_misses = 0
         self.cache: dict[str, dict] = {}
         if CACHE.exists():
             with open(CACHE, encoding="utf-8") as f:
@@ -75,6 +82,9 @@ class LiveNCE:
 
     def __call__(self, alert: dict) -> list[NCEHypothesis]:
         rec = self.cache.get(alert["alert_id"])
+        if rec is None and self.cache_only:
+            self.cache_misses += 1
+            raise RuntimeError("alert not in the NCE cache (cache-only mode)")
         if rec is None:
             if not self.cap.available():
                 raise RuntimeError("live NCE call cap reached")
