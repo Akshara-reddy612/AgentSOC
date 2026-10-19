@@ -22,8 +22,20 @@ One process keeps the Knowledge Store's single writer (I6) simple. The runner wr
 
 Each step is committed with tests. No new Python packages are needed.
 
-## Not in M4
+## Added after M4 (2026-10-19)
+
+| Addition | Content |
+|:--|:--|
+| Network alerts | `--sources host,network` (default) merges the Windows events and the Suricata alerts in stream time (`MergedSource`). A home records which sources built it and refuses others |
+| NCE modes | `--nce cache` (recorded answers, no API calls; default), `live` (Gemini, at most `--nce-per-day` calls per stream day), `off`. Live mode works on a copy of the recorded cache in the home, so the frozen results' caches are never written |
+| Live log ingestion | `--follow host=<path>,network=<path>` (`soc_server/follow.py`): winlogbeat / ECS JSON lines and Suricata eve.json or DEDALE syslog lines, read as they are appended, unpaced, resumed by byte offset. Training still comes from the DEDALE replay; `--follow-clock wall` moves the clock with real time while the files are quiet |
+| Contamination scenario | `--inject suppress|fake_approval|steer` (plan section 5, item 7): the attacker's command lines carry E1's payloads, and with `--nce cache` the LLM answers are E1's recorded ones |
+| Login throttling | 5 failures per user + address, or 20 per address, in 15 min lock that key for 15 min (HTTP 429 with Retry-After) |
+| Withdrawing a verdict | `POST /cases/{id}/withdraw` (lead / admin): a wrong 'malicious' verdict is withdrawn; the loop ends the host's watch, restores the patterns it retracted and the destination's previous reputation, and the case returns to the queue |
+
+## Not built
 
 - TLS.
 - Multi-tenant.
-- Real sensor ingestion: the source is a replay; a live log tail could plug into the same runner later ("Later" list).
+- An environment model for networks other than DEDALE: followed logs must come from DEDALE's hosts.
+- Highlighting the injected span of untrusted text (plan section 5, item 3): the trace shows the text and the entity-binding flags; marking the span is left to frontend polish.
