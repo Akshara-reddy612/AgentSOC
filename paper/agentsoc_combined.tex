@@ -11,6 +11,8 @@
 \usepackage{multirow}
 \usepackage{url}
 \usepackage{balance}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
@@ -51,8 +53,51 @@ alerts) and \emph{misdirection} (containment aimed at the wrong host or account)
 fields at the sensor is out of scope for the defences; we measure its effect separately (Section~\ref{sec:c1}).
 
 \section{System}
-\todo{Claude, from the old draft's Section IV and the code: Fig.~1 (pipeline and loop).}
-For each new case, the Narrative Counterfactual Engine (NCE), an LLM, proposes ATT\&CK hypotheses from the alert.
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  font=\footnotesize, node distance=4mm and 5mm,
+  box/.style={draw, rounded corners=2pt, align=center, minimum height=9mm, inner sep=3pt, fill=white},
+  llm/.style={box, fill=violet!10},
+  store/.style={box, fill=cyan!10},
+  human/.style={box, fill=orange!12},
+  arr/.style={-{Latex[length=2mm]}, thick},
+  back/.style={-{Latex[length=2mm]}, thick, dashed}]
+\node[box] (sense) {Sensor events\\(host logs, IDS)};
+\node[box, right=of sense] (detect) {Detectors:\\unlearned pattern\\$\Rightarrow$ alert};
+\node[box, right=of detect] (cases) {Case\\builder};
+\node[box, right=of cases] (gate) {Triage gate\\(learned? cached?)};
+\node[llm, right=of gate] (nce) {NCE (LLM)\\hypotheses};
+\node[box, right=of nce] (sse) {SSE + entity\\binding (graph)};
+\node[box, right=of sse] (rsem) {RSEM +\\guardrails};
+\node[box, below=9mm of rsem] (dec) {Decision:\\review / dismiss /\\auto-respond};
+\node[human, left=of dec] (analyst) {Analyst review loop\\(inbox, four-eyes,\\verdicts)};
+\node[box, left=of analyst] (monitor) {Outcome monitor\\(watches, escalation)};
+\node[store, below=9mm of cases, minimum width=40mm] (ks) {Knowledge Store\\structured patterns only};
+\node[store, left=of ks] (lgate) {Learning gate\\(delay, escalation hold)};
+\draw[arr] (sense) -- (detect);
+\draw[arr] (detect) -- (cases);
+\draw[arr] (cases) -- (gate);
+\draw[arr] (gate) -- node[above]{new} (nce);
+\draw[arr] (nce) -- (sse);
+\draw[arr] (sse) -- (rsem);
+\draw[arr] (rsem) -- (dec);
+\draw[arr] (dec) -- (analyst);
+\draw[arr] (analyst) -- (monitor);
+\draw[back] (dec.south) -- ++(0,-11mm) -| node[pos=0.25, below]{dismissed cases (learned only if no escalation)} (lgate.south);
+\draw[arr] (lgate) -- (ks);
+\draw[back] (analyst.south) -- ++(0,-4mm) -| node[pos=0.25, below]{verdicts: benign $\Rightarrow$ learn; malicious $\Rightarrow$ retract} ([xshift=12mm]ks.south);
+\draw[back] (ks) -- node[left, align=right]{routine\\stays silent} (detect);
+\draw[back] (ks) -- (gate);
+\draw[back] (ks.north east) -- node[right, pos=0.5]{graph} (sse.south west);
+\draw[back] (monitor) -- node[left]{escalate} (gate);
+\end{tikzpicture}
+\caption{The pipeline (top) and the loop around it. Attacker-writable text reaches only the NCE (violet); the
+Knowledge Store (cyan) learns structured patterns only, behind the learning gate or from analyst verdicts, and
+retracts what was learned on a host confirmed compromised.}
+\label{fig:pipeline}
+\end{figure*}
+Fig.~\ref{fig:pipeline} shows the system. For each new case, the Narrative Counterfactual Engine (NCE), an LLM, proposes ATT\&CK hypotheses from the alert.
 The Structural Simulation Engine (SSE) checks each against a knowledge graph of hosts, accounts, access and network
 reachability; entity binding compares the entities a hypothesis names with the alert's trusted fields; RSEM ranks
 responses by containment and business impact; guardrails decide what may run automatically. Around this
