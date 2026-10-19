@@ -29,6 +29,7 @@ Decided 2026-10-12 with Abhishek. This file sets the scope. Work outside it goes
 | P4 | Demo: a real frontend with accounts that depicts the whole pipeline on the DEDALE attack (section 5) |
 | P5 | (2026-10-19, user: "do all") Backend gaps for the tool: network alerts in the demo server, login throttling, withdrawing a wrong `malicious` verdict (moved from "Later"), live log ingestion (`--follow`), live NCE with a daily budget. The Streamlit demo is archived (`archive/streamlit/`) |
 | P6 | (2026-10-19, user) Claude drafts the team's paper sections too (abstract, introduction, related work, conclusion), for the team to revise, and does the frontend polish (M5). Authors stay with the team |
+| P7 | (2026-10-19, user) **Handover goal:** before the project is handed to the team, everything for GUIDE and DEDALE is finished and stable (paper, tool, docs). The team's only remaining work is the optional third dataset (AIT-LDS, E3). Choices: GUIDE gets a Contamination Lab page in the frontend; Claude designs the frontend, and the user approves the new Live and Case pages before the rest; stale files move to `archive/` after the user sees the list |
 
 ## 3. Paper: claims and evidence
 
@@ -105,8 +106,9 @@ Package installs (npm for the frontend; nothing new for Python) need approval, a
 | M5 | Frontend | M4, npm approval | Claude + team | **first version done 2026-10-19** (`frontend/`); **polish done 2026-10-19** (P6): possible-steering marks in the case view (section 5, item 3), verdict withdrawal, follow mode, login lockout message; accounts managed fully in the browser (first-run admin setup, own password, admin role / enable / reset) |
 | M6 | Optional E3 (AIT-LDS) | decided after M3 | Claude | ~1 week |
 | M7 | Venue choice, final paper, demo video, README | all | team | ~1 week |
+| M8 | **Handover (P7):** (1) finish open items: gpt-oss-20b run, final tables, paper figures; (2) stability: full-replay soak test, fresh-clone check, one-command end-to-end browser check; (3) frontend design pass and the Contamination Lab (GUIDE); (4) `HANDOVER.md`, adding-a-dataset guide and a `--dataset` switch in the server, repository cleanup | P7 | Claude | in progress |
 
-Order: M1 -> M2 -> M3 and M4 in parallel -> M5 -> (M6) -> M7.
+Order: M1 -> M2 -> M3 and M4 in parallel -> M5 -> M8 (handover) -> the team: (M6) -> M7.
 
 ## 7. Rules
 
