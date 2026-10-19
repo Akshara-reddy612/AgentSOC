@@ -11,6 +11,18 @@ Run the demo server (M4.4):
 - Accounts live in <home>/auth.sqlite. Create the first admin with:
       python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin
 - Binds 127.0.0.1 by default. The API reference is at /docs.
+
+Live logs instead of the replay (soc_server/follow.py):
+
+    python -m soc_server --home <new dir> --follow host=<winlogbeat.ndjson>,network=<eve.json>
+
+- On first start it learns DEDALE's benign weeks (the replay), then follows the
+  files from their start, as they grow; it runs without pressing Start.
+- --follow-clock wall moves the clock to the wall time while the files are
+  quiet (real-time logs); the default, events, keeps the time of the last event
+  (logs with past timestamps, e.g. DEDALE lines appended for a test).
+- The environment is still DEDALE's (inventory, zones): the logs must come
+  from its hosts.
 """
 from __future__ import annotations
 
@@ -27,6 +39,13 @@ def main() -> None:
     ap.add_argument("--home", default=str(data_dir().parent / "live"), help="server state (stores, checkpoints)")
     ap.add_argument("--speed", type=float, default=600.0, help="stream seconds per wall second")
     ap.add_argument("--demo-start", default="2025-01-06T08:00", help="UTC stream time the demo starts at")
+    ap.add_argument("--sources", default="host,network", help="host, network or both (DEDALE replay)")
+    ap.add_argument("--nce", default="cache", choices=["cache", "live", "off"],
+                    help="cache: recorded LLM answers only (no API calls); live: Gemini, limited by --nce-per-day")
+    ap.add_argument("--nce-per-day", type=int, default=200, help="live NCE: at most this many calls per stream day")
+    ap.add_argument("--follow", default="", help="follow live log files: host=<path>,network=<path> (either or both)")
+    ap.add_argument("--follow-clock", default="events", choices=["events", "wall"],
+                    help="with --follow: does the clock move with the wall time while the files are quiet?")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
     args = ap.parse_args()
@@ -40,24 +59,56 @@ def main() -> None:
     from review_api.accounts import AccountStore
     from soc_server.app import build_app, with_frontend
     from soc_server.runner import LiveRunner
-    from soc_server.sources import DedaleHostSource
+    from perception.triage_gate import DailyBudget
+    from soc_server.sources import DedaleHostSource, DedaleNetSource, MergedSource, handle_merged
 
-    nce = LiveNCE(None, cache_only=True)
+    follow = {}
+    for part in filter(None, (p.strip() for p in args.follow.split(","))):
+        kind, _, path = part.partition("=")
+        if kind not in ("host", "network") or not path or kind in follow:
+            sys.exit("--follow takes host=<path>,network=<path> (either or both)")
+        follow[kind] = str(Path(path).resolve())
+    kinds = sorted(follow) or sorted({k.strip() for k in args.sources.split(",") if k.strip()})
+    if not kinds or set(kinds) - {"host", "network"}:
+        sys.exit("--sources takes host, network or host,network")
+    replay = MergedSource({k: DedaleHostSource(EVENTS) if k == "host" else DedaleNetSource() for k in kinds})
+    if follow:
+        from soc_server.follow import PARSERS, FollowSource, TailSource
+
+        source = FollowSource({k: TailSource(p, PARSERS[k]) for k, p in sorted(follow.items())})
+        source_id = "follow:" + ",".join(f"{k}={p}" for k, p in sorted(follow.items()))
+    else:
+        source, source_id = replay, ",".join(kinds)
+    externals, gate_options = {}, {}
+    if args.nce != "off":
+        from experiments.dedale_nce import CallCap
+        nce = LiveNCE(None, cache_only=True) if args.nce == "cache" else LiveNCE(CallCap(10**9))
+        externals["nce"] = nce
+        gate_options["nce"] = nce
+        if args.nce == "live":
+            gate_options["budget"] = DailyBudget(args.nce_per_day)
 
     def make_loop(db, cases):
-        return SocLoop(db, mode="gated", training_end=TRAINING_END, case_store=cases,
-                       gate_options={"nce": nce})
+        return SocLoop(db, mode="gated", training_end=TRAINING_END, case_store=cases, gate_options=gate_options)
 
-    runner = LiveRunner(args.home, DedaleHostSource(EVENTS), profile=DEDALE_PROFILE, start=TRAINING_START,
-                        make_loop=make_loop, handle=lambda loop, ev, at: loop.process_host_event(ev, at),
-                        seed=lambda db: seed_store(db, TRAINING_START), externals={"nce": nce}, speed=args.speed)
-    if not runner.restored:
+    try:
+        runner = LiveRunner(args.home, source, profile=DEDALE_PROFILE, start=TRAINING_START, make_loop=make_loop,
+                            handle=handle_merged, seed=lambda db: seed_store(db, TRAINING_START),
+                            externals=externals, speed=args.speed, source_id=source_id, paced=not follow,
+                            idle_clock=(lambda: datetime.now(timezone.utc)) if args.follow_clock == "wall" else None)
+    except ValueError as e:
+        sys.exit(str(e))
+    if not runner.restored and follow:
+        print("first start: learning the benign weeks, then following " + ", ".join(follow.values()), flush=True)
+        n = runner.run_until(TRAINING_END, source=replay)
+        print(f"  {n:,} events processed; checkpoint written", flush=True)
+    elif not runner.restored:
         target = datetime.fromisoformat(args.demo_start).replace(tzinfo=timezone.utc)
         print(f"first start: learning the benign weeks and fast-forwarding to {target:%Y-%m-%d %H:%M} ...",
               flush=True)
         n = runner.run_until(target)
         print(f"  {n:,} events processed; checkpoint written", flush=True)
-    runner.start(paused=True)                 # applies analysts' commands even before the replay starts
+    runner.start(paused=not follow)           # paused replay still applies analysts' commands
     accounts = AccountStore(runner.home / "auth.sqlite")
     if not accounts.users():
         print(f"no accounts yet: python -m review_api.accounts --db {runner.home / 'auth.sqlite'} "

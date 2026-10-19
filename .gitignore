@@ -45,3 +45,8 @@ Thumbs.db
 # Environments
 .env
 *.env
+
+# Personal working notes kept at the root, not part of the project (2026-10-19)
+/CLAUDE_HANDOFF.md
+/agentsoc_context_v2.md
+/agenso_.research_base.pdf

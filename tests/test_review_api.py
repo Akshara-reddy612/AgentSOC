@@ -147,3 +147,10 @@ def test_verdict_over_http_reaches_the_store_through_the_loop(env):
     assert [e["actor"] for e in audit if e["op"] in ("note", "verdict")] == ["analyst:alice", "analyst:alice"]
     dump = json.dumps(audit) + json.dumps(client.get("/cases/case-1", headers=_h(BOB)).json())
     assert ALICE not in dump and BOB not in dump                                 # tokens are never returned
+
+
+def test_only_leads_withdraw_verdicts(env):
+    client, db, cs, loop, clock = env
+    client.post("/cases/case-1/verdict", json={"verdict": "malicious"}, headers=_h(ALICE))
+    r = client.post("/cases/case-1/withdraw", json={"reason": "wrong"}, headers=_h(ALICE))
+    assert r.status_code == 403                                                  # analysts (token mode) cannot

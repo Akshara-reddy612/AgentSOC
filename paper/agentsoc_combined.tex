@@ -149,12 +149,12 @@ Run & Suppressed & Induced (non-ERA) & Misdirected exec. \\
 \midrule
 Dev, Gemini & 4/428 (0.9\%) & 4 & 0 \\
 Held-out, Gemini & 3/437 (0.7\%) & 0 & 0 \\
-Dev, gpt-oss-20b\textsuperscript{*} & 3/108 (2.8\%) & 0 & 0 \\
+Dev, gpt-oss-20b\textsuperscript{*} & 10/382 (2.6\%) & 5 & 0 \\
 \midrule
 Undefended agent, dev & 130/439 (29.6\%) & -- & -- \\
 \bottomrule
 \end{tabular}}\\[2pt]
-{\footnotesize \textsuperscript{*}partial run (125 pairs); \todo{update when complete}.}
+{\footnotesize \textsuperscript{*}partial run (440 of 500 pairs); \todo{update when complete}.}
 \end{table}
 
 \textbf{Through the full loop on real telemetry (E1).} On DEDALE, we appended attacker text to the command lines of
@@ -242,16 +242,99 @@ On the network, the attacker's server stays reachable until the verdict: contain
 first alert, equal to the delay.
 
 \section{Discussion and Limitations}
-\todo{team + Claude.} Limits to state: one real dataset with two labelled attacked hosts; a simulated analyst; one
-LLM on DEDALE; synthetic entities and payloads in GUIDE v2; actions are simulated.
+% Drafted by Claude 2026-10-19 from RESULTS.md; for the team to revise.
+\textbf{Where the defence lives.} The LLM itself was not made robust. Acting alone, it was hijacked on 29.6\% of
+the GUIDE pairs, and on DEDALE it named the steered host in 30--32 of 38 cases. What held was the structure around
+it. Hypotheses are checked against the trusted fields and the environment model before any response is ranked. A
+target the trusted fields do not support is flagged, not acted on. Only structured fields are ever learned. This is
+the principle of recent designs that keep untrusted data out of an agent's control flow~\cite{camel}, applied to a
+SOC: the LLM's output is advisory, and what it may cause is decided by components it cannot write to. Prompt-level
+defences~\cite{spotlighting,struq} reduce how often a model follows injected text; our measurements concern what
+happens when it does.
+
+\textbf{Memory is the larger surface.} A system that learns what is normal is a classic poisoning
+target~\cite{antidote}, and agents' memories and knowledge bases have the same weakness~\cite{agentpoison,poisonedrag}.
+On DEDALE, learning without the gate cut the labelled attack events that raised alerts from 400 to 99; with the
+gate, all 400 still did.
+The weaker route is the analyst. Verdicts bypass the gate by design, and with a simulated analyst who missed 20\% of the
+attacks, only 256 of the 400 still raised alerts. Unlearning on confirmed compromise closed this route: a targeted form of machine
+unlearning~\cite{unlearning} that retracts what was recently learned on a host once the host is confirmed
+compromised. It has two costs. It works only because each attacked host received at least one correct malicious
+verdict. And it makes false confirmations expensive, raising reviews from 31.4 to 44.6 per day at 5\% false alarms.
+The prototype lets a lead withdraw a wrong confirmation, which restores what it retracted; we did not evaluate this.
+
+\textbf{Absence of telemetry is not impossibility.} The closed-world feasibility check dismissed 2 real attack cases,
+because the store had no telemetry from the server the attacker copied data from. Any structural check of LLM
+hypotheses inherits the coverage of its environment model. Hosts without telemetry must be treated as unknown, and
+a deployment needs to know which hosts it cannot see.
+
+\textbf{Workload.} Most of the reduction comes from learning: 6,095 to 65 reviews per day. Analyst verdicts feeding
+the store take it to 34. The LLM cuts reviews by 16\% on its own, and by little once an analyst is in the loop
+(34.1 to 33.2). On this data, the LLM's measurable effect on workload is modest. We did not measure its effect on
+how fast or how accurately analysts decide, which is where its explanations would matter.
+
+\textbf{Limitations.}
+\begin{itemize}
+\item One real dataset. Labels exist for two attacked Windows clients, and the network results rest on few
+malicious verdicts.
+\item A simulated analyst: an oracle with random, per-case mistakes. Real analysts' mistakes are likely correlated
+with how well the attacker blends in, which would make C3 harder.
+\item One LLM on DEDALE (\texttt{gemini-3.1-flash-lite}). The second model covers only part of the GUIDE development
+set (Table~\ref{tab:c1}).
+\item GUIDE v2's entities, evidence and payloads are synthetic. E1 injects text only into command lines, with three
+payload families.
+\item Tampering with structured sensor fields is outside the defences (Section~\ref{sec:c1}).
+\item All containment is simulated.
+\item The prototype's review-queue order was tuned on DEDALE and is not evaluated.
+\end{itemize}
+
+\textbf{What a deployment would need:}
+\begin{itemize}
+\item an asset inventory and environment model that are kept current, since SSE and entity binding are only as good
+as they are;
+\item known telemetry coverage per host;
+\item a study with real analysts, who face alert fatigue~\cite{alahmadi};
+\item a second dataset, to check that the gate's settings transfer (a 24\,h delay, and a hold while related cases are
+escalated).
+\end{itemize}
 
 \section{Conclusion}
 \todo{team.}
 
-\begin{thebibliography}{9}
-\bibitem{agentsoc} \todo{AgentSOC base paper, arXiv:2604.20134.}
-\bibitem{guide} \todo{Microsoft GUIDE dataset.}
-\bibitem{dedale} \todo{Inria DEDALE dataset, DOI 10.57745/Y5JLDG (CC BY 4.0).}
+% References drafted 2026-10-19 (Claude). Bibliographic details checked: agentsoc against the PDF; guide,
+% spotlighting and camel against arXiv. Related work (team) should cite the ones the discussion does not.
+\begin{thebibliography}{99}
+\bibitem{agentsoc} J.~Roy and S.~K.~Singh, ``AgentSOC: A multi-layer agentic AI framework for security operations
+automation,'' in \emph{Proc. 5th IEEE Int. Conf. on AI in Cybersecurity (ICAIC)}, Houston, TX, USA, 2026,
+arXiv:2604.20134.
+\bibitem{guide} S.~Freitas, J.~Kalajdjieski, A.~Gharib, and R.~McCann, ``AI-driven guided response for security
+operation centers with Microsoft Copilot for Security,'' arXiv:2407.09017, 2024.
+\bibitem{dedale} \todo{authors, year.} ``DEDALE,'' Inria, Recherche Data Gouv, doi:10.57745/Y5JLDG, CC BY 4.0.
+\bibitem{attack} B.~E.~Strom, A.~Applebaum, D.~P.~Miller, K.~C.~Nickels, A.~G.~Pennington, and C.~B.~Thomas,
+``MITRE ATT\&CK: Design and philosophy,'' The MITRE Corporation, Tech. Rep., 2018.
+\bibitem{alahmadi} B.~A.~Alahmadi, L.~Axon, and I.~Martinovic, ``99\% false positives: A qualitative study of SOC
+analysts' perspectives on security alarms,'' in \emph{Proc. 31st USENIX Security Symp.}, 2022.
+\bibitem{perez} F.~Perez and I.~Ribeiro, ``Ignore previous prompt: Attack techniques for language models,'' in
+\emph{NeurIPS ML Safety Workshop}, 2022, arXiv:2211.09527.
+\bibitem{greshake} K.~Greshake, S.~Abdelnabi, S.~Mishra, C.~Endres, T.~Holz, and M.~Fritz, ``Not what you've signed
+up for: Compromising real-world LLM-integrated applications with indirect prompt injection,'' in \emph{Proc. 16th
+ACM Workshop on Artificial Intelligence and Security (AISec)}, 2023.
+\bibitem{liu} Y.~Liu, Y.~Jia, R.~Geng, J.~Jia, and N.~Z.~Gong, ``Formalizing and benchmarking prompt injection
+attacks and defenses,'' in \emph{Proc. 33rd USENIX Security Symp.}, 2024.
+\bibitem{spotlighting} K.~Hines, G.~Lopez, M.~Hall, F.~Zarfati, Y.~Zunger, and E.~Kiciman, ``Defending against
+indirect prompt injection attacks with spotlighting,'' arXiv:2403.14720, 2024.
+\bibitem{struq} S.~Chen, J.~Piet, C.~Sitawarin, and D.~Wagner, ``StruQ: Defending against prompt injection with
+structured queries,'' in \emph{Proc. 34th USENIX Security Symp.}, 2025.
+\bibitem{camel} E.~Debenedetti \emph{et al.}, ``Defeating prompt injections by design,'' arXiv:2503.18813, 2025.
+\bibitem{antidote} B.~I.~P.~Rubinstein, B.~Nelson, L.~Huang, A.~D.~Joseph, S.~Lau, S.~Rao, N.~Taft, and
+J.~D.~Tygar, ``ANTIDOTE: Understanding and defending against poisoning of anomaly detectors,'' in \emph{Proc. 9th
+ACM SIGCOMM Internet Measurement Conf. (IMC)}, 2009.
+\bibitem{agentpoison} Z.~Chen, Z.~Xiang, C.~Xiao, D.~Song, and B.~Li, ``AgentPoison: Red-teaming LLM agents via
+poisoning memory or knowledge bases,'' in \emph{Advances in Neural Information Processing Systems (NeurIPS)}, 2024.
+\bibitem{poisonedrag} W.~Zou, R.~Geng, B.~Wang, and J.~Jia, ``PoisonedRAG: Knowledge corruption attacks to
+retrieval-augmented generation of large language models,'' in \emph{Proc. 34th USENIX Security Symp.}, 2025.
+\bibitem{unlearning} Y.~Cao and J.~Yang, ``Towards making systems forget with machine unlearning,'' in \emph{Proc.
+IEEE Symp. on Security and Privacy (S\&P)}, 2015.
 \end{thebibliography}
 
 \end{document}

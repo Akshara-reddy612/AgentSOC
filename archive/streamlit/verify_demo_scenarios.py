@@ -1,5 +1,5 @@
 """
-scratch/verify_demo_scenarios.py
+archive/streamlit/verify_demo_scenarios.py (archived with the app, 2026-10-19)
 
 Independent verification of all 7 curated demo scenarios.
 
@@ -7,7 +7,7 @@ Imports load_scenario() from streamlit_app and validates that each
 scenario loads correctly with all expected pipeline stage data.
 No Streamlit dependency — this is pure data verification.
 
-Run:  python -m scratch.verify_demo_scenarios
+Run:  cd archive/streamlit && python verify_demo_scenarios.py
 """
 
 from __future__ import annotations

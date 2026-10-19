@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 
 from dedale.environment import DEDALE_PROFILE, seed_store
-from perception.case_store import CaseStore
+from perception.case_store import CaseStore, ReviewError
 from perception.host_detection import DETECTORS, image_node_id, learn_key
 from perception.knowledge_db import KnowledgeDB, graph_signature
 from perception.knowledge_updater import KnowledgeUpdater
@@ -72,7 +72,7 @@ def test_retract_host_learning_scope(db):
         learn_key(db, "lineage", DETECTORS["lineage"].key(_proc(at, image, host)), provenance=prov, at=at,
                   writer="test")
     gone = up.retract_host_learning("CLIENT2", T - timedelta(days=7), T + timedelta(hours=2), "analyst:bob")
-    assert sorted(g.split(" -[")[0] for g in gone) == [image_node_id(EXPLORER)] * 2 and len(gone) == 2
+    assert sorted(g["src"] for g in gone) == [image_node_id(EXPLORER)] * 2 and len(gone) == 2
     g = db.graph.graph
     assert not g.has_edge(*_edge("C:\\x\\a.exe")) and not g.has_edge(*_edge("C:\\x\\b.exe"))
     assert g.has_edge(*_edge("C:\\x\\old.exe"))                       # training: kept
@@ -116,3 +116,32 @@ def test_policy_can_be_switched_off(db, cs):
     cs.submit_verdict(_case_for(cs, "C:\\x\\beacon.exe")["case_id"], "malicious", "bob", T + timedelta(hours=2))
     loop.process_host_event(_proc(T + timedelta(hours=3), "C:\\x\\c2.exe", rid=3), T + timedelta(hours=3))
     assert db.edge_learned_from(*_edge("C:\\x\\dropper.exe")) == "analyst"
+
+
+def test_withdrawing_a_wrong_malicious_verdict_undoes_its_effects(db, cs):
+    loop = _loop(db, cs)
+    loop.process_host_event(_proc(T, "C:\\x\\backup.exe"), T)
+    cs.submit_verdict(_case_for(cs, "C:\\x\\backup.exe")["case_id"], "benign", "alice", T + timedelta(minutes=5))
+    loop.process_host_event(_proc(T + timedelta(hours=1), "C:\\x\\admin_tool.exe", rid=2), T + timedelta(hours=1))
+    assert db.edge_learned_from(*_edge("C:\\x\\backup.exe")) == "analyst"
+    tool = _case_for(cs, "C:\\x\\admin_tool.exe")["case_id"]
+    cs.submit_verdict(tool, "malicious", "bob", T + timedelta(hours=2))          # a false alarm
+    loop.process_host_event(_proc(T + timedelta(hours=3), "C:\\x\\c.exe", rid=3), T + timedelta(hours=3))
+    assert db.edge_learned_from(*_edge("C:\\x\\backup.exe")) is None            # retracted by the confirmation
+    assert loop.monitor.host_confirmed("CLIENT2", T + timedelta(hours=3))
+
+    with pytest.raises(ReviewError, match="reason"):
+        cs.withdraw_verdict(tool, "lena", T + timedelta(hours=4), " ")
+    cs.withdraw_verdict(tool, "lena", T + timedelta(hours=4), "admin tool, change ticket 1182")
+    assert cs.case(tool)["review_status"] == "open" and cs.case(tool)["verdict"] is None
+    loop.process_host_event(_proc(T + timedelta(hours=5), "C:\\x\\d.exe", rid=4), T + timedelta(hours=5))
+    result = [c for c in cs.commands(tool) if c["kind"] == "withdraw"][0]["result"]
+    assert result["applied"] and result["restored"] == 1 and len(result["ended_watches"]) == 1
+    assert db.edge_learned_from(*_edge("C:\\x\\backup.exe")) == "analyst"      # restored, original provenance
+    assert not loop.monitor.host_confirmed("CLIENT2", T + timedelta(hours=5))   # learning on the host resumes
+    assert graph_signature(db.replay_log()) == graph_signature(db.graph.graph)     # still rebuildable from the log
+    cs.submit_verdict(tool, "benign", "lena", T + timedelta(hours=6))            # re-review
+    loop.process_host_event(_proc(T + timedelta(hours=7), "C:\\x\\e.exe", rid=5), T + timedelta(hours=7))
+    assert db.edge_learned_from(*_edge("C:\\x\\admin_tool.exe")) == "analyst"
+    with pytest.raises(ReviewError, match="no 'malicious' verdict"):
+        cs.withdraw_verdict(tool, "lena", T + timedelta(hours=8), "again")

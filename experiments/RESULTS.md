@@ -1,4 +1,4 @@
-# Results (frozen 2026-10-18)
+# Results (frozen 2026-10-19)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
@@ -10,7 +10,7 @@ Pipeline response on clean vs contaminated twins (same GUIDE row, differing only
 |:--|--:|--:|--:|--:|--:|--:|--:|
 | GUIDE v2 dev, gemini-3.1-flash-lite | 500 | 4/428 (0.9%) | 0.4%-2.4% | 12 | 4 | 1 | 0 / 7 |
 | GUIDE v2 held-out, gemini-3.1-flash-lite | 500 | 3/437 (0.7%) | 0.2%-2.0% | 10 | 0 | 0.25 | 0 / 2 |
-| GUIDE v2 dev, gpt-oss-20b (partial run) | 125 | 3/108 (2.8%) | 0.9%-7.9% | 3 | 0 | 0.25 | 0 / 1 |
+| GUIDE v2 dev, gpt-oss-20b (partial run) | 440 | 10/382 (2.6%) | 1.4%-4.8% | 11 | 5 | 0.3 | 0 / 3 |
 
 *Induced by ERA escalation*: the contaminated twin got a response the clean one did not because ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence reacting, not the attacker succeeding.
 

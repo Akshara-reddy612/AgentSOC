@@ -6,7 +6,7 @@ confusables>=1.2.0
 python-dotenv
 google-genai==2.18.1
 openai==3.3.1
-streamlit>=1.38
+streamlit>=1.38            # only for the archived Streamlit app (archive/streamlit)
 # Analyst review API (review_api/, decision B1; Starlette comes with FastAPI)
 fastapi==0.143.0
 uvicorn>=0.52

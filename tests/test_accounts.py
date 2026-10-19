@@ -76,3 +76,29 @@ def test_login_roles_and_admin_endpoints(acc):
     assert client.get("/queue", headers=h(alice)).status_code == 401
     client.post("/auth/logout", headers=h(root))
     assert client.get("/me", headers=h(root)).status_code == 401
+
+
+def test_failed_logins_are_throttled(acc):
+    from review_api.accounts import LoginThrottle
+    store, clock, tmp = acc
+    throttle = LoginThrottle(clock=clock)
+    client = TestClient(create_app(CaseStore(tmp / "cases.sqlite"), accounts=store, throttle=throttle))
+    for _ in range(5):
+        assert client.post("/auth/login", json={"username": "alice", "password": "wrong-password!"}).status_code == 401
+    r = client.post("/auth/login", json={"username": "alice", "password": PW})
+    assert r.status_code == 429 and int(r.headers["retry-after"]) > 0          # locked, even with the right password
+    assert client.post("/auth/login", json={"username": "root", "password": PW}).status_code == 200  # other user ok
+    clock.t += timedelta(minutes=16)
+    assert client.post("/auth/login", json={"username": "alice", "password": PW}).status_code == 200
+
+
+def test_throttle_by_address_and_no_remote_lockout():
+    from review_api.accounts import LoginThrottle
+    clock = Clock()
+    t = LoginThrottle(clock=clock)
+    for i in range(20):                                          # password spraying from one address
+        t.failed(f"user{i}", "10.0.0.9")
+    assert t.retry_after("someone-else", "10.0.0.9") is not None
+    for _ in range(10):                                          # guessing alice's password from elsewhere
+        t.failed("alice", "10.0.0.66")
+    assert t.retry_after("alice", "10.0.0.1") is None            # alice herself is not locked out

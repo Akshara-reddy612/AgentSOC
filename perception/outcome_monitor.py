@@ -135,6 +135,12 @@ class OutcomeMonitor:
         """An analyst confirmed malicious activity from this host: watch it (no containment effect)."""
         return self.start(case_id, "ANALYST_CONFIRMED", host, "host", at)
 
+    def end_flags(self, case_id: str, at: datetime) -> list[str]:
+        """A confirmation was withdrawn: end that case's ANALYST_CONFIRMED watches; returns their ids."""
+        flags = [w for ws in self._by_target.values() for w in ws
+                 if w.case_id == case_id and w.action == "ANALYST_CONFIRMED" and w.status == "active"]
+        return [w.watch_id for w in flags if self.roll_back(w.watch_id, at) is not None]
+
     def host_confirmed(self, host: str, at: datetime) -> bool:
         """Is the host under an analyst's confirmed-compromise watch at `at`?"""
         return any(w.action == "ANALYST_CONFIRMED" and w.since <= at <= w.until

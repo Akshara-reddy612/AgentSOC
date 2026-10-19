@@ -114,12 +114,12 @@ class KnowledgeUpdater:
         for address in _addresses(case):
             self._escalations.get(address, {}).pop(case.case_id, None)
 
-    def retract_host_learning(self, host: str, since: datetime, at: datetime, writer: str) -> list[str]:
+    def retract_host_learning(self, host: str, since: datetime, at: datetime, writer: str) -> list[dict]:
         """
         Decision B5 (a): the host is confirmed compromised.  Patterns learned on it
         since `since` from closed cases or verdicts (not training, not config) may
         be the attacker's, so they are retracted: they alert again.  Returns the
-        retracted edges as "src -[key]-> dst".
+        retracted edges as {"src", "dst", "key"} (what withdrawing the verdict restores).
         """
         node, lineage_key = host_node_id(host), f"host:{host.lower()}"
         out = []
@@ -130,7 +130,7 @@ class KnowledgeUpdater:
                 continue
             self.db.retract_edge(src, dst, key, writer=writer, at=at,
                                  reason=f"host {host} confirmed compromised; learned since {since.isoformat()}")
-            out.append(f"{src} -[{key}]-> {dst}")
+            out.append({"src": src, "dst": dst, "key": key})
         return out
 
     @property

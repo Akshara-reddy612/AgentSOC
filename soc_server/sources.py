@@ -33,3 +33,52 @@ class DedaleHostSource:
             start = after[1] + 1 if after is not None and hour == after[0] else 0
             for i in range(start, len(events)):
                 yield (hour, i), _t(events[i]["t"]), events[i]
+
+
+class DedaleNetSource:
+    """DEDALE Suricata alerts (dedale/suricata.py) in file order (= time order); position = line number."""
+
+    def __init__(self, path: str | Path | None = None) -> None:
+        self.path = Path(path) if path else None
+
+    def events(self, after: int | None) -> Iterator[tuple[int, datetime, dict]]:
+        from dedale.suricata import alert_time, iter_alerts
+
+        for alert in iter_alerts(self.path):
+            line = int(alert["alert_id"].rsplit("-", 1)[1])
+            if after is not None and line <= after:
+                continue
+            yield line, alert_time(alert), alert
+
+
+class MergedSource:
+    """
+    Several sources interleaved by time.  Items are (positions, time, (name, event)); `positions`
+    holds the last position consumed from every source, so a resume continues each where it stopped.
+    """
+
+    def __init__(self, sources: dict[str, object]) -> None:
+        self.sources = sources
+
+    def events(self, after: dict | None) -> Iterator[tuple[dict, datetime, tuple[str, dict]]]:
+        import heapq
+
+        positions = dict(after or {})
+
+        def tagged(name, src):                    # binds `name` per stream (a generator expression would not)
+            for pos, t, ev in src.events(positions.get(name)):
+                yield t, name, pos, ev
+
+        streams = [tagged(name, src) for name, src in self.sources.items()]
+        for t, name, pos, ev in heapq.merge(*streams, key=lambda x: (x[0], x[1])):
+            positions[name] = pos
+            yield dict(positions), t, (name, ev)
+
+
+def handle_merged(loop, item: tuple[str, dict], at: datetime) -> None:
+    """The loop call for an item of a MergedSource of 'host' and 'network' sources."""
+    kind, event = item
+    if kind == "host":
+        loop.process_host_event(event, at)
+    else:
+        loop.process(event, at)

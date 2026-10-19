@@ -181,3 +181,47 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+class LoginThrottle:
+    """
+    Slows down password guessing.  A (username, client address) pair is locked after
+    `per_pair` failures within `window`, and a client address after `per_address` failures
+    (password spraying); a lock lasts `lockout`.  Locking by username alone is avoided on
+    purpose: it would let anyone lock a real analyst out from elsewhere.  In memory, per process.
+    """
+
+    def __init__(self, per_pair: int = 5, per_address: int = 20, window: timedelta = timedelta(minutes=15),
+                 lockout: timedelta = timedelta(minutes=15), clock=_now) -> None:
+        self.limits = {"pair": per_pair, "addr": per_address}
+        self.window, self.lockout, self.clock = window, lockout, clock
+        self._fails: dict[str, list[datetime]] = {}
+        self._locked: dict[str, datetime] = {}
+        self._lock = threading.Lock()
+
+    @staticmethod
+    def _keys(username: str, address: str) -> dict[str, str]:
+        return {"pair": f"pair:{username.lower()}|{address}", "addr": f"addr:{address}"}
+
+    def retry_after(self, username: str, address: str) -> float | None:
+        """Seconds until a login may be tried again, or None if not locked."""
+        now = self.clock()
+        with self._lock:
+            waits = [(until - now).total_seconds() for k in self._keys(username, address).values()
+                     if (until := self._locked.get(k)) and until > now]
+        return max(waits) if waits else None
+
+    def failed(self, username: str, address: str) -> None:
+        now = self.clock()
+        with self._lock:
+            for kind, key in self._keys(username, address).items():
+                recent = [t for t in self._fails.get(key, []) if now - t < self.window] + [now]
+                self._fails[key] = recent
+                if len(recent) >= self.limits[kind]:
+                    self._locked[key] = now + self.lockout
+                    self._fails[key] = []
+
+    def succeeded(self, username: str, address: str) -> None:
+        with self._lock:
+            key = self._keys(username, address)["pair"]
+            self._fails.pop(key, None)
