@@ -77,10 +77,10 @@ class LiveRunner:
                  make_loop: Callable[[KnowledgeDB, CaseStore], SocLoop],
                  handle: Callable[[SocLoop, dict, datetime], None],
                  seed: Callable[[KnowledgeDB], None] | None = None, externals: dict[str, Any] | None = None,
-                 speed: float = 60.0, checkpoint_every: float = 30.0) -> None:
+                 speed: float = 60.0, checkpoint_every: float = 30.0, source_id: str = "default") -> None:
         self.home = Path(home)
         self.home.mkdir(parents=True, exist_ok=True)
-        self.source, self.handle = source, handle
+        self.source, self.handle, self.source_id = source, handle, source_id
         self.speed, self.checkpoint_every = speed, checkpoint_every
         self.extra = externals or {}                      # e.g. {"nce": LiveNCE(...)}: not pickled
         self._cond = threading.Condition()
@@ -99,6 +99,11 @@ class LiveRunner:
             self.db, self.cases = KnowledgeDB(ks), CaseStore(cs)
             with open(cp / "state.pkl", "rb") as f:
                 st = _Unpickler(f, {"ks": self.db, "cases": self.cases, **self.extra}).load()
+            if st.get("source_id", "default") != source_id:
+                self.db.close()
+                self.cases.close()
+                raise ValueError(f"{self.home} was built from sources {st.get('source_id', 'default')!r}, not "
+                                 f"{source_id!r}: use another home directory")
             self.loop, self.pos, self.clock = st["loop"], st["pos"], st["clock"]
             self.cases._alert_cap.update(st["alert_cap"])
             self.events_processed = st["events_processed"]
@@ -269,6 +274,7 @@ class LiveRunner:
         externals = {id(self.db): "ks", id(self.cases): "cases", **{id(v): k for k, v in self.extra.items()}}
         with open(tmp / "state.pkl", "wb") as f:
             _Pickler(f, externals).dump({"loop": self.loop, "pos": self.pos, "clock": self.clock,
+                                         "source_id": self.source_id,
                                          "alert_cap": dict(self.cases._alert_cap),
                                          "events_processed": self.events_processed})
         shutil.rmtree(old, ignore_errors=True)

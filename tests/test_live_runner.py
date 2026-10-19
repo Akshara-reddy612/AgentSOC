@@ -103,3 +103,69 @@ def test_commands_apply_before_the_replay_is_started(tmp_path):
         time.sleep(0.05)
     assert r.cases.commands()[0]["applied_at"] is not None and r.status()["state"] == "paused"
     r.stop()
+
+
+def _net_alert(t, n, dst="172.19.0.2"):
+    line = f"[1:2018959:4] ET POLICY Example [Classification: Misc] [Priority: 2] {{TCP}} 172.16.1.3:4000 -> {dst}:443"
+    from dedale.suricata import to_alert
+    return to_alert({"@timestamp": int(t.timestamp() * 1000), "logsource": "companyrouter2", "message": line}, n)
+
+
+class _Merged:
+    """host + network synthetic streams through the real MergedSource."""
+
+    def __init__(self):
+        from soc_server.sources import MergedSource
+
+        class L:
+            def __init__(self, items):
+                self.items = items
+
+            def events(self, after):
+                return stream_after(self.items, after)
+
+        net = [(START + timedelta(days=d, hours=11), _net_alert(START + timedelta(days=d, hours=11), d + 1))
+               for d in range(10)]
+        self.src = MergedSource({"host": L(_events()), "network": L(net)})
+
+    def events(self, after):
+        return self.src.events(after)
+
+
+def _merged_runner(home, source_id="host,network"):
+    from soc_server.sources import handle_merged
+    return LiveRunner(home, _Merged(), profile=DEDALE_PROFILE, start=START,
+                      make_loop=lambda db, cs: SocLoop(db, mode="gated", training_end=TRAIN_END, case_store=cs),
+                      handle=handle_merged, seed=lambda db: seed_store(db, START), source_id=source_id)
+
+
+def test_merged_source_interleaves_and_resumes(tmp_path):
+    items = list(_Merged().events(None))
+    times = [t for _, t, _ in items]
+    assert times == sorted(times) and {k for _, _, (k, _) in items} == {"host", "network"}
+    pos, _, _ = items[20]
+    rest = list(_Merged().events(pos))
+    assert [(t, k) for _, t, (k, _) in rest] == [(t, k) for _, t, (k, _) in items[21:]]
+
+    end = START + timedelta(days=11)
+    whole = _merged_runner(tmp_path / "w")
+    whole.run_until(end)
+    expected = _snapshot(whole)
+    assert whole.loop.counts["cases_test"] > 0 and any(c["kind"] == "network" for c in whole.cases.cases())
+    whole.stop()
+    first = _merged_runner(tmp_path / "m")
+    first.run_until(START + timedelta(days=7, hours=12))
+    first.stop()
+    again = _merged_runner(tmp_path / "m")
+    again.run_until(end)
+    assert _snapshot(again) == expected
+    again.stop()
+
+
+def test_a_home_refuses_other_sources(tmp_path):
+    import pytest
+    r = _merged_runner(tmp_path / "h")
+    r.run_until(START + timedelta(days=1))
+    r.stop()
+    with pytest.raises(ValueError, match="sources"):
+        _merged_runner(tmp_path / "h", source_id="host")

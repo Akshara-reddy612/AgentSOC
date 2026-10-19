@@ -27,6 +27,10 @@ def main() -> None:
     ap.add_argument("--home", default=str(data_dir().parent / "live"), help="server state (stores, checkpoints)")
     ap.add_argument("--speed", type=float, default=600.0, help="stream seconds per wall second")
     ap.add_argument("--demo-start", default="2025-01-06T08:00", help="UTC stream time the demo starts at")
+    ap.add_argument("--sources", default="host,network", help="host, network or both (DEDALE replay)")
+    ap.add_argument("--nce", default="cache", choices=["cache", "live", "off"],
+                    help="cache: recorded LLM answers only (no API calls); live: Gemini, limited by --nce-per-day")
+    ap.add_argument("--nce-per-day", type=int, default=200, help="live NCE: at most this many calls per stream day")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
     args = ap.parse_args()
@@ -40,17 +44,31 @@ def main() -> None:
     from review_api.accounts import AccountStore
     from soc_server.app import build_app, with_frontend
     from soc_server.runner import LiveRunner
-    from soc_server.sources import DedaleHostSource
+    from perception.triage_gate import DailyBudget
+    from soc_server.sources import DedaleHostSource, DedaleNetSource, MergedSource, handle_merged
 
-    nce = LiveNCE(None, cache_only=True)
+    kinds = sorted({k.strip() for k in args.sources.split(",") if k.strip()})
+    if not kinds or set(kinds) - {"host", "network"}:
+        sys.exit("--sources takes host, network or host,network")
+    source = MergedSource({k: DedaleHostSource(EVENTS) if k == "host" else DedaleNetSource() for k in kinds})
+    externals, gate_options = {}, {}
+    if args.nce != "off":
+        from experiments.dedale_nce import CallCap
+        nce = LiveNCE(None, cache_only=True) if args.nce == "cache" else LiveNCE(CallCap(10**9))
+        externals["nce"] = nce
+        gate_options["nce"] = nce
+        if args.nce == "live":
+            gate_options["budget"] = DailyBudget(args.nce_per_day)
 
     def make_loop(db, cases):
-        return SocLoop(db, mode="gated", training_end=TRAINING_END, case_store=cases,
-                       gate_options={"nce": nce})
+        return SocLoop(db, mode="gated", training_end=TRAINING_END, case_store=cases, gate_options=gate_options)
 
-    runner = LiveRunner(args.home, DedaleHostSource(EVENTS), profile=DEDALE_PROFILE, start=TRAINING_START,
-                        make_loop=make_loop, handle=lambda loop, ev, at: loop.process_host_event(ev, at),
-                        seed=lambda db: seed_store(db, TRAINING_START), externals={"nce": nce}, speed=args.speed)
+    try:
+        runner = LiveRunner(args.home, source, profile=DEDALE_PROFILE, start=TRAINING_START, make_loop=make_loop,
+                            handle=handle_merged, seed=lambda db: seed_store(db, TRAINING_START),
+                            externals=externals, speed=args.speed, source_id=",".join(kinds))
+    except ValueError as e:
+        sys.exit(str(e))
     if not runner.restored:
         target = datetime.fromisoformat(args.demo_start).replace(tzinfo=timezone.utc)
         print(f"first start: learning the benign weeks and fast-forwarding to {target:%Y-%m-%d %H:%M} ...",
