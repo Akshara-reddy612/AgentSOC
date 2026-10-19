@@ -236,6 +236,10 @@ def create_app(store: CaseStore, tokens: dict[str, str] | None = None, *, accoun
         return {"case_id": case_id, "verdict": body.verdict,
                 "command_id": service.verdict(case_id, body.verdict, who, body.note)}
 
+    @app.post("/cases/{case_id}/withdraw")
+    def withdraw(case_id: str, body: ReasonIn, p: tuple[str, str] = Depends(role("lead", "admin"))) -> dict:
+        return {"case_id": case_id, "status": "open", "command_id": service.withdraw(case_id, p[0], body.reason)}
+
     @app.post("/verdicts")
     def verdicts(body: BulkVerdictIn, who: str = Depends(analyst)) -> dict:
         ids = service.verdicts(body.case_ids, body.verdict, who, body.note)

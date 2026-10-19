@@ -348,6 +348,34 @@ class KnowledgeDB:
             self._con.execute("DELETE FROM edges WHERE src = ? AND dst = ? AND key = ?", (src, dst, _dumps(key)))
             self._graph.remove_edge(src, dst, key)
 
+    def restore_edge(self, src: str, dst: str, key: Any, *, writer: str, at: datetime) -> bool:
+        """
+        Put back an edge that was retracted, with the attributes and provenance it had at the
+        retraction (rebuilt from the log).  False if it was never retracted or already exists.
+        """
+        with self.batch():
+            if self._graph.has_edge(src, dst, key):
+                return False
+            enc_key = encode_value(key)
+            attrs, learned_from, retracted = None, None, False
+            rows = self._con.execute(
+                "SELECT op, payload FROM ks_log WHERE op IN ('add_edge', 'update_edge', 'retract_edge')"
+                " AND payload LIKE ? ORDER BY seq", ('%"src": ' + json.dumps(src) + "%",)).fetchall()
+            for op, payload in rows:
+                p = json.loads(payload)
+                if p["src"] != src or p["dst"] != dst or p["key"] != enc_key:
+                    continue
+                if op == "add_edge":
+                    attrs, learned_from, retracted = decode_value(p["attrs"]), p["learned_from"], False
+                elif op == "update_edge" and attrs is not None:
+                    attrs.update(decode_value(p["changes"]))
+                elif op == "retract_edge":
+                    retracted = True
+            if not retracted or attrs is None:
+                return False
+            self._add_edge(src, dst, key, attrs, writer, at, learned_from)
+            return True
+
     def learned_edges(self, provenances: set[str] | frozenset[str]) -> list[tuple[str, str, Any, str, datetime]]:
         """(src, dst, key, learned_from, time first learned) of the edges learned with these provenances."""
         marks = ",".join("?" * len(provenances))

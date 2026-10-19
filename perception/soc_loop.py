@@ -60,9 +60,9 @@ from perception.case_builder import Case, CaseBuilder, alert_case_key
 from perception.case_store import CaseStore, approvals_needed, host_tier, other_targets
 from perception.host_detection import DETECTORS, host_alert, learn_key, novel_keys
 from perception.knowledge_db import KnowledgeDB
-from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, ensure_endpoint
+from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, endpoint_node_id, ensure_endpoint
 from perception.network_alert import with_entities
-from perception.network_model import KNOWN_BAD
+from perception.network_model import KNOWN_BAD, UNKNOWN
 from perception.outcome import AUTO_APPROVED, REVIEW
 from perception.outcome_monitor import OutcomeMonitor, proposed_responses
 from perception.source_systems import SourceSystem
@@ -93,6 +93,7 @@ class SocLoop:
         self.analyst_delay = analyst_delay
         self.case_store = case_store                # test-window cases, decisions, alerts (review loop)
         self._awaiting: dict[str, tuple[Case, Decision]] = {}             # REVIEW cases without a verdict yet
+        self._confirmed: dict[str, tuple[Case, Decision, dict]] = {}     # malicious verdicts (can be withdrawn)
         self.unlearn_on_confirm = unlearn_on_confirm
         self._reviews: list[tuple[datetime, int, Case, Decision]] = []    # heap by verdict time
         self._review_seq = itertools.count()
@@ -218,7 +219,34 @@ class SocLoop:
                 self.updater.lift_hold(case)
         else:
             done.update(self._confirmed_malicious(case, d, at, f"analyst:{analyst}", execute_proposed))
+            self._confirmed[case_id] = (case, d, dict(done))
         return done
+
+    def withdraw_verdict(self, case_id: str, analyst: str, at: datetime) -> dict:
+        """
+        A 'malicious' verdict found wrong is withdrawn: the host's confirmation watch ends
+        (learning on it resumes), the patterns that verdict retracted are restored, a destination it
+        marked known-bad gets its previous reputation back, and the case awaits a new verdict.
+        Executed containment is not undone here: each action has its own rollback.
+        """
+        entry = self._confirmed.pop(case_id, None)
+        if entry is None:
+            return {"applied": False, "reason": "no malicious verdict of this case to withdraw in this loop"}
+        case, d, done = entry
+        writer = f"analyst:{analyst}"
+        out: dict = {"applied": True, "ended_watches": self.monitor.end_flags(case_id, at), "restored": 0,
+                     "reputation_restored": None}
+        for e in done.get("retracted") or []:
+            out["restored"] += self.db.restore_edge(e["src"], e["dst"], e["key"], writer=writer, at=at)
+        if done.get("known_bad"):
+            node = endpoint_node_id(self.db, done["known_bad"])
+            fact = self.db.graph.graph.nodes[node].get("reputation") if node in self.db.graph.graph else None
+            previous = fact.audit_history[-1].value if fact is not None and fact.audit_history else UNKNOWN
+            self.db.set_fact(node, "reputation", previous, confidence=1.0, source=SourceSystem.SYSTEM,
+                             writer=writer, at=at)
+            out["reputation_restored"] = previous
+        self._awaiting[case_id] = (case, d)
+        return out
 
     def _analyst_due(self, now: datetime) -> None:
         """The simulated analyst (experiments): a verdict `analyst_delay` after each REVIEW case."""
@@ -250,6 +278,8 @@ class SocLoop:
                 act = self.case_store.action(cmd.action_id)
                 w = self.monitor.start(act["case_id"], act["action"], act["target"], act["target_kind"], cmd.at)
                 result = {"applied": True, "watch_id": w.watch_id, "mode": "simulated"}
+            elif cmd.kind == "withdraw":
+                result = self.withdraw_verdict(cmd.case_id, cmd.actor.removeprefix("analyst:"), cmd.at)
             elif cmd.kind == "rollback":
                 act = self.case_store.action(cmd.action_id)
                 w = self.monitor.roll_back(act["watch_id"], cmd.at) if act["watch_id"] else None
@@ -275,7 +305,7 @@ class SocLoop:
         elif a.get("source_host") and self.db.profile.is_internal_address(str(a["src_ip"])):
             done["flagged_host"] = str(a["source_host"])
         if done["flagged_host"]:
-            self.monitor.flag_host(done["flagged_host"], case.case_id, at)
+            done["flag_watch"] = self.monitor.flag_host(done["flagged_host"], case.case_id, at).watch_id
             if self.unlearn_on_confirm and self.updater is not None:
                 done["retracted"] = self.updater.retract_host_learning(
                     done["flagged_host"], at - UNLEARN_LOOKBACK, at, writer)

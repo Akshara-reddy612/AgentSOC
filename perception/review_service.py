@@ -273,5 +273,9 @@ class ReviewService:
     def reject(self, action_id: str, analyst: str, reason: str) -> None:
         self.store.reject_action(action_id, analyst, self.clock(), reason)
 
+    def withdraw(self, case_id: str, analyst: str, reason: str) -> int:
+        """Withdraw a wrong 'malicious' verdict (the API allows leads and admins only)."""
+        return self.store.withdraw_verdict(case_id, analyst, self.clock(), reason)
+
     def rollback(self, action_id: str, analyst: str, reason: str) -> int:
         return self.store.request_rollback(action_id, analyst, self.clock(), reason)

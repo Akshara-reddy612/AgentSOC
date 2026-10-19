@@ -198,7 +198,7 @@ class ConflictError(ReviewError):
 @dataclass(frozen=True)
 class Command:
     cmd_id: int
-    kind: str                   # "verdict" | "execute" | "rollback"
+    kind: str                   # "verdict" | "execute" | "rollback" | "withdraw"
     case_id: str
     action_id: str | None
     verdict: str | None
@@ -521,6 +521,28 @@ class CaseStore:
                                     ("verdict", case_id, verdict, actor, _iso(at)))
             self._audit(at, actor, "verdict", case_id, {"verdict": verdict, "cmd_id": cur.lastrowid})
             return cur.lastrowid
+
+    def withdraw_verdict(self, case_id: str, analyst: str, at: datetime, reason: str) -> int:
+        """
+        Withdraw a 'malicious' verdict found wrong: the case returns to the queue and the loop
+        undoes the verdict's effects (command "withdraw").  Returns the command id.
+        """
+        _check_analyst(analyst)
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 1000:
+            raise ReviewError("withdrawing a verdict needs a reason (1-1000 characters)")
+        with self.batch():
+            row = self._con.execute("SELECT review_status, verdict FROM cases WHERE case_id = ?", (case_id,)).fetchone()
+            if row is None:
+                raise NotFoundError(f"no case {case_id!r}")
+            if row != ("closed", "malicious"):
+                raise ReviewError(f"{case_id} has no 'malicious' verdict to withdraw")
+            self._con.execute("UPDATE cases SET review_status = 'open', verdict = NULL, claimed_by = NULL"
+                              " WHERE case_id = ?", (case_id,))
+            actor = f"analyst:{analyst}"
+            cmd = self._con.execute("INSERT INTO commands (kind, case_id, actor, at) VALUES (?, ?, ?, ?)",
+                                    ("withdraw", case_id, actor, _iso(at))).lastrowid
+            self._audit(at, actor, "verdict_withdrawn", case_id, {"reason": reason, "cmd_id": cmd})
+            return cmd
 
     def submit_verdicts(self, case_ids: list[str], verdict: str, analyst: str, at: datetime,
                         note: str | None = None) -> list[int | None]:
