@@ -111,3 +111,29 @@ def test_one_origin_with_the_built_frontend(server, tmp_path):
     assert c.get("/assets/app.js").text == "console.log(1)"
     assert "no" != c.get("/../secret.txt").text                                 # no traversal out of dist
     assert c.get("/api/live/status", headers=h["alice"]).json()["state"] == "paused"
+
+
+def test_live_nce_never_writes_the_recorded_cache(tmp_path):
+    from soc_server.__main__ import nce_cache
+
+    recorded = tmp_path / "runs" / "nce_cache_host.jsonl"
+    recorded.parent.mkdir()
+    recorded.write_text('{"alert_id": "a"}\n')
+    assert nce_cache(recorded, tmp_path / "home", live=False) == recorded
+    own = nce_cache(recorded, tmp_path / "home", live=True)
+    assert own == tmp_path / "home" / "nce_cache_host.jsonl" and own.read_text() == recorded.read_text()
+    with open(own, "a") as f:                                  # what a live call does
+        f.write('{"alert_id": "b"}\n')
+    assert recorded.read_text() == '{"alert_id": "a"}\n'
+    assert nce_cache(recorded, tmp_path / "home", live=True).read_text().count("alert_id") == 2   # kept
+
+
+def test_injected_source_passes_events_through_the_injector():
+    from soc_server.sources import InjectedSource
+
+    class Src:
+        def events(self, after):
+            yield from [(1, "t1", {"cmd": "a"}), (2, "t2", {"cmd": "b"})][(after or 0):]
+
+    out = list(InjectedSource(Src(), lambda e: dict(e, cmd=e["cmd"] + " # x")).events(1))
+    assert out == [(2, "t2", {"cmd": "b # x"})]
