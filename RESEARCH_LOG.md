@@ -1970,3 +1970,16 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `paper/.gitignore`; on `m5-frontend`: `frontend/**`, `tests/test_soc_server.py` (one-origin test)
 - Modified: `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`; on `m5-frontend`: `soc_server/app.py`, `soc_server/__main__.py`
+
+## 2026-10-19 — Session: paper Fig. 1
+
+### What was tried
+- Pushed `main` (`f3f0a3a..9859e90`, user-approved).
+- Added Fig. 1 (TikZ: the pipeline in the top row; Knowledge Store, learning gate, outcome monitor and analyst loop below) to `paper/agentsoc_combined.tex`.
+
+### What was found
+- First render: two feedback-edge labels overlapped; separated by routing them at different depths. Compiles cleanly.
+- `npm install` still not run (frontend not yet built). gpt-oss-20b at 120 / 419.
+
+### Files created/modified
+- Modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

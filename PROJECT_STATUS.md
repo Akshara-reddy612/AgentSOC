@@ -37,7 +37,8 @@
     - **Tests:** `tests/test_accounts.py` (3), `tests/test_live_runner.py` (2), `tests/test_soc_server.py` (3); suite 755 passed, 1 deselected.
   - **M3 draft started (2026-10-19):** `paper/agentsoc_combined.tex` (IEEE conference).
     - Drafted by Claude: threat model, system, setup and results C1-C5 with 4 tables, every number from `RESULTS.md`.
-    - Left for the team (TODO): introduction, related work, discussion, conclusion, abstract, authors, references, Fig. 1.
+    - Fig. 1 (pipeline and loop, TikZ) added 2026-10-19.
+    - Left for the team (TODO): introduction, related work, discussion, conclusion, abstract, authors, references.
     - Compiles with pdflatex.
   - **M5 in progress:** npm packages approved by the user (2026-10-19).
     - Frontend source on branch `m5-frontend`: React + TypeScript; pages Login, Live, Case (8-stage trace), Knowledge Store (graph), Metrics, Accounts.
