@@ -22,7 +22,7 @@ Security rules:
     (single writer, invariant I6).
 Errors: 401 no / wrong token; 404 unknown case or action; 409 the case is
 claimed by another analyst; 400 an action not allowed in the current state;
-422 an invalid request body.
+422 an invalid request body; 429 too many failed logins (LoginThrottle).
 """
 from __future__ import annotations
 
@@ -99,7 +99,7 @@ class NewUserIn(_Body):
 
 
 def create_app(store: CaseStore, tokens: dict[str, str] | None = None, *, accounts=None,
-               clock: Callable[[], datetime] | None = None) -> FastAPI:
+               clock: Callable[[], datetime] | None = None, throttle=None) -> FastAPI:
     """
     The review API over `store`.  Authentication: `accounts` (review_api.accounts.AccountStore:
     users, roles, sessions) and/or fixed per-analyst `tokens` from load_tokens (role analyst;
@@ -108,6 +108,9 @@ def create_app(store: CaseStore, tokens: dict[str, str] | None = None, *, accoun
     if not tokens and accounts is None:
         raise ValueError("configure accounts or analyst tokens")
     service = ReviewService(store, clock=clock)
+    if throttle is None and accounts is not None:
+        from review_api.accounts import LoginThrottle
+        throttle = LoginThrottle()
     digests = {hashlib.sha256(t.encode("utf-8")).digest(): a for t, a in (tokens or {}).items()}
     app = FastAPI(title="AgentSOC review API", version="1",
                   description="Analyst review loop: queue, cases, verdicts, actions, audit.")
@@ -153,12 +156,19 @@ def create_app(store: CaseStore, tokens: dict[str, str] | None = None, *, accoun
     app.state.principal, app.state.role = principal, role      # for routers added by soc_server
 
     @app.post("/auth/login")
-    def login(body: LoginIn) -> dict:
+    def login(body: LoginIn, request: Request) -> dict:
         if accounts is None:
             raise HTTPException(404, "accounts are not configured")
+        address = request.client.host if request.client else "unknown"
+        wait = throttle.retry_after(body.username, address)
+        if wait is not None:
+            raise HTTPException(429, "too many failed logins; try again later",
+                                headers={"Retry-After": str(int(wait) + 1)})
         found = accounts.login(body.username, body.password)
         if found is None:
+            throttle.failed(body.username, address)
             raise HTTPException(401, "wrong username or password")
+        throttle.succeeded(body.username, address)
         token, user_role, expires = found
         return {"token": token, "username": body.username, "role": user_role, "expires": expires.isoformat()}
 
