@@ -1958,7 +1958,7 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
   - Charts use the validated dark categorical slots 1-4 (dataviz validator: all checks pass; worst adjacent CVD ΔE 8.4).
   - "No learning" (6,095 reviews / day) is shown as a tile, never on a second axis.
 - **`soc_server.with_frontend`:** one origin (API under `/api`, SPA routes -> index.html, no path traversal) + test.
-- **Paper draft:** `paper/agentsoc_combined.tex`, built with MiKTeX pdflatex. First render: the tables were wider than one IEEE column; fixed with `esizebox{\columnwidth}`. References resolve on a second pass.
+- **Paper draft:** `paper/agentsoc_combined.tex`, built with MiKTeX pdflatex. First render: the tables were wider than one IEEE column; fixed with `\resizebox{\columnwidth}`. References resolve on a second pass.
 
 ### What was found
 - gpt-oss-20b: resumed with 419 calls left in the dev set.
