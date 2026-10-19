@@ -90,3 +90,16 @@ def test_paced_run_pause_speed_and_commands_while_paused(tmp_path):
     assert st["state"] == "finished" and st["events_processed"] == len(_events())
     r.stop()
     assert (tmp_path / "c" / "checkpoint" / "state.pkl").exists()
+
+
+def test_commands_apply_before_the_replay_is_started(tmp_path):
+    r = _runner(tmp_path / "d", speed=86_400, checkpoint_every=0.2)
+    r.run_until(TRAIN_END + timedelta(hours=10))
+    (case,) = [c for c in r.cases.cases() if c["review_status"] == "open"][:1]
+    r.start(paused=True)                                         # server start: thread up, replay paused
+    r.cases.submit_verdict(case["case_id"], "benign", "alice", r.now())
+    deadline = time.monotonic() + 10
+    while not r.cases.commands()[0]["applied_at"] and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert r.cases.commands()[0]["applied_at"] is not None and r.status()["state"] == "paused"
+    r.stop()

@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 
 
 def main() -> None:
@@ -37,7 +38,7 @@ def main() -> None:
     from experiments.dedale_nce import LiveNCE
     from perception.soc_loop import SocLoop
     from review_api.accounts import AccountStore
-    from soc_server.app import build_app
+    from soc_server.app import build_app, with_frontend
     from soc_server.runner import LiveRunner
     from soc_server.sources import DedaleHostSource
 
@@ -56,12 +57,18 @@ def main() -> None:
               flush=True)
         n = runner.run_until(target)
         print(f"  {n:,} events processed; checkpoint written", flush=True)
+    runner.start(paused=True)                 # applies analysts' commands even before the replay starts
     accounts = AccountStore(runner.home / "auth.sqlite")
     if not accounts.users():
         print(f"no accounts yet: python -m review_api.accounts --db {runner.home / 'auth.sqlite'} "
               "create-user <name> --role admin", file=sys.stderr)
     try:
-        uvicorn.run(build_app(runner, accounts=accounts), host=args.host, port=args.port)
+        app = build_app(runner, accounts=accounts)
+        dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
+        if dist.joinpath("index.html").exists():          # built frontend: one origin, API under /api
+            app = with_frontend(app, dist)
+            print(f"frontend: http://{args.host}:{args.port}/  (API under /api)", flush=True)
+        uvicorn.run(app, host=args.host, port=args.port)
     finally:
         runner.stop()
 

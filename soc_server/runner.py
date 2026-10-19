@@ -128,12 +128,15 @@ class LiveRunner:
 
     # -- control (any thread) -----------------------------------------------------
 
-    def start(self) -> None:
-        """Start (or resume) paced replay in the background."""
+    def start(self, paused: bool = False) -> None:
+        """
+        Start (or resume) paced replay in the background.  `paused=True` starts the thread
+        without replaying, so analysts' commands are applied from the moment the server is up.
+        """
         with self._cond:
             if self._thread is None or not self._thread.is_alive():
                 self._thread = threading.Thread(target=self._run, name="soc-runner", daemon=True)
-                self._state = "running"
+                self._state = "paused" if paused else "running"
                 self._thread.start()
             elif self._state == "paused":
                 self._state = "running"
