@@ -136,8 +136,15 @@ def test_other_targets_resolve_addresses_and_raise_priority(db, cs):
             {"technique_id": "T1021.004", "target_host": "172.16.0.2"},              # internalserver
             {"technique_id": "T1071", "target_host": ""}]
     d = Decision("case-1", T, "pipeline", "REVIEW", "REVIEW", [], "ran", rows, 1)
-    assert other_targets(db, d, "CLIENT1") == ["172.16.0.2"]
-    assert other_targets(db, d, None) == []
+    assert other_targets(db, d, {"target_host": "CLIENT1"}) == ["172.16.0.2"]
+    assert other_targets(db, d, {}) == []
+    # a network alert's own endpoints are not "another target" (a STUN server ranked benign cases first)
+    net = [{"technique_id": "T1071", "target_host": "185.208.37.90"},
+           {"technique_id": "T1071", "target_host": "172.17.0.5"},
+           {"technique_id": "T1021", "target_host": "172.16.0.2"}]
+    alert = {"target_host": "vpnserver", "src_ip": "172.17.0.5", "dst_ip": "185.208.37.90"}
+    assert other_targets(db, Decision("case-2", T, "pipeline", "REVIEW", "REVIEW", [], "ran", net, 1),
+                         alert) == ["172.16.0.2"]
     _record(db, cs, 1)
     case = cs.case("case-1")
     pts, why = priority(case, {"hypotheses": rows, "other_targets": ["172.16.0.2"]}, [], T)

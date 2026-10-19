@@ -289,18 +289,24 @@ def _host_key(db: KnowledgeDB, name: str) -> str:
     return n
 
 
-def other_targets(db: KnowledgeDB, decision: Decision, host: str | None) -> list[str]:
+ENDPOINT_FIELDS = ("source_host", "target_host", "src_ip", "dst_ip", "destination_ip", "destination_domain")
+
+
+def other_targets(db: KnowledgeDB, decision: Decision, alert: dict) -> list[str]:
     """
-    Targets the hypotheses name other than the alerting host (addresses resolved
-    to inventory hosts).  LLM output, so the review queue uses it only to raise
-    attention, never to lower it.
+    Targets the hypotheses name that the alert itself does not (its own endpoints
+    excluded; addresses resolved to inventory hosts).  LLM output, so the review
+    queue uses it only to raise attention, never to lower it.  Endpoints other
+    than the host were added 2026-10-19: a network alert's own destination (a
+    STUN server) counted as "another target" and put benign cases on top.
     """
-    if not host:
+    if not alert.get("target_host"):
         return []
-    own, out = _host_key(db, host), []
+    own = {_host_key(db, str(alert[k])) for k in ENDPOINT_FIELDS if alert.get(k)}
+    out = []
     for h in decision.hypotheses:
         t = str(h.get("target_host") or "").strip()
-        if t and _host_key(db, t) != own and t not in out:
+        if t and _host_key(db, t) not in own and t not in out:
             out.append(t)
     return out
 

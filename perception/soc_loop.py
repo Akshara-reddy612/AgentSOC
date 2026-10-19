@@ -177,7 +177,7 @@ class SocLoop:
                     self.case_store.case_opened(case, a, at, d, approvals=lambda r: approvals_needed(self.db, r),
                                                 host_tier=host_tier(self.db, str(a.get("target_host") or "")),
                                                 watch_ids={row: w.watch_id for row, w in zip(auto, started)},
-                                                other_targets=other_targets(self.db, d, a.get("target_host")))
+                                                other_targets=other_targets(self.db, d, a))
         elif not self._in_training and self.case_store is not None:
             self.case_store.alert_attached(case, a, at)
 
