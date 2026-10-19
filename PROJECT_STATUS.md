@@ -43,7 +43,18 @@
   - **M5 in progress:** npm packages approved by the user (2026-10-19).
     - Frontend source on branch `m5-frontend`: React + TypeScript; pages Login, Live, Case (8-stage trace), Knowledge Store (graph), Metrics, Accounts.
     - `soc_server.with_frontend` serves the build at `/` and the API under `/api`.
-    - Waiting for the user's `npm install` to typecheck, build and test in a browser.
+    - **First version done (2026-10-19):**
+      - `npm install`: 56 packages, 182 MB; tsc clean; Vite build; Knowledge / Metrics / Accounts lazy-loaded (first load ~540 kB).
+      - Checked in headless Edge over the DevTools protocol (`tools/ui_check.py`): every page rendered with 0 JavaScript errors.
+      - Clicked through claim -> malicious -> approve on case-20 and confirmed the loop applied it (CLIENT2 flagged, BLOCK_EGRESS executed as simulated watch-3).
+    - **Fixes from the visual check:**
+      - truncated guardrail and provenance labels;
+      - JSON-escaped key values;
+      - an unreadable host graph (80 edges, spaced layout, labels on hubs / hover);
+      - colliding chart end labels;
+      - a Cytoscape scroll-zoom warning.
+    - **Real gap found:** analysts' verdicts were not applied until someone pressed Start (the runner thread started only then). The server now starts the thread paused (`LiveRunner.start(paused=True)`), with a test.
+    - Run instructions: `frontend/README.md`.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)

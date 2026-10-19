@@ -23,16 +23,21 @@ export default function Graph({ data, height = 460 }: { data: GraphData; height?
         {
           selector: "node",
           style: {
-            label: "data(label)",
-            "font-size": 9,
-            color: "#ced4da",
+            label: "",
+            "font-size": 18,
+            color: "#e9ecef",
             "text-valign": "bottom",
-            "text-margin-y": 3,
-            width: 12,
-            height: 12,
+            "text-margin-y": 6,
+            "text-background-color": "#1a1b1e",
+            "text-background-opacity": 0.8,
+            "text-background-padding": "2px",
+            width: (n: cytoscape.NodeSingular) => Math.min(30, 8 + 3 * n.degree(false)),
+            height: (n: cytoscape.NodeSingular) => Math.min(30, 8 + 3 * n.degree(false)),
             "background-color": (n: cytoscape.NodeSingular) => NODE_COLOR[String(n.data("kind"))] ?? "#868e96",
           },
         },
+        { selector: "node.hub, node.hover, node[kind = 'host']", style: { label: "data(label)" } },
+        { selector: "node[kind = 'host']", style: { "border-width": 3, "border-color": "#ffffff" } },
         {
           selector: "edge",
           style: {
@@ -45,9 +50,11 @@ export default function Graph({ data, height = 460 }: { data: GraphData; height?
           },
         },
       ],
-      layout: { name: "cose", animate: false, nodeRepulsion: () => 9000 },
-      wheelSensitivity: 0.3,
+      layout: { name: "cose", animate: false, nodeRepulsion: () => 400000, idealEdgeLength: () => 70, gravity: 0.25, padding: 24 },
     });
+    cy.current.nodes().filter((n) => n.degree(false) >= 4).addClass("hub");
+    cy.current.on("mouseover", "node", (e) => e.target.addClass("hover"));
+    cy.current.on("mouseout", "node", (e) => e.target.removeClass("hover"));
     return () => {
       cy.current?.destroy();
       cy.current = null;

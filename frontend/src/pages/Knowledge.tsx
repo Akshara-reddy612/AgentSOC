@@ -1,4 +1,4 @@
-import { Badge, Card, Grid, Group, Loader, Select, SimpleGrid, Stack, Table, Text, Title } from "@mantine/core";
+import { Card, Grid, Group, Loader, Select, SimpleGrid, Stack, Table, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { api, type GraphData, type KnowledgeSummary, type Pattern, type Retraction } from "../api";
@@ -23,7 +23,7 @@ function Legend() {
 export default function Knowledge() {
   const [host, setHost] = useState<string>("CLIENT2");
   const summary = useQuery({ queryKey: ["ks-summary"], queryFn: () => api<KnowledgeSummary>("/knowledge/summary"), refetchInterval: 5000 });
-  const graph = useQuery({ queryKey: ["ks-graph", host], queryFn: () => api<GraphData>(`/knowledge/graph/${encodeURIComponent(host)}?limit=150`) });
+  const graph = useQuery({ queryKey: ["ks-graph", host], queryFn: () => api<GraphData>(`/knowledge/graph/${encodeURIComponent(host)}?limit=80`) });
   const patterns = useQuery({ queryKey: ["ks-host", host], queryFn: () => api<Pattern[]>(`/knowledge/hosts/${encodeURIComponent(host)}?limit=300`), refetchInterval: 5000 });
   const retractions = useQuery({ queryKey: ["ks-retractions"], queryFn: () => api<Retraction[]>("/knowledge/retractions?limit=50"), refetchInterval: 5000 });
   const s = summary.data;
@@ -87,7 +87,10 @@ export default function Knowledge() {
         <Grid.Col span={{ base: 12, lg: 7 }}>
           <Card withBorder>
             <Group justify="space-between" mb="xs">
-              <Title order={6}>Around a host</Title>
+              <div>
+                <Title order={6}>Around a host</Title>
+                <Text size="xs" c="dimmed">latest 80 patterns; hover a node for its name, scroll to zoom</Text>
+              </div>
               <Select size="xs" w={180} data={HOSTS} value={host} onChange={(v) => v && setHost(v)} searchable />
             </Group>
             {graph.isLoading ? <Loader /> : graph.data && graph.data.edges.length ? <Graph data={graph.data} /> : <Text c="dimmed" size="sm">Nothing learned on this host.</Text>}
@@ -102,7 +105,10 @@ export default function Knowledge() {
                 {(patterns.data ?? []).slice(0, 120).map((p, i) => (
                   <Table.Tr key={i}>
                     <Table.Td>
-                      <Badge size="xs" style={{ background: PROVENANCE_COLOR[p.learned_from] }} c="dark">{p.learned_from}</Badge>
+                      <Group gap={6} wrap="nowrap">
+                        <div style={{ width: 8, height: 8, borderRadius: 4, background: PROVENANCE_COLOR[p.learned_from], flexShrink: 0 }} />
+                        <Text size="xs">{p.learned_from}</Text>
+                      </Group>
                     </Table.Td>
                     <Table.Td>{p.type}</Table.Td>
                     <Table.Td>

@@ -57,6 +57,7 @@ def main() -> None:
               flush=True)
         n = runner.run_until(target)
         print(f"  {n:,} events processed; checkpoint written", flush=True)
+    runner.start(paused=True)                 # applies analysts' commands even before the replay starts
     accounts = AccountStore(runner.home / "auth.sqlite")
     if not accounts.users():
         print(f"no accounts yet: python -m review_api.accounts --db {runner.home / 'auth.sqlite'} "

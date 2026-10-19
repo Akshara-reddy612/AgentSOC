@@ -79,7 +79,21 @@ function CellValue({ name, value }: { name: string; value: unknown }) {
       </Tooltip>
     );
   }
-  if (name === "playbook_status") return <Badge variant="outline" size="sm">{v}</Badge>;
+  if (name === "playbook_status") {
+    const label: Record<string, [string, string]> = {
+      PENDING_ANALYST_REVIEW: ["needs approval", "orange"],
+      AUTO_APPROVED: ["auto-approved", "red"],
+      REJECTED_BY_GUARDRAIL: ["blocked", "gray"],
+      LOGGED_EXPECTED_ACTIVITY: ["logged (expected)", "gray"],
+      DRY_RUN_FAILED: ["dry run failed", "gray"],
+    };
+    const [text, color] = label[v] ?? [v, "gray"];
+    return (
+      <Tooltip label={v}>
+        <Text size="xs" fw={700} c={color} style={{ whiteSpace: "nowrap" }}>{text}</Text>
+      </Tooltip>
+    );
+  }
   return <Text size="xs" ff="monospace">{v}</Text>;
 }
 

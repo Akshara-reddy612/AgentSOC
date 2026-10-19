@@ -34,7 +34,7 @@ function lineOption(series: { name: string; data: number[] }[]) {
     textStyle: { color: INK },
     tooltip: { trigger: "axis", axisPointer: { type: "line" }, valueFormatter: (v: number) => `${v} reviews` },
     legend: { top: 0, textStyle: { color: INK } },
-    grid: { left: 44, right: 120, top: 36, bottom: 30 },
+    grid: { left: 44, right: 24, top: 36, bottom: 30 },
     xAxis: { type: "category", data: TEST_DAYS.map((d) => d.slice(5)), ...axis, splitLine: { show: false } },
     yAxis: { type: "value", name: "reviews / day", nameTextStyle: { color: MUTED }, ...axis },
     series: series.map((s, i) => ({
@@ -44,7 +44,6 @@ function lineOption(series: { name: string; data: number[] }[]) {
       lineStyle: { width: 2, color: SLOT[i] },
       itemStyle: { color: SLOT[i], borderColor: SURFACE, borderWidth: 2 },
       symbolSize: 8,
-      endLabel: { show: true, formatter: "{a}", color: INK, fontSize: 11 },
       emphasis: { focus: "series" },
     })),
   };

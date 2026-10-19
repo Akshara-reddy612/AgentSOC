@@ -1983,3 +1983,31 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: M5 frontend built and checked
+
+### What was tried
+- **Install:** `frontend/` existed only on branch `m5-frontend` while the working copy was on `main`, which is why the user's install could not run. Switched branches (merged `main` in), then `npm install` from Claude Code: 56 packages, 182 MB.
+- **Build:** `tsc --noEmit` clean; `vite build`. The heavy pages are lazy-loaded with React.lazy.
+- **Server:** `python -m soc_server` with the build: API under `/api`, the app at `/`.
+- **Visual check:** headless Edge over CDP (separate temporary profile; `tools/ui_check.py`); sign-in with a throwaway admin whose password was kept in a file; screenshots of Live, Case, Knowledge, Metrics, Accounts; clicks on case-20.
+
+### What was found
+- **0 JavaScript errors** on every page, after removing Cytoscape's custom wheel sensitivity (it logged a warning).
+- **Visual problems fixed:**
+  - truncated guardrail badges ("PENDIN...") -> readable labels;
+  - truncated provenance badges -> dot + word;
+  - JSON-escaped detector keys -> plain list text;
+  - the CLIENT2 graph a hairball -> 80 edges, spaced cose layout, nodes sized by degree, labels on hubs / hover, larger label font;
+  - colliding line end labels in Metrics -> removed (legend + tooltip).
+- **Gap:** UI verdicts / approvals stayed unapplied (commands pending) because the runner thread starts only on Start.
+  - Fixed: `LiveRunner.start(paused=True)` at server start, with a test.
+  - After the restart, the same clicks were applied within seconds: verdict -> CLIENT2 flagged; BLOCK_EGRESS -> executed (simulated, watch-3); nothing retracted (CLIENT2's patterns are all training).
+- Git Bash rewrote the "/" route argument into a Windows path; use `MSYS_NO_PATHCONV=1`.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 757 passed, 1 deselected.
+
+### Files created/modified
+- Created: `frontend/package-lock.json`, `frontend/README.md`, `tools/ui_check.py`
+- Modified: `frontend/src/**`, `soc_server/runner.py`, `soc_server/__main__.py`, `tests/test_live_runner.py`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

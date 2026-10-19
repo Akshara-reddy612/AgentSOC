@@ -47,5 +47,6 @@ export const PROVENANCE_COLOR: Record<string, string> = {
 export function short(v: unknown): string {
   if (v === null || v === undefined) return "—";
   if (typeof v === "string") return v;
+  if (Array.isArray(v) && v.every((x) => typeof x !== "object" || x === null)) return v.map((x) => String(x)).join("  ·  ");
   return JSON.stringify(v);
 }
