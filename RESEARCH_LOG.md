@@ -1945,3 +1945,41 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `PAPER_OUTLINE.md`, `DEMO_BACKEND_DESIGN.md`, `review_api/accounts.py`, `soc_server/{__init__,__main__,app,reader,runner,sources}.py`, `tests/test_accounts.py`, `tests/test_live_runner.py`, `tests/test_soc_server.py`
 - Modified: `review_api/app.py`, `perception/review_service.py`, `perception/knowledge_db.py`, `perception/case_store.py`, `perception/soc_loop.py`, `tests/test_review_api.py`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: M3 draft, M5 frontend source
+
+### What was tried
+- **User approvals:** npm packages for the frontend, pushing `main` (`09c37c5..f3f0a3a`), and resuming the gpt-oss-20b run (day 2).
+- **Package checks** (`npm view` metadata only):
+  - versions / licences / unpacked sizes of the approved packages;
+  - two extra type packages flagged to the user before installing (@types/react 19.3.0, @types/react-dom 19.3.0, MIT);
+  - peer requirements checked: all optional or satisfied.
+- **Frontend source** (branch `m5-frontend`): `frontend/package.json` (exact versions) and the React + TypeScript app.
+  - Charts use the validated dark categorical slots 1-4 (dataviz validator: all checks pass; worst adjacent CVD ΔE 8.4).
+  - "No learning" (6,095 reviews / day) is shown as a tile, never on a second axis.
+- **`soc_server.with_frontend`:** one origin (API under `/api`, SPA routes -> index.html, no path traversal) + test.
+- **Paper draft:** `paper/agentsoc_combined.tex`, built with MiKTeX pdflatex. First render: the tables were wider than one IEEE column; fixed with `\resizebox{\columnwidth}`. References resolve on a second pass.
+
+### What was found
+- gpt-oss-20b: resumed with 419 calls left in the dev set.
+- `npm install` not yet run by the user at the time of writing, so the frontend is not yet typechecked or built.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest tests experiments -q`: 756 passed, 1 deselected.
+
+### Files created/modified
+- Created: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `paper/.gitignore`; on `m5-frontend`: `frontend/**`, `tests/test_soc_server.py` (one-origin test)
+- Modified: `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`; on `m5-frontend`: `soc_server/app.py`, `soc_server/__main__.py`
+
+## 2026-10-19 — Session: paper Fig. 1
+
+### What was tried
+- Pushed `main` (`f3f0a3a..9859e90`, user-approved).
+- Added Fig. 1 (TikZ: the pipeline in the top row; Knowledge Store, learning gate, outcome monitor and analyst loop below) to `paper/agentsoc_combined.tex`.
+
+### What was found
+- First render: two feedback-edge labels overlapped; separated by routing them at different depths. Compiles cleanly.
+- `npm install` still not run (frontend not yet built). gpt-oss-20b at 120 / 419.
+
+### Files created/modified
+- Modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

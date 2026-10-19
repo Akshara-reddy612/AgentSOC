@@ -35,7 +35,15 @@
       - by 12:22 on 2025-01-06: 271,380 events, 70 alerts, 29 cases, the CLIENT2 attack at the top of the queue;
       - after a hard kill and restart it resumed from the checkpoint and reproduced the same counts and queue.
     - **Tests:** `tests/test_accounts.py` (3), `tests/test_live_runner.py` (2), `tests/test_soc_server.py` (3); suite 755 passed, 1 deselected.
-  - **Next:** M3 drafting and M5 frontend (needs an npm install approval).
+  - **M3 draft started (2026-10-19):** `paper/agentsoc_combined.tex` (IEEE conference).
+    - Drafted by Claude: threat model, system, setup and results C1-C5 with 4 tables, every number from `RESULTS.md`.
+    - Fig. 1 (pipeline and loop, TikZ) added 2026-10-19.
+    - Left for the team (TODO): introduction, related work, discussion, conclusion, abstract, authors, references.
+    - Compiles with pdflatex.
+  - **M5 in progress:** npm packages approved by the user (2026-10-19).
+    - Frontend source on branch `m5-frontend`: React + TypeScript; pages Login, Live, Case (8-stage trace), Knowledge Store (graph), Metrics, Accounts.
+    - `soc_server.with_frontend` serves the build at `/` and the API under `/api`.
+    - Waiting for the user's `npm install` to typecheck, build and test in a browser.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)
