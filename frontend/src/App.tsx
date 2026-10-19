@@ -1,15 +1,18 @@
 import { AppShell, Badge, Button, Center, Group, Loader, NavLink, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { lazy, Suspense } from "react";
 import { NavLink as RouterLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { api, type LiveStatus } from "./api";
 import { useAuth } from "./auth";
 import { when } from "./format";
-import Admin from "./pages/Admin";
 import CasePage from "./pages/Case";
-import Knowledge from "./pages/Knowledge";
 import Live from "./pages/Live";
 import Login from "./pages/Login";
-import MetricsPage from "./pages/Metrics";
+
+// Pages with the heavy graph / chart libraries load on demand.
+const Admin = lazy(() => import("./pages/Admin"));
+const Knowledge = lazy(() => import("./pages/Knowledge"));
+const MetricsPage = lazy(() => import("./pages/Metrics"));
 
 const NAV = [
   { to: "/", label: "Live", hint: "stream and review queue" },
@@ -86,6 +89,7 @@ export default function App() {
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>
+        <Suspense fallback={<Loader />}>
         <Routes>
           <Route path="/" element={<Live />} />
           <Route path="/cases/:caseId" element={<CasePage />} />
@@ -94,6 +98,7 @@ export default function App() {
           <Route path="/admin" element={session.role === "admin" ? <Admin /> : <Navigate to="/" />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </Suspense>
       </AppShell.Main>
     </AppShell>
   );
