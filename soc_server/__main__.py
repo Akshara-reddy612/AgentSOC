@@ -160,9 +160,10 @@ def main() -> None:
         print(f"  {n:,} events processed; checkpoint written", flush=True)
     runner.start(paused=not follow)           # paused replay still applies analysts' commands
     accounts = AccountStore(runner.home / "auth.sqlite")
-    if not accounts.users():
-        print(f"no accounts yet: python -m review_api.accounts --db {runner.home / 'auth.sqlite'} "
-              "create-user <name> --role admin", file=sys.stderr)
+    if not accounts.has_users():
+        print(f"no accounts yet: open http://{args.host}:{args.port}/ to create the first admin "
+              f"(or: python -m review_api.accounts --db {runner.home / 'auth.sqlite'} create-user <name> --role admin)",
+              file=sys.stderr, flush=True)
     try:
         app = build_app(runner, accounts=accounts)
         dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"

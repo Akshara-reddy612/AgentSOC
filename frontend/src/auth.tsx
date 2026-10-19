@@ -10,6 +10,7 @@ interface AuthState {
   session: Session | null;
   loading: boolean;
   login: (username: string, password: string) => Promise<void>;
+  setup: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -30,14 +31,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(username: string, password: string) {
-    const r = await api<{ token: string; username: string; role: Role }>("/auth/login", {
+  async function begin(path: string, username: string, password: string) {
+    const r = await api<{ token: string; username: string; role: Role }>(path, {
       method: "POST",
       body: { username, password },
     });
     setToken(r.token);
     setSession({ username: r.username, role: r.role });
   }
+
+  const login = (username: string, password: string) => begin("/auth/login", username, password);
+  /** First run only: creates the first (admin) account and signs it in. */
+  const setup = (username: string, password: string) => begin("/auth/setup", username, password);
 
   async function logout() {
     try {
@@ -48,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ session, loading, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ session, loading, login, setup, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthState {

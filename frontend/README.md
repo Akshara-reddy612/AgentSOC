@@ -10,15 +10,11 @@ React + TypeScript (Vite) app for the demo in `PROJECT_PLAN.md` section 5: a day
    npm install        # exact versions in package.json / package-lock.json
    npm run build      # typecheck + production build into frontend/dist
    ```
-2. **Create an admin (once):**
-   ```
-   python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin
-   ```
-   The default `<home>` is `D:\agentsoc_data\live`.
-3. **Start the server:** `python -m soc_server`
+2. **Start the server:** `python -m soc_server`
    - The first start learns the two benign weeks and fast-forwards to the attack morning (a few minutes).
-   - Open http://127.0.0.1:8000/ and sign in.
-   - A lead or admin presses Start on the Live page.
+   - Open http://127.0.0.1:8000/.
+3. **First run:** with no accounts yet, the page asks you to create the admin account. Then add the analysts' and leads' accounts on the Accounts page. (The command line can also create accounts: `python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin`; the default `<home>` is `D:\agentsoc_data\live`.)
+4. **Start the replay:** a lead or admin presses Start on the Live page.
 
 ## Develop
 
@@ -32,7 +28,8 @@ Run `npm run dev` (http://127.0.0.1:5173) with `python -m soc_server` running. T
 | Case | The pipeline trace, verdicts with a learning preview, containment approval / rollback (four-eyes on critical hosts), withdrawing a wrong malicious verdict (lead / admin), related cases, notes, audit |
 | Knowledge Store | What has been learned and from where (graph per host), retractions |
 | Metrics | Frozen learning-mode comparison, the session's cases and learning per day |
-| Accounts | Admin only: users and roles |
+| My account | Your role; change your password (your other sessions are signed out) |
+| Accounts | Admin only: create accounts, change roles, disable / enable, reset passwords |
 
 The Case page's pipeline trace covers, in order: the alert (trusted fields and untrusted text kept apart), the triage gate, the LLM hypotheses (labelled as LLM output), structural feasibility and entity binding, response ranking and guardrails, the decision, containment, and what the store learns.
 

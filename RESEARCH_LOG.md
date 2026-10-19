@@ -2177,3 +2177,33 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `frontend/src/App.tsx`, `frontend/src/api.ts`, `frontend/src/pages/Case.tsx`, `frontend/src/pages/Live.tsx`, `frontend/src/pages/Login.tsx`, `frontend/README.md`, `PAPER_OUTLINE.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: accounts in the browser
+
+### What was tried
+- The user started the demo and asked why there was no way to create an account in the frontend.
+  - The Accounts page (admin only) existed, but the first admin could be created only with the command-line tool.
+- **Backend:**
+  - `AccountStore`: `create_user(..., only_if_empty=True)` (count and insert in one IMMEDIATE transaction), `has_users`, `verify`, `set_role`.
+  - API:
+    - `GET/POST /auth/setup`: first admin, then 409;
+    - `POST /auth/password`: own password; needs the current one; throttled; ends the user's sessions;
+    - `POST /admin/users/{u}/role | enable | password`: no self role change.
+- **Frontend:**
+  - the sign-in page turns into first-run setup when no account exists;
+  - new "My account" page (role, change password; signs back in with the new password);
+  - Accounts page: role select, enable, password reset.
+- The server's startup hint now points to the browser.
+- Restarted the demo server (`D:\agentsoc_data\demo`, port 8000) with the change. Its admin account is left for the user to create.
+
+### What was found
+- `/api/auth/setup` reports `needed: true` on the demo home; the setup screen renders, and nothing was submitted.
+- On the test home, My account and Accounts render with 0 JavaScript errors.
+- API tests: setup works once (a second setup gets 409; only the first account exists); a wrong current password gets 401; after a change the old sessions are refused and the old password fails; role / reset / disable / enable work; analysts get 403.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 771 passed, 1 deselected.
+
+### Files created/modified
+- Created: `frontend/src/pages/Account.tsx`
+- Modified: `review_api/accounts.py`, `review_api/app.py`, `soc_server/__main__.py`, `tests/test_accounts.py`, `frontend/src/auth.tsx`, `frontend/src/App.tsx`, `frontend/src/pages/Login.tsx`, `frontend/src/pages/Admin.tsx`, `frontend/README.md`, `README.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

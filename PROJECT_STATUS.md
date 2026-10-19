@@ -92,6 +92,11 @@
       - Feasibility / binding are text labels (the badges were truncated).
       - Follow mode shows "live logs" (no speed).
       - The login page reports a lockout.
+    - **Accounts in the browser** (user's request, 2026-10-19). Before this, the first admin could be created only from the command line.
+      - **First-run setup:** while no account exists, the sign-in page creates the admin (`/auth/setup`; once only, checked in the same transaction).
+      - **My account:** change your own password (`/auth/password`). It needs the current password, is throttled, and ends the user's other sessions.
+      - **Accounts page:** role change (not your own), enable a disabled account, reset a password.
+      - Tests: 2 new; suite 771 passed.
       - Checked in headless Edge with 0 JavaScript errors; a withdrawal through the API put the case back in the queue.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.

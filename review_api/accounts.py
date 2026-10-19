@@ -63,6 +63,11 @@ def _hash(password: str, salt: bytes) -> bytes:
     return hashlib.scrypt(password.encode("utf-8"), salt=salt, maxmem=64 * 1024 * 1024, **_SCRYPT)
 
 
+def _check_password(password: str) -> None:
+    if not isinstance(password, str) or len(password) < MIN_PASSWORD:
+        raise AccountError(f"passwords have at least {MIN_PASSWORD} characters")
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -81,24 +86,58 @@ class AccountStore:
 
     # -- users -----------------------------------------------------------------
 
-    def create_user(self, username: str, password: str, role: str = "analyst") -> None:
+    def create_user(self, username: str, password: str, role: str = "analyst", *, only_if_empty: bool = False) -> None:
+        """
+        A new account.  `only_if_empty`: first-run setup, which may create an account only while
+        there is none (checked in the same transaction, so two setups cannot both succeed).
+        """
         if not is_valid_analyst_id(username):
             raise AccountError("usernames are 1-64 characters: letters, digits, _ . @ -")
         if role not in ROLES:
             raise AccountError(f"role must be one of {ROLES}")
-        if not isinstance(password, str) or len(password) < MIN_PASSWORD:
-            raise AccountError(f"passwords have at least {MIN_PASSWORD} characters")
+        _check_password(password)
         salt = secrets.token_bytes(16)
+        pw_hash = _hash(password, salt)
         with self._lock:
+            self._con.execute("BEGIN IMMEDIATE")
             try:
+                if only_if_empty and self._con.execute("SELECT COUNT(*) FROM users").fetchone()[0]:
+                    raise AccountError("accounts exist already: sign in instead")
                 self._con.execute("INSERT INTO users VALUES (?, ?, ?, ?, 0, ?)",
-                                  (username, role, salt, _hash(password, salt), self.clock().isoformat()))
+                                  (username, role, salt, pw_hash, self.clock().isoformat()))
+                self._con.execute("COMMIT")
             except sqlite3.IntegrityError:
+                self._con.execute("ROLLBACK")
                 raise AccountError(f"user {username!r} exists") from None
+            except BaseException:
+                self._con.execute("ROLLBACK")
+                raise
+
+    def has_users(self) -> bool:
+        with self._lock:
+            return self._con.execute("SELECT 1 FROM users LIMIT 1").fetchone() is not None
+
+    def verify(self, username: str, password: str) -> bool:
+        """Are these the credentials of an enabled user?  (No session is created.)"""
+        with self._lock:
+            row = self._con.execute("SELECT salt, pw_hash, disabled FROM users WHERE username = ?",
+                                    (username,)).fetchone()
+        if row is None:
+            _hash(password, b"0" * 16)               # same work for unknown users
+            return False
+        return hmac.compare_digest(_hash(password, row[0]), row[1]) and not row[2]
+
+    def set_role(self, username: str, role: str) -> None:
+        if role not in ROLES:
+            raise AccountError(f"role must be one of {ROLES}")
+        with self._lock:
+            cur = self._con.execute("UPDATE users SET role = ? WHERE username = ?", (role, username))
+        if not cur.rowcount:
+            raise AccountError(f"no user {username!r}")
 
     def set_password(self, username: str, password: str) -> None:
-        if len(password) < MIN_PASSWORD:
-            raise AccountError(f"passwords have at least {MIN_PASSWORD} characters")
+        """New password; every session of the user ends."""
+        _check_password(password)
         salt = secrets.token_bytes(16)
         with self._lock:
             cur = self._con.execute("UPDATE users SET salt = ?, pw_hash = ? WHERE username = ?",

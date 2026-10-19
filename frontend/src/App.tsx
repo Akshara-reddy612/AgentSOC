@@ -11,6 +11,7 @@ import Login from "./pages/Login";
 
 // Pages with the heavy graph / chart libraries load on demand.
 const Admin = lazy(() => import("./pages/Admin"));
+const Account = lazy(() => import("./pages/Account"));
 const Knowledge = lazy(() => import("./pages/Knowledge"));
 const MetricsPage = lazy(() => import("./pages/Metrics"));
 
@@ -95,6 +96,7 @@ export default function App() {
           {session.role === "admin" && (
             <NavLink component={RouterLink} to="/admin" label="Accounts" description="users and roles" active={location.pathname === "/admin"} />
           )}
+          <NavLink component={RouterLink} to="/account" label="My account" description="role and password" active={location.pathname === "/account"} />
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>
@@ -105,6 +107,7 @@ export default function App() {
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/metrics" element={<MetricsPage />} />
           <Route path="/admin" element={session.role === "admin" ? <Admin /> : <Navigate to="/" />} />
+          <Route path="/account" element={<Account />} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
         </Suspense>
