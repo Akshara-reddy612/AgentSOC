@@ -682,6 +682,10 @@ class CaseStore:
         c["case_key"] = json.loads(c["case_key"])
         return c
 
+    def alert_total(self) -> int:
+        """Alerts of all recorded cases (the loop records cases after its training window only)."""
+        return self._con.execute("SELECT COALESCE(SUM(alert_count), 0) FROM cases").fetchone()[0]
+
     def cases(self, *, review_status: str | tuple[str, ...] | None = None, host: str | None = None,
               case_key: list | None = None, limit: int = 1000) -> list[dict]:
         where, args = [], []

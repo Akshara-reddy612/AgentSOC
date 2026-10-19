@@ -2207,3 +2207,23 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `frontend/src/pages/Account.tsx`
 - Modified: `review_api/accounts.py`, `review_api/app.py`, `soc_server/__main__.py`, `tests/test_accounts.py`, `frontend/src/auth.tsx`, `frontend/src/App.tsx`, `frontend/src/pages/Login.tsx`, `frontend/src/pages/Admin.tsx`, `frontend/README.md`, `README.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: the user runs the demo; live page fixes
+
+### What was tried
+- The user signed in (first-run setup) and ran the replay at x60. At 12:32 stream time they asked what the screen showed.
+- Two display bugs were found and fixed:
+  - **"Alerts (new patterns)"** showed `loop.counts["alerts"]`, which also counts the training weeks (745,645). The runner's status now adds `alerts_test` = the sum of `alert_count` over the recorded cases (`CaseStore.alert_total`); the loop records cases only after training.
+    - The loop's counters were left unchanged on purpose: replay summaries (`summary.json`) store them, and a new key would change their format.
+  - **The queue's status badge** was truncated ("OP..."); it is now a text label.
+- The demo server was restarted on the new code right after a checkpoint (written 18:31:48), so almost nothing was lost. It resumed paused.
+
+### What was found
+- After the restart: 54,252 test-period alerts in 649 cases.
+- Explained to the user: the top of the queue is benign STUN traffic on vpnserver (tier 2, many same-signature cases, feasible T1071, proposed block), level with the CLIENT2 attack cases from 10:03. This is the known queue weakness already on the "Later" list.
+
+### Test verification
+- `tests/test_live_runner.py`, `tests/test_follow.py`, `tests/test_soc_server.py`: 15 passed.
+
+### Files created/modified
+- Modified: `perception/case_store.py`, `soc_server/runner.py`, `tests/test_live_runner.py`, `frontend/src/api.ts`, `frontend/src/pages/Live.tsx`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

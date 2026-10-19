@@ -87,6 +87,7 @@ def test_paced_run_pause_speed_and_commands_while_paused(tmp_path):
     while r.status()["state"] != "finished" and time.monotonic() < deadline + 20:
         time.sleep(0.05)
     st = r.status()
+    assert st["alerts_test"] == sum(c["alert_count"] for c in r.cases.cases()) <= st["counts"]["alerts"]
     assert st["state"] == "finished" and st["events_processed"] == len(_events())
     r.stop()
     assert (tmp_path / "c" / "checkpoint" / "state.pkl").exists()

@@ -81,7 +81,11 @@ export default function Live() {
         <SimpleGrid cols={{ base: 2, md: 5 }}>
           <Stat label="Stream time" value={when(s.stream_time).slice(0, 16)} hint={s.state} />
           <Stat label="Events processed" value={s.events_processed.toLocaleString()} hint={`${(s.counts.events_training ?? 0).toLocaleString()} in training`} />
-          <Stat label="Alerts (new patterns)" value={s.counts.alerts ?? 0} />
+          <Stat
+            label="Alerts (new patterns)"
+            value={(s.alerts_test ?? s.counts.alerts ?? 0).toLocaleString()}
+            hint={s.alerts_test !== undefined ? "after the training weeks" : undefined}
+          />
           <Stat label="Cases" value={s.counts.cases_test ?? 0} />
           <Stat label="Waiting for an analyst" value={queue.data?.length ?? "…"} />
         </SimpleGrid>
@@ -131,10 +135,10 @@ export default function Live() {
                 </Table.Td>
                 <Table.Td>{q.alert_count}</Table.Td>
                 <Table.Td>
-                  <Badge color={STATUS_COLOR[q.review_status] ?? "gray"} variant="light">
-                    {q.review_status}
+                  <Text size="xs" fw={700} c={STATUS_COLOR[q.review_status] ?? "dimmed"} tt="uppercase" style={{ whiteSpace: "nowrap" }}>
+                    {q.review_status.replace("_", " ")}
                     {q.claimed_by ? ` · ${q.claimed_by}` : ""}
-                  </Badge>
+                  </Text>
                 </Table.Td>
               </Table.Tr>
             ))}
