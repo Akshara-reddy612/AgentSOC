@@ -68,7 +68,16 @@
       - The alert's own endpoints are now excluded. STUN now ranks 75-79, interleaved with the attack cases (78).
       - Recomputed on the frozen host run: all 18 host cases with other targets are unchanged.
     - **Combined smoke test** (to 13:23 on 2025-01-06): 750,301 events, 467 cases, 63 in the queue (34 network).
-    - Suite: 763 passed, 1 deselected.
+    - **Live log ingestion** (`soc_server/follow.py`): `python -m soc_server --follow host=<winlogbeat.ndjson>,network=<eve.json>`.
+      - The server learns the benign weeks from the replay, then follows the files as they grow: winlogbeat / ECS JSON lines, and Suricata eve.json or DEDALE syslog lines.
+      - It runs unpaced and resumes by byte offset.
+      - `--follow-clock wall` moves the clock with real time while the files are quiet.
+      - Smoke test on raw DEDALE lines for 08:00-09:00 on 2025-01-06 (43,773 host events, 7,376 network alerts, 169 cases). A hard stop and restart resumed with the same counts and re-read nothing.
+    - **Streamlit archived** to `archive/streamlit/` (app, dashboard tab, config, scenario check; runnable from there). The scenario check passes 4 / 7, the same as before the move. The rest of `monitoring/` stays.
+    - **README rewritten:** pipeline, headline results, quick start, demo and follow mode, reproduce, repository map.
+    - **Paper:** discussion and limitations drafted by Claude; 15 references. The DEDALE authors / year are still TODO.
+    - Three personal root files (handoff, context notes, base-paper PDF) are gitignored.
+    - Suite: 767 passed, 1 deselected.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)
@@ -470,7 +479,7 @@ The **55.3% (21/38)** "defended-LLM recovery" metric (measured on an earlier LLM
 | [`perception/nce_contract.py`](perception/nce_contract.py) | NCE output data contract + LLM-free mock generator (the real LLM NCE is in nce_engine.py) | Built & Tested |
 | [`perception/nce_engine.py`](perception/nce_engine.py) | NCE LLM implementation and evidentiary threshold filter for T1071 | Built & Tested |
 | [`perception/action_playbook.py`](perception/action_playbook.py) | Action/Playbook Layer with guardrails and simulated execution (there is no `action/` directory) | Built & Tested |
-| [`monitoring/`](monitoring/) | Streamlit Live Monitoring interface (replay of archived alerts) | Built & Tested |
+| [`monitoring/`](monitoring/) | Live Monitoring layer (replay of archived alerts); its Streamlit tab is archived in `archive/streamlit/` (2026-10-19) | Built & Tested |
 | [`experiments/`](experiments/) | Experiment 1 harnesses, analysis scripts (`analyze_paired`, `filter_sensitivity`, `t1071_noise_floor`), metrics, tests | Built; test hygiene issues (see Known limitations) |
 
 The Perception Layer's Situational Contextualization component reads the flat `InMemoryKnowledgeStore` for ImmutableContext facts (user role, asset criticality). The evaluation harness (Section V) constructs NCE input directly and does not invoke PerceptionPipeline or Contextualizer; the flat `InMemoryKnowledgeStore` therefore plays no role in any reported result. It is exercised by the Live Monitoring tab (which runs PerceptionPipeline on replayed records; a replay, NOT real-time monitoring) and by the defended triage agent. Streamlit "Live Mode" is a separate panel that makes real NCE API calls and does not run Perception.

@@ -2047,3 +2047,44 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `soc_server/sources.py`, `soc_server/runner.py`, `soc_server/__main__.py`, `review_api/accounts.py`, `review_api/app.py`, `perception/knowledge_db.py`, `perception/knowledge_updater.py`, `perception/outcome_monitor.py`, `perception/soc_loop.py`, `perception/case_store.py`, `perception/review_service.py`, `tests/test_live_runner.py`, `tests/test_accounts.py`, `tests/test_unlearning.py`, `tests/test_review_api.py`, `tests/test_review_service.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`
+
+## 2026-10-19 — Session: live log ingestion, Streamlit archive, README, paper discussion
+
+### What was tried
+- **Live log ingestion** (`soc_server/follow.py`):
+  - `TailSource` reads complete lines appended to a file from a byte offset;
+  - `FollowSource` polls several files and yields `WAIT` when none has a new line;
+  - parsers for winlogbeat / ECS JSON (`dedale.winlogbeat.compact`), Suricata eve.json alerts, and DEDALE's router syslog lines.
+- **Runner:**
+  - handles `WAIT` (ticks the loop, waits 0.5 s, stays responsive to pause and stop);
+  - `paced=False` processes events as they arrive;
+  - `run_until(t, source=...)` learns from the replay first;
+  - `idle_clock` (wall clock, optional);
+  - status reports `mode`.
+- **CLI:** `--follow host=<path>,network=<path>`, `--follow-clock events|wall`. Follow mode starts running without Start.
+- **Smoke test:**
+  - new home, trained on the benign weeks (7,500,232 events);
+  - a feeder appended raw DEDALE lines for 08:00-09:00 on 2025-01-06: 207,002 host lines (kept event ids plus 200 that must be skipped) and 7,376 router syslog alerts, in batches, ending with a broken line;
+  - then a hard stop (TaskStop) and a restart with the same arguments.
+- **Streamlit archive:** `git mv` of `streamlit_app.py`, `monitoring/dashboard.py`, `.streamlit/` and `scratch/verify_demo_scenarios.py` to `archive/streamlit/`. Paths fixed so the app runs from there; README added.
+- **Root files:** `CLAUDE_HANDOFF.md`, `agentsoc_context_v2.md` and `agenso_.research_base.pdf` are gitignored, not deleted.
+- **README** rewritten for the whole system.
+- **Paper:** discussion and limitations drafted; 15 references.
+  - The base paper's details were taken from its PDF.
+  - GUIDE, Spotlighting and CaMeL were checked against arXiv.
+  - DEDALE's authors and year could not be confirmed and are a TODO.
+
+### What was found
+- **Follow mode:** 43,773 host events kept and 7,376 network alerts processed, 169 test cases, stream clock 08:59:59.998. `/api/docs` answers under the frontend.
+  - The follow commit message (f17a5a4) says 36,119 host events: that was a reading taken mid-feed. The final count is 43,773.
+- **Restart:** restored from the checkpoint without retraining; the same counts (7,551,381 events, 169 test cases) and nothing re-read.
+- **Archive:** the scenario check passes 4 / 7 scenarios both before and after the move. The 3 failures (scenarios 2, 4, 5) are pre-existing: they expect RSEM top actions the current pipeline no longer produces. Noted in the archive README; not fixed (archived).
+- **Groq:** gpt-oss-20b resumed (864 / 1,000 records; the token-per-day cap was hit at 06:26 UTC).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 767 passed, 1 deselected (new: `tests/test_follow.py`, 4 tests).
+
+### Files created/modified
+- Created: `soc_server/follow.py`, `tests/test_follow.py`, `archive/streamlit/README.md`
+- Moved: `streamlit_app.py`, `monitoring/dashboard.py`, `.streamlit/config.toml`, `scratch/verify_demo_scenarios.py` -> `archive/streamlit/`
+- Modified: `soc_server/runner.py`, `soc_server/__main__.py`, `monitoring/__init__.py`, `requirements.txt`, `.gitignore`, `README.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
