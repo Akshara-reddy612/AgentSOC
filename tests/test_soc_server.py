@@ -95,3 +95,19 @@ def test_analysts_actions_use_the_stream_clock(server):
     (cmd,) = runner.cases.commands(case_id)
     assert cmd["at"].startswith(runner.now().strftime("%Y-%m-%d"))          # 2025, not today's date
     assert cmd["actor"] == "analyst:alice"
+
+
+def test_one_origin_with_the_built_frontend(server, tmp_path):
+    from soc_server.app import with_frontend
+    client, runner, h = server
+    dist = tmp_path / "dist"
+    (dist / "assets").mkdir(parents=True)
+    (dist / "index.html").write_text("<html>app</html>", encoding="utf-8")
+    (dist / "assets" / "app.js").write_text("console.log(1)", encoding="utf-8")
+    (tmp_path / "secret.txt").write_text("no", encoding="utf-8")
+    app = with_frontend(client.app, dist)
+    c = TestClient(app)
+    assert c.get("/cases/case-20").text == "<html>app</html>"                   # client route -> index.html
+    assert c.get("/assets/app.js").text == "console.log(1)"
+    assert "no" != c.get("/../secret.txt").text                                 # no traversal out of dist
+    assert c.get("/api/live/status", headers=h["alice"]).json()["state"] == "paused"

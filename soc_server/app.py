@@ -100,3 +100,24 @@ def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | Non
         return {**metrics(runner.cases, reader), "comparison": comparison()}
 
     return app
+
+
+def with_frontend(api_app: FastAPI, dist: Path) -> FastAPI:
+    """
+    One origin for the demo: the API under /api (as the frontend calls it) and the built
+    frontend (frontend/dist) at /, with client-side routes (e.g. /cases/case-20) served index.html.
+    """
+    from fastapi.responses import FileResponse
+
+    root = FastAPI(title="AgentSOC", docs_url=None, redoc_url=None)
+    root.mount("/api", api_app)
+    index = dist / "index.html"
+
+    @root.get("/{path:path}", include_in_schema=False)
+    def spa(path: str):
+        target = (dist / path).resolve()
+        if path and target.is_file() and dist.resolve() in target.parents:     # no path traversal
+            return FileResponse(target)
+        return FileResponse(index)
+
+    return root
