@@ -14,6 +14,10 @@ checkpoints and restart recovery.
   - Pacing: an event at stream time t is processed at wall time
     wall0 + (t - t0) / speed (speed = stream seconds per wall second).
     `run_until(t)` fast-forwards without pacing (training, demo start).
+    Following live logs (soc_server/follow.py, `paced=False`), events are
+    processed as they arrive; a source with nothing new yields WAIT, and the
+    runner ticks the loop and waits (moving the clock to `idle_clock()` if
+    one is given, e.g. the wall clock for real-time logs).
   - Checkpoints (every `checkpoint_every` wall seconds, on pause and on stop):
     consistent copies of the Knowledge Store and the case store (SQLite backup
     API) plus a pickle of the loop's in-memory state (open cases, gate queue,
@@ -40,6 +44,15 @@ from perception.knowledge_db import KnowledgeDB
 from perception.soc_loop import SocLoop
 
 BATCH_EVENTS = 500
+IDLE_WAIT = 0.5                                       # wall seconds between polls of a waiting source
+
+
+class _Wait:
+    def __repr__(self) -> str:
+        return "WAIT"
+
+
+WAIT = _Wait()                                        # a live source has no new event yet
 
 
 class Source(Protocol):
@@ -77,10 +90,12 @@ class LiveRunner:
                  make_loop: Callable[[KnowledgeDB, CaseStore], SocLoop],
                  handle: Callable[[SocLoop, dict, datetime], None],
                  seed: Callable[[KnowledgeDB], None] | None = None, externals: dict[str, Any] | None = None,
-                 speed: float = 60.0, checkpoint_every: float = 30.0, source_id: str = "default") -> None:
+                 speed: float = 60.0, checkpoint_every: float = 30.0, source_id: str = "default",
+                 paced: bool = True, idle_clock: Callable[[], datetime] | None = None) -> None:
         self.home = Path(home)
         self.home.mkdir(parents=True, exist_ok=True)
         self.source, self.handle, self.source_id = source, handle, source_id
+        self.paced, self.idle_clock = paced, idle_clock
         self.speed, self.checkpoint_every = speed, checkpoint_every
         self.extra = externals or {}                      # e.g. {"nce": LiveNCE(...)}: not pickled
         self._cond = threading.Condition()
@@ -126,7 +141,8 @@ class LiveRunner:
         return self.clock
 
     def status(self) -> dict:
-        return {"state": self._state, "stream_time": self.clock.isoformat(), "speed": self.speed,
+        return {"state": self._state, "mode": "replay" if self.paced else "follow",
+                "stream_time": self.clock.isoformat(), "speed": self.speed,
                 "events_processed": self.events_processed, "counts": dict(self.loop.counts),
                 "last_checkpoint": self.last_checkpoint.isoformat() if self.last_checkpoint else None,
                 "restored_from_checkpoint": self.restored}
@@ -187,6 +203,9 @@ class LiveRunner:
         with self.db.batch(), self.cases.batch():
             while n < limit:
                 item = self._next()
+                if item is WAIT:
+                    self._pending = None
+                    break
                 if item is None:
                     break
                 pos, at, event = item
@@ -202,11 +221,19 @@ class LiveRunner:
         self._dirty = self._dirty or n > 0
         return n
 
-    def run_until(self, t: datetime) -> int:
-        """Fast-forward (no pacing) through every event before `t`; returns the number processed."""
+    def run_until(self, t: datetime, source: Source | None = None) -> int:
+        """
+        Fast-forward (no pacing) through every event before `t`; returns the number processed.
+        With `source` (before start): learn from that source instead, e.g. a replay of the benign
+        weeks before following live logs; the runner's own source then starts from its beginning.
+        """
+        if source is not None:
+            self._iter, self._pending = source.events(None), None
         total = 0
         while n := self._process(None, BATCH_EVENTS * 20, until_time=t):
             total += n
+        if source is not None:
+            self._iter, self._pending, self.pos = None, None, None
         with self.db.batch(), self.cases.batch():
             self.clock = max(self.clock, t)
             self.loop.tick(self.clock)
@@ -242,6 +269,18 @@ class LiveRunner:
                         self._rebase()
                 continue
             item = self._next()
+            if item is WAIT:
+                self._pending = None
+                with self.db.batch(), self.cases.batch():
+                    if self.idle_clock is not None:
+                        self.clock = max(self.clock, self.idle_clock())
+                    self.loop.tick(self.clock)
+                if time.monotonic() - last_cp > self.checkpoint_every:
+                    self.checkpoint()
+                    last_cp = time.monotonic()
+                with self._cond:
+                    self._cond.wait(IDLE_WAIT)
+                continue
             if item is None:
                 with self.db.batch(), self.cases.batch():
                     self.loop.tick(self.clock)
@@ -252,13 +291,13 @@ class LiveRunner:
                         continue
                 continue
             now = time.monotonic()
-            if self._due(item[1]) > now:
+            if self.paced and self._due(item[1]) > now:
                 with self.db.batch(), self.cases.batch():
                     self.loop.tick(self.clock)
                 with self._cond:
                     self._cond.wait(min(self._due(item[1]) - now, 0.25))
                 continue
-            self._process(now, BATCH_EVENTS)
+            self._process(now if self.paced else None, BATCH_EVENTS)
             if time.monotonic() - last_cp > self.checkpoint_every:
                 self.checkpoint()
                 last_cp = time.monotonic()
@@ -292,4 +331,4 @@ def stream_after(events: list[tuple[datetime, dict]], after: int | None) -> Iter
         yield i, events[i][0], events[i][1]
 
 
-__all__ = ["LiveRunner", "Source", "stream_after"]
+__all__ = ["LiveRunner", "Source", "WAIT", "stream_after"]
