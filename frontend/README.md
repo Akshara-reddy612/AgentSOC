@@ -28,8 +28,8 @@ Run `npm run dev` (http://127.0.0.1:5173) with `python -m soc_server` running. T
 
 | Page | Shows |
 |:--|:--|
-| Live | Replay clock and controls, status tiles, the prioritised review queue |
-| Case | The pipeline trace, verdicts with a learning preview, containment approval / rollback (four-eyes on critical hosts), related cases, notes, audit |
+| Live | Replay clock and controls (or "live logs" when the server follows log files), status tiles, the prioritised review queue |
+| Case | The pipeline trace, verdicts with a learning preview, containment approval / rollback (four-eyes on critical hosts), withdrawing a wrong malicious verdict (lead / admin), related cases, notes, audit |
 | Knowledge Store | What has been learned and from where (graph per host), retractions |
 | Metrics | Frozen learning-mode comparison, the session's cases and learning per day |
 | Accounts | Admin only: users and roles |
@@ -37,6 +37,8 @@ Run `npm run dev` (http://127.0.0.1:5173) with `python -m soc_server` running. T
 The Case page's pipeline trace covers, in order: the alert (trusted fields and untrusted text kept apart), the triage gate, the LLM hypotheses (labelled as LLM output), structural feasibility and entity binding, response ranking and guardrails, the decision, containment, and what the store learns.
 
 Untrusted text from logs is always rendered as text, never as HTML.
+
+**Possible steering:** when entity binding finds that an LLM hypothesis names an account or host the alert's trusted fields do not support ("unbound"), the case view marks where that name appears in the untrusted text and lists it in the structural-check table. The marks inform the analyst; they change no decision. Run the server with `--inject steer` to see them on the attacker's own commands.
 
 ## Check it like a user
 

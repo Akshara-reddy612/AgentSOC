@@ -20,6 +20,15 @@ const NAV = [
   { to: "/metrics", label: "Metrics", hint: "workload and learning" },
 ];
 
+function SourceLabel() {
+  const { data } = useQuery({ queryKey: ["live"], queryFn: () => api<LiveStatus>("/live/status"), refetchInterval: 2000 });
+  return (
+    <Text size="xs" c="dimmed">
+      {data?.mode === "follow" ? "live logs" : "DEDALE replay"}
+    </Text>
+  );
+}
+
 function StreamClock() {
   const { data } = useQuery({ queryKey: ["live"], queryFn: () => api<LiveStatus>("/live/status"), refetchInterval: 2000 });
   if (!data) return null;
@@ -32,9 +41,11 @@ function StreamClock() {
       <Text size="sm" ff="monospace">
         {when(data.stream_time)}
       </Text>
-      <Text size="xs" c="dimmed">
-        ×{data.speed}
-      </Text>
+      {data.mode !== "follow" && (
+        <Text size="xs" c="dimmed">
+          ×{data.speed}
+        </Text>
+      )}
     </Group>
   );
 }
@@ -57,9 +68,7 @@ export default function App() {
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
             <Title order={4}>AgentSOC</Title>
-            <Text size="xs" c="dimmed">
-              DEDALE replay
-            </Text>
+            <SourceLabel />
           </Group>
           <StreamClock />
           <Group gap="xs">

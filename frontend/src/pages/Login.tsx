@@ -1,5 +1,6 @@
 import { Alert, Button, Card, Center, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useState, type FormEvent } from "react";
+import { ApiError } from "../api";
 import { useAuth } from "../auth";
 
 export default function Login() {
@@ -15,8 +16,12 @@ export default function Login() {
     setError(null);
     try {
       await login(username, password);
-    } catch {
-      setError("Wrong username or password.");
+    } catch (err) {
+      setError(
+        err instanceof ApiError && err.status === 429
+          ? "Too many failed sign-ins. Wait a few minutes and try again."
+          : "Wrong username or password.",
+      );
     } finally {
       setBusy(false);
     }
