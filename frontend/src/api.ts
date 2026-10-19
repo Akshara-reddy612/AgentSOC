@@ -58,6 +58,7 @@ export type Verdict = "malicious" | "benign" | "benign_once" | "needs_info";
 export interface LiveStatus {
   state: "paused" | "running" | "finished" | "stopped";
   mode?: "replay" | "follow";
+  alerts_test?: number;
   stream_time: string;
   speed: number;
   events_processed: number;

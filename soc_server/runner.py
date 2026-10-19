@@ -144,6 +144,7 @@ class LiveRunner:
         return {"state": self._state, "mode": "replay" if self.paced else "follow",
                 "stream_time": self.clock.isoformat(), "speed": self.speed,
                 "events_processed": self.events_processed, "counts": dict(self.loop.counts),
+                "alerts_test": self.cases.alert_total(),       # loop.counts["alerts"] includes training
                 "last_checkpoint": self.last_checkpoint.isoformat() if self.last_checkpoint else None,
                 "restored_from_checkpoint": self.restored}
 
