@@ -100,9 +100,9 @@ Package installs (npm for the frontend; nothing new for Python) need approval, a
 |:--|:--|:--|:--|:--|
 | M1 | E2: freeze, results tables, `REPRODUCE.md` | — | Claude | **done 2026-10-18** |
 | M2 | E2b (finish the interrupted runs) and E1 (contamination through the full loop) | API budget approval | Claude | **E1 and the undefended run done 2026-10-18; gpt-oss-20b resumes daily (Groq cap)** |
-| M3 | Paper draft. Outline first; Claude drafts methods and results from the M1-M2 tables; the team writes the introduction, related work and discussion | M1, M2 | team + Claude | outline done 2026-10-18; **Claude's sections drafted 2026-10-19 (`paper/agentsoc_combined.tex`), plus a discussion draft and references**; team sections next |
+| M3 | Paper draft. Outline first; Claude drafts methods and results from the M1-M2 tables; the team writes the introduction, related work and discussion | M1, M2 | team + Claude | outline done 2026-10-18; **full draft 2026-10-19** (`paper/agentsoc_combined.tex`): Claude drafted every section (P6) and checked all 15 references; the team revises; authors TODO |
 | M4 | Demo backend: live runner + recovery, read APIs, accounts | — (alongside M3) | Claude | **done 2026-10-18** (`soc_server/`, `DEMO_BACKEND_DESIGN.md`) |
-| M5 | Frontend | M4, npm approval | Claude + team | **first version done 2026-10-19** (`frontend/`); polish with the team, including highlighting injected text (section 5, item 3; the backend's `--inject` scenario provides the cases) |
+| M5 | Frontend | M4, npm approval | Claude + team | **first version done 2026-10-19** (`frontend/`); **polish done 2026-10-19** (P6): possible-steering marks in the case view (section 5, item 3), verdict withdrawal, follow mode, login lockout message |
 | M6 | Optional E3 (AIT-LDS) | decided after M3 | Claude | ~1 week |
 | M7 | Venue choice, final paper, demo video, README | all | team | ~1 week |
 

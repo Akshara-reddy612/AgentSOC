@@ -83,6 +83,16 @@
     - **Fix:** `--nce live` would have appended live answers to the recorded NCE cache that the frozen replays read. Live mode now works on a copy in the server home. No live demo run had happened.
     - `PROJECT_PLAN.md`: decision P5 records these scope changes; new "Later" items (queue peers by distinct pattern, placeholder targets).
     - Suite: 769 passed, 1 deselected.
+  - **Decision P6 (2026-10-19, user):** Claude also drafts the team's paper sections and does the frontend polish.
+    - **Paper (M3):** abstract, introduction (contributions C1-C5), related work and conclusion drafted; citations added in the system and setup sections. All 15 references were checked: DEDALE against DataCite (M. Lanvin, F. Majorczyk, 2026), the others against arXiv / USENIX / NeurIPS / IEEE / MITRE listings. 5 pages, compiles cleanly. Authors and the repository link stay TODO.
+    - **Frontend (M5):**
+      - The case view marks the names that unbound LLM hypotheses used, where they appear in the untrusted text, and lists them per hypothesis. A notice says the marks decide nothing. ERA's regex detectors were tried first: they caught 4 of the 12 E1 payloads and none of the steering ones.
+      - Leads / admins can withdraw a wrong malicious verdict.
+      - Network alerts show their raw line.
+      - Feasibility / binding are text labels (the badges were truncated).
+      - Follow mode shows "live logs" (no speed).
+      - The login page reports a lockout.
+      - Checked in headless Edge with 0 JavaScript errors; a withdrawal through the API put the case back in the queue.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)
