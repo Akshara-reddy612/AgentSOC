@@ -27,6 +27,7 @@ Decided 2026-10-12 with Abhishek. This file sets the scope. Work outside it goes
 | P2 | Venue chosen after the draft exists |
 | P3 | At most 3 datasets: GUIDE (synthetic corpus v2, contamination), DEDALE (real telemetry, the main evidence) and, optionally, AIT-LDS v2 (generality check, time-boxed) |
 | P4 | Demo: a real frontend with accounts that depicts the whole pipeline on the DEDALE attack (section 5) |
+| P5 | (2026-10-19, user: "do all") Backend gaps for the tool: network alerts in the demo server, login throttling, withdrawing a wrong `malicious` verdict (moved from "Later"), live log ingestion (`--follow`), live NCE with a daily budget. The Streamlit demo is archived (`archive/streamlit/`) |
 
 ## 3. Paper: claims and evidence
 
@@ -100,7 +101,7 @@ Package installs (npm for the frontend; nothing new for Python) need approval, a
 | M2 | E2b (finish the interrupted runs) and E1 (contamination through the full loop) | API budget approval | Claude | **E1 and the undefended run done 2026-10-18; gpt-oss-20b resumes daily (Groq cap)** |
 | M3 | Paper draft. Outline first; Claude drafts methods and results from the M1-M2 tables; the team writes the introduction, related work and discussion | M1, M2 | team + Claude | outline done 2026-10-18; **Claude's sections drafted 2026-10-19 (`paper/agentsoc_combined.tex`), plus a discussion draft and references**; team sections next |
 | M4 | Demo backend: live runner + recovery, read APIs, accounts | — (alongside M3) | Claude | **done 2026-10-18** (`soc_server/`, `DEMO_BACKEND_DESIGN.md`) |
-| M5 | Frontend | M4, npm approval | Claude + team | **first version done 2026-10-19** (`frontend/`); polish with the team |
+| M5 | Frontend | M4, npm approval | Claude + team | **first version done 2026-10-19** (`frontend/`); polish with the team, including highlighting injected text (section 5, item 3; the backend's `--inject` scenario provides the cases) |
 | M6 | Optional E3 (AIT-LDS) | decided after M3 | Claude | ~1 week |
 | M7 | Venue choice, final paper, demo video, README | all | team | ~1 week |
 
@@ -119,7 +120,8 @@ Order: M1 -> M2 -> M3 and M4 in parallel -> M5 -> (M6) -> M7.
 
 - Queue order: an out-of-sample test (AIT-LDS or OpTC).
 - DARPA OpTC: about 1 TB, with known label and data-quality problems.
-- Withdrawing a wrong `malicious` verdict; tuning the 7-day unlearning window.
+- Tuning the 7-day unlearning window. (Withdrawing a wrong `malicious` verdict: done 2026-10-19, P5.)
+- Review queue: count host peers by distinct pattern (12 same-signature STUN cases on the VPN server add +25); drop placeholder hypothesis targets such as "unknown".
 - Extending four-eyes to privileged accounts.
 - Real EDR / firewall connectors (actions stay simulated).
 - `perception/normalizer.py` (locked) classifies `destination_domain` as free text.
