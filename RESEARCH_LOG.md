@@ -2011,3 +2011,39 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `frontend/package-lock.json`, `frontend/README.md`, `tools/ui_check.py`
 - Modified: `frontend/src/**`, `soc_server/runner.py`, `soc_server/__main__.py`, `tests/test_live_runner.py`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: backend gaps (network alerts, login throttling, withdrawing a verdict, queue fix)
+
+### What was tried
+- The user said "do all" to the remaining project and backend items; the frontend is on hold.
+- Branch `backend-gaps`, one commit per step:
+  - **Network alerts in the demo server:**
+    - `soc_server/sources.py`: `DedaleNetSource` (Suricata) and `MergedSource` (heap merge on stream time; position = per-source dict);
+    - `--sources host,network`;
+    - the checkpoint stores a source id and refuses a mismatch.
+  - **NCE mode options:** `--nce cache|live|off`, plus `--nce-per-day` (default 200) as a `DailyBudget` on live NCE.
+  - **Login throttling:** `review_api/accounts.LoginThrottle` (per user + address 5, per address 20, 15 min window, 15 min lockout); 429 with Retry-After.
+  - **Withdrawing a wrong 'malicious' verdict:**
+    - `CaseStore.withdraw_verdict` -> command "withdraw";
+    - `SocLoop.withdraw_verdict` ends the confirmation watch (`OutcomeMonitor.end_flags`), restores the retracted edges (`KnowledgeDB.restore_edge`, from the log) and restores a known-bad destination's previous reputation;
+    - API `POST /cases/{id}/withdraw` (lead / admin).
+- **Smoke test:** combined host + network server on a new home, to 13:23 on 2025-01-06.
+
+### What was found
+- **Bug in the first MergedSource:** a generator expression bound the source name late, so every event was tagged "network" and host events raised KeyError `src_ip`. Fixed with a helper function, with a test.
+- **Combined run:** 7,505,328 training events; by 13:23, 750,301 alerts, 467 test cases, 63 in the queue, 34 of them network.
+- **Queue misfire:**
+  - Benign STUN cases on vpnserver ranked 100-104, above the CLIENT2 attack (78).
+  - The hypotheses named the alert's own external destination, which counted as "another target" (+25).
+  - Fix: `other_targets` takes the alert and excludes its endpoint fields.
+- **Fix checked offline on a copy of the server's stores:** the top STUN cases went to 75-79, interleaved with the attack cases (78).
+  - The remaining weight is host tier 2 and 12 same-signature cases counted as host peers.
+  - Not tuned further: that would be more in-sample fitting.
+  - "Later": count peers by distinct pattern, and drop placeholder targets such as "unknown" or "Z:" (seen in 3 host cases).
+- **Host results unchanged:** recomputed on the frozen host run (`dedale_host_gated_nce_q2`), all 18 host cases with other targets keep the same targets. `queue_order.json` stays valid.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 763 passed, 1 deselected.
+
+### Files created/modified
+- Modified: `soc_server/sources.py`, `soc_server/runner.py`, `soc_server/__main__.py`, `review_api/accounts.py`, `review_api/app.py`, `perception/knowledge_db.py`, `perception/knowledge_updater.py`, `perception/outcome_monitor.py`, `perception/soc_loop.py`, `perception/case_store.py`, `perception/review_service.py`, `tests/test_live_runner.py`, `tests/test_accounts.py`, `tests/test_unlearning.py`, `tests/test_review_api.py`, `tests/test_review_service.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`, `experiments/PAPER_CLAIMS_TO_REVISE.md`

@@ -55,6 +55,20 @@
       - a Cytoscape scroll-zoom warning.
     - **Real gap found:** analysts' verdicts were not applied until someone pressed Start (the runner thread started only then). The server now starts the thread paused (`LiveRunner.start(paused=True)`), with a test.
     - Run instructions: `frontend/README.md`.
+  - **Backend gaps (2026-10-19, branch `backend-gaps`):**
+    - **Network alerts in the demo server:** `python -m soc_server --sources host,network` (default) merges the Windows events and the Suricata alerts in stream time (`MergedSource`). The checkpoint records which sources built it, and a mismatch is refused.
+    - **NCE mode options:** `--nce cache|live|off`. With `live`, `--nce-per-day N` (default 200) caps calls per stream day.
+    - **Login throttling:** 5 failures per user + address, or 20 per address, in 15 min lock that key for 15 min. The API answers 429 with Retry-After.
+    - **Withdrawing a wrong 'malicious' verdict** (`POST /cases/{id}/withdraw`, leads and admins only):
+      - the case goes back to the queue;
+      - the loop ends the host's confirmation watch, restores the patterns that verdict retracted (rebuilt from the Knowledge Store log) and gives a destination marked known-bad its previous reputation back.
+      - Executed containment keeps its own rollback.
+    - **Queue fix:** a network alert's own destination counted as "another target" (+25).
+      - In the combined server, benign STUN cases on vpnserver ranked 100-104, above the CLIENT2 attack (78).
+      - The alert's own endpoints are now excluded. STUN now ranks 75-79, interleaved with the attack cases (78).
+      - Recomputed on the frozen host run: all 18 host cases with other targets are unchanged.
+    - **Combined smoke test** (to 13:23 on 2025-01-06): 750,301 events, 467 cases, 63 in the queue (34 network).
+    - Suite: 763 passed, 1 deselected.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)
