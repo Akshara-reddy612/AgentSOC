@@ -10,12 +10,15 @@ All 7 curated scenarios replay from existing JSON files or run
 deterministic graph computations.  A secondary "Live Mode" toggle
 (off by default) allows optional live Gemini calls during rehearsal.
 
-Run:  streamlit run streamlit_app.py
+ARCHIVED 2026-10-19: replaced by the React frontend and soc_server (see
+archive/streamlit/README.md).  Run from this folder:
+      cd archive/streamlit && streamlit run streamlit_app.py
 """
 
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -23,7 +26,9 @@ from typing import Any
 # PROJECT ROOT — all file paths relative to this
 # =========================================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:          # archived: the project packages live two levels up
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 
 # =========================================================================
@@ -1597,7 +1602,7 @@ def main() -> None:
             render_live_mode(st)
 
     with tab_monitor:
-        from monitoring.dashboard import render_live_monitoring_tab
+        from dashboard import render_live_monitoring_tab
         render_live_monitoring_tab(st)
 
     # Footer

@@ -5,7 +5,8 @@ Real-Time Monitoring Layer for AgentSOC.
 
 This package wraps the existing pipeline (NCE → SSE → RSEM → Action/Playbook)
 with a live-event queue, single worker thread, bounded in-memory state, and a
-Streamlit dashboard tab.
+Streamlit dashboard tab (archived 2026-10-19 to archive/streamlit/dashboard.py with
+the Streamlit app; the demo is now soc_server + frontend/).
 
 Architecture:
     producer thread(s) → queue.Queue(maxsize=200) → MonitoringWorker (single thread)
