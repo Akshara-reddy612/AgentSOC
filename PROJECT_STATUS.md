@@ -77,7 +77,12 @@
     - **README rewritten:** pipeline, headline results, quick start, demo and follow mode, reproduce, repository map.
     - **Paper:** discussion and limitations drafted by Claude; 15 references. The DEDALE authors / year are still TODO.
     - Three personal root files (handoff, context notes, base-paper PDF) are gitignored.
-    - Suite: 767 passed, 1 deselected.
+    - **Contamination scenario for the demo** (plan section 5, item 7): `python -m soc_server --inject steer` (or `suppress`, `fake_approval`) replays the attacker's command lines with E1's payloads and E1's recorded LLM answers.
+      - Smoke test to 00:00 on 2025-01-07: 5 queued cases carry the steering text.
+      - In all 5 the LLM named the steered account, entity binding flagged it unbound, and the only containment proposed was BLOCK_EGRESS on CLIENT2, none on internalserver.
+    - **Fix:** `--nce live` would have appended live answers to the recorded NCE cache that the frozen replays read. Live mode now works on a copy in the server home. No live demo run had happened.
+    - `PROJECT_PLAN.md`: decision P5 records these scope changes; new "Later" items (queue peers by distinct pattern, placeholder targets).
+    - Suite: 769 passed, 1 deselected.
 - **No-actionable-hypothesis rate, pre-filter (NOT an attack-blocking rate):** 80.0-81.5% (320-326/400)
 - **No-actionable-hypothesis rate, post-filter (NOT an attack-blocking rate):** 85.0-86.0% (340-344/400). Clean inputs reach the same rate (Experiment 1), so this is a base rate of the pipeline on this corpus, not a defense rate. Every payload family is a *suppression* attack (goal: benign/close), so "no actionable hypothesis" is the attacker's desired outcome, not a defense success.
 - **Stability (two contaminated runs):** hypothesis sets differ 151/320 (47.2%), technique sets 139/320 (43.4%); 6/320 (1.9%) final verdicts changed. (The previously stated "162/320 (50.6%)" is not reproducible under any definition: 151/153 post-filter normalized/raw, 177/179 pre-filter.)

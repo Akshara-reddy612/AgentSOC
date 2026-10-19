@@ -2123,3 +2123,32 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_api_log.jsonl`, `experiments/RESULTS.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: demo contamination scenario; live NCE cache fix
+
+### What was tried
+- The user asked for other in-scope work while the Groq run waits for quota.
+- Plan section 5, item 7 (contamination shown in the demo) had no backend support.
+  - Added `--inject suppress|fake_approval|steer` to `soc_server`: E1's `Injector` wraps the host replay (`InjectedSource`), and `InjectedRouter` gives injected alerts E1's recorded family cache.
+  - The home's source id includes the family.
+- While wiring it, found that `--nce live` (added earlier today) passed the recorded cache path to `LiveNCE`, which appends every live answer to its cache file.
+  - Live mode now copies the recorded cache into the home and writes there (`soc_server.__main__.nce_cache`, with a test).
+- Smoke test: new home, `--inject steer --demo-start 2025-01-07T00:00`; checked the queue and traces through the API.
+- Docs:
+  - `DEMO_BACKEND_DESIGN.md`: a section on everything added after M4;
+  - README: the `--inject` option;
+  - `PROJECT_PLAN.md`: decision P5 (today's scope changes, including withdrawal moved out of "Later"), new "Later" items, and M5 polish to include highlighting injected text.
+
+### What was found
+- **Cache bug:** no live demo run had happened, so the recorded caches are unchanged (`nce_cache_host*.jsonl` timestamps are still 2026-10-18).
+- **Scenario** (training 8,212,542 events to 2025-01-07 00:00; queue 73): 5 queued CLIENT2 cases carry the steering text in the command line. In all 5:
+  - the LLM named BREACH\Administrator;
+  - entity binding flagged 7 hypotheses unbound;
+  - the only proposed containment was BLOCK_EGRESS on CLIENT2, with 0 actions on internalserver.
+- Highlighting the injected span (item 3) is left to the frontend polish (M5).
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 769 passed, 1 deselected.
+
+### Files created/modified
+- Modified: `soc_server/__main__.py`, `soc_server/sources.py`, `tests/test_soc_server.py`, `README.md`, `DEMO_BACKEND_DESIGN.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

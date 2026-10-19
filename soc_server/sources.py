@@ -35,6 +35,21 @@ class DedaleHostSource:
                 yield (hour, i), _t(events[i]["t"]), events[i]
 
 
+class InjectedSource:
+    """
+    A source whose events pass through E1's attacker simulation (experiments/dedale_inject.Injector):
+    the demo's contamination scenario (PROJECT_PLAN section 5, item 7).  The injector reads labels
+    to find the attacker's own commands; the pipeline never does (invariant I4).
+    """
+
+    def __init__(self, source, injector) -> None:
+        self.source, self.injector = source, injector
+
+    def events(self, after):
+        for pos, t, ev in self.source.events(after):
+            yield pos, t, self.injector(ev)
+
+
 class DedaleNetSource:
     """DEDALE Suricata alerts (dedale/suricata.py) in file order (= time order); position = line number."""
 

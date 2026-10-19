@@ -23,13 +23,41 @@ Live logs instead of the replay (soc_server/follow.py):
   (logs with past timestamps, e.g. DEDALE lines appended for a test).
 - The environment is still DEDALE's (inventory, zones): the logs must come
   from its hosts.
+
+Contamination scenario (PROJECT_PLAN section 5, item 7):
+
+    python -m soc_server --home <new dir> --inject steer      # or suppress, fake_approval
+
+- The attacker's own command lines carry text written for the LLM (E1's
+  payloads, experiments/dedale_inject.py); with --nce cache, the LLM answers
+  are E1's recorded ones for that text (no API calls).
+- Look for CLIENT2 / CLIENT1 cases whose command line ends in the payload: the
+  trace shows the LLM following it, entity binding flagging the steered
+  host, and no containment against it.
 """
 from __future__ import annotations
 
 import argparse
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+def nce_cache(recorded: Path, home: Path, *, live: bool) -> Path:
+    """
+    The NCE cache file to use.  Cache mode reads the recorded answers.  Live mode works on a copy
+    in the home: a live call appends its answer to the cache, and the recorded caches must stay as
+    the frozen results used them (found 2026-10-19, before any live demo run).
+    """
+    if not live:
+        return recorded
+    own = home / recorded.name
+    if not own.exists():
+        home.mkdir(parents=True, exist_ok=True)
+        if recorded.exists():
+            shutil.copyfile(recorded, own)
+    return own
 
 
 def main() -> None:
@@ -44,6 +72,8 @@ def main() -> None:
                     help="cache: recorded LLM answers only (no API calls); live: Gemini, limited by --nce-per-day")
     ap.add_argument("--nce-per-day", type=int, default=200, help="live NCE: at most this many calls per stream day")
     ap.add_argument("--follow", default="", help="follow live log files: host=<path>,network=<path> (either or both)")
+    ap.add_argument("--inject", default=None, choices=["suppress", "fake_approval", "steer"],
+                    help="contamination scenario: the attacker's command lines carry this E1 payload family")
     ap.add_argument("--follow-clock", default="events", choices=["events", "wall"],
                     help="with --follow: does the clock move with the wall time while the files are quiet?")
     ap.add_argument("--host", default="127.0.0.1")
@@ -71,18 +101,38 @@ def main() -> None:
     kinds = sorted(follow) or sorted({k.strip() for k in args.sources.split(",") if k.strip()})
     if not kinds or set(kinds) - {"host", "network"}:
         sys.exit("--sources takes host, network or host,network")
-    replay = MergedSource({k: DedaleHostSource(EVENTS) if k == "host" else DedaleNetSource() for k in kinds})
+    if args.inject and (follow or "host" not in kinds):
+        sys.exit("--inject needs the host replay (not --follow)")
+    host_source = DedaleHostSource(EVENTS)
+    if args.inject:                    # the attacker simulation reads labels; the pipeline does not
+        from experiments.dedale_host_novelty import load_host_labels
+        from experiments.dedale_inject import Injector
+        from soc_server.sources import InjectedSource
+
+        host_source = InjectedSource(host_source, Injector(args.inject, load_host_labels()))
+    replay = MergedSource({k: host_source if k == "host" else DedaleNetSource() for k in kinds})
     if follow:
         from soc_server.follow import PARSERS, FollowSource, TailSource
 
         source = FollowSource({k: TailSource(p, PARSERS[k]) for k, p in sorted(follow.items())})
         source_id = "follow:" + ",".join(f"{k}={p}" for k, p in sorted(follow.items()))
     else:
-        source, source_id = replay, ",".join(kinds)
+        source, source_id = replay, ",".join(kinds) + (f"+inject={args.inject}" if args.inject else "")
     externals, gate_options = {}, {}
     if args.nce != "off":
-        from experiments.dedale_nce import CallCap
-        nce = LiveNCE(None, cache_only=True) if args.nce == "cache" else LiveNCE(CallCap(10**9))
+        from experiments.dedale_nce import CACHE, CallCap
+
+        cap = None if args.nce == "cache" else CallCap(10**9)
+
+        def cache(name: str) -> Path:
+            return nce_cache(CACHE.with_name(name), Path(args.home), live=cap is not None)
+
+        nce = LiveNCE(cap, cache_only=cap is None, cache_path=cache(CACHE.name))
+        if args.inject:                # E1's recorded answers for the injected text (its own cache)
+            from experiments.dedale_inject import InjectedRouter
+
+            nce = InjectedRouter(args.inject, nce, LiveNCE(cap, cache_only=cap is None,
+                                                           cache_path=cache(f"nce_cache_host_{args.inject}.jsonl")))
         externals["nce"] = nce
         gate_options["nce"] = nce
         if args.nce == "live":
