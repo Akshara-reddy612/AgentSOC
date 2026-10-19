@@ -1,5 +1,6 @@
-% Draft (M3, 2026-10-19). Sections 3-6 drafted from experiments/RESULTS.md; every number there is built from
-% frozen result files (REPRODUCE.md). Sections marked TODO(team) are for the team (PAPER_OUTLINE.md).
+% Draft (M3, 2026-10-19). Every number comes from experiments/RESULTS.md, built from frozen result files
+% (REPRODUCE.md). All sections drafted by Claude (decision P6 for the abstract, introduction, related work and
+% conclusion); the team revises them. Authors: team.
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
@@ -25,24 +26,91 @@
 \maketitle
 
 \begin{abstract}
-\todo{team, after the results are final.} Draft points: an LLM-driven SOC has two attack surfaces: the model reads
-log text an attacker can write, and the memory learns from what it sees and from analysts. We build the full
-pipeline of an agentic SOC (LLM hypotheses, structural checks against a knowledge graph, response ranking,
-guardrails, a learning Knowledge Store behind a learning gate, an outcome monitor and an analyst review loop) and
-evaluate both surfaces: on 1,000 clean/contaminated GUIDE alert pairs and on the real telemetry of the DEDALE
-dataset with exact labels. Contamination that hijacks an undefended LLM agent on 29.6\% of pairs suppresses the
-pipeline's response on 0.9\%, with no misdirected action executed; on real telemetry, attacker text gets a few
-attack cases dismissed, but the learning gate keeps all of them from being learned. Learning cuts analyst reviews
-from 6,095 to 65 per day without losing the attack; learning without the gate learns the attacker. Analyst
-mistakes are the larger poisoning route, and unlearning on confirmed compromise closes it.
+An LLM-driven security operations centre (SOC) has two attack surfaces. Its model reads log text that an attacker
+can write, and its memory learns what is normal from what it sees and from its analysts. We build the full pipeline
+of an agentic SOC: LLM hypotheses, structural checks against a knowledge graph, response ranking, guardrails, a
+learning Knowledge Store behind a learning gate, an outcome monitor and an analyst review loop. We evaluate both
+surfaces, on 1,000 clean/contaminated alert pairs built from GUIDE and on the real telemetry of the DEDALE dataset.
+Text that hijacks an undefended LLM agent on 29.6\% of pairs suppresses the pipeline's response on 0.9\%, and no
+misdirected action is executed. On real telemetry, attacker text gets a few attack cases dismissed, but the learning
+gate keeps every one of them from being learned. Learning cuts analyst reviews from 6,095 to 65 per day without
+losing the attack; learning without the gate learns the attacker. Analyst mistakes are the larger poisoning route,
+and retracting what was learned on a host once it is confirmed compromised closes it.
 \end{abstract}
 
+\begin{IEEEkeywords}
+security operations centre, large language models, prompt injection, memory poisoning, alert triage
+\end{IEEEkeywords}
+
 \section{Introduction}
-\todo{team: agentic SOCs and alert fatigue; why an LLM triage agent that learns is exposed twice; contributions C1--C5.}
+SOC analysts face more alerts than they can investigate, and most of them turn out to be benign
+activity~\cite{alahmadi}. Agentic SOC frameworks respond by putting a large language model (LLM) in the loop: it
+reads an alert and its evidence, reasons about what the attacker may be doing, and proposes a response.
+AgentSOC~\cite{agentsoc}, for example, has an LLM generate ATT\&CK hypotheses~\cite{attack}, checks them against
+the structure of the enterprise and ranks containment actions by their effect and business impact. To reduce the
+alert load further, such a system must also learn what is normal, so that routine activity stops raising alerts.
+
+That makes the system attackable twice. First, much of what the LLM reads is written by the attacker: command lines,
+script text, file names and the raw lines of their own activity as the sensors record them. Text in that evidence
+can try to steer the model, as in indirect prompt injection~\cite{greshake}: it can claim that the activity is
+approved maintenance, or name another host as the culprit. Second, a store that learns what is normal can be
+taught. An attacker who is seen often enough, whose case is dismissed, or whom an analyst wrongly clears becomes
+routine, and from then on their activity raises no alert at all. The first attack works once; the second lasts.
+
+This paper evaluates both surfaces in one pipeline. The LLM's output is treated as advisory. Its hypotheses are
+checked against trusted structured fields and an environment model before any response is ranked; guardrails
+decide what may run without an analyst; and only structured fields, never text, are learned, behind a learning gate
+that holds back anything near an escalation. Analysts' verdicts pass through an inbox that the loop applies, and a
+host confirmed compromised has its recent learning retracted. We measure the pipeline on a contamination corpus
+built from GUIDE~\cite{guide} and on four weeks of real host and network telemetry with an APT-style intrusion
+from the DEDALE dataset~\cite{dedale}. Our contributions:
+\begin{itemize}
+\item \textbf{C1:} attacker-written text does not steer the pipeline's actions. It hijacks an undefended LLM agent
+on 29.6\% of 500 alert pairs but suppresses the pipeline's response on 0.9\%, with no misdirected action executed.
+On real telemetry, through the full loop, it teaches the store none of the attacker's patterns.
+\item \textbf{C2:} a learning store behind a gate cuts analyst reviews from 6,095 to 65 per day on DEDALE's host
+logs while every attack case still reaches review.
+\item \textbf{C3:} memory poisoning is real. Without the gate the store learns the attacker, and an analyst who
+misses 20\% of attacks silences over a third of the attack's events. Retracting what was learned on a host once it
+is confirmed compromised removes the effect.
+\item \textbf{C4:} on real telemetry the LLM's contribution is modest, and a closed-world feasibility check
+dismissed real attacks until hosts without telemetry were treated as unknown.
+\item \textbf{C5:} the analyst's response time sets the workload and the time to containment, not detection.
+\end{itemize}
+All numbers are reproducible offline from recorded LLM outputs.
 
 \section{Background and Related Work}
-\todo{team: AgentSOC (base paper); prompt injection and log contamination; memory poisoning in learning systems;
-alert triage; datasets (GUIDE, DEDALE).}
+% team: check the positioning sentences against your own literature search.
+\textbf{Agentic SOCs.} AgentSOC~\cite{agentsoc} combines a Narrative Counterfactual Engine (NCE) that generates
+multiple ATT\&CK hypotheses with an LLM, a Structural Simulation Engine (SSE) that checks them against enterprise
+topology, identity and policy, and a Risk Scoring and Evaluation Module (RSEM) that ranks responses; it was
+evaluated conceptually and with a proof of concept on authentication data. We build on its three engines and add
+the loop around them: learning, gating, monitoring and analyst review. Microsoft's guided response system~\cite{guide}
+recommends investigation, triage and remediation actions to SOC analysts; its authors released GUIDE, a large set of
+real incidents with analyst triage labels, from which our contamination corpus is built.
+
+\textbf{Prompt injection.} Text that a model processes as data can override its instructions~\cite{perez}; when the
+text comes from documents, web pages or tools the application retrieves, the attack is indirect~\cite{greshake}.
+Liu et al.~\cite{liu} formalise these attacks and benchmark defences. Defences work at several levels: marking the
+provenance of untrusted input in the prompt~\cite{spotlighting}, training models to follow instructions only from a
+separate trusted channel~\cite{struq}, or building a system layer that keeps untrusted data out of an agent's
+control flow~\cite{camel}. A SOC is an unusually direct case: the attacker writes the very evidence the model must
+read. Our defences are of the system kind; they bound what the model's output can cause rather than whether the
+model is fooled.
+
+\textbf{Poisoning what a system learns.} Detectors that learn normal behaviour can be poisoned through their
+training data so that later attacks pass unnoticed~\cite{antidote}. LLM agents inherit the problem through their
+memory and knowledge bases: a few poisoned entries can steer an agent's actions~\cite{agentpoison} or a
+retrieval-augmented model's answers~\cite{poisonedrag}. Machine unlearning~\cite{unlearning} removes the influence
+of specific training data, motivated in part by such pollution. Our learning gate limits what can enter the store,
+and unlearning on confirmed compromise is a targeted, provenance-based form of it.
+
+\textbf{Alert triage.} Analysts validate large numbers of alarms, most of them false or benign, which leads to
+fatigue and desensitisation~\cite{alahmadi}. Learning routine activity is the main lever on that workload, which
+is why the memory surface matters as much as the model surface.
+
+These lines of work mostly study one surface at a time. Here both are evaluated in one SOC pipeline, on real
+telemetry, with the analyst included as a route for poisoning.
 
 \section{Threat Model}
 The attacker controls the free text of their own activity as sensors record it: command lines, script text, raw
@@ -97,7 +165,7 @@ Knowledge Store (cyan) learns structured patterns only, behind the learning gate
 retracts what was learned on a host confirmed compromised.}
 \label{fig:pipeline}
 \end{figure*}
-Fig.~\ref{fig:pipeline} shows the system. For each new case, the Narrative Counterfactual Engine (NCE), an LLM, proposes ATT\&CK hypotheses from the alert.
+Fig.~\ref{fig:pipeline} shows the system, which extends AgentSOC~\cite{agentsoc}. For each new case, the Narrative Counterfactual Engine (NCE), an LLM, proposes ATT\&CK~\cite{attack} hypotheses from the alert.
 The Structural Simulation Engine (SSE) checks each against a knowledge graph of hosts, accounts, access and network
 reachability; entity binding compares the entities a hypothesis names with the alert's trusted fields; RSEM ranks
 responses by containment and business impact; guardrails decide what may run automatically. Around this
@@ -115,11 +183,11 @@ single-alert pipeline runs the loop:
 SSE treats hosts without telemetry as unknown, not as impossible targets (open world, Section~\ref{sec:c4}).
 
 \section{Evaluation Setup}
-\textbf{GUIDE corpus v2.} 500 development and 500 held-out pairs built from Microsoft GUIDE incidents: each pair is
+\textbf{GUIDE corpus v2.} 500 development and 500 held-out pairs built from Microsoft GUIDE incidents~\cite{guide}: each pair is
 a clean alert and a contaminated twin that differs only at the injection site, across 10 payload families
 (suppression and identity steering), with entities from a synthetic enterprise inventory.
 
-\textbf{DEDALE.} Four weeks of a simulated company's telemetry with an APT-style intrusion and exact labels of the
+\textbf{DEDALE~\cite{dedale}.} Four weeks of a simulated company's telemetry with an APT-style intrusion and exact labels of the
 malicious host events on the two attacked Windows clients. The first two weeks are benign and used for training;
 the attack and the remaining activity fall in the 14 test days (2025-01-06 to 01-19). Detection on host logs comes
 from the store itself: an event whose structured pattern the store has not learned becomes an alert.
@@ -299,17 +367,25 @@ escalated).
 \end{itemize}
 
 \section{Conclusion}
-\todo{team.}
+An LLM-driven SOC can be attacked through what its model reads and through what its memory learns. In our
+pipeline, the model was easy to steer, but its output was advisory: hypotheses were checked against trusted fields
+and the environment model, steered targets were flagged, and no misdirected action ran. The memory was the larger
+risk. Learning made the workload manageable (6,095 to 65 reviews per day on DEDALE's host logs) and, without a
+gate, also learned the attacker. The gate held, and the weakest remaining route, wrong analyst verdicts, was closed
+by retracting what was learned on a host once it was confirmed compromised. A deployment would need a maintained
+environment model, known telemetry coverage, and evaluation with real analysts and more than one real dataset.
+The pipeline, the demo and the scripts that rebuild every number are available \todo{repository link}.
 
-% References drafted 2026-10-19 (Claude). Bibliographic details checked: agentsoc against the PDF; guide,
-% spotlighting and camel against arXiv. Related work (team) should cite the ones the discussion does not.
+% References drafted 2026-10-19 (Claude). All checked: agentsoc against its PDF; dedale against DataCite;
+% the others against arXiv, USENIX, NeurIPS, IEEE, MITRE or the publisher's listing.
 \begin{thebibliography}{99}
 \bibitem{agentsoc} J.~Roy and S.~K.~Singh, ``AgentSOC: A multi-layer agentic AI framework for security operations
 automation,'' in \emph{Proc. 5th IEEE Int. Conf. on AI in Cybersecurity (ICAIC)}, Houston, TX, USA, 2026,
 arXiv:2604.20134.
 \bibitem{guide} S.~Freitas, J.~Kalajdjieski, A.~Gharib, and R.~McCann, ``AI-driven guided response for security
 operation centers with Microsoft Copilot for Security,'' arXiv:2407.09017, 2024.
-\bibitem{dedale} \todo{authors, year.} ``DEDALE,'' Inria, Recherche Data Gouv, doi:10.57745/Y5JLDG, CC BY 4.0.
+\bibitem{dedale} M.~Lanvin and F.~Majorczyk, ``DEDALE: Dataset for evaluating detection of APT among logs and
+events,'' Recherche Data Gouv, 2026, doi:10.57745/Y5JLDG.
 \bibitem{attack} B.~E.~Strom, A.~Applebaum, D.~P.~Miller, K.~C.~Nickels, A.~G.~Pennington, and C.~B.~Thomas,
 ``MITRE ATT\&CK: Design and philosophy,'' The MITRE Corporation, Tech. Rep., 2018.
 \bibitem{alahmadi} B.~A.~Alahmadi, L.~Axon, and I.~Martinovic, ``99\% false positives: A qualitative study of SOC

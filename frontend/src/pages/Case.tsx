@@ -1,14 +1,45 @@
 import {
-  Alert, Anchor, Badge, Button, Card, Code, Grid, Group, Loader, Stack, Table, Text, Textarea, Timeline, Title, Tooltip,
+  Alert, Anchor, Badge, Button, Card, Code, Grid, Group, Highlight, Loader, Stack, Table, Text, Textarea, Timeline, Title,
+  Tooltip,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, type Action, type CaseView, type Stage, type Trace, type Verdict } from "../api";
-import { useAuth } from "../auth";
+import { canControl, useAuth } from "../auth";
 import { OUTCOME_COLOR, STATUS_COLOR, VERDICT_COLOR, short, when } from "../format";
 
 type Row = Record<string, unknown>;
+
+const ROLE_LABEL: Record<string, string> = { source_account: "account", source_host: "source", target_host: "target" };
+
+/**
+ * Names the LLM's hypotheses used that entity binding could not tie to the alert's trusted fields
+ * ("unbound"), per hypothesis.  Pipeline output, not a guess: the case view marks where these names
+ * appear in the attacker-writable text, i.e. where a steered hypothesis may have come from.
+ */
+function unboundEntities(stages: Stage[]): string[][] {
+  const hyps = (stages.find((s) => s.stage === "reasoning")?.hypotheses ?? []) as Row[];
+  const checks = (stages.find((s) => s.stage === "structural_check")?.checks ?? []) as Row[];
+  return checks.map((c, i) =>
+    Object.entries((c.binding_roles ?? {}) as Record<string, string>)
+      .filter(([, label]) => label === "unbound")
+      .map(([role]) => `${ROLE_LABEL[role] ?? role}: ${String(hyps[i]?.[role] ?? "")}`),
+  );
+}
+
+/** Search terms for a name: the name itself and, for DOMAIN\user, the user part. */
+function markTerms(unbound: string[][]): string[] {
+  const out = new Set<string>();
+  for (const entry of unbound.flat()) {
+    const name = entry.slice(entry.indexOf(": ") + 2).trim();
+    if (name.length < 3) continue;
+    out.add(name);
+    const user = name.split("\\").pop() ?? "";
+    if (user !== name && user.length >= 4) out.add(user);
+  }
+  return [...out];
+}
 
 function KeyValues({ data }: { data: Record<string, unknown> }) {
   const entries = Object.entries(data).filter(([, v]) => v !== null && v !== undefined && v !== "");
@@ -54,7 +85,7 @@ function RowsTable({ rows, cols }: { rows: Row[]; cols: [string, string][] }) {
         {rows.map((r, i) => (
           <Table.Tr key={i}>
             {cols.map(([k]) => (
-              <Table.Td key={k}>
+              <Table.Td key={k} style={BADGE_COLS.has(k) ? { whiteSpace: "nowrap" } : undefined}>
                 <CellValue name={k} value={r[k]} />
               </Table.Td>
             ))}
@@ -65,17 +96,24 @@ function RowsTable({ rows, cols }: { rows: Row[]; cols: [string, string][] }) {
   );
 }
 
+const BADGE_COLS = new Set(["sse_verdict", "entity_binding", "playbook_status"]);
+
 function CellValue({ name, value }: { name: string; value: unknown }) {
   const v = short(value);
   if (name === "sse_verdict") {
-    const c = v === "FEASIBLE" ? "orange" : v === "INFEASIBLE" ? "gray" : "yellow";
-    return <Badge color={c} variant="light" size="sm">{v}</Badge>;
+    const [text, c] = v === "FEASIBLE" ? ["feasible", "orange"] : v === "INFEASIBLE" ? ["infeasible", "dimmed"]
+      : v === "CONDITIONALLY_FEASIBLE" ? ["conditional", "yellow"] : [v.toLowerCase(), "dimmed"];
+    return (
+      <Tooltip label={v}>
+        <Text size="xs" fw={700} c={c} style={{ whiteSpace: "nowrap" }}>{text}</Text>
+      </Tooltip>
+    );
   }
   if (name === "entity_binding") {
     const c = v === "unbound" ? "red" : v === "partial" ? "yellow" : "green";
     return (
       <Tooltip label={v === "unbound" ? "names entities that are not in the alert's trusted fields (possible steering)" : "entities match the alert"}>
-        <Badge color={c} variant="light" size="sm">{v}</Badge>
+        <Text size="xs" fw={700} c={c} style={{ whiteSpace: "nowrap" }}>{v}</Text>
       </Tooltip>
     );
   }
@@ -97,9 +135,14 @@ function CellValue({ name, value }: { name: string; value: unknown }) {
   return <Text size="xs" ff="monospace">{v}</Text>;
 }
 
-function StageBody({ stage }: { stage: Stage }) {
+function StageBody({ stage, unbound }: { stage: Stage; unbound: string[][] }) {
+  const terms = markTerms(unbound);
   switch (stage.stage) {
-    case "alert":
+    case "alert": {
+      const all = Object.entries(stage.untrusted as Row);
+      const others = all.filter(([k]) => k !== "raw_log_line");
+      const fields = others.length ? others : all; // network alerts: the raw line is the only text
+      const marked = fields.some(([, v]) => terms.some((t) => short(v).toLowerCase().includes(t.toLowerCase())));
       return (
         <Stack gap="xs">
           <Text size="sm" fw={500}>{String(stage.pattern)}</Text>
@@ -108,18 +151,32 @@ function StageBody({ stage }: { stage: Stage }) {
           <Alert color="red" variant="light" title="Untrusted text" p="xs">
             <Text size="xs">{String(stage.untrusted_notice)}</Text>
           </Alert>
-          {Object.entries(stage.untrusted as Row)
-            .filter(([k]) => k !== "raw_log_line")
-            .map(([k, v]) => (
-              <div key={k}>
-                <Text size="xs" c="dimmed">{k}</Text>
-                <Code block style={{ borderLeft: "3px solid var(--mantine-color-red-6)", whiteSpace: "pre-wrap" }}>
-                  {short(v)}
-                </Code>
-              </div>
-            ))}
+          {marked && (
+            <Alert color="yellow" variant="light" title="Possible steering" p="xs">
+              <Text size="xs">
+                Marked: names that the LLM's hypotheses used but the alert's trusted fields do not support (entity
+                binding: unbound). They appear here, in text the attacker can write. The marks inform the analyst;
+                they change no decision.
+              </Text>
+            </Alert>
+          )}
+          {fields.map(([k, v]) => (
+            <div key={k}>
+              <Text size="xs" c="dimmed">{k}</Text>
+              <Code block style={{ borderLeft: "3px solid var(--mantine-color-red-6)", whiteSpace: "pre-wrap" }}>
+                {terms.length ? (
+                  <Highlight component="span" size="xs" ff="monospace" highlight={terms} color="yellow">
+                    {short(v)}
+                  </Highlight>
+                ) : (
+                  short(v)
+                )}
+              </Code>
+            </div>
+          ))}
         </Stack>
       );
+    }
     case "triage_gate":
       return (
         <Stack gap={4}>
@@ -146,8 +203,8 @@ function StageBody({ stage }: { stage: Stage }) {
     case "structural_check":
       return (
         <RowsTable
-          rows={stage.checks as Row[]}
-          cols={[["technique_id", "Technique"], ["sse_verdict", "Feasibility"], ["path_confidence", "Path confidence"], ["entity_binding", "Entity binding"]]}
+          rows={(stage.checks as Row[]).map((c, i) => ({ ...c, unbound: (unbound[i] ?? []).join(", ") || "—" }))}
+          cols={[["technique_id", "Technique"], ["sse_verdict", "Feasibility"], ["path_confidence", "Path confidence"], ["entity_binding", "Entity binding"], ["unbound", "Not in trusted fields"]]}
         />
       );
     case "response":
@@ -250,14 +307,27 @@ function VerdictPanel({ view }: { view: CaseView }) {
   const op = useMutation({ mutationFn: (p: { path: string; body?: unknown }) => api(p.path, { method: "POST", body: p.body }), onSuccess: refresh });
   const reviewable = ["open", "claimed", "needs_info"].includes(c.review_status);
   const mine = c.claimed_by === session?.username;
+  const withdrawable = c.review_status === "closed" && c.verdict === "malicious" && canControl(session?.role);
 
   return (
     <Card withBorder>
       <Title order={5} mb="xs">Analyst decision</Title>
       {!reviewable ? (
-        <Text size="sm" c="dimmed">
-          {c.review_status === "closed" ? `Closed as ${c.verdict} by ${c.claimed_by}.` : "This case was not sent for review."}
-        </Text>
+        <Stack gap="xs">
+          <Text size="sm" c="dimmed">
+            {c.review_status === "closed" ? `Closed as ${c.verdict} by ${c.claimed_by}.` : "This case was not sent for review."}
+          </Text>
+          {withdrawable && (
+            <>
+              <Textarea size="xs" autosize placeholder="Why the verdict was wrong (required)" value={note} onChange={(e) => setNote(e.currentTarget.value)} />
+              <Tooltip multiline w={380} label="The case returns to the queue. The loop ends the host's watch, restores the patterns this verdict retracted and a blocked destination's previous reputation. Executed containment keeps its own rollback.">
+                <Button size="xs" variant="default" disabled={!note.trim()} onClick={() => op.mutate({ path: `/cases/${id}/withdraw`, body: { reason: note } })}>
+                  Withdraw verdict
+                </Button>
+              </Tooltip>
+            </>
+          )}
+        </Stack>
       ) : (
         <Stack gap="xs">
           <Group gap="xs">
@@ -300,6 +370,7 @@ export default function CasePage() {
   if (view.error || !view.data || !trace.data) return <Alert color="red">{String(view.error ?? trace.error)}</Alert>;
   const v = view.data;
   const c = v.case;
+  const unbound = unboundEntities(trace.data.stages);
 
   return (
     <Stack>
@@ -332,7 +403,7 @@ export default function CasePage() {
                     </Stack>
                   ) : (
                     <div style={{ marginTop: 4 }}>
-                      <StageBody stage={s} />
+                      <StageBody stage={s} unbound={unbound} />
                     </div>
                   )}
                 </Timeline.Item>

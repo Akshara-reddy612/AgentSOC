@@ -37,6 +37,7 @@ export default function Live() {
   });
   const s = status.data;
   const lead = canControl(session?.role);
+  const follow = s?.mode === "follow";
 
   return (
     <Stack>
@@ -44,8 +45,11 @@ export default function Live() {
         <div>
           <Title order={3}>Live</Title>
           <Text size="sm" c="dimmed">
-            A day in the SOC during the DEDALE attack. Activity the Knowledge Store has learned as routine stays silent; new
-            patterns become cases, triaged by the pipeline and ordered for review.
+            {follow
+              ? "Following live log files as they grow. "
+              : "A day in the SOC during the DEDALE attack. "}
+            Activity the Knowledge Store has learned as routine stays silent; new patterns become cases, triaged by the
+            pipeline and ordered for review.
           </Text>
         </div>
         {lead && s && (
@@ -59,11 +63,15 @@ export default function Live() {
                 {s.state === "finished" ? "Finished" : "Start"}
               </Button>
             )}
-            <SegmentedControl
-              value={String(s.speed)}
-              data={SPEEDS.map((v) => ({ value: v, label: `×${v}` }))}
-              onChange={(v) => control.mutate({ path: "/live/speed", body: { speed: Number(v) } })}
-            />
+            {follow ? (
+              <Badge variant="light" size="lg">live logs</Badge>
+            ) : (
+              <SegmentedControl
+                value={String(s.speed)}
+                data={SPEEDS.map((v) => ({ value: v, label: `×${v}` }))}
+                onChange={(v) => control.mutate({ path: "/live/speed", body: { speed: Number(v) } })}
+              />
+            )}
           </Group>
         )}
       </Group>

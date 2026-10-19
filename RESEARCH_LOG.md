@@ -2152,3 +2152,28 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `soc_server/__main__.py`, `soc_server/sources.py`, `tests/test_soc_server.py`, `README.md`, `DEMO_BACKEND_DESIGN.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: paper sections and frontend polish (decision P6)
+
+### What was tried
+- The user asked Claude to do the team items "1, 2": the paper's remaining sections, and the frontend polish. Recorded as decision P6 in `PROJECT_PLAN.md`.
+- **Paper:**
+  - Drafted the abstract (plus index terms), the introduction with contributions C1-C5, related work (agentic SOCs; prompt injection and its defences; poisoning of learned behaviour and agent memory, and unlearning; alert triage) and the conclusion.
+  - Added citations in the system and setup sections.
+  - Checked the 10 references written from memory by web search, and DEDALE's citation via the DataCite API. The repository page blocks automated access.
+- **Frontend:**
+  - Possible-steering marks: names used by hypotheses whose entity binding is "unbound" are highlighted in the untrusted text (Mantine Highlight, text only).
+  - Verdict withdrawal (lead / admin); follow mode in the header and on the Live page; the login lockout message.
+  - Fixes: the raw line for network alerts; text labels instead of truncated badges.
+- **Checked** on the `--inject steer` home and the follow home with `tools/ui_check.py`, and a withdrawal through the API.
+
+### What was found
+- **References:** all 10 from memory match their listings (authors, venue, year). DEDALE = M. Lanvin and F. Majorczyk, "DEDALE: Dataset for Evaluating Detection of APT among Logs and Events", Recherche Data Gouv, 2026.
+- **Paper:** 5 pages, compiles cleanly. Fig. 2 / Fig. 3 from the outline are not drawn: the frozen score files have no per-day series (noted in `PAPER_OUTLINE.md`).
+- **ERA as a highlighter:** its regex and approval-claim detectors (no model) fired on 4 of the 12 E1 payloads (ticket ids, "false positive", "whitelist") and on none of the steering payloads, so they were not used for highlighting. Benign command lines tested: 0 hits.
+- **Steering marks on case-7561** ("powershell.exe starting scvhost.exe on CLIENT2", injected "steer"): "internalserver" and "BREACH\Administrator" are marked in the command line, and the T1078 hypothesis is listed as account BREACH\Administrator, source internalserver.
+- **Withdrawal:** case-7565 was closed malicious through the UI, then withdrawn through the API. The loop applied the command (audit: `verdict_withdrawn`, `command_applied`) and the case is back in the queue.
+- **Pages:** 0 JavaScript errors on every page checked (Live, three case pages, Knowledge, Metrics, follow-mode Live).
+
+### Files created/modified
+- Modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `frontend/src/App.tsx`, `frontend/src/api.ts`, `frontend/src/pages/Case.tsx`, `frontend/src/pages/Live.tsx`, `frontend/src/pages/Login.tsx`, `frontend/README.md`, `PAPER_OUTLINE.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
