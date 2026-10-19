@@ -28,6 +28,7 @@ Decided 2026-10-12 with Abhishek. This file sets the scope. Work outside it goes
 | P3 | At most 3 datasets: GUIDE (synthetic corpus v2, contamination), DEDALE (real telemetry, the main evidence) and, optionally, AIT-LDS v2 (generality check, time-boxed) |
 | P4 | Demo: a real frontend with accounts that depicts the whole pipeline on the DEDALE attack (section 5) |
 | P5 | (2026-10-19, user: "do all") Backend gaps for the tool: network alerts in the demo server, login throttling, withdrawing a wrong `malicious` verdict (moved from "Later"), live log ingestion (`--follow`), live NCE with a daily budget. The Streamlit demo is archived (`archive/streamlit/`) |
+| P6 | (2026-10-19, user) Claude drafts the team's paper sections too (abstract, introduction, related work, conclusion), for the team to revise, and does the frontend polish (M5). Authors stay with the team |
 
 ## 3. Paper: claims and evidence
 
