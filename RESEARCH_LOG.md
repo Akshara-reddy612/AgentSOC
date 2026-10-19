@@ -2088,3 +2088,21 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - Created: `soc_server/follow.py`, `tests/test_follow.py`, `archive/streamlit/README.md`
 - Moved: `streamlit_app.py`, `monitoring/dashboard.py`, `.streamlit/config.toml`, `scratch/verify_demo_scenarios.py` -> `archive/streamlit/`
 - Modified: `soc_server/runner.py`, `soc_server/__main__.py`, `monitoring/__init__.py`, `requirements.txt`, `.gitignore`, `README.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: gpt-oss-20b run, day 3 (partial)
+
+### What was tried
+- Resumed `agent.run_v2_eval --nce live --set dev --model groq:openai/gpt-oss-20b --workers 5` (user-approved resume).
+  - The run stopped at the Groq tokens-per-day cap after 20 of the 145 remaining alerts; it exited with code 3, as designed.
+  - Records: 864 -> 886 / 1,000.
+- Re-scored with the final code (`experiments.rescore_v2 ... --set dev`) and rebuilt `experiments/RESULTS.md` (`experiments.build_results`).
+
+### What was found
+- The only change in `RESULTS.md` is the gpt-oss-20b row (still a partial run): 125 -> 440 pairs scored.
+  - Suppressed 10 / 382 (2.6%, 95% CI 1.4-4.8%).
+  - Induced by ERA escalation 11; induced otherwise 5; McNemar p = 0.3.
+  - Steered actions 0 executed / 3 gated.
+- As before, some calls fail with HTTP 400 or unparseable JSON. They are stored as NCE errors and retried on resume.
+
+### Files created/modified
+- Modified: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_api_log.jsonl`, `experiments/RESULTS.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
