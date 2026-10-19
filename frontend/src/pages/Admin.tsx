@@ -17,9 +17,15 @@ export default function Admin() {
       void qc.invalidateQueries({ queryKey: ["users"] });
     },
   });
-  const disable = useMutation({
-    mutationFn: (u: string) => api(`/admin/users/${encodeURIComponent(u)}/disable`, { method: "POST" }),
+  const op = useMutation({
+    mutationFn: (p: { user: string; what: string; body?: unknown }) =>
+      api(`/admin/users/${encodeURIComponent(p.user)}/${p.what}`, { method: "POST", body: p.body }),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["users"] }),
+  });
+  const [reset, setReset] = useState<{ user: string | null; password: string }>({ user: null, password: "" });
+  const resetPw = useMutation({
+    mutationFn: () => api(`/admin/users/${encodeURIComponent(reset.user ?? "")}/password`, { method: "POST", body: { password: reset.password } }),
+    onSuccess: () => setReset({ user: null, password: "" }),
   });
 
   function submit(e: FormEvent) {
@@ -45,19 +51,36 @@ export default function Admin() {
             {(users.data ?? []).map((u) => (
               <Table.Tr key={u.username}>
                 <Table.Td>{u.username}</Table.Td>
-                <Table.Td><Badge variant="light">{u.role}</Badge></Table.Td>
+                <Table.Td>
+                  {u.username === session?.username ? (
+                    <Badge variant="light">{u.role} (you)</Badge>
+                  ) : (
+                    <Select
+                      size="xs"
+                      w={120}
+                      data={["analyst", "lead", "admin"]}
+                      value={u.role}
+                      allowDeselect={false}
+                      onChange={(v) => v && v !== u.role && op.mutate({ user: u.username, what: "role", body: { role: v } })}
+                    />
+                  )}
+                </Table.Td>
                 <Table.Td><Text size="xs">{when(u.created).slice(0, 16)}</Text></Table.Td>
                 <Table.Td>
-                  {u.disabled ? (
-                    <Badge color="gray">disabled</Badge>
-                  ) : u.username !== session?.username ? (
-                    <Button size="xs" variant="subtle" color="red" onClick={() => disable.mutate(u.username)}>Disable</Button>
-                  ) : null}
+                  {u.username === session?.username ? null : u.disabled ? (
+                    <Group gap="xs">
+                      <Badge color="gray">disabled</Badge>
+                      <Button size="xs" variant="subtle" onClick={() => op.mutate({ user: u.username, what: "enable" })}>Enable</Button>
+                    </Group>
+                  ) : (
+                    <Button size="xs" variant="subtle" color="red" onClick={() => op.mutate({ user: u.username, what: "disable" })}>Disable</Button>
+                  )}
                 </Table.Td>
               </Table.Tr>
             ))}
           </Table.Tbody>
         </Table>
+        {op.error && <Alert color="red" mt="xs">{(op.error as Error).message}</Alert>}
       </Card>
       <Card withBorder>
         <Title order={6} mb="xs">New account</Title>
@@ -70,6 +93,22 @@ export default function Admin() {
           </Group>
         </form>
         {create.error && <Alert color="red" mt="xs">{(create.error as Error).message}</Alert>}
+      </Card>
+      <Card withBorder>
+        <Title order={6} mb="xs">Reset a password</Title>
+        <Text size="xs" c="dimmed" mb="xs">Sets a new password and signs the user out everywhere. Users change their own on My account.</Text>
+        <Group align="flex-end">
+          <Select
+            label="User"
+            data={(users.data ?? []).filter((u) => u.username !== session?.username).map((u) => u.username)}
+            value={reset.user}
+            onChange={(v) => setReset({ ...reset, user: v })}
+          />
+          <PasswordInput label="New password (12+ characters)" value={reset.password} onChange={(e) => setReset({ ...reset, password: e.currentTarget.value })} />
+          <Button disabled={!reset.user || !reset.password} loading={resetPw.isPending} onClick={() => resetPw.mutate()}>Reset</Button>
+        </Group>
+        {resetPw.isSuccess && <Alert color="green" mt="xs" p="xs">Password reset.</Alert>}
+        {resetPw.error && <Alert color="red" mt="xs">{(resetPw.error as Error).message}</Alert>}
       </Card>
     </Stack>
   );

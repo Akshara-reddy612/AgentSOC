@@ -72,17 +72,15 @@ The demo is a day in the SOC during the DEDALE attack. The server replays DEDALE
    ```
    python -m experiments.dedale_extract_winlogbeat
    ```
-3. **Create an admin account:**
-   ```
-   python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin
-   ```
-   `<home>` defaults to `<data>/live`.
-4. **Start the server:**
+3. **Start the server:**
    ```
    python -m soc_server
    ```
    - The first start learns the two benign weeks and fast-forwards to 08:00 on the attack morning. This takes a few minutes; later starts resume from the last checkpoint.
-   - Open http://127.0.0.1:8000/, sign in, and press Start on the Live page (lead or admin).
+4. **Open http://127.0.0.1:8000/:**
+   - On the first run, the page asks you to create the admin account. The command line can do it too: `python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin`, where `<home>` defaults to `<data>/live`.
+   - Add the analysts' and leads' accounts on the Accounts page.
+   - Press Start on the Live page (lead or admin).
 
 | Option | Default | Meaning |
 |:--|:--|:--|
@@ -102,7 +100,8 @@ The demo is a day in the SOC during the DEDALE attack. The server replays DEDALE
 - **Case:** the eight-stage pipeline trace; verdicts with a preview of what the store will learn; containment approval and rollback; related cases, notes and audit.
 - **Knowledge Store:** what was learned, from where, and what was retracted.
 - **Metrics:** the frozen comparison runs and the session's own counts.
-- **Accounts:** admin only.
+- **My account:** your role, and changing your password.
+- **Accounts:** admin only. Create accounts, change roles, disable or enable, reset passwords.
 
 The API reference is at `/api/docs`. More detail, including development mode, is in [frontend/README.md](frontend/README.md) and [DEMO_BACKEND_DESIGN.md](DEMO_BACKEND_DESIGN.md).
 
@@ -117,7 +116,8 @@ The API reference is at `/api/docs`. More detail, including development mode, is
 **Security notes:**
 
 - The server binds to localhost.
-- Passwords are hashed with scrypt, and sessions use hashed tokens.
+- Passwords are hashed with scrypt, and sessions use hashed tokens. Changing or resetting a password ends that user's sessions.
+- The first-run setup creates one admin, only while no account exists. Create it right after starting the server.
 - Logins are throttled: 5 failures per user and address, or 20 per address, lock that key for 15 minutes.
 - Text from logs is always shown as text, never as HTML.
 - All containment is simulated: nothing touches a real network.

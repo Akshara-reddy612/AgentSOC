@@ -9,8 +9,11 @@ Security rules:
   - Who acts is decided by the bearer token, never by the request body: one
     token per analyst (AGENTSOC_ANALYST_TOKENS="alice:<token>,bob:<token>",
     at least 24 characters each), compared as SHA-256 digests in constant
-    time.  Tokens are never logged or returned.  Accounts come with the
-    frontend (frontend plan); until then tokens are the accounts.
+    time.  Tokens are never logged or returned.  With an AccountStore
+    (review_api/accounts.py) users sign in instead: /auth/login,
+    /auth/password (own password), /admin/users/* (admins).  First run:
+    while no account exists, /auth/setup creates the first admin (once; the
+    server binds to localhost, so create it right after starting).
   - Request bodies are validated (fixed verdict vocabulary, length limits) and
     unknown fields are rejected, so a client cannot smuggle an "analyst"
     field.
@@ -22,7 +25,8 @@ Security rules:
     (single writer, invariant I6).
 Errors: 401 no / wrong token; 404 unknown case or action; 409 the case is
 claimed by another analyst; 400 an action not allowed in the current state;
-422 an invalid request body; 429 too many failed logins (LoginThrottle).
+422 an invalid request body; 429 too many failed logins or password checks
+(LoginThrottle); 409 on /auth/setup once an account exists.
 """
 from __future__ import annotations
 
@@ -90,6 +94,19 @@ class ReasonIn(_Body):
 class LoginIn(_Body):
     username: str = Field(min_length=1, max_length=64)
     password: str = Field(min_length=1, max_length=1_000)
+
+
+class PasswordChangeIn(_Body):
+    current_password: str = Field(min_length=1, max_length=1_000)
+    new_password: str = Field(min_length=1, max_length=1_000)
+
+
+class PasswordIn(_Body):
+    password: str = Field(min_length=1, max_length=1_000)
+
+
+class RoleIn(_Body):
+    role: Literal["analyst", "lead", "admin"]
 
 
 class NewUserIn(_Body):
@@ -172,6 +189,43 @@ def create_app(store: CaseStore, tokens: dict[str, str] | None = None, *, accoun
         token, user_role, expires = found
         return {"token": token, "username": body.username, "role": user_role, "expires": expires.isoformat()}
 
+    @app.get("/auth/setup")
+    def setup_needed() -> dict:
+        """First run: no account exists yet, so the first one (an admin) can be created here."""
+        return {"needed": accounts is not None and not accounts.has_users()}
+
+    @app.post("/auth/setup")
+    def setup(body: LoginIn) -> dict:
+        from review_api.accounts import AccountError
+        if accounts is None:
+            raise HTTPException(404, "accounts are not configured")
+        try:
+            accounts.create_user(body.username, body.password, "admin", only_if_empty=True)
+        except AccountError as e:
+            raise HTTPException(409 if "exist" in str(e) else 400, str(e)) from None
+        token, user_role, expires = accounts.login(body.username, body.password)
+        return {"token": token, "username": body.username, "role": user_role, "expires": expires.isoformat()}
+
+    @app.post("/auth/password")
+    def change_password(body: PasswordChangeIn, request: Request, p: tuple[str, str] = Depends(principal)) -> dict:
+        """Change one's own password; every session of the user ends (sign in again)."""
+        from review_api.accounts import AccountError
+        if accounts is None:
+            raise HTTPException(404, "accounts are not configured")
+        address = request.client.host if request.client else "unknown"
+        wait = throttle.retry_after(p[0], address)
+        if wait is not None:
+            raise HTTPException(429, "too many failed attempts; try again later",
+                                headers={"Retry-After": str(int(wait) + 1)})
+        if not accounts.verify(p[0], body.current_password):
+            throttle.failed(p[0], address)
+            raise HTTPException(401, "current password is wrong")
+        try:
+            accounts.set_password(p[0], body.new_password)
+        except AccountError as e:
+            raise HTTPException(400, str(e)) from None
+        return {"changed": p[0]}
+
     @app.post("/auth/logout")
     def logout(authorization: str | None = Header(default=None), p: tuple[str, str] = Depends(principal)) -> dict:
         if accounts is not None and authorization:
@@ -203,6 +257,38 @@ def create_app(store: CaseStore, tokens: dict[str, str] | None = None, *, accoun
         except (AccountError, AttributeError) as e:
             raise HTTPException(404, str(e)) from None
         return {"disabled": username}
+
+    @app.post("/admin/users/{username}/enable")
+    def enable_user(username: str, p: tuple[str, str] = Depends(role("admin"))) -> dict:
+        from review_api.accounts import AccountError
+        try:
+            accounts.set_disabled(username, False)
+        except (AccountError, AttributeError) as e:
+            raise HTTPException(404, str(e)) from None
+        return {"enabled": username}
+
+    @app.post("/admin/users/{username}/role")
+    def set_user_role(username: str, body: RoleIn, p: tuple[str, str] = Depends(role("admin"))) -> dict:
+        from review_api.accounts import AccountError
+        if username == p[0]:
+            raise HTTPException(400, "admins cannot change their own role")
+        try:
+            accounts.set_role(username, body.role)
+        except (AccountError, AttributeError) as e:
+            raise HTTPException(404, str(e)) from None
+        return {"username": username, "role": body.role}
+
+    @app.post("/admin/users/{username}/password")
+    def reset_password(username: str, body: PasswordIn, p: tuple[str, str] = Depends(role("admin"))) -> dict:
+        """An admin sets a new password (the user's sessions end)."""
+        from review_api.accounts import AccountError
+        try:
+            accounts.set_password(username, body.password)
+        except AccountError as e:
+            raise HTTPException(404 if "no user" in str(e) else 400, str(e)) from None
+        except AttributeError as e:
+            raise HTTPException(404, str(e)) from None
+        return {"reset": username}
 
     @app.get("/health")
     def health() -> dict:

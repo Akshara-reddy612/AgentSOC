@@ -1,52 +1,85 @@
-import { Alert, Button, Card, Center, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
-import { useState, type FormEvent } from "react";
-import { ApiError } from "../api";
+import { Alert, Button, Card, Center, Loader, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { useEffect, useState, type FormEvent } from "react";
+import { ApiError, api } from "../api";
 import { useAuth } from "../auth";
 
+/** Sign-in; on a server with no accounts yet, first-run setup of the first admin instead. */
 export default function Login() {
-  const { login } = useAuth();
+  const { login, setup } = useAuth();
+  const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    api<{ needed: boolean }>("/auth/setup")
+      .then((r) => setNeedsSetup(r.needed))
+      .catch(() => setNeedsSetup(false));
+  }, []);
+
   async function submit(e: FormEvent) {
     e.preventDefault();
-    setBusy(true);
     setError(null);
+    if (needsSetup && password !== confirm) {
+      setError("The two passwords differ.");
+      return;
+    }
+    setBusy(true);
     try {
-      await login(username, password);
+      if (needsSetup) await setup(username, password);
+      else await login(username, password);
     } catch (err) {
-      setError(
-        err instanceof ApiError && err.status === 429
-          ? "Too many failed sign-ins. Wait a few minutes and try again."
-          : "Wrong username or password.",
-      );
+      if (err instanceof ApiError && err.status === 429) setError("Too many failed sign-ins. Wait a few minutes and try again.");
+      else if (needsSetup && err instanceof ApiError && err.status === 409) {
+        setNeedsSetup(false);
+        setError("An account was created meanwhile: sign in.");
+      } else if (needsSetup && err instanceof ApiError) setError(err.message);
+      else setError("Wrong username or password.");
     } finally {
       setBusy(false);
     }
   }
 
+  if (needsSetup === null)
+    return (
+      <Center h="100vh">
+        <Loader />
+      </Center>
+    );
+
   return (
     <Center h="100vh">
-      <Card w={380} withBorder padding="xl">
+      <Card w={400} withBorder padding="xl">
         <form onSubmit={submit}>
           <Stack>
             <div>
               <Title order={3}>AgentSOC</Title>
               <Text size="sm" c="dimmed">
-                Analyst console — sign in
+                {needsSetup ? "First run — create the admin account" : "Analyst console — sign in"}
               </Text>
             </div>
+            {needsSetup && (
+              <Alert variant="light" p="xs">
+                <Text size="xs">
+                  No accounts exist yet. This first account is an admin; create the analysts' and leads' accounts on the
+                  Accounts page afterwards. Passwords have at least 12 characters.
+                </Text>
+              </Alert>
+            )}
             <TextInput label="Username" value={username} onChange={(e) => setUsername(e.currentTarget.value)} autoFocus required />
             <PasswordInput label="Password" value={password} onChange={(e) => setPassword(e.currentTarget.value)} required />
+            {needsSetup && (
+              <PasswordInput label="Password again" value={confirm} onChange={(e) => setConfirm(e.currentTarget.value)} required />
+            )}
             {error && (
               <Alert color="red" variant="light">
                 {error}
               </Alert>
             )}
             <Button type="submit" loading={busy}>
-              Sign in
+              {needsSetup ? "Create admin account" : "Sign in"}
             </Button>
           </Stack>
         </form>

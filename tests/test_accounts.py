@@ -102,3 +102,49 @@ def test_throttle_by_address_and_no_remote_lockout():
     for _ in range(10):                                          # guessing alice's password from elsewhere
         t.failed("alice", "10.0.0.66")
     assert t.retry_after("alice", "10.0.0.1") is None            # alice herself is not locked out
+
+
+def test_first_run_setup_creates_one_admin_only(tmp_path):
+    store = AccountStore(tmp_path / "auth.sqlite")
+    client = TestClient(create_app(CaseStore(tmp_path / "cases.sqlite"), accounts=store))
+    assert client.get("/auth/setup").json() == {"needed": True}
+    assert client.post("/auth/setup", json={"username": "boss", "password": "short"}).status_code == 400
+    r = client.post("/auth/setup", json={"username": "boss", "password": "a long enough pw"})
+    assert r.status_code == 200 and r.json()["role"] == "admin"
+    assert client.get("/me", headers={"Authorization": f"Bearer {r.json()['token']}"}).json()["role"] == "admin"
+    assert client.get("/auth/setup").json() == {"needed": False}
+    again = client.post("/auth/setup", json={"username": "mallory", "password": "a long enough pw"})
+    assert again.status_code == 409 and [u["username"] for u in store.users()] == ["boss"]
+
+
+def test_own_password_and_admin_account_management(tmp_path):
+    store = AccountStore(tmp_path / "auth.sqlite")
+    store.create_user("boss", "admin password 1", "admin")
+    store.create_user("alice", "alice password 1", "analyst")
+    client = TestClient(create_app(CaseStore(tmp_path / "cases.sqlite"), accounts=store))
+
+    def login(u, pw):
+        r = client.post("/auth/login", json={"username": u, "password": pw})
+        return {"Authorization": f"Bearer {r.json()['token']}"} if r.status_code == 200 else r.status_code
+
+    alice = login("alice", "alice password 1")
+    bad = client.post("/auth/password", headers=alice, json={"current_password": "nope", "new_password": "x" * 12})
+    assert bad.status_code == 401
+    ok = client.post("/auth/password", headers=alice,
+                     json={"current_password": "alice password 1", "new_password": "alice password 2"})
+    assert ok.status_code == 200
+    assert client.get("/me", headers=alice).status_code == 401              # sessions ended
+    assert login("alice", "alice password 1") == 401
+    alice = login("alice", "alice password 2")
+
+    boss = login("boss", "admin password 1")
+    assert client.post("/admin/users/alice/role", headers=alice, json={"role": "admin"}).status_code == 403
+    assert client.post("/admin/users/alice/role", headers=boss, json={"role": "lead"}).status_code == 200
+    assert client.post("/admin/users/boss/role", headers=boss, json={"role": "analyst"}).status_code == 400
+    assert client.post("/admin/users/alice/password", headers=boss, json={"password": "reset by admin 1"}).status_code == 200
+    assert login("alice", "reset by admin 1") != 401
+    assert client.post("/admin/users/alice/disable", headers=boss).status_code == 200
+    assert login("alice", "reset by admin 1") == 401
+    assert client.post("/admin/users/alice/enable", headers=boss).status_code == 200
+    assert {u["username"]: u["role"] for u in store.users()} == {"alice": "lead", "boss": "admin"}
+    assert client.post("/admin/users/nobody/password", headers=boss, json={"password": "x" * 12}).status_code == 404
