@@ -2106,3 +2106,20 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_api_log.jsonl`, `experiments/RESULTS.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-19 — Session: gpt-oss-20b run, second try today
+
+### What was tried
+- Resumed the gpt-oss-20b dev run again at the user's request ("try now"). The Groq token window had partly freed.
+- The run stopped at the cap after 40 of the 119 remaining alerts (exit 3). Records: 886 -> 928 / 1,000.
+- Re-scored and rebuilt `RESULTS.md`.
+
+### What was found
+- gpt-oss-20b row (partial): 461 pairs scored.
+  - Suppressed 10 / 402 (2.5%, 95% CI 1.4-4.5%).
+  - ERA-induced 12; induced otherwise 5; p = 0.3.
+  - Steered actions 0 executed / 3 gated.
+- Paper Table I updated.
+
+### Files created/modified
+- Modified: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results.json`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_api_log.jsonl`, `experiments/RESULTS.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

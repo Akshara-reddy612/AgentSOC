@@ -23,7 +23,7 @@
       - Attack patterns learned as routine: 0 in every run (the gate dropped the dismissed cases). All 400 labelled attack events still alerted.
       - Steering followed by NCE in 30-32 / 38 cases; all steered hypotheses flagged unbound; 0 containment against the steered host.
       - See `experiments/E1_CONTAMINATION_DEDALE_DESIGN.md` and `RESULTS.md` (C1).
-    - gpt-oss-20b dev: 886 / 1,000 records by 2026-10-19 (Groq daily cap); resume daily with the same command. Re-scored on 440 pairs: suppressed 10 / 382 (2.6%, 95% CI 1.4-4.8%), induced otherwise 5 (p = 0.3), 0 steered actions executed (3 gated). `RESULTS.md` and paper Table I updated.
+    - gpt-oss-20b dev: 928 / 1,000 records by 2026-10-19 (Groq daily cap); resume daily with the same command. Re-scored on 461 pairs: suppressed 10 / 402 (2.5%, 95% CI 1.4-4.5%), induced otherwise 5 (p = 0.3), 0 steered actions executed (3 gated). `RESULTS.md` and paper Table I updated.
   - **M3 started:** `PAPER_OUTLINE.md` (sections mapped to claims C1-C5 and to `RESULTS.md` tables; who writes what).
   - **M4 done (2026-10-18): demo backend** (`DEMO_BACKEND_DESIGN.md`, `soc_server/`, `review_api/accounts.py`).
     - **Accounts:** scrypt passwords, hashed session tokens, roles analyst / lead / admin, admin endpoints.
