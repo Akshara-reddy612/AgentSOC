@@ -15,7 +15,7 @@ const TIER: Record<number, string> = { 0: "workstation", 1: "server", 2: "critic
 function Tile({ label, value, hint, children }: { label: string; value: ReactNode; hint?: ReactNode; children?: ReactNode }) {
   return (
     <div className="soc-card" style={{ padding: "12px 14px", height: "100%" }}>
-      <Text className="soc-card-title" style={{ fontSize: 11 }}>{label}</Text>
+      <Text size="xs" c="dimmed" fw={600}>{label}</Text>
       <div className="soc-kpi-value" style={{ marginTop: 4 }}>{value}</div>
       {hint && <Text size="xs" c="dimmed" mt={2}>{hint}</Text>}
       {children}
@@ -88,7 +88,7 @@ function QueueRow({ item, now, child, onOpen }: { item: QueueItem; now: string; 
         <Text size="xs" ff="monospace">{item.opened.slice(5, 16).replace("T", " ")}</Text>
         <Text size="xs" c="dimmed">{age(item.opened, now)} ago</Text>
       </div>
-      <Text size="xs" fw={700} tt="uppercase" c={item.review_status === "claimed" ? "blue" : item.review_status === "needs_info" ? "yellow" : "orange"}
+      <Text size="xs" fw={700} tt="uppercase" c={item.review_status === "claimed" ? "gray.4" : item.review_status === "needs_info" ? "yellow" : "orange"}
         style={{ whiteSpace: "nowrap" }}>
         {item.review_status.replace("_", " ")}
         {item.claimed_by ? <Text span size="xs" c="dimmed" tt="none" fw={400}>{` · ${item.claimed_by}`}</Text> : null}

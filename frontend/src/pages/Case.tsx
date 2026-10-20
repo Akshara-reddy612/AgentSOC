@@ -97,13 +97,13 @@ function Evidence({ stage, unbound }: { stage: Stage; unbound: string[][] }) {
   return (
     <Grid gap="lg">
       <Grid.Col span={{ base: 12, md: 6 }}>
-        <Text size="xs" fw={600} c="dimmed" tt="uppercase" mb={6}>Trusted · sensor and inventory fields</Text>
+        <Text size="sm" fw={600} mb={6}>Trusted <Text span size="xs" c="dimmed" fw={400}>· sensor and inventory fields</Text></Text>
         <KeyValues data={(stage.trusted ?? {}) as Row} />
       </Grid.Col>
       <Grid.Col span={{ base: 12, md: 6 }}>
         <Group gap={6} mb={6}>
           <span style={{ color: "var(--soc-critical)", display: "inline-flex" }}><IconWarning size={14} /></span>
-          <Text size="xs" fw={600} c="dimmed" tt="uppercase">Untrusted · attacker-writable text</Text>
+          <Text size="sm" fw={600}>Untrusted <Text span size="xs" c="dimmed" fw={400}>· attacker-writable text</Text></Text>
         </Group>
         <Text size="xs" c="dimmed" mb="xs">{String(stage.untrusted_notice ?? "")}</Text>
         {marked && (
@@ -257,7 +257,7 @@ function VerdictPanel({ view }: { view: CaseView }) {
   const withdrawable = c.review_status === "closed" && c.verdict === "malicious" && canControl(session?.role);
 
   return (
-    <div className="soc-card" style={{ padding: 16, borderTop: "2px solid var(--soc-accent)" }}>
+    <div className="soc-card" style={{ padding: 16 }}>
       <Text className="soc-card-title" mb="xs">Analyst decision</Text>
       {!reviewable ? (
         <Stack gap="xs">
@@ -290,7 +290,7 @@ function VerdictPanel({ view }: { view: CaseView }) {
           <SimpleGrid cols={2} spacing="xs">
             {(["malicious", "benign", "benign_once", "needs_info"] as Verdict[]).map((v) => (
               <Tooltip key={v} multiline w={360} label={view.learning_preview[v]}>
-                <Button size="xs" color={VERDICT_COLOR[v]} variant={v === "malicious" ? "filled" : "light"}
+                <Button size="xs" color={VERDICT_COLOR[v]} variant={v === "malicious" ? "filled" : v === "benign_once" ? "default" : "light"}
                   disabled={c.review_status === "claimed" && !mine}
                   onClick={() => op.mutate({ path: `/cases/${id}/verdict`, body: { verdict: v, note: note || undefined } })}>
                   {v.replace("_", " ")}

@@ -8,14 +8,18 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./auth";
 
-// Navy "SOC console" dark palette (Mantine reads dark[7] as the body, dark[6] for inputs, dark[4] for borders).
+// Neutral graphite palette (Mantine reads dark[7] as the body, dark[6] for inputs, dark[4] for borders).
+// The primary colour is a mid gray: neutral primary buttons; red / green / yellow keep their usual strength.
 const theme = createTheme({
-  primaryColor: "cyan",
+  primaryColor: "graphite",
+  primaryShade: { light: 7, dark: 7 },
+  autoContrast: true,
   fontFamily: "Inter, 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif",
   fontFamilyMonospace: "'JetBrains Mono', 'Cascadia Mono', Consolas, monospace",
-  defaultRadius: "md",
+  defaultRadius: "sm",
   colors: {
-    dark: ["#e6ebf2", "#c4ccd8", "#a8b3c4", "#7b8798", "#33435e", "#22314c", "#16223a", "#111a2b", "#0b1220", "#070c16"],
+    dark: ["#ececec", "#c8c8c8", "#a6a6a6", "#767676", "#3d3d3d", "#303030", "#262626", "#1c1c1c", "#141414", "#0d0d0d"],
+    graphite: ["#f5f5f5", "#ececec", "#d9d9d9", "#bfbfbf", "#a6a6a6", "#8c8c8c", "#737373", "#595959", "#404040", "#262626"],
   },
   headings: { fontWeight: "650" },
 });

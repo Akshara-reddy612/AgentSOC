@@ -29,7 +29,7 @@ function StreamClock() {
   return (
     <div className="soc-clock" title={`${data.state}; stream time (UTC)`}>
       <span className="soc-dot" data-state={data.state} />
-      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>{data.state}</Text>
+      <Text size="xs" c="dimmed" fw={600}>{data.state}</Text>
       <Text size="sm" ff="monospace" fw={600}>{time}</Text>
       <Text size="xs" c="dimmed">{date} UTC</Text>
       {data.mode !== "follow" && <Text size="xs" c="dimmed">×{data.speed}</Text>}
@@ -59,7 +59,7 @@ export default function App() {
       <AppShell.Header className="soc-header">
         <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
           <Group gap={10} wrap="nowrap">
-            <span style={{ color: "var(--soc-accent)", display: "flex" }}><IconLogo size={26} /></span>
+            <span style={{ color: "var(--soc-text)", display: "flex" }}><IconLogo size={24} /></span>
             <div>
               <Text fw={700} size="lg" lh={1.1}>AgentSOC</Text>
               <Text size="xs" c="dimmed" lh={1.1}>{live.data?.mode === "follow" ? "live logs" : "DEDALE replay"}</Text>
@@ -70,7 +70,7 @@ export default function App() {
             <Menu.Target>
               <UnstyledButton>
                 <Group gap={8} wrap="nowrap">
-                  <Avatar size={30} radius="xl" color="cyan" variant="light">{session.username.slice(0, 2).toUpperCase()}</Avatar>
+                  <Avatar size={30} radius="sm" color="gray" variant="filled">{session.username.slice(0, 2).toUpperCase()}</Avatar>
                   <div>
                     <Text size="sm" fw={600} lh={1.1}>{session.username}</Text>
                     <Text size="xs" c="dimmed" lh={1.1}>{session.role}</Text>
@@ -93,7 +93,7 @@ export default function App() {
             <NavLink key={n.to} className="soc-nav-item" component={RouterLink} to={n.to} label={n.label}
               description={n.hint} leftSection={n.icon} active={active(n.to)} />
           ))}
-          <Text size="xs" c="dimmed" tt="uppercase" fw={600} mt="md" mb={2} px="sm">Account</Text>
+          <Text size="xs" c="dimmed" fw={600} mt="md" mb={2} px="sm">Account</Text>
           {session.role === "admin" && (
             <NavLink className="soc-nav-item" component={RouterLink} to="/admin" label="Accounts" description="users and roles"
               leftSection={<IconUsers />} active={active("/admin")} />

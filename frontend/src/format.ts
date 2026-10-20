@@ -15,12 +15,12 @@ export const OUTCOME_COLOR: Record<string, string> = {
   REVIEW: "orange",
   AUTO_APPROVED: "red",
   LOW_PRIORITY: "gray",
-  NO_ACTIONABLE: "teal",
+  NO_ACTIONABLE: "gray",
 };
 
 export const STATUS_COLOR: Record<string, string> = {
   open: "orange",
-  claimed: "blue",
+  claimed: "gray",
   needs_info: "yellow",
   closed: "gray",
   none: "dark",
@@ -28,8 +28,8 @@ export const STATUS_COLOR: Record<string, string> = {
 
 export const VERDICT_COLOR: Record<string, string> = {
   malicious: "red",
-  benign: "teal",
-  benign_once: "cyan",
+  benign: "green",
+  benign_once: "gray",
   needs_info: "yellow",
 };
 

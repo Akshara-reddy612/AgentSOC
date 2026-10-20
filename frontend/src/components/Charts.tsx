@@ -1,13 +1,15 @@
-// Charts for the console. Colours: two categorical slots validated on the console surface
-// (dataviz validator, dark, surface #111a2b: CVD dE 26.8, normal-vision dE 31.8, contrast >= 3:1).
+// Charts for the console. Emphasis encoding: the routine majority in gray, cases for an analyst in
+// colour (dataviz validator, dark, surface #1c1c1c: CVD dE 10.7, normal-vision dE 17.8, contrast >= 3:1;
+// the chroma check flags the gray, as intended for emphasis).
 import ReactECharts from "echarts-for-react";
 
-const SURFACE = "#111a2b";
-const SERIES_1 = "#3987e5"; // closed automatically
+const SURFACE = "#1c1c1c";
+const SERIES_1 = "#7a7a7a"; // closed automatically (the routine majority)
 const SERIES_2 = "#d95926"; // sent to an analyst
-const INK_2 = "#a8b3c4";
-const MUTED = "#7b8798";
-const GRID = "rgba(148,163,184,0.12)";
+const INK_2 = "#a6a6a6";
+const MUTED = "#767676";
+const GRID = "#2b2b2b";
+const TIP = { backgroundColor: "#262626", borderColor: "#3a3a3a", textStyle: { color: "#ececec", fontSize: 12 } };
 
 /** A one-series trend line for a stat tile (no axes; the tile's number is the headline). */
 export function Sparkline({ values, color = SERIES_1, height = 34, label }: { values: number[]; color?: string; height?: number; label: string }) {
@@ -24,9 +26,7 @@ export function Sparkline({ values, color = SERIES_1, height = 34, label }: { va
         tooltip: {
           trigger: "axis",
           axisPointer: { type: "line", lineStyle: { color: MUTED } },
-          backgroundColor: "#16223a",
-          borderColor: "rgba(148,163,184,0.26)",
-          textStyle: { color: "#e6ebf2", fontSize: 11 },
+          ...TIP,
           formatter: (p: { dataIndex: number; value: number }[]) => {
             const back = values.length - 1 - p[0].dataIndex;
             return `${label}: <b>${p[0].value}</b><br/><span style="color:${INK_2}">${back === 0 ? "this hour" : `${back} h ago`}</span>`;
@@ -60,10 +60,8 @@ export function ActivityChart({ hours, height = 230 }: { hours: HourBucket[]; he
         },
         tooltip: {
           trigger: "axis",
-          axisPointer: { type: "shadow", shadowStyle: { color: "rgba(148,163,184,0.08)" } },
-          backgroundColor: "#16223a",
-          borderColor: "rgba(148,163,184,0.26)",
-          textStyle: { color: "#e6ebf2", fontSize: 12 },
+          axisPointer: { type: "shadow", shadowStyle: { color: "rgba(255,255,255,0.05)" } },
+          ...TIP,
           formatter: (p: { dataIndex: number; seriesName: string; value: number; marker: string }[]) => {
             const h = hours[p[0].dataIndex];
             const total = h.closed_automatically + h.sent_to_analyst;
@@ -74,7 +72,7 @@ export function ActivityChart({ hours, height = 230 }: { hours: HourBucket[]; he
         },
         xAxis: {
           type: "category", data: labels,
-          axisLine: { lineStyle: { color: "rgba(148,163,184,0.3)" } },
+          axisLine: { lineStyle: { color: "#3a3a3a" } },
           axisTick: { show: false },
           axisLabel: { color: MUTED, fontSize: 11, interval: 2 },
         },

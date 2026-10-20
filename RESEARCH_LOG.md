@@ -2312,3 +2312,30 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `frontend/src/soc.css`, `frontend/src/hooks.ts`, `frontend/src/components/{Icons,Severity,Charts,PipelineFlow,EntityGraph}.tsx`
 - Modified: `frontend/src/{App.tsx,main.tsx,api.ts}`, `frontend/src/pages/{Live,Case}.tsx`, `perception/case_store.py`, `perception/review_service.py`, `soc_server/app.py`, `tests/test_soc_server.py`, `tests/test_monitoring.py`, `tools/ui_check.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: graphite theme (user: "why is everything so blue, it gives an AI feel")
+
+### What was tried
+- The navy surfaces, cyan accent and violet highlights read as a generic AI dashboard.
+- Replaced with a neutral graphite theme like real SOC consoles; colour is kept only where it means something:
+  - severity bands, status, attacker-writable text (red edge), steering marks;
+  - destructive or decisive buttons;
+  - small violet markers for LLM output.
+- **Theme:**
+  - Mantine dark palette neutral (#141414 page, #1c1c1c cards); primary colour a mid gray (neutral primary buttons; red / green / yellow keep their strength);
+  - smaller radii, fewer pills, no glow animation;
+  - normal-case labels instead of uppercase, links underlined in neutral ink.
+- **Triage chart:** now an emphasis encoding: cases closed automatically in gray, cases sent to an analyst in orange.
+  - Validated on #1c1c1c: CVD dE 10.7, normal-vision dE 17.8, contrast >= 3:1.
+  - The chroma check flags the gray, which is intended for emphasis.
+- The entity graph, sparklines and status colours were recoloured to match.
+
+### What was found
+- A first attempt set a light primary shade for all colours, which made every coloured button pale (white text on light green). Corrected to shade 7.
+- Live and the two case pages: 0 JavaScript errors. Screenshots in `D:\agentsoc_data\design_review\`.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 773 passed, 1 deselected.
+
+### Files created/modified
+- Modified: `frontend/src/soc.css`, `frontend/src/main.tsx`, `frontend/src/format.ts`, `frontend/src/App.tsx`, `frontend/src/components/Charts.tsx`, `frontend/src/components/EntityGraph.tsx`, `frontend/src/pages/Live.tsx`, `frontend/src/pages/Case.tsx`, `RESEARCH_LOG.md`

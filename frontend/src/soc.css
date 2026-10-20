@@ -1,28 +1,29 @@
-/* AgentSOC console styles: one dark "SOC" surface system used by every page. */
+/* AgentSOC console styles: one neutral graphite surface system used by every page.
+   Colour is reserved for meaning: severity, status, attacker text, LLM output. */
 
 :root {
-  --soc-bg: #0b1220;
-  --soc-surface: #111a2b;
-  --soc-surface-2: #16223a;
-  --soc-surface-3: #1c2a45;
-  --soc-border: rgba(148, 163, 184, 0.14);
-  --soc-border-strong: rgba(148, 163, 184, 0.26);
-  --soc-text: #e6ebf2;
-  --soc-text-2: #a8b3c4;
-  --soc-muted: #7b8798;
-  --soc-accent: #22d3ee;
-  --soc-accent-soft: rgba(34, 211, 238, 0.12);
+  --soc-bg: #141414;
+  --soc-surface: #1c1c1c;
+  --soc-surface-2: #232323;
+  --soc-surface-3: #2c2c2c;
+  --soc-border: #2b2b2b;
+  --soc-border-strong: #3a3a3a;
+  --soc-text: #ececec;
+  --soc-text-2: #a6a6a6;
+  --soc-muted: #767676;
+  --soc-accent: #d9d9d9;
+  --soc-accent-soft: rgba(255, 255, 255, 0.06);
   /* status: fixed, always paired with a label or number */
   --soc-critical: #d03b3b;
   --soc-serious: #ec835a;
   --soc-warning: #fab219;
   --soc-good: #0ca30c;
-  /* chart series (validated on --soc-surface) */
-  --soc-series-1: #3987e5;
+  /* chart: emphasis -- the routine majority gray, cases for an analyst in colour (validated on --soc-surface) */
+  --soc-series-1: #7a7a7a;
   --soc-series-2: #d95926;
-  /* LLM output (as in the paper's Fig. 1) */
-  --soc-llm: #a78bfa;
-  --soc-llm-soft: rgba(167, 139, 250, 0.12);
+  /* LLM output (violet, as in the paper's Fig. 1): small markers only */
+  --soc-llm: #a99be0;
+  --soc-llm-soft: transparent;
 }
 
 html,
@@ -33,8 +34,7 @@ body {
 
 /* ---- shell ---- */
 .soc-header {
-  background: rgba(11, 18, 32, 0.92);
-  backdrop-filter: blur(6px);
+  background: var(--soc-bg);
   border-bottom: 1px solid var(--soc-border) !important;
 }
 .soc-navbar {
@@ -42,7 +42,7 @@ body {
   border-right: 1px solid var(--soc-border) !important;
 }
 .soc-nav-item {
-  border-radius: 8px;
+  border-radius: 4px;
   color: var(--soc-text-2);
 }
 .soc-nav-item[data-active] {
@@ -54,8 +54,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 12px;
-  border-radius: 999px;
+  padding: 4px 12px;
+  border-radius: 4px;
   background: var(--soc-surface);
   border: 1px solid var(--soc-border);
   font-variant-numeric: tabular-nums;
@@ -68,33 +68,21 @@ body {
 }
 .soc-dot[data-state="running"] {
   background: var(--soc-good);
-  box-shadow: 0 0 0 0 rgba(12, 163, 12, 0.6);
-  animation: soc-pulse 1.8s infinite;
 }
 .soc-dot[data-state="paused"] {
   background: var(--soc-warning);
-}
-@keyframes soc-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(12, 163, 12, 0.55); }
-  70% { box-shadow: 0 0 0 8px rgba(12, 163, 12, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(12, 163, 12, 0); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .soc-dot[data-state="running"] { animation: none; }
 }
 
 /* ---- surfaces ---- */
 .soc-card {
   background: var(--soc-surface);
   border: 1px solid var(--soc-border);
-  border-radius: 12px;
+  border-radius: 6px;
 }
 .soc-card-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--soc-text-2);
+  color: var(--soc-text);
 }
 .soc-kpi-value {
   font-size: 28px;
@@ -114,11 +102,11 @@ body {
   min-width: 34px;
   height: 22px;
   padding: 0 6px;
-  border-radius: 6px;
+  border-radius: 3px;
   font-weight: 700;
   font-size: 12px;
   font-variant-numeric: tabular-nums;
-  color: #0b1220;
+  color: #141414;
 }
 .soc-sev[data-band="critical"] { background: var(--soc-critical); color: #fff; }
 .soc-sev[data-band="high"] { background: var(--soc-serious); }
@@ -139,18 +127,18 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 1px 8px;
-  border-radius: 999px;
+  padding: 1px 7px;
+  border-radius: 3px;
   border: 1px solid var(--soc-border-strong);
   font-size: 11.5px;
   color: var(--soc-text-2);
   white-space: nowrap;
 }
-.soc-chip[data-tone="llm"] { border-color: rgba(167, 139, 250, 0.45); color: var(--soc-llm); background: var(--soc-llm-soft); }
+.soc-chip[data-tone="llm"] { border-color: rgba(169, 155, 224, 0.35); color: var(--soc-llm); }
 .soc-chip[data-tone="alert"] { border-color: rgba(208, 59, 59, 0.55); color: #ff8a8a; background: rgba(208, 59, 59, 0.1); }
 .soc-chip[data-tone="good"] { border-color: rgba(12, 163, 12, 0.5); color: #5fd35f; background: rgba(12, 163, 12, 0.08); }
 .soc-chip[data-tone="warn"] { border-color: rgba(250, 178, 25, 0.5); color: var(--soc-warning); background: rgba(250, 178, 25, 0.08); }
-.soc-chip[data-tone="accent"] { border-color: rgba(34, 211, 238, 0.45); color: var(--soc-accent); background: var(--soc-accent-soft); }
+.soc-chip[data-tone="accent"] { border-color: #5a5a5a; color: var(--soc-text); background: var(--soc-accent-soft); }
 
 /* ---- queue ---- */
 .soc-queue-row {
@@ -169,9 +157,8 @@ body {
   grid-template-columns: 3px 52px minmax(0, 1fr) 150px 120px 110px;
   gap: 12px;
   padding: 6px 12px;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--soc-muted);
   border-bottom: 1px solid var(--soc-border);
 }
@@ -253,8 +240,8 @@ body {
 }
 .soc-untrusted {
   border-left: 3px solid var(--soc-critical);
-  background: rgba(208, 59, 59, 0.06);
-  border-radius: 0 8px 8px 0;
+  background: var(--soc-surface-2);
+  border-radius: 0 4px 4px 0;
   padding: 8px 12px;
   font-family: var(--mantine-font-family-monospace);
   font-size: 12.5px;
@@ -263,17 +250,26 @@ body {
 }
 .soc-callout {
   border-left: 3px solid var(--soc-warning);
-  background: rgba(250, 178, 25, 0.07);
-  border-radius: 0 8px 8px 0;
+  background: var(--soc-surface-2);
+  border-radius: 0 4px 4px 0;
   padding: 8px 12px;
 }
 
 /* ---- hypothesis cards ---- */
 .soc-hyp {
   border: 1px solid var(--soc-border);
-  border-top: 2px solid var(--soc-llm);
-  border-radius: 10px;
+  border-top: 2px solid var(--soc-border-strong);
+  border-radius: 6px;
   background: var(--soc-surface-2);
   padding: 12px;
 }
 .soc-hyp[data-unbound] { border-top-color: var(--soc-critical); }
+
+/* links: neutral text, underlined (no accent hue) */
+.soc-link,
+main a.mantine-Anchor-root {
+  color: var(--soc-text);
+  text-decoration: underline;
+  text-decoration-color: #555;
+  text-underline-offset: 2px;
+}
