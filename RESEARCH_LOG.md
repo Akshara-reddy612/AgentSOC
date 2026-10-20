@@ -2438,3 +2438,28 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - **Look:** both plots use the console's colours plus markers and dashes, so they survive grayscale print.
   - Fig. 3's legend first covered the reference line and was moved.
 - **Paper:** compiles cleanly, 5 pages.
+
+## 2026-10-20 — Session: dataset registry for the server (`--dataset`)
+
+### What was tried
+- **`soc_server/datasets.py`:** a `Dataset` record holding everything the server needs to know about a dataset. DEDALE is registered; factories import lazily.
+  - The fields: environment profile, seed, training window, demo start, replay source factories, recorded NCE cache, frozen comparison runs, and contamination families with their recorded answers.
+- **`python -m soc_server --dataset dedale`** (the default) reads everything from the registry.
+  - Non-DEDALE homes get `<data>/live_<name>`; their source ids are prefixed with the dataset name. DEDALE homes keep their ids, so they still restore.
+- **API:**
+  - `/live/status` carries the dataset label;
+  - Metrics takes the comparison runs from the dataset;
+  - new `/knowledge/hostnames` (hosts in the store, natural order).
+- **Frontend:** the header label and Live text come from the dataset; the Knowledge Store's host picker comes from the store instead of a hard-coded DEDALE list.
+
+### What was found
+- The steering-scenario home restored with the refactored CLI (no retraining).
+- `tools/e2e_check.py`: 9 / 9.
+
+### Test verification
+- New `tests/test_datasets.py` (2) and a hostnames / label test.
+- Full suite: see the commit.
+
+### Files created/modified
+- Created: `soc_server/datasets.py`, `tests/test_datasets.py`
+- Modified: `soc_server/__main__.py`, `soc_server/app.py`, `soc_server/reader.py`, `tests/test_soc_server.py`, `frontend/src/{api.ts,App.tsx,pages/Live.tsx,pages/Knowledge.tsx}`, `RESEARCH_LOG.md`

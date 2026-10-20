@@ -194,3 +194,10 @@ def test_host_timeline_lists_every_case_on_the_host_in_order(server):
     assert opened == sorted(opened)
     assert {"techniques", "actions", "outcome", "verdict"} <= set(t["cases"][0])
     assert client.get("/hosts/nohost/timeline", headers=h["alice"]).json()["total"] == 0
+
+
+def test_hostnames_in_natural_order_and_dataset_label(server):
+    client, runner, h = server
+    names = client.get("/knowledge/hostnames", headers=h["alice"]).json()
+    assert "CLIENT2" in names and names.index("CLIENT9") < names.index("CLIENT10")
+    assert client.get("/live/status", headers=h["alice"]).json()["dataset"] == "DEDALE"

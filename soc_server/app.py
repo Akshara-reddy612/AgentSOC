@@ -37,25 +37,30 @@ class SpeedIn(BaseModel):
     speed: float = Field(gt=0, le=86_400)
 
 
-def comparison() -> dict:
-    """Reviews per day of the frozen DEDALE runs (no learning / gate / no gate / analyst), if available."""
-    if not COMPARISON.exists():
+def comparison(path: Path | None = COMPARISON, run_ids: dict[str, str] | None = None) -> dict:
+    """Reviews per day of the dataset's frozen runs (no learning / gate / no gate / analyst), if available."""
+    if path is None or not path.exists():
         return {}
-    runs = json.loads(COMPARISON.read_text(encoding="utf-8"))["runs"]
+    runs = json.loads(path.read_text(encoding="utf-8"))["runs"]
     return {label: {"mean": runs[r]["reviews_per_day"]["mean"], "by_day": runs[r]["reviews_per_day"]["by_day"]}
-            for label, r in COMPARISON_RUNS.items() if r in runs}
+            for label, r in (run_ids or COMPARISON_RUNS).items() if r in runs}
 
 
-def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | None = None) -> FastAPI:
+def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | None = None, dataset=None) -> FastAPI:
+    """The demo API.  `dataset` (soc_server.datasets.Dataset) names the replay and its frozen comparison runs."""
     app = create_app(runner.cases, tokens, accounts=accounts, clock=runner.now)
     principal, role = app.state.principal, app.state.role
     reader = KnowledgeReader(runner.home / "ks.sqlite")
     service = ReviewService(runner.cases, clock=runner.now)
     app.state.reader = reader
 
+    label = dataset.label if dataset is not None else "DEDALE"
+    cmp_path = dataset.comparison if dataset is not None else COMPARISON
+    cmp_runs = dataset.comparison_runs if dataset is not None else COMPARISON_RUNS
+
     @app.get("/live/status")
     def live_status(p=Depends(principal)) -> dict:
-        return runner.status()
+        return {**runner.status(), "dataset": label}
 
     @app.get("/live/activity")
     def live_activity(hours: int = Query(24, ge=1, le=24 * 31), p=Depends(principal)) -> dict:
@@ -137,6 +142,11 @@ def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | Non
     def ks_summary(p=Depends(principal)) -> dict:
         return reader.summary()
 
+    @app.get("/knowledge/hostnames")
+    def ks_hostnames(p=Depends(principal)) -> list[str]:
+        """The hosts in the store (its inventory): for host pickers."""
+        return reader.hosts()
+
     @app.get("/knowledge/hosts/{host}")
     def ks_host(host: str, limit: int = Query(500, ge=1, le=5000), p=Depends(principal)) -> list[dict]:
         return reader.host_patterns(host, limit)
@@ -156,7 +166,7 @@ def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | Non
 
     @app.get("/metrics")
     def get_metrics(p=Depends(principal)) -> dict:
-        return {**metrics(runner.cases, reader), "comparison": comparison()}
+        return {**metrics(runner.cases, reader), "comparison": comparison(cmp_path, cmp_runs)}
 
     return app
 

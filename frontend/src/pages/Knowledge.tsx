@@ -5,7 +5,6 @@ import { api, type GraphData, type KnowledgeSummary, type Pattern, type Retracti
 import Graph from "../components/Graph";
 import { PROVENANCE_COLOR, PROVENANCE_LABEL, when } from "../format";
 
-const HOSTS = [...Array.from({ length: 30 }, (_, i) => `CLIENT${i + 1}`), "internalserver", "logserver", "dmzserver", "webserver", "vpnserver"];
 const PROVENANCES = ["training", "closed_benign", "analyst", "ungated", "telemetry", "config"];
 
 function Tile({ label, value, hint, tone }: { label: string; value: string | number; hint?: string; tone?: string }) {
@@ -38,7 +37,9 @@ export function ProvenanceLegend({ only }: { only?: string[] }) {
 const short = (node: string) => node.split(":").slice(1).join(":").split("\\").pop();
 
 export default function Knowledge() {
-  const [host, setHost] = useState<string>("CLIENT2");
+  const hostnames = useQuery({ queryKey: ["ks-hostnames"], queryFn: () => api<string[]>("/knowledge/hostnames"), staleTime: 60_000 });
+  const [picked, setHost] = useState<string | null>(null);
+  const host = picked ?? (hostnames.data?.includes("CLIENT2") ? "CLIENT2" : hostnames.data?.[0] ?? "CLIENT2");
   const summary = useQuery({ queryKey: ["ks-summary"], queryFn: () => api<KnowledgeSummary>("/knowledge/summary"), refetchInterval: 5000 });
   const graph = useQuery({ queryKey: ["ks-graph", host], queryFn: () => api<GraphData>(`/knowledge/graph/${encodeURIComponent(host)}?limit=80`) });
   const patterns = useQuery({ queryKey: ["ks-host", host], queryFn: () => api<Pattern[]>(`/knowledge/hosts/${encodeURIComponent(host)}?limit=300`), refetchInterval: 5000 });
@@ -112,7 +113,7 @@ export default function Knowledge() {
                 <Text className="soc-card-title">Around a host</Text>
                 <Text size="xs" c="dimmed">Latest 80 patterns; edges coloured by provenance. Hover a node for its name, scroll to zoom.</Text>
               </div>
-              <Select size="xs" w={180} data={HOSTS} value={host} onChange={(v) => v && setHost(v)} searchable aria-label="Host" />
+              <Select size="xs" w={180} data={hostnames.data ?? [host]} value={host} onChange={(v) => v && setHost(v)} searchable aria-label="Host" />
             </Group>
             {graph.isLoading ? <Loader /> : graph.data && graph.data.edges.length ? <Graph data={graph.data} /> : <Text c="dimmed" size="sm">Nothing learned on this host.</Text>}
             <Group justify="space-between" mt="xs" wrap="wrap" gap="xs">

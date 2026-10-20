@@ -67,7 +67,7 @@ export default function App() {
             <span style={{ color: "var(--soc-brand)", display: "flex" }}><IconLogo size={24} /></span>
             <div>
               <Text fw={700} size="lg" lh={1.1}>AgentSOC</Text>
-              <Text size="xs" c="dimmed" lh={1.1}>{live.data?.mode === "follow" ? "live logs" : "DEDALE replay"}</Text>
+              <Text size="xs" c="dimmed" lh={1.1}>{live.data?.mode === "follow" ? "live logs" : `${live.data?.dataset ?? "DEDALE"} replay`}</Text>
             </div>
           </Group>
           <StreamClock />

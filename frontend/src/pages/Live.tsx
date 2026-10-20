@@ -198,7 +198,8 @@ export default function Live() {
         <div>
           <Title order={2}>SOC overview</Title>
           <Text size="sm" c="dimmed" maw={760}>
-            {follow ? "Following live log files as they grow." : "A day in the SOC during the DEDALE attack."} Activity the
+            {follow ? "Following live log files as they grow."
+              : s?.dataset && s.dataset !== "DEDALE" ? `Replaying the ${s.dataset} dataset.` : "A day in the SOC during the DEDALE attack."} Activity the
             Knowledge Store has learned as routine stays silent; new patterns become cases, triaged by the pipeline and
             ordered for review.
           </Text>

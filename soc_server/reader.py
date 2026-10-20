@@ -59,6 +59,12 @@ class KnowledgeReader:
         return {"nodes": nodes, "edges": dict(edges), "log_entries": sum(ops.values()),
                 "retractions": ops.get("retract_edge", 0)}
 
+    def hosts(self) -> list[str]:
+        """Host names in the store (inventory and observed), natural order (CLIENT2 before CLIENT10)."""
+        import re
+        names = [n for n, in self._q("SELECT json_extract(attrs, '$.host_id') FROM nodes WHERE node_type = 'HostNode'") if n]
+        return sorted(set(names), key=lambda s: [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", s)])
+
     def host_patterns(self, host: str, limit: int = 500) -> list[dict]:
         """What the store has learned about one host: its detector patterns and logons, with provenance."""
         node, key = host_node_id(host), json.dumps(f"host:{host.lower()}")
