@@ -2339,3 +2339,9 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `frontend/src/soc.css`, `frontend/src/main.tsx`, `frontend/src/format.ts`, `frontend/src/App.tsx`, `frontend/src/components/Charts.tsx`, `frontend/src/components/EntityGraph.tsx`, `frontend/src/pages/Live.tsx`, `frontend/src/pages/Case.tsx`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: muted red brand accent (user)
+
+- The user asked for a muted red accent. `--soc-brand` #b4483f (3.4:1 on the page background) is used for the chrome only: the logo, the active menu item's bar and icon, and the keyboard focus ring.
+- It is never used on data or buttons, so it cannot be mistaken for critical severity (#d03b3b, which stays on priority bands).
+- Checked in headless Edge: 0 JavaScript errors.

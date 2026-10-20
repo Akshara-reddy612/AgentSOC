@@ -59,7 +59,7 @@ export default function App() {
       <AppShell.Header className="soc-header">
         <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
           <Group gap={10} wrap="nowrap">
-            <span style={{ color: "var(--soc-text)", display: "flex" }}><IconLogo size={24} /></span>
+            <span style={{ color: "var(--soc-brand)", display: "flex" }}><IconLogo size={24} /></span>
             <div>
               <Text fw={700} size="lg" lh={1.1}>AgentSOC</Text>
               <Text size="xs" c="dimmed" lh={1.1}>{live.data?.mode === "follow" ? "live logs" : "DEDALE replay"}</Text>
