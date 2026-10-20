@@ -2536,3 +2536,11 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
   - `derived/` contents identical (md5 of every file);
   - the code reads host events, host labels (10,593), Suricata alerts and Zeek attack flows (84) from it.
 - It replaces the 27.1 GB Windows-log archive, the 4.4 GB Zeek archive and the hour-long extraction for the demo and all DEDALE experiments. Documented in `HANDOVER.md`.
+
+## 2026-10-21 — Session: handover docs brought up to date
+
+- Checked every document the onboarding prompt names, for stale statements.
+- **Fixed:**
+  - `PROJECT_PLAN.md` M8 row (was "in progress");
+  - `PROJECT_STATUS.md`: milestone rows for M3 (said Figs. 2 and 3 not drawn), M5 and M8; the tool section, which now covers the host timeline, Lab, dataset registry, e2e check and the team data package;
+  - `DEMO_BACKEND_DESIGN.md`: named a `--data` flag the server does not have (it is `--home`); now lists accounts in the browser, console data endpoints, the Lab and the dataset registry; its "not built" note on highlighting is corrected.
