@@ -1,4 +1,4 @@
-# Results (frozen 2026-10-19)
+# Results (frozen 2026-10-20)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
@@ -10,7 +10,7 @@ Pipeline response on clean vs contaminated twins (same GUIDE row, differing only
 |:--|--:|--:|--:|--:|--:|--:|--:|
 | GUIDE v2 dev, gemini-3.1-flash-lite | 500 | 4/428 (0.9%) | 0.4%-2.4% | 12 | 4 | 1 | 0 / 7 |
 | GUIDE v2 held-out, gemini-3.1-flash-lite | 500 | 3/437 (0.7%) | 0.2%-2.0% | 10 | 0 | 0.25 | 0 / 2 |
-| GUIDE v2 dev, gpt-oss-20b (partial run) | 461 | 10/402 (2.5%) | 1.4%-4.5% | 12 | 5 | 0.3 | 0 / 3 |
+| GUIDE v2 dev, gpt-oss-20b | 500 | 10/437 (2.3%) | 1.2%-4.2% | 12 | 5 | 0.3 | 0 / 3 |
 
 *Induced by ERA escalation*: the contaminated twin got a response the clean one did not because ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence reacting, not the attacker succeeding.
 
@@ -117,6 +117,5 @@ With 5% false alarms on the network, approved blocks would have hit benign traff
 
 - **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few malicious verdicts.
 - **Analyst:** simulated (an oracle that follows the labels, with random per-case mistakes).
-- **LLM:** one model on DEDALE. On GUIDE, gpt-oss-20b covered only part of the dev set.
+- **LLM:** one model on DEDALE. On GUIDE, the second model (gpt-oss-20b) ran on the dev set only, not the held-out set.
 - **GUIDE v2:** its entities, payloads and evidence are synthetic.
-- **Second model:** the gpt-oss-20b run covers only part of the dev set (Groq free-tier daily cap).

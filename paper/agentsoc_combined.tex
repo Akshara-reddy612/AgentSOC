@@ -194,7 +194,7 @@ from the store itself: an event whose structured pattern the store has not learn
 
 \textbf{Conditions.} Learning modes: static (nothing learned), frozen (training only), gated, ungated. A simulated
 analyst gives verdicts from the labels after a delay, with optional seeded mistakes. NCE is
-\texttt{gemini-3.1-flash-lite} (and \texttt{gpt-oss-20b} on part of GUIDE); live outputs are recorded and replayed,
+\texttt{gemini-3.1-flash-lite} (and \texttt{gpt-oss-20b} on the GUIDE development set); live outputs are recorded and replayed,
 so every number is reproducible offline.
 
 \section{Results}
@@ -205,7 +205,9 @@ twin received in 4 of 428 (development) and 3 of 437 (held-out) pairs; the oppos
 escalation were 4 and 0 (McNemar $p=1.0$ and $0.25$). The LLM followed identity-steering payloads, but every steered
 hypothesis was flagged by entity binding and no misdirected action was executed. On the same 500 development pairs,
 the undefended LLM triage agent was hijacked into dismissing 130 of 439 contaminated alerts (29.6\%, 95\% CI
-25.5--34.0\%, $p=6.5\times10^{-17}$), against 4 of 428 for the pipeline.
+25.5--34.0\%, $p=6.5\times10^{-17}$), against 4 of 428 for the pipeline. With a second model,
+\texttt{gpt-oss-20b}, as the NCE, the pipeline's response was suppressed on 10 of 437 development pairs (2.3\%, 95\%
+CI 1.2--4.2\%) against 5 opposite flips ($p=0.3$), and again no misdirected action was executed.
 
 \begin{table}[t]
 \caption{Contamination on GUIDE v2 (clean vs contaminated twins).}\label{tab:c1}
@@ -217,12 +219,11 @@ Run & Suppressed & Induced (non-ERA) & Misdirected exec. \\
 \midrule
 Dev, Gemini & 4/428 (0.9\%) & 4 & 0 \\
 Held-out, Gemini & 3/437 (0.7\%) & 0 & 0 \\
-Dev, gpt-oss-20b\textsuperscript{*} & 10/402 (2.5\%) & 5 & 0 \\
+Dev, gpt-oss-20b & 10/437 (2.3\%) & 5 & 0 \\
 \midrule
 Undefended agent, dev & 130/439 (29.6\%) & -- & -- \\
 \bottomrule
-\end{tabular}}\\[2pt]
-{\footnotesize \textsuperscript{*}partial run (461 of 500 pairs); \todo{update when complete}.}
+\end{tabular}}
 \end{table}
 
 \textbf{Through the full loop on real telemetry (E1).} On DEDALE, we appended attacker text to the command lines of
@@ -347,8 +348,8 @@ how fast or how accurately analysts decide, which is where its explanations woul
 malicious verdicts.
 \item A simulated analyst: an oracle with random, per-case mistakes. Real analysts' mistakes are likely correlated
 with how well the attacker blends in, which would make C3 harder.
-\item One LLM on DEDALE (\texttt{gemini-3.1-flash-lite}). The second model covers only part of the GUIDE development
-set (Table~\ref{tab:c1}).
+\item One LLM on DEDALE (\texttt{gemini-3.1-flash-lite}). The second model, \texttt{gpt-oss-20b}, was run on the GUIDE
+development set only (Table~\ref{tab:c1}).
 \item GUIDE v2's entities, evidence and payloads are synthetic. E1 injects text only into command lines, with three
 payload families.
 \item Tampering with structured sensor fields is outside the defences (Section~\ref{sec:c1}).
