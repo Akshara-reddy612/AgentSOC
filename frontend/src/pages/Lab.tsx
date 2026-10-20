@@ -174,6 +174,7 @@ export default function Lab() {
               ]} />
           </Group>
         </Group>
+        <Table.ScrollContainer minWidth={820} type="native">
         <Table verticalSpacing={6} fz="sm" highlightOnHover>
           <Table.Thead>
             <Table.Tr>
@@ -223,6 +224,7 @@ export default function Lab() {
             ))}
           </Table.Tbody>
         </Table>
+        </Table.ScrollContainer>
         {pairs.data && pairs.data.total > 25 && (
           <Group justify="center" p="sm"><Pagination size="sm" total={Math.ceil(pairs.data.total / 25)} value={page} onChange={setPage} /></Group>
         )}

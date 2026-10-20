@@ -2477,3 +2477,14 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
   - The steps: data, package and environment model, Linux host detectors, labels for scoring only, replays, freeze and scores, LLM answers, demo registration, paper and tracking.
   - Ends with a checklist.
 - **README and `frontend/README.md`:** the new pages, `--dataset`, the end-to-end check and the design notes.
+
+## 2026-10-20 — Session: narrow-window check
+
+- **The user's question (Lab: 130 / 439 vs 4 / 428):** the denominators differ by design.
+  - 439 = pairs where the undefended agent did not dismiss the clean alert on its own (it dismissed 61 of 500).
+  - 428 = pairs where the pipeline responded to the clean alert (it closed 72 of 500 on its own).
+  - Each rate is "the attack worked when it had something to suppress", the same as Table I.
+- **The cut-off in the user's screenshot:** no window controls or address-bar icons are visible at its right edge, so the screenshot is cropped. At that width there was no overflow.
+- **Probe:** every page in headless Edge at 900 / 1,000 / 1,100 / 1,280 px, listing elements past the window's right edge.
+  - Found: below about 1,050 px the Lab's pair table (and the Knowledge Store provenance table) were wider than their cards, and the card clipped the last columns.
+  - Fixed: both now scroll horizontally (Mantine `Table.ScrollContainer`). No page is wider than the window at 900–1,280 px.

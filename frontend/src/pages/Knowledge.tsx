@@ -86,7 +86,8 @@ export default function Knowledge() {
                 style={{ flex: byProv[p], background: PROVENANCE_COLOR[p], minWidth: 3 }} />
             ))}
           </div>
-          <Table fz="xs" verticalSpacing={4} mt="sm" style={{ fontVariantNumeric: "tabular-nums" }}>
+          <Table.ScrollContainer minWidth={760} type="native" mt="sm">
+          <Table fz="xs" verticalSpacing={4} style={{ fontVariantNumeric: "tabular-nums" }}>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Pattern type</Table.Th>
@@ -102,6 +103,7 @@ export default function Knowledge() {
               ))}
             </Table.Tbody>
           </Table>
+          </Table.ScrollContainer>
         </div>
       )}
 
