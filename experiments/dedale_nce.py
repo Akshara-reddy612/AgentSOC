@@ -20,6 +20,7 @@ API keys are never printed or logged.
 from __future__ import annotations
 
 import json
+import shutil
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +31,9 @@ from perception.sse import TECHNIQUE_TABLE
 
 MODEL = "gemini-3.1-flash-lite"
 CACHE = data_dir().parent / "runs" / "nce_cache_host.jsonl"
+# The answers recorded for the paper, kept in the repository (2026-10-20, handover).  A machine whose data
+# folder has no cache yet starts from a copy of them; live answers are only ever appended to that copy.
+RECORDED = Path(__file__).resolve().parent / "dedale_results" / "nce_cache"
 API_LOG = data_dir().parent / "runs" / "nce_api_log_host.jsonl"
 
 
@@ -74,6 +78,9 @@ class LiveNCE:
         self.cache_only = cache_only
         self.cache_misses = 0
         self.cache_path = cache_path         # E1: one cache per payload family (same alert ids, other text)
+        if not cache_path.exists() and (RECORDED / cache_path.name).exists():
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(RECORDED / cache_path.name, cache_path)
         self.cache: dict[str, dict] = {}
         if cache_path.exists():
             with open(cache_path, encoding="utf-8") as f:

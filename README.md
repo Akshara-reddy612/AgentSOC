@@ -52,11 +52,17 @@ Needs Python 3.13, plus Node 22 for the frontend.
 ```
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements-lock.txt      # Linux / macOS: .venv/bin/python
+.venv\Scripts\python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 set HF_HUB_OFFLINE=1                                               # bash: export HF_HUB_OFFLINE=1
 .venv\Scripts\python -m pytest -q
 ```
 
-Data lives outside the repository: `../agentsoc_data` by default, or wherever `AGENTSOC_DATA_DIR` points. The demo and the DEDALE experiments need DEDALE there (see [Data](#data)). The tests do not.
+The third line downloads, once, the 88 MB embedding model that the text-risk detector (ERA) uses. The tests then run offline.
+
+Data lives outside the repository: `../agentsoc_data` by default, or wherever `AGENTSOC_DATA_DIR` points.
+- The demo and the DEDALE experiments need DEDALE there (see [Data](#data)).
+- The tests do not: with an empty data folder they pass, and one data-dependent test is skipped.
+- The recorded LLM answers for DEDALE ship in the repository (`experiments/dedale_results/nce_cache/`) and are copied into the data folder automatically.
 
 ## Run the demo
 
