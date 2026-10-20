@@ -2265,3 +2265,50 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - Created: `PROJECT_STATUS.md` (new short version), `archive/README.md`
 - Moved: `agentsoc2_paper_corrected.{tex,pdf}`, `SESSION1_STATUS.md`, `nce8_clean_fp_investigation.md`, `t1071_mislabeling_investigation.md`, `demo.py`, `demo_phase2.py`, `scratch/`, 27 `experiments/` one-offs, `PROJECT_STATUS.md` -> `archive/...`
 - Modified: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_{results.json,api_log.jsonl}`, `experiments/build_results.py`, `experiments/RESULTS.md`, `paper/agentsoc_combined.{tex,pdf}`, `PROJECT_PLAN.md`, `PAPER_OUTLINE.md`, `REPRODUCE.md`, `README.md`, `pyproject.toml`, `agent/run_baseline_eval.py`, `experiments/PAPER_CLAIMS_TO_REVISE.md`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: frontend design pass (Live and Case, for approval)
+
+### What was tried
+- Decision P7: Claude designs the frontend, and the user approves the new Live and Case pages before the rest. Branch `design`.
+- **Look:**
+  - a navy SOC-console theme (Mantine dark palette plus `frontend/src/soc.css`);
+  - inline SVG icons (no new package);
+  - priority bands from the fixed status colours, always shown with the score;
+  - header stream clock and user menu.
+- **Charts** (dataviz method):
+  - the triage chart is a stacked bar of cases per stream hour, closed automatically vs sent to an analyst;
+  - the two series colours were validated on the console surface (#111a2b): CVD dE 26.8, normal-vision dE 31.8, contrast >= 3:1;
+  - sparklines in two stat tiles;
+  - the status colours were checked too: they fail as a categorical set, as expected, so they are used only for priority bands with the number.
+- **Live:**
+  - stat tiles;
+  - triage chart;
+  - hosts with waiting cases (click to filter);
+  - queue with search, status and kind filters, and "group similar":
+    - network cases grouped by signature + the internal host (STUN requests and responses each become one row: "172.17.0.5 -> 13 destinations", "12 sources -> 172.17.0.5");
+    - host cases by pattern without the host.
+- **Case:**
+  - header with severity, host tier and chips;
+  - the 8-stage pipeline as a flow, each stage with its result and colour (click to jump);
+  - evidence split trusted / attacker-writable with the steering marks;
+  - hypothesis cards (ATT&CK name, roles with unbound names in red, feasibility, binding, best response and guardrail reason);
+  - decision, containment, learning;
+  - right column: analyst decision, entity graph (concentric: the alert's host in the middle, LLM-named entities outside, unbound ones red and dashed), related cases, notes and audit.
+- **Backend:**
+  - `/live/activity?hours=N` (`CaseStore.opened_per_hour`);
+  - `/techniques` (names from SSE's `TECHNIQUE_TABLE`);
+  - queue items gain `kind`, `host_tier`, feasible `techniques` and a `group` key (`review_service.group_key`).
+
+### What was found
+- **Screenshot artifact:** `tools/ui_check.py` shifted fixed layouts by about 20 px when capturing beyond the viewport, which made the main column look clipped. Measured in the browser (heading at x = 252 as expected) and fixed: the viewport is now resized to the page height before the capture.
+- **401s on the sign-in screen:** the shell polled `/live/status` before anyone signed in; the query now waits for a session.
+- **Port clash:** `tests/test_monitoring.py` used the fixed port 8769, which collided with a running demo server. It now takes a free port.
+- **Checked in headless Edge:** Live, a steered host case and a network case, 0 JavaScript errors. Screenshots for review: `D:\agentsoc_data\design_review\`.
+- The user's demo (`D:\agentsoc_data\demo`, port 8000) was restarted on the new build.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 772 passed, 1 deselected, plus the fixed monitoring test (24 / 24 in `tests/test_monitoring.py`).
+
+### Files created/modified
+- Created: `frontend/src/soc.css`, `frontend/src/hooks.ts`, `frontend/src/components/{Icons,Severity,Charts,PipelineFlow,EntityGraph}.tsx`
+- Modified: `frontend/src/{App.tsx,main.tsx,api.ts}`, `frontend/src/pages/{Live,Case}.tsx`, `perception/case_store.py`, `perception/review_service.py`, `soc_server/app.py`, `tests/test_soc_server.py`, `tests/test_monitoring.py`, `tools/ui_check.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

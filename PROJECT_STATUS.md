@@ -24,7 +24,7 @@ The goal now is the handover (decision P7). Before the project goes to the team,
 | gpt-oss-20b run, final tables | Done 2026-10-20 |
 | Full-replay soak test | Done 2026-10-20 (below) |
 | Repository cleanup | Done 2026-10-20 (`archive/README.md`) |
-| Frontend design pass (Live and Case first, for approval) | To do |
+| Frontend design pass (Live and Case first, for approval) | Live and Case done 2026-10-20 on branch `design`; awaiting the user's approval, then the other pages |
 | Contamination Lab page (GUIDE) | To do |
 | Paper Figs. 2 and 3 | To do |
 | Fresh-clone check; one-command end-to-end browser check | To do |
