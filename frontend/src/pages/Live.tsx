@@ -1,7 +1,7 @@
-import { Alert, Button, Grid, Group, SegmentedControl, Stack, Switch, Text, TextInput, Title, Tooltip } from "@mantine/core";
+import { Alert, Anchor, Button, Grid, Group, SegmentedControl, Stack, Switch, Text, TextInput, Title, Tooltip } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { api, type LiveStatus, type QueueItem } from "../api";
 import { canControl, useAuth } from "../auth";
 import { ActivityChart, Sparkline, type HourBucket } from "../components/Charts";
@@ -274,12 +274,17 @@ export default function Live() {
                   <Group gap={8} wrap="nowrap">
                     <Text size="xs" c="dimmed">{h.n} {h.n === 1 ? "case" : "cases"}</Text>
                     <SeverityPill priority={h.max} />
+                    {h.host !== "—" && (
+                      <Anchor component={Link} to={`/hosts/${encodeURIComponent(h.host)}`} size="xs" onClick={(e) => e.stopPropagation()}>
+                        timeline
+                      </Anchor>
+                    )}
                   </Group>
                 </Group>
               ))}
               {!hosts.length && <Text size="sm" c="dimmed">Nothing waiting.</Text>}
             </Stack>
-            <Text size="xs" c="dimmed" mt="sm">Click a host to filter the queue.</Text>
+            <Text size="xs" c="dimmed" mt="sm">Click a host to filter the queue, or open its timeline.</Text>
           </div>
         </Grid.Col>
       </Grid>

@@ -348,10 +348,12 @@ export default function CasePage() {
               <Title order={3} style={{ wordBreak: "break-word" }}>{c.title}</Title>
             </Group>
             <Group gap={6} mt="xs">
-              <span className="soc-chip">
-                {network ? <IconNetwork size={13} /> : <IconHost size={13} />}
-                {c.host ?? "—"}{c.host_tier != null ? ` · ${TIER[c.host_tier] ?? `tier ${c.host_tier}`}` : ""}
-              </span>
+              <Tooltip label="Open the host's timeline">
+                <Link to={c.host ? `/hosts/${encodeURIComponent(c.host)}` : "#"} className="soc-chip" style={{ textDecoration: "none" }}>
+                  {network ? <IconNetwork size={13} /> : <IconHost size={13} />}
+                  {c.host ?? "—"}{c.host_tier != null ? ` · ${TIER[c.host_tier] ?? `tier ${c.host_tier}`}` : ""}
+                </Link>
+              </Tooltip>
               <span className="soc-chip">{network ? "network alert (IDS)" : "host alert"}</span>
               <span className="soc-chip">{c.case_id}</span>
               <span className="soc-chip">opened {when(c.opened).slice(0, 16)}</span>

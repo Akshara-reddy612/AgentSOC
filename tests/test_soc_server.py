@@ -184,3 +184,13 @@ def test_contamination_lab_reproduces_table_one(server):
     assert field == pair["metadata"]["site"] and 0 <= a < b <= len(x["untrusted"][field])
     assert not any(k.startswith("_") for k in {**x["trusted"], **x["untrusted"]})   # no ground truth in the alert
     assert client.get("/lab/nope/summary", headers=h["alice"]).status_code == 404
+
+
+def test_host_timeline_lists_every_case_on_the_host_in_order(server):
+    client, runner, h = server
+    t = client.get("/hosts/CLIENT2/timeline", headers=h["alice"]).json()
+    assert t["host"] == "CLIENT2" and t["total"] == len(runner.cases.cases(host="CLIENT2")) > 0
+    opened = [c["opened"] for c in t["cases"]]
+    assert opened == sorted(opened)
+    assert {"techniques", "actions", "outcome", "verdict"} <= set(t["cases"][0])
+    assert client.get("/hosts/nohost/timeline", headers=h["alice"]).json()["total"] == 0

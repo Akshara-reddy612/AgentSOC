@@ -2403,3 +2403,19 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `soc_server/lab.py`, `frontend/src/pages/{Lab,LabPair}.tsx`
 - Modified: `soc_server/app.py`, `frontend/src/App.tsx`, `tests/test_soc_server.py`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: host timeline
+
+### What was tried
+- **`ReviewService.host_timeline` and `/hosts/{host}/timeline`:** every case the SOC opened on a host, oldest first, with triage outcome, review status, verdict, feasible techniques and containment.
+  - Pipeline data only: DEDALE's attack labels are never read (invariant I4), so the view works on any dataset.
+- **Frontend:** the host page has counts, an activity strip over stream time (closed by the pipeline in gray, sent to an analyst in orange, a red ring for confirmed malicious; click a dot to open the case) and a day-by-day chronology. It is linked from the Live hosts panel and the case header.
+
+### What was found
+- CLIENT2's morning reads as the attack as the SOC saw it, from 10:01: a PowerShell script fingerprint, ZIP files, a "Dotted Quad Host ZIP Request" to 172.19.1.1, and so on.
+- **First version:** the strip's time axis showed the browser's local time (IST, +5:30) while every other time in the console is UTC. It now sets ECharts `useUTC`.
+- 0 JavaScript errors.
+
+### Files created/modified
+- Created: `frontend/src/pages/Host.tsx`
+- Modified: `perception/review_service.py`, `soc_server/app.py`, `tests/test_soc_server.py`, `frontend/src/{App.tsx,pages/Live.tsx,pages/Case.tsx}`, `RESEARCH_LOG.md`

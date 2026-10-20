@@ -71,6 +71,11 @@ def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | Non
             t += timedelta(hours=1)
         return {"hours": out}
 
+    @app.get("/hosts/{host}/timeline")
+    def host_timeline(host: str, limit: int = Query(500, ge=1, le=5000), p=Depends(principal)) -> dict:
+        """Every case on a host, oldest first (the host's story as the SOC saw it)."""
+        return service.host_timeline(host, limit)
+
     lab = Lab()
 
     def _lab(call):

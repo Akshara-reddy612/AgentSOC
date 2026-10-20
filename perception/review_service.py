@@ -182,6 +182,24 @@ class ReviewService:
         items.sort(key=lambda i: (-i["priority"], i["opened"], i["case_id"]))
         return items[:limit]
 
+    def host_timeline(self, host: str, limit: int = 500) -> dict:
+        """
+        Every case the SOC opened on a host, oldest first: what it saw there and what happened to
+        each case (triage outcome, review, verdict, containment).  Pipeline data only, no labels.
+        """
+        cases = sorted(self.store.cases(host=host, limit=100_000), key=lambda c: (c["opened"], c["case_id"]))
+        items = []
+        for c in cases[-limit:]:
+            d = self.store.decision(c["case_id"]) or {}
+            acts = self.store.actions(c["case_id"])
+            items.append({k: c[k] for k in ("case_id", "title", "kind", "opened", "last_seen", "alert_count", "outcome",
+                                            "review_status", "verdict")}
+                         | {"techniques": sorted({h["technique_id"] for h in d.get("hypotheses", [])
+                                                  if h.get("sse_verdict") == "FEASIBLE"}),
+                            "actions": [{"action": a["action"], "target": a["target"], "status": a["status"]} for a in acts]})
+        tiers = [c["host_tier"] for c in cases if c.get("host_tier") is not None]
+        return {"host": host, "tier": tiers[0] if tiers else None, "total": len(cases), "cases": items}
+
     def case_view(self, case_id: str) -> dict:
         c = self.store.case(case_id)
         if c is None:

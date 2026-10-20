@@ -14,6 +14,7 @@ const Account = lazy(() => import("./pages/Account"));
 const Knowledge = lazy(() => import("./pages/Knowledge"));
 const MetricsPage = lazy(() => import("./pages/Metrics"));
 const Lab = lazy(() => import("./pages/Lab"));
+const HostPage = lazy(() => import("./pages/Host"));
 const LabPair = lazy(() => import("./pages/LabPair"));
 
 const NAV: { to: string; label: string; hint: string; icon: ReactNode }[] = [
@@ -55,7 +56,8 @@ export default function App() {
   if (!session) return <Login />;
 
   const active = (to: string) =>
-    to === "/" ? location.pathname === "/" || location.pathname.startsWith("/cases") : location.pathname.startsWith(to);
+    to === "/" ? location.pathname === "/" || location.pathname.startsWith("/cases") || location.pathname.startsWith("/hosts")
+      : location.pathname.startsWith(to);
 
   return (
     <AppShell header={{ height: 60 }} navbar={{ width: 232, breakpoint: "sm" }} padding="lg">
@@ -113,6 +115,7 @@ export default function App() {
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/metrics" element={<MetricsPage />} />
             <Route path="/lab" element={<Lab />} />
+            <Route path="/hosts/:host" element={<HostPage />} />
             <Route path="/lab/:run/:pairId" element={<LabPair />} />
             <Route path="/admin" element={session.role === "admin" ? <Admin /> : <Navigate to="/" />} />
             <Route path="/account" element={<Account />} />
