@@ -5,6 +5,6 @@ markers = [
 # By default, exclude smoke tests from the regular suite.
 # Run smoke tests explicitly with: pytest -m smoke
 addopts = "-m 'not smoke'"
-# Only these directories hold real tests; agent/ and scratch/ contain
+# Only these directories hold real tests; agent/ and archive/ contain
 # test_*.py scripts that make live API calls and must never be collected.
 testpaths = ["tests", "experiments"]

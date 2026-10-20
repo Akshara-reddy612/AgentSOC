@@ -137,3 +137,67 @@ def test_injected_source_passes_events_through_the_injector():
 
     out = list(InjectedSource(Src(), lambda e: dict(e, cmd=e["cmd"] + " # x")).events(1))
     assert out == [(2, "t2", {"cmd": "b # x"})]
+
+
+def test_activity_queue_fields_and_techniques(server):
+    client, runner, h = server
+    act = client.get("/live/activity?hours=48", headers=h["alice"]).json()["hours"]
+    assert len(act) == 48 and act[-1]["hour"].startswith("2025-01-07T12")
+    assert sum(x["sent_to_analyst"] + x["closed_automatically"] for x in act) == len(runner.cases.cases())
+    q = client.get("/queue", headers=h["alice"]).json()
+    assert q and all({"kind", "host_tier", "group", "techniques"} <= set(i) for i in q)
+    assert all(i["group"].startswith("host|") and "CLIENT2" not in i["group"] for i in q)
+    t = client.get("/techniques", headers=h["alice"]).json()
+    assert t["T1078"]["name"] == "Valid Accounts" and t["T1071"]["name"]
+
+
+def test_group_key_drops_the_varying_endpoint():
+    from perception.review_service import group_key
+    a = {"case_key": [2016149, "172.17.0.5", "185.208.37.90"], "host": "vpnserver"}
+    b = {"case_key": [2016149, "172.17.0.5", "64.131.63.216"], "host": "vpnserver"}
+    r = {"case_key": [2016150, "64.131.63.216", "172.17.0.5"], "host": "vpnserver"}
+    r2 = {"case_key": [2016150, "77.72.169.212", "172.17.0.5"], "host": "vpnserver"}
+    c = {"case_key": [2016149, "172.17.0.9", "185.208.37.90"], "host": "webserver"}
+    assert group_key(a) == group_key(b) != group_key(c)
+    assert group_key(r) == group_key(r2) != group_key(a)
+    h1 = {"case_key": ["host", "lineage", "CLIENT1", "-", "c:\\windows\\system32\\usoclient.exe"]}
+    h2 = {"case_key": ["host", "lineage", "CLIENT9", "-", "c:\\windows\\system32\\usoclient.exe"]}
+    assert group_key(h1) == group_key(h2)
+
+
+def test_contamination_lab_reproduces_table_one(server):
+    client, runner, h = server
+    runs = client.get("/lab/runs", headers=h["alice"]).json()
+    assert [r["id"] for r in runs] == ["dev_gemini", "heldout_gemini", "dev_gptoss"]
+    expected = {"dev_gemini": (4, 428, 12, 4), "heldout_gemini": (3, 437, 10, 0), "dev_gptoss": (10, 437, 12, 5)}
+    for run, (supp, resp, era, other) in expected.items():                     # experiments/RESULTS.md, C1
+        t = client.get(f"/lab/{run}/summary", headers=h["alice"]).json()["total"]
+        assert (t["suppressed"], t["clean_responded"], t["induced_by_era"], t["induced"]) == (supp, resp, era, other)
+        assert t["pairs"] == 500 and t["misdirect_executed"] == 0
+    und = client.get("/lab/dev_gemini/summary", headers=h["alice"]).json()["undefended"]
+    assert (und["hijacked"], und["clean_not_dismissed"]) == (130, 439)
+    rows = client.get("/lab/dev_gemini/pairs?change=suppressed", headers=h["alice"]).json()
+    assert rows["total"] == 4
+    pair = client.get(f"/lab/dev_gemini/pairs/{rows['items'][0]['pair_id']}", headers=h["alice"]).json()
+    x = pair["variants"]["contaminated"]
+    (field, (a, b)), = x["injected"].items()
+    assert field == pair["metadata"]["site"] and 0 <= a < b <= len(x["untrusted"][field])
+    assert not any(k.startswith("_") for k in {**x["trusted"], **x["untrusted"]})   # no ground truth in the alert
+    assert client.get("/lab/nope/summary", headers=h["alice"]).status_code == 404
+
+
+def test_host_timeline_lists_every_case_on_the_host_in_order(server):
+    client, runner, h = server
+    t = client.get("/hosts/CLIENT2/timeline", headers=h["alice"]).json()
+    assert t["host"] == "CLIENT2" and t["total"] == len(runner.cases.cases(host="CLIENT2")) > 0
+    opened = [c["opened"] for c in t["cases"]]
+    assert opened == sorted(opened)
+    assert {"techniques", "actions", "outcome", "verdict"} <= set(t["cases"][0])
+    assert client.get("/hosts/nohost/timeline", headers=h["alice"]).json()["total"] == 0
+
+
+def test_hostnames_in_natural_order_and_dataset_label(server):
+    client, runner, h = server
+    names = client.get("/knowledge/hostnames", headers=h["alice"]).json()
+    assert "CLIENT2" in names and names.index("CLIENT9") < names.index("CLIENT10")
+    assert client.get("/live/status", headers=h["alice"]).json()["dataset"] == "DEDALE"

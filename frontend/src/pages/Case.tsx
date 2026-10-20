@@ -1,17 +1,35 @@
 import {
-  Alert, Anchor, Badge, Button, Card, Code, Grid, Group, Highlight, Loader, Stack, Table, Text, Textarea, Timeline, Title,
-  Tooltip,
+  Alert, Anchor, Badge, Button, Grid, Group, Highlight, Loader, SimpleGrid, Stack, Text, Textarea, Title, Tooltip,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { lazy, Suspense, useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, type Action, type CaseView, type Stage, type Trace, type Verdict } from "../api";
 import { canControl, useAuth } from "../auth";
+import { IconBrain, IconHost, IconNetwork, IconWarning } from "../components/Icons";
+import { PipelineFlow, flowSteps } from "../components/PipelineFlow";
+import { SeverityPill, SeverityStripe } from "../components/Severity";
 import { OUTCOME_COLOR, STATUS_COLOR, VERDICT_COLOR, short, when } from "../format";
+import { useTechniques } from "../hooks";
+
+const EntityGraph = lazy(() => import("../components/EntityGraph"));
 
 type Row = Record<string, unknown>;
 
 const ROLE_LABEL: Record<string, string> = { source_account: "account", source_host: "source", target_host: "target" };
+const TIER: Record<number, string> = { 0: "workstation", 1: "server", 2: "critical server", 3: "domain controller" };
+const PLAYBOOK: Record<string, [string, string]> = {
+  PENDING_ANALYST_REVIEW: ["needs approval", "warn"],
+  AUTO_APPROVED: ["auto-approved", "alert"],
+  REJECTED_BY_GUARDRAIL: ["blocked by guardrail", "neutral"],
+  LOGGED_EXPECTED_ACTIVITY: ["logged as expected", "neutral"],
+  DRY_RUN_FAILED: ["dry run failed", "neutral"],
+};
+const FEASIBILITY: Record<string, [string, string]> = {
+  FEASIBLE: ["feasible", "warn"],
+  CONDITIONALLY_FEASIBLE: ["conditionally feasible", "neutral"],
+  INFEASIBLE: ["infeasible", "neutral"],
+};
 
 /**
  * Names the LLM's hypotheses used that entity binding could not tie to the alert's trusted fields
@@ -41,209 +59,138 @@ function markTerms(unbound: string[][]): string[] {
   return [...out];
 }
 
-function KeyValues({ data }: { data: Record<string, unknown> }) {
+function Section({ stage, n, title, extra, children }: { stage: string; n: string; title: string; extra?: ReactNode; children: ReactNode }) {
+  return (
+    <div id={`stage-${stage}`} className="soc-card soc-section-anchor" style={{ padding: 16 }}>
+      <Group justify="space-between" mb="sm" wrap="nowrap">
+        <Group gap={10} wrap="nowrap">
+          <span className="soc-chip" style={{ fontWeight: 700 }}>{n}</span>
+          <Text fw={600}>{title}</Text>
+        </Group>
+        {extra}
+      </Group>
+      {children}
+    </div>
+  );
+}
+
+function KeyValues({ data }: { data: Row }) {
   const entries = Object.entries(data).filter(([, v]) => v !== null && v !== undefined && v !== "");
   return (
-    <Table withRowBorders={false} verticalSpacing={2}>
-      <Table.Tbody>
-        {entries.map(([k, v]) => (
-          <Table.Tr key={k}>
-            <Table.Td w={170}>
-              <Text size="xs" c="dimmed">
-                {k}
-              </Text>
-            </Table.Td>
-            <Table.Td>
-              <Text size="xs" ff="monospace" style={{ wordBreak: "break-all" }}>
-                {short(v)}
-              </Text>
-            </Table.Td>
-          </Table.Tr>
-        ))}
-      </Table.Tbody>
-    </Table>
+    <dl className="soc-kv" style={{ margin: 0 }}>
+      {entries.map(([k, v]) => (
+        <div key={k} style={{ display: "contents" }}>
+          <dt>{k}</dt>
+          <dd>{short(v)}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
 
-function RowsTable({ rows, cols }: { rows: Row[]; cols: [string, string][] }) {
-  if (!rows.length)
-    return (
-      <Text size="sm" c="dimmed">
-        none
-      </Text>
-    );
-  return (
-    <Table verticalSpacing={4} fz="xs">
-      <Table.Thead>
-        <Table.Tr>
-          {cols.map(([, label]) => (
-            <Table.Th key={label}>{label}</Table.Th>
-          ))}
-        </Table.Tr>
-      </Table.Thead>
-      <Table.Tbody>
-        {rows.map((r, i) => (
-          <Table.Tr key={i}>
-            {cols.map(([k]) => (
-              <Table.Td key={k} style={BADGE_COLS.has(k) ? { whiteSpace: "nowrap" } : undefined}>
-                <CellValue name={k} value={r[k]} />
-              </Table.Td>
-            ))}
-          </Table.Tr>
-        ))}
-      </Table.Tbody>
-    </Table>
-  );
-}
-
-const BADGE_COLS = new Set(["sse_verdict", "entity_binding", "playbook_status"]);
-
-function CellValue({ name, value }: { name: string; value: unknown }) {
-  const v = short(value);
-  if (name === "sse_verdict") {
-    const [text, c] = v === "FEASIBLE" ? ["feasible", "orange"] : v === "INFEASIBLE" ? ["infeasible", "dimmed"]
-      : v === "CONDITIONALLY_FEASIBLE" ? ["conditional", "yellow"] : [v.toLowerCase(), "dimmed"];
-    return (
-      <Tooltip label={v}>
-        <Text size="xs" fw={700} c={c} style={{ whiteSpace: "nowrap" }}>{text}</Text>
-      </Tooltip>
-    );
-  }
-  if (name === "entity_binding") {
-    const c = v === "unbound" ? "red" : v === "partial" ? "yellow" : "green";
-    return (
-      <Tooltip label={v === "unbound" ? "names entities that are not in the alert's trusted fields (possible steering)" : "entities match the alert"}>
-        <Text size="xs" fw={700} c={c} style={{ whiteSpace: "nowrap" }}>{v}</Text>
-      </Tooltip>
-    );
-  }
-  if (name === "playbook_status") {
-    const label: Record<string, [string, string]> = {
-      PENDING_ANALYST_REVIEW: ["needs approval", "orange"],
-      AUTO_APPROVED: ["auto-approved", "red"],
-      REJECTED_BY_GUARDRAIL: ["blocked", "gray"],
-      LOGGED_EXPECTED_ACTIVITY: ["logged (expected)", "gray"],
-      DRY_RUN_FAILED: ["dry run failed", "gray"],
-    };
-    const [text, color] = label[v] ?? [v, "gray"];
-    return (
-      <Tooltip label={v}>
-        <Text size="xs" fw={700} c={color} style={{ whiteSpace: "nowrap" }}>{text}</Text>
-      </Tooltip>
-    );
-  }
-  return <Text size="xs" ff="monospace">{v}</Text>;
-}
-
-function StageBody({ stage, unbound }: { stage: Stage; unbound: string[][] }) {
+function Evidence({ stage, unbound }: { stage: Stage; unbound: string[][] }) {
   const terms = markTerms(unbound);
-  switch (stage.stage) {
-    case "alert": {
-      const all = Object.entries(stage.untrusted as Row);
-      const others = all.filter(([k]) => k !== "raw_log_line");
-      const fields = others.length ? others : all; // network alerts: the raw line is the only text
-      const marked = fields.some(([, v]) => terms.some((t) => short(v).toLowerCase().includes(t.toLowerCase())));
-      return (
+  const all = Object.entries((stage.untrusted ?? {}) as Row);
+  const others = all.filter(([k]) => k !== "raw_log_line");
+  const fields = others.length ? others : all; // network alerts: the raw line is the only text
+  const marked = fields.some(([, v]) => terms.some((t) => short(v).toLowerCase().includes(t.toLowerCase())));
+  return (
+    <Grid gap="lg">
+      <Grid.Col span={{ base: 12, md: 6 }}>
+        <Text size="sm" fw={600} mb={6}>Trusted <Text span size="xs" c="dimmed" fw={400}>· sensor and inventory fields</Text></Text>
+        <KeyValues data={(stage.trusted ?? {}) as Row} />
+      </Grid.Col>
+      <Grid.Col span={{ base: 12, md: 6 }}>
+        <Group gap={6} mb={6}>
+          <span style={{ color: "var(--soc-critical)", display: "inline-flex" }}><IconWarning size={14} /></span>
+          <Text size="sm" fw={600}>Untrusted <Text span size="xs" c="dimmed" fw={400}>· attacker-writable text</Text></Text>
+        </Group>
+        <Text size="xs" c="dimmed" mb="xs">{String(stage.untrusted_notice ?? "")}</Text>
+        {marked && (
+          <div className="soc-callout" style={{ marginBottom: 8 }}>
+            <Text size="xs" fw={700} c="yellow">Possible steering</Text>
+            <Text size="xs" c="dimmed">
+              Marked: names that the LLM's hypotheses used but the alert's trusted fields do not support (entity binding:
+              unbound). They appear here, in text the attacker can write. The marks inform the analyst; they change no decision.
+            </Text>
+          </div>
+        )}
         <Stack gap="xs">
-          <Text size="sm" fw={500}>{String(stage.pattern)}</Text>
-          <Text size="xs" c="dimmed">Trusted (structured sensor and inventory fields)</Text>
-          <KeyValues data={stage.trusted as Row} />
-          <Alert color="red" variant="light" title="Untrusted text" p="xs">
-            <Text size="xs">{String(stage.untrusted_notice)}</Text>
-          </Alert>
-          {marked && (
-            <Alert color="yellow" variant="light" title="Possible steering" p="xs">
-              <Text size="xs">
-                Marked: names that the LLM's hypotheses used but the alert's trusted fields do not support (entity
-                binding: unbound). They appear here, in text the attacker can write. The marks inform the analyst;
-                they change no decision.
-              </Text>
-            </Alert>
-          )}
           {fields.map(([k, v]) => (
             <div key={k}>
-              <Text size="xs" c="dimmed">{k}</Text>
-              <Code block style={{ borderLeft: "3px solid var(--mantine-color-red-6)", whiteSpace: "pre-wrap" }}>
+              <Text size="xs" c="dimmed" mb={2}>{k}</Text>
+              <div className="soc-untrusted">
                 {terms.length ? (
-                  <Highlight component="span" size="xs" ff="monospace" highlight={terms} color="yellow">
-                    {short(v)}
-                  </Highlight>
+                  <Highlight component="span" size="xs" ff="monospace" highlight={terms} color="yellow">{short(v)}</Highlight>
                 ) : (
                   short(v)
                 )}
-              </Code>
+              </div>
             </div>
           ))}
+          {!fields.length && <Text size="xs" c="dimmed">none</Text>}
         </Stack>
-      );
-    }
-    case "triage_gate":
-      return (
-        <Stack gap={4}>
-          <Group gap="xs">
-            <Badge variant="light">{String(stage.path)}</Badge>
-            <Text size="sm">{String(stage.explanation)}</Text>
+      </Grid.Col>
+    </Grid>
+  );
+}
+
+function Hypothesis({ h, check, response, unbound, names }: { h: Row; check: Row; response?: Row; unbound: string[]; names: Record<string, { name: string; detail: string }> }) {
+  const tid = String(h.technique_id ?? "");
+  const roles = (check.binding_roles ?? {}) as Record<string, string>;
+  const [feasText, feasTone] = FEASIBILITY[String(check.sse_verdict)] ?? [String(check.sse_verdict ?? "—").toLowerCase(), "neutral"];
+  const binding = String(check.entity_binding ?? "");
+  const [pbText, pbTone] = response ? PLAYBOOK[String(response.playbook_status)] ?? [String(response.playbook_status ?? ""), "neutral"] : ["", ""];
+  return (
+    <div className="soc-hyp" data-unbound={unbound.length ? true : undefined}>
+      <Group justify="space-between" wrap="nowrap" align="flex-start">
+        <div style={{ minWidth: 0 }}>
+          <Group gap={6}>
+            <span className="soc-chip" data-tone="llm">{tid}</span>
+            <Text size="sm" fw={600}>{names[tid]?.name ?? "technique"}</Text>
           </Group>
-          {(stage.escalations as string[]).map((e, i) => (
-            <Alert key={i} color="orange" p="xs">{e}</Alert>
-          ))}
-        </Stack>
-      );
-    case "reasoning":
-      return (
-        <Stack gap={4}>
-          <Group gap="xs">
-            <Badge color="grape">LLM output</Badge>
-            <Text size="xs" c="dimmed">NCE status: {String(stage.nce_status)}</Text>
-          </Group>
-          <Text size="xs" c="dimmed">{String(stage.notice)}</Text>
-          <RowsTable rows={stage.hypotheses as Row[]} cols={[["technique_id", "Technique"], ["source_account", "Account"], ["source_host", "Source"], ["target_host", "Target"]]} />
-        </Stack>
-      );
-    case "structural_check":
-      return (
-        <RowsTable
-          rows={(stage.checks as Row[]).map((c, i) => ({ ...c, unbound: (unbound[i] ?? []).join(", ") || "—" }))}
-          cols={[["technique_id", "Technique"], ["sse_verdict", "Feasibility"], ["path_confidence", "Path confidence"], ["entity_binding", "Entity binding"], ["unbound", "Not in trusted fields"]]}
-        />
-      );
-    case "response":
-      return (
-        <RowsTable
-          rows={stage.responses as Row[]}
-          cols={[["technique_id", "Technique"], ["top_action", "Best response"], ["top_target_host", "Target host"], ["top_composite", "Score"], ["playbook_status", "Guardrails"], ["guardrail_reason", "Why"]]}
-        />
-      );
-    case "decision":
-      return (
-        <Stack gap={4}>
-          <Badge color={OUTCOME_COLOR[String(stage.outcome)] ?? "gray"} size="lg">{String(stage.outcome)}</Badge>
-          {(stage.reasons as string[]).map((r, i) => (
-            <Text key={i} size="sm">• {r}</Text>
-          ))}
-        </Stack>
-      );
-    case "actions":
-      return null; // rendered with controls below
-    case "learning":
-      return (
-        <Stack gap={4}>
-          <Group gap="xs">
-            <Badge color={STATUS_COLOR[String(stage.review_status)] ?? "gray"} variant="light">{String(stage.review_status)}</Badge>
-            {stage.verdict ? <Badge color={VERDICT_COLOR[String(stage.verdict)]}>{String(stage.verdict)}</Badge> : null}
-          </Group>
-          <Text size="xs" c="dimmed">What each verdict would do to the Knowledge Store:</Text>
-          {Object.entries(stage.preview as Record<string, string>).map(([k, v]) => (
-            <Text key={k} size="xs">
-              <Badge size="xs" color={VERDICT_COLOR[k]} mr={6}>{k}</Badge>
-              {v}
+          {names[tid]?.detail && <Text size="xs" c="dimmed" mt={2}>{names[tid].detail}</Text>}
+        </div>
+        <Tooltip label="LLM output: a lead, not a finding">
+          <span style={{ color: "var(--soc-llm)", display: "inline-flex" }}><IconBrain size={16} /></span>
+        </Tooltip>
+      </Group>
+      <dl className="soc-kv" style={{ margin: "10px 0 0", gridTemplateColumns: "70px minmax(0,1fr)" }}>
+        {(["source_account", "source_host", "target_host"] as const).map((role) => (
+          <div key={role} style={{ display: "contents" }}>
+            <dt>{ROLE_LABEL[role]}</dt>
+            <dd style={roles[role] === "unbound" ? { color: "#ff8a8a" } : undefined}>
+              {short(h[role])}
+              {roles[role] === "unbound" && (
+                <Text span size="xs" c="dimmed" ff="text" style={{ display: "block" }}>not in the alert's trusted fields</Text>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <Group gap={6} mt="sm">
+        <Tooltip label={`Structural feasibility (SSE)${check.path_confidence != null ? `, path confidence ${String(check.path_confidence)}` : ""}`}>
+          <span className="soc-chip" data-tone={feasTone}>{feasText}</span>
+        </Tooltip>
+        <Tooltip label={binding === "unbound" ? "names entities that are not in the alert's trusted fields (possible steering)" : "entity binding: the names match the alert"}>
+          <span className="soc-chip" data-tone={binding === "unbound" ? "alert" : binding === "bound" ? "good" : "warn"}>{binding || "—"}</span>
+        </Tooltip>
+      </Group>
+      {response && (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid var(--soc-border)" }}>
+          <Group justify="space-between" wrap="nowrap">
+            <Text size="xs">
+              Best response: <b>{String(response.top_action)}</b>
+              {response.top_target_host ? ` → ${String(response.top_target_host)}` : ""}
+              <Text span c="dimmed" size="xs">{` · score ${String(response.top_composite)}`}</Text>
             </Text>
-          ))}
-        </Stack>
-      );
-    default:
-      return <KeyValues data={stage as Row} />;
-  }
+            <span className="soc-chip" data-tone={pbTone}>{pbText}</span>
+          </Group>
+          {response.guardrail_reason ? <Text size="xs" c="dimmed" mt={4}>{String(response.guardrail_reason)}</Text> : null}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ActionRow({ a, caseId }: { a: Action; caseId: string }) {
@@ -256,42 +203,42 @@ function ActionRow({ a, caseId }: { a: Action; caseId: string }) {
       void qc.invalidateQueries({ queryKey: ["trace", caseId] });
     },
   });
+  const tone = a.status === "executed" ? "alert" : a.status === "proposed" || a.status === "approved" ? "warn" : "neutral";
   return (
-    <Card withBorder p="xs">
-      <Group justify="space-between">
+    <div className="soc-hyp" style={{ borderTopColor: "var(--soc-border-strong)" }}>
+      <Group justify="space-between" wrap="nowrap">
         <div>
-          <Text size="sm" fw={500}>
-            {a.action} → {a.target}
-          </Text>
-          <Text size="xs" c="dimmed">
-            {a.status} · approvals {a.approvals.length}/{a.approvals_needed}
+          <Group gap={6}>
+            <Text size="sm" fw={600}>{a.action}</Text>
+            <Text size="sm" c="dimmed">→ {a.target}</Text>
+            <span className="soc-chip" data-tone={tone}>{a.status}</span>
+          </Group>
+          <Text size="xs" c="dimmed" mt={2}>
+            Simulated · approvals {a.approvals.length}/{a.approvals_needed}
             {a.approvals_needed > 1 ? " (four-eyes: critical host)" : ""}
             {a.approvals.length ? ` · ${a.approvals.join(", ")}` : ""}
           </Text>
         </div>
-        <Group gap="xs">
+        <Group gap="xs" wrap="nowrap">
           {a.status === "proposed" && (
             <>
-              <Button size="xs" color="red" onClick={() => op.mutate({ path: `/actions/${a.action_id}/approve` })}>
-                Approve (simulated)
-              </Button>
-              <Button size="xs" variant="default" disabled={!reason.trim()} onClick={() => op.mutate({ path: `/actions/${a.action_id}/reject`, body: { reason } })}>
-                Reject
-              </Button>
+              <Button size="xs" color="red" onClick={() => op.mutate({ path: `/actions/${a.action_id}/approve` })}>Approve</Button>
+              <Button size="xs" variant="default" disabled={!reason.trim()}
+                onClick={() => op.mutate({ path: `/actions/${a.action_id}/reject`, body: { reason } })}>Reject</Button>
             </>
           )}
           {a.status === "executed" && (
-            <Button size="xs" variant="default" disabled={!reason.trim()} onClick={() => op.mutate({ path: `/actions/${a.action_id}/rollback`, body: { reason } })}>
-              Roll back
-            </Button>
+            <Button size="xs" variant="default" disabled={!reason.trim()}
+              onClick={() => op.mutate({ path: `/actions/${a.action_id}/rollback`, body: { reason } })}>Roll back</Button>
           )}
         </Group>
       </Group>
       {(a.status === "proposed" || a.status === "executed") && (
-        <Textarea mt="xs" size="xs" autosize placeholder="Reason (required to reject or roll back)" value={reason} onChange={(e) => setReason(e.currentTarget.value)} />
+        <Textarea mt="xs" size="xs" autosize placeholder="Reason (required to reject or roll back)" value={reason}
+          onChange={(e) => setReason(e.currentTarget.value)} />
       )}
       {op.error && <Alert color="red" mt="xs" p="xs">{String((op.error as Error).message)}</Alert>}
-    </Card>
+    </div>
   );
 }
 
@@ -310,12 +257,12 @@ function VerdictPanel({ view }: { view: CaseView }) {
   const withdrawable = c.review_status === "closed" && c.verdict === "malicious" && canControl(session?.role);
 
   return (
-    <Card withBorder>
-      <Title order={5} mb="xs">Analyst decision</Title>
+    <div className="soc-card" style={{ padding: 16 }}>
+      <Text className="soc-card-title" mb="xs">Analyst decision</Text>
       {!reviewable ? (
         <Stack gap="xs">
           <Text size="sm" c="dimmed">
-            {c.review_status === "closed" ? `Closed as ${c.verdict} by ${c.claimed_by}.` : "This case was not sent for review."}
+            {c.review_status === "closed" ? `Closed as ${c.verdict} by ${c.claimed_by}.` : "The pipeline did not send this case for review."}
           </Text>
           {withdrawable && (
             <>
@@ -340,25 +287,22 @@ function VerdictPanel({ view }: { view: CaseView }) {
             )}
           </Group>
           <Textarea size="xs" autosize minRows={2} placeholder="Note (optional; stays in the case store, never learned)" value={note} onChange={(e) => setNote(e.currentTarget.value)} />
-          <Group gap="xs">
+          <SimpleGrid cols={2} spacing="xs">
             {(["malicious", "benign", "benign_once", "needs_info"] as Verdict[]).map((v) => (
               <Tooltip key={v} multiline w={360} label={view.learning_preview[v]}>
-                <Button
-                  size="xs"
-                  color={VERDICT_COLOR[v]}
-                  variant={v === "malicious" ? "filled" : "light"}
+                <Button size="xs" color={VERDICT_COLOR[v]} variant={v === "malicious" ? "filled" : v === "benign_once" ? "default" : "light"}
                   disabled={c.review_status === "claimed" && !mine}
-                  onClick={() => op.mutate({ path: `/cases/${id}/verdict`, body: { verdict: v, note: note || undefined } })}
-                >
+                  onClick={() => op.mutate({ path: `/cases/${id}/verdict`, body: { verdict: v, note: note || undefined } })}>
                   {v.replace("_", " ")}
                 </Button>
               </Tooltip>
             ))}
-          </Group>
+          </SimpleGrid>
+          <Text size="xs" c="dimmed">Hover a verdict to see what the Knowledge Store will learn.</Text>
         </Stack>
       )}
       {op.error && <Alert color="red" mt="xs" p="xs">{String((op.error as Error).message)}</Alert>}
-    </Card>
+    </div>
   );
 }
 
@@ -366,82 +310,171 @@ export default function CasePage() {
   const { caseId = "" } = useParams();
   const view = useQuery({ queryKey: ["case", caseId], queryFn: () => api<CaseView>(`/cases/${caseId}`), refetchInterval: 4000 });
   const trace = useQuery({ queryKey: ["trace", caseId], queryFn: () => api<Trace>(`/cases/${caseId}/trace`), refetchInterval: 4000 });
+  const techniques = useTechniques();
   if (view.isLoading || trace.isLoading) return <Loader />;
   if (view.error || !view.data || !trace.data) return <Alert color="red">{String(view.error ?? trace.error)}</Alert>;
   const v = view.data;
   const c = v.case;
-  const unbound = unboundEntities(trace.data.stages);
+  const stages = trace.data.stages;
+  const by = Object.fromEntries(stages.map((s) => [s.stage, s])) as Record<string, Stage>;
+  const hyps = (by.reasoning?.hypotheses ?? []) as Row[];
+  const checks = (by.structural_check?.checks ?? []) as Row[];
+  const responses = [...((by.response?.responses ?? []) as Row[])];
+  const unbound = unboundEntities(stages);
+  const steps = flowSteps(stages, v.actions);
+  const names = techniques.data ?? {};
+  const go = (stage: string) => {
+    const id = ["structural_check", "response"].includes(stage) ? "reasoning" : stage;
+    document.getElementById(`stage-${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const responseFor = (h: Row) => {
+    const i = responses.findIndex((r) => r.technique_id === h.technique_id);
+    return i >= 0 ? responses.splice(i, 1)[0] : undefined;
+  };
+  const decision = by.decision ?? ({} as Stage);
+  const learning = by.learning ?? ({} as Stage);
+  const network = c.kind === "network";
 
   return (
-    <Stack>
-      <Anchor component={Link} to="/" size="sm">← Queue</Anchor>
-      <Group justify="space-between" align="flex-start">
-        <div>
-          <Title order={3}>{c.title}</Title>
-          <Text size="sm" c="dimmed">
-            {c.case_id} · host {c.host ?? "—"}{c.host_tier !== null ? ` (tier ${c.host_tier})` : ""} · opened {when(c.opened)} · {c.alert_count} alerts
-          </Text>
-        </div>
-        <Group gap="xs">
-          <Badge color={OUTCOME_COLOR[c.outcome] ?? "gray"} size="lg">{c.outcome}</Badge>
-          <Tooltip multiline w={420} label={v.priority_reasons.join("\n") || "no priority factors"} style={{ whiteSpace: "pre-line" }}>
-            <Badge variant="outline" size="lg">priority {v.priority}</Badge>
-          </Tooltip>
-        </Group>
-      </Group>
+    <Stack gap="lg">
+      <Anchor component={Link} to="/" size="sm">← Review queue</Anchor>
 
-      <Grid>
+      <div className="soc-card" style={{ display: "flex", overflow: "hidden" }}>
+        <div style={{ display: "flex", width: 4 }}><SeverityStripe priority={v.priority} /></div>
+        <Group justify="space-between" align="flex-start" p="md" style={{ flex: 1 }} wrap="wrap" gap="md">
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <Group gap="sm" wrap="nowrap" align="center">
+              <SeverityPill priority={v.priority} reasons={v.priority_reasons} />
+              <Title order={3} style={{ wordBreak: "break-word" }}>{c.title}</Title>
+            </Group>
+            <Group gap={6} mt="xs">
+              <Tooltip label="Open the host's timeline">
+                <Link to={c.host ? `/hosts/${encodeURIComponent(c.host)}` : "#"} className="soc-chip" style={{ textDecoration: "none" }}>
+                  {network ? <IconNetwork size={13} /> : <IconHost size={13} />}
+                  {c.host ?? "—"}{c.host_tier != null ? ` · ${TIER[c.host_tier] ?? `tier ${c.host_tier}`}` : ""}
+                </Link>
+              </Tooltip>
+              <span className="soc-chip">{network ? "network alert (IDS)" : "host alert"}</span>
+              <span className="soc-chip">{c.case_id}</span>
+              <span className="soc-chip">opened {when(c.opened).slice(0, 16)}</span>
+              <span className="soc-chip">{c.alert_count} {c.alert_count === 1 ? "alert" : "alerts"}</span>
+            </Group>
+          </div>
+          <Group gap="xs">
+            <Badge size="lg" color={OUTCOME_COLOR[c.outcome] ?? "gray"}>{c.outcome}</Badge>
+            <Badge size="lg" variant="light" color={STATUS_COLOR[c.review_status] ?? "gray"}>{c.review_status.replace("_", " ")}</Badge>
+            {c.verdict && <Badge size="lg" color={VERDICT_COLOR[c.verdict]}>{c.verdict}</Badge>}
+          </Group>
+        </Group>
+      </div>
+
+      <div className="soc-card" style={{ padding: "16px 12px 14px" }}>
+        <Group justify="space-between" mb="sm" px={4}>
+          <Text className="soc-card-title">Pipeline</Text>
+          <Text size="xs" c="dimmed">Each stage and what it decided for this case. Click a stage for its detail.</Text>
+        </Group>
+        <PipelineFlow steps={steps} onSelect={go} />
+      </div>
+
+      <Grid gap="lg">
         <Grid.Col span={{ base: 12, lg: 8 }}>
-          <Card withBorder>
-            <Title order={5} mb="sm">Pipeline trace</Title>
-            <Timeline active={trace.data.stages.length} bulletSize={22} lineWidth={2}>
-              {trace.data.stages.map((s, i) => (
-                <Timeline.Item key={s.stage} title={`${i + 1}. ${s.title}`}>
-                  {s.stage === "actions" ? (
-                    <Stack gap="xs" mt={4}>
-                      {v.actions.length ? v.actions.map((a) => <ActionRow key={a.action_id} a={a} caseId={c.case_id} />) : <Text size="sm" c="dimmed">No containment proposed.</Text>}
-                    </Stack>
-                  ) : (
-                    <div style={{ marginTop: 4 }}>
-                      <StageBody stage={s} unbound={unbound} />
-                    </div>
-                  )}
-                </Timeline.Item>
+          <Stack gap="lg">
+            {by.alert && (
+              <Section stage="alert" n="1" title="Sensor alert" extra={<Text size="xs" c="dimmed">{String(by.alert.pattern ?? "")}</Text>}>
+                <Evidence stage={by.alert} unbound={unbound} />
+              </Section>
+            )}
+            {by.triage_gate && (
+              <Section stage="triage_gate" n="2" title="Triage gate">
+                <Group gap="xs">
+                  <span className="soc-chip" data-tone="accent">{String(by.triage_gate.path ?? "—")}</span>
+                  <Text size="sm">{String(by.triage_gate.explanation ?? "")}</Text>
+                </Group>
+                {((by.triage_gate.escalations ?? []) as string[]).map((e, i) => (
+                  <Alert key={i} color="orange" variant="light" p="xs" mt="xs">{e}</Alert>
+                ))}
+              </Section>
+            )}
+            <Section stage="reasoning" n="3–5" title="LLM hypotheses, checks and responses"
+              extra={<span className="soc-chip" data-tone="llm">LLM output · NCE {String(by.reasoning?.nce_status ?? "—")}</span>}>
+              <Text size="xs" c="dimmed" mb="sm">{String(by.reasoning?.notice ?? "")}</Text>
+              {hyps.length ? (
+                <SimpleGrid cols={{ base: 1, md: 2 }} spacing="sm">
+                  {hyps.map((h, i) => (
+                    <Hypothesis key={i} h={h} check={checks[i] ?? {}} response={responseFor(h)} unbound={unbound[i] ?? []} names={names} />
+                  ))}
+                </SimpleGrid>
+              ) : (
+                <Text size="sm" c="dimmed">No hypotheses: the LLM did not run for this case, or proposed none.</Text>
+              )}
+            </Section>
+            <Section stage="decision" n="6" title="Decision">
+              <Group gap="xs" mb={6}>
+                <Badge size="lg" color={OUTCOME_COLOR[String(decision.outcome)] ?? "gray"}>{String(decision.outcome ?? "—")}</Badge>
+                {decision.pipeline_outcome && decision.pipeline_outcome !== decision.outcome ? (
+                  <Text size="xs" c="dimmed">pipeline alone: {String(decision.pipeline_outcome)}</Text>
+                ) : null}
+              </Group>
+              {((decision.reasons ?? []) as string[]).map((r, i) => (
+                <Text key={i} size="sm">• {r}</Text>
               ))}
-            </Timeline>
-          </Card>
+            </Section>
+            <Section stage="actions" n="7" title="Containment">
+              <Stack gap="xs">
+                {v.actions.length ? v.actions.map((a) => <ActionRow key={a.action_id} a={a} caseId={c.case_id} />)
+                  : <Text size="sm" c="dimmed">No containment proposed.</Text>}
+              </Stack>
+            </Section>
+            <Section stage="learning" n="8" title="What the Knowledge Store learns">
+              <Stack gap={6}>
+                {Object.entries((learning.preview ?? {}) as Record<string, string>).map(([k, text]) => (
+                  <Group key={k} gap="xs" wrap="nowrap" align="flex-start">
+                    <Badge size="sm" w={96} color={VERDICT_COLOR[k]} variant={c.verdict === k ? "filled" : "light"}>{k.replace("_", " ")}</Badge>
+                    <Text size="sm" style={{ flex: 1 }}>{text}</Text>
+                  </Group>
+                ))}
+              </Stack>
+            </Section>
+          </Stack>
         </Grid.Col>
         <Grid.Col span={{ base: 12, lg: 4 }}>
-          <Stack>
+          <Stack gap="lg" style={{ position: "sticky", top: 76 }}>
             <VerdictPanel view={v} />
-            <Card withBorder>
-              <Title order={6} mb="xs">Related cases</Title>
-              {[...v.related.same_pattern.map((r) => ({ ...r, why: "same pattern" })), ...v.related.same_host_in_queue.map((r) => ({ ...r, why: "same host" }))]
-                .slice(0, 12)
-                .map((r) => (
-                  <Text key={r.case_id + r.why} size="xs">
-                    <Anchor component={Link} to={`/cases/${r.case_id}`}>{r.case_id}</Anchor> · {r.why} · {r.title} · {r.review_status}
-                    {r.verdict ? ` (${r.verdict})` : ""}
-                  </Text>
+            <div className="soc-card" style={{ padding: 16 }}>
+              <Text className="soc-card-title">Entities</Text>
+              <Text size="xs" c="dimmed" mb={4}>
+                From the trusted fields, plus what each hypothesis named (violet). Red dashed: a name the trusted fields do not support.
+              </Text>
+              <Suspense fallback={<Loader size="sm" />}>
+                <EntityGraph trusted={(by.alert?.trusted ?? {}) as Row} hypotheses={hyps} checks={checks} />
+              </Suspense>
+            </div>
+            <div className="soc-card" style={{ padding: 16 }}>
+              <Text className="soc-card-title" mb="xs">Related cases</Text>
+              <Stack gap={4}>
+                {[...v.related.same_pattern.map((r) => ({ ...r, why: "same pattern" })), ...v.related.same_host_in_queue.map((r) => ({ ...r, why: "same host" }))]
+                  .slice(0, 10)
+                  .map((r) => (
+                    <Text key={r.case_id + r.why} size="xs">
+                      <Anchor component={Link} to={`/cases/${r.case_id}`}>{r.case_id}</Anchor>
+                      <Text span c="dimmed" size="xs">{` · ${r.why} · `}</Text>
+                      {r.title}
+                    </Text>
+                  ))}
+                {!v.related.same_pattern.length && !v.related.same_host_in_queue.length && <Text size="xs" c="dimmed">none</Text>}
+              </Stack>
+            </div>
+            <div className="soc-card" style={{ padding: 16 }}>
+              <Text className="soc-card-title" mb="xs">Notes and audit trail</Text>
+              <Stack gap={4}>
+                {v.notes.map((n) => (
+                  <Text key={n.note_id} size="xs"><b>{n.analyst}</b> · {when(n.at).slice(0, 16)}: {n.text}</Text>
                 ))}
-              {!v.related.same_pattern.length && !v.related.same_host_in_queue.length && <Text size="xs" c="dimmed">none</Text>}
-            </Card>
-            <Card withBorder>
-              <Title order={6} mb="xs">Notes</Title>
-              {v.notes.length ? v.notes.map((n) => (
-                <Text key={n.note_id} size="xs">
-                  <b>{n.analyst}</b> · {when(n.at).slice(0, 16)}: {n.text}
-                </Text>
-              )) : <Text size="xs" c="dimmed">none</Text>}
-            </Card>
-            <Card withBorder>
-              <Title order={6} mb="xs">Audit trail</Title>
-              {v.audit.map((e) => (
-                <Text key={e.seq} size="xs" ff="monospace">
-                  {when(e.at).slice(5, 16)} {e.actor} {e.op}
-                </Text>
-              ))}
-            </Card>
+                {v.audit.map((e) => (
+                  <Text key={e.seq} size="xs" ff="monospace" c="dimmed">{when(e.at).slice(5, 16)} {e.actor} {e.op}</Text>
+                ))}
+              </Stack>
+            </div>
           </Stack>
         </Grid.Col>
       </Grid>

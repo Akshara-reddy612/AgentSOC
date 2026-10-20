@@ -1,10 +1,13 @@
 """
 Run the demo server (M4.4):
 
-    python -m soc_server [--home <dir>] [--speed 600] [--demo-start 2025-01-06T08:00] [--port 8000]
+    python -m soc_server [--dataset dedale] [--home <dir>] [--speed 600] [--demo-start 2025-01-06T08:00] [--port 8000]
 
-- On first start it learns DEDALE's two benign weeks and fast-forwards to
-  --demo-start (a few minutes), then checkpoints.
+- The dataset (environment model, replay sources, recorded LLM answers, training
+  window) comes from soc_server/datasets.py; DEDALE is the default and the only
+  one registered so far (docs/ADDING_A_DATASET.md adds another).
+- On first start it learns the dataset's benign training window and fast-forwards
+  to --demo-start (a few minutes for DEDALE), then checkpoints.
 - Later starts resume from the latest checkpoint.
 - The replay starts paused; a lead or admin starts it (POST /live/start or the frontend).
 - NCE uses the recorded hypotheses (cache only, no API calls).
@@ -62,35 +65,40 @@ def nce_cache(recorded: Path, home: Path, *, live: bool) -> Path:
 
 def main() -> None:
     from dedale import data_dir
+    from soc_server.datasets import DATASETS, load
 
     ap = argparse.ArgumentParser(description="AgentSOC demo server")
-    ap.add_argument("--home", default=str(data_dir().parent / "live"), help="server state (stores, checkpoints)")
+    ap.add_argument("--dataset", default="dedale", choices=sorted(DATASETS), help="which dataset to replay")
+    ap.add_argument("--home", default=None, help="server state (stores, checkpoints); default <data>/live (DEDALE) "
+                                                  "or <data>/live_<dataset>")
     ap.add_argument("--speed", type=float, default=600.0, help="stream seconds per wall second")
-    ap.add_argument("--demo-start", default="2025-01-06T08:00", help="UTC stream time the demo starts at")
-    ap.add_argument("--sources", default="host,network", help="host, network or both (DEDALE replay)")
+    ap.add_argument("--demo-start", default=None, help="UTC stream time the demo starts at (default: the dataset's)")
+    ap.add_argument("--sources", default="host,network", help="host, network or both (the dataset's replay sources)")
     ap.add_argument("--nce", default="cache", choices=["cache", "live", "off"],
                     help="cache: recorded LLM answers only (no API calls); live: Gemini, limited by --nce-per-day")
     ap.add_argument("--nce-per-day", type=int, default=200, help="live NCE: at most this many calls per stream day")
     ap.add_argument("--follow", default="", help="follow live log files: host=<path>,network=<path> (either or both)")
-    ap.add_argument("--inject", default=None, choices=["suppress", "fake_approval", "steer"],
-                    help="contamination scenario: the attacker's command lines carry this E1 payload family")
+    ap.add_argument("--inject", default=None,
+                    help="contamination scenario: the attacker's command lines carry this payload family "
+                         "(DEDALE: suppress, fake_approval, steer)")
     ap.add_argument("--follow-clock", default="events", choices=["events", "wall"],
                     help="with --follow: does the clock move with the wall time while the files are quiet?")
     ap.add_argument("--host", default="127.0.0.1")
     ap.add_argument("--port", type=int, default=8000)
     args = ap.parse_args()
+    ds = load(args.dataset)
+    if args.home is None:
+        args.home = str(data_dir().parent / ("live" if ds.name == "dedale" else f"live_{ds.name}"))
 
     import uvicorn
 
-    from dedale.environment import DEDALE_PROFILE, seed_store
-    from experiments.dedale_host_replay import EVENTS, TRAINING_END, TRAINING_START
     from experiments.dedale_nce import LiveNCE
     from perception.soc_loop import SocLoop
+    from perception.triage_gate import DailyBudget
     from review_api.accounts import AccountStore
     from soc_server.app import build_app, with_frontend
     from soc_server.runner import LiveRunner
-    from perception.triage_gate import DailyBudget
-    from soc_server.sources import DedaleHostSource, DedaleNetSource, MergedSource, handle_merged
+    from soc_server.sources import MergedSource, handle_merged
 
     follow = {}
     for part in filter(None, (p.strip() for p in args.follow.split(","))):
@@ -99,18 +107,16 @@ def main() -> None:
             sys.exit("--follow takes host=<path>,network=<path> (either or both)")
         follow[kind] = str(Path(path).resolve())
     kinds = sorted(follow) or sorted({k.strip() for k in args.sources.split(",") if k.strip()})
-    if not kinds or set(kinds) - {"host", "network"}:
-        sys.exit("--sources takes host, network or host,network")
-    if args.inject and (follow or "host" not in kinds):
-        sys.exit("--inject needs the host replay (not --follow)")
-    host_source = DedaleHostSource(EVENTS)
-    if args.inject:                    # the attacker simulation reads labels; the pipeline does not
-        from experiments.dedale_host_novelty import load_host_labels
-        from experiments.dedale_inject import Injector
+    if not kinds or set(kinds) - set(ds.sources):
+        sys.exit(f"--sources takes {' / '.join(sorted(ds.sources))} (comma-separated) for {ds.label}")
+    if args.inject and (follow or "host" not in kinds or args.inject not in ds.injections):
+        sys.exit(f"--inject needs the host replay (not --follow) and one of: {', '.join(ds.injections) or 'none for ' + ds.label}")
+    replay_sources = {k: ds.sources[k]() for k in kinds}
+    if args.inject:                    # the attacker simulation may read labels; the pipeline does not (I4)
         from soc_server.sources import InjectedSource
 
-        host_source = InjectedSource(host_source, Injector(args.inject, load_host_labels()))
-    replay = MergedSource({k: host_source if k == "host" else DedaleNetSource() for k in kinds})
+        replay_sources["host"] = InjectedSource(replay_sources["host"], ds.injector(args.inject))
+    replay = MergedSource(replay_sources)
     if follow:
         from soc_server.follow import PARSERS, FollowSource, TailSource
 
@@ -118,43 +124,46 @@ def main() -> None:
         source_id = "follow:" + ",".join(f"{k}={p}" for k, p in sorted(follow.items()))
     else:
         source, source_id = replay, ",".join(kinds) + (f"+inject={args.inject}" if args.inject else "")
+        if ds.name != "dedale":                      # DEDALE homes keep their original source ids
+            source_id = f"{ds.name}:{source_id}"
     externals, gate_options = {}, {}
     if args.nce != "off":
-        from experiments.dedale_nce import CACHE, CallCap
+        from experiments.dedale_nce import CallCap
 
         cap = None if args.nce == "cache" else CallCap(10**9)
 
-        def cache(name: str) -> Path:
-            return nce_cache(CACHE.with_name(name), Path(args.home), live=cap is not None)
+        def cache(recorded: Path) -> Path:
+            return nce_cache(recorded, Path(args.home), live=cap is not None)
 
-        nce = LiveNCE(cap, cache_only=cap is None, cache_path=cache(CACHE.name))
-        if args.inject:                # E1's recorded answers for the injected text (its own cache)
+        recorded = ds.nce_cache or Path(args.home) / f"nce_cache_{ds.name}.jsonl"
+        nce = LiveNCE(cap, cache_only=cap is None, cache_path=cache(recorded))
+        if args.inject:                # the recorded answers for the injected text (their own cache)
             from experiments.dedale_inject import InjectedRouter
 
             nce = InjectedRouter(args.inject, nce, LiveNCE(cap, cache_only=cap is None,
-                                                           cache_path=cache(f"nce_cache_host_{args.inject}.jsonl")))
+                                                           cache_path=cache(ds.injection_cache(args.inject))))
         externals["nce"] = nce
         gate_options["nce"] = nce
         if args.nce == "live":
             gate_options["budget"] = DailyBudget(args.nce_per_day)
 
     def make_loop(db, cases):
-        return SocLoop(db, mode="gated", training_end=TRAINING_END, case_store=cases, gate_options=gate_options)
+        return SocLoop(db, mode="gated", training_end=ds.training_end, case_store=cases, gate_options=gate_options)
 
     try:
-        runner = LiveRunner(args.home, source, profile=DEDALE_PROFILE, start=TRAINING_START, make_loop=make_loop,
-                            handle=handle_merged, seed=lambda db: seed_store(db, TRAINING_START),
+        runner = LiveRunner(args.home, source, profile=ds.profile, start=ds.training_start, make_loop=make_loop,
+                            handle=handle_merged, seed=ds.seed,
                             externals=externals, speed=args.speed, source_id=source_id, paced=not follow,
                             idle_clock=(lambda: datetime.now(timezone.utc)) if args.follow_clock == "wall" else None)
     except ValueError as e:
         sys.exit(str(e))
     if not runner.restored and follow:
-        print("first start: learning the benign weeks, then following " + ", ".join(follow.values()), flush=True)
-        n = runner.run_until(TRAINING_END, source=replay)
+        print("first start: learning the benign training window, then following " + ", ".join(follow.values()), flush=True)
+        n = runner.run_until(ds.training_end, source=replay)
         print(f"  {n:,} events processed; checkpoint written", flush=True)
     elif not runner.restored:
-        target = datetime.fromisoformat(args.demo_start).replace(tzinfo=timezone.utc)
-        print(f"first start: learning the benign weeks and fast-forwarding to {target:%Y-%m-%d %H:%M} ...",
+        target = datetime.fromisoformat(args.demo_start).replace(tzinfo=timezone.utc) if args.demo_start else ds.demo_start
+        print(f"first start ({ds.label}): learning the benign training window and fast-forwarding to {target:%Y-%m-%d %H:%M} ...",
               flush=True)
         n = runner.run_until(target)
         print(f"  {n:,} events processed; checkpoint written", flush=True)
@@ -165,7 +174,7 @@ def main() -> None:
               f"(or: python -m review_api.accounts --db {runner.home / 'auth.sqlite'} create-user <name> --role admin)",
               file=sys.stderr, flush=True)
     try:
-        app = build_app(runner, accounts=accounts)
+        app = build_app(runner, accounts=accounts, dataset=ds)
         dist = Path(__file__).resolve().parent.parent / "frontend" / "dist"
         if dist.joinpath("index.html").exists():          # built frontend: one origin, API under /api
             app = with_frontend(app, dist)

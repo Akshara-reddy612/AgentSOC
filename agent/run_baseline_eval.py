@@ -23,7 +23,7 @@ DISCLAIMER
 This is a small (~9 alert) sanity-check sample, NOT a statistically powered
 result.  Numbers here are illustrative only and do NOT constitute a rigorous
 evaluation.  A proper evaluation requires a large, labeled dataset with
-independently verified ground truth.  See demo_phase2.py for a similar caveat.
+independently verified ground truth.  See archive/early_demos/demo_phase2.py for a similar caveat.
 """
 from __future__ import annotations
 

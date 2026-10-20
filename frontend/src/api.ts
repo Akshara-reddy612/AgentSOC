@@ -58,6 +58,7 @@ export type Verdict = "malicious" | "benign" | "benign_once" | "needs_info";
 export interface LiveStatus {
   state: "paused" | "running" | "finished" | "stopped";
   mode?: "replay" | "follow";
+  dataset?: string;
   alerts_test?: number;
   stream_time: string;
   speed: number;
@@ -77,6 +78,10 @@ export interface QueueItem {
   claimed_by: string | null;
   priority: number;
   priority_reasons: string[];
+  kind?: string;
+  host_tier?: number | null;
+  group?: string;
+  techniques?: string[];
 }
 
 export interface Action {

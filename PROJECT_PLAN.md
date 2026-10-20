@@ -29,12 +29,13 @@ Decided 2026-10-12 with Abhishek. This file sets the scope. Work outside it goes
 | P4 | Demo: a real frontend with accounts that depicts the whole pipeline on the DEDALE attack (section 5) |
 | P5 | (2026-10-19, user: "do all") Backend gaps for the tool: network alerts in the demo server, login throttling, withdrawing a wrong `malicious` verdict (moved from "Later"), live log ingestion (`--follow`), live NCE with a daily budget. The Streamlit demo is archived (`archive/streamlit/`) |
 | P6 | (2026-10-19, user) Claude drafts the team's paper sections too (abstract, introduction, related work, conclusion), for the team to revise, and does the frontend polish (M5). Authors stay with the team |
+| P7 | (2026-10-19, user) **Handover goal:** before the project is handed to the team, everything for GUIDE and DEDALE is finished and stable (paper, tool, docs). The team's only remaining work is the optional third dataset (AIT-LDS, E3). Choices: GUIDE gets a Contamination Lab page in the frontend; Claude designs the frontend, and the user approves the new Live and Case pages before the rest; stale files move to `archive/` after the user sees the list |
 
 ## 3. Paper: claims and evidence
 
 | Claim | Evidence | Status |
 |:--|:--|:--|
-| **C1** Text an attacker writes into logs does not steer the pipeline's actions | GUIDE v2, live, 500 + 500 clean/contaminated pairs: suppression 4 / 428 (dev) and 3 / 437 (held-out), against 4 / 0 responses induced for other reasons (p = 1.0 / 0.25). 0 steered actions executed. Undefended LLM agent on the same pairs: hijacked 48 / 156 (30.8%), against the defended pipeline's 2 / 155 (interim, 183 dev pairs) | Have for the reasoning half; **finish the interrupted runs (M2)**; **E1 needed for the full loop** |
+| **C1** Text an attacker writes into logs does not steer the pipeline's actions | GUIDE v2, live, 500 + 500 clean/contaminated pairs: suppression 4 / 428 (dev) and 3 / 437 (held-out), against 4 / 0 responses induced for other reasons (p = 1.0 / 0.25). 0 steered actions executed. Undefended LLM agent on all 500 dev pairs: hijacked 130 / 439 (29.6%). Second model (gpt-oss-20b, all 500 dev pairs): suppressed 10 / 437 (2.3%), 0 steered actions executed. E1 on DEDALE through the full loop: 0 attack patterns learned | **Have (final 2026-10-20)** |
 | **C2** A learning Knowledge Store behind a gate cuts analyst load and keeps the attack visible | DEDALE host logs: 6,095 -> 65 reviews / day (static -> gated), 72 / 72 attack cases reviewed. Network: 552 -> 26 / day | Have |
 | **C3** Memory poisoning and its defences: without the gate, or through analyst mistakes, the store learns the attacker; the gate and unlearning-on-confirmation prevent it | Ungated: 38 attack patterns learned; 99 attack events alerted, against 400 gated. Analyst missing 20% of attacks: 400 -> 256 attack events alerted; with unlearning, 400 / 400 (+10% reviews) | Have |
 | **C4** What the LLM adds on real telemetry, and a failure mode | NCE: -16% reviews alone, -3% on top of an analyst. Closed-world feasibility dismissed 2 real attack cases; the open-world rule fixed it (0 / 72) | Have |
@@ -53,7 +54,7 @@ Decided 2026-10-12 with Abhishek. This file sets the scope. Work outside it goes
 |:--|:--|:--|:--|
 | **E1** | **Contamination through the full loop on DEDALE.** See below | API budget | **done 2026-10-18** (114 calls; `RESULTS.md` C1) |
 | **E2** | **Freeze.** Re-run every headline number on the final code (NCE from the cache); one results file; `REPRODUCE.md` | nothing | **done 2026-10-18** (`experiments/RESULTS.md`) |
-| **E2b** | **Finish the interrupted C1 runs** (found during M1): the undefended agent on the remaining dev pairs (~640 Gemini calls) and gpt-oss-20b on the remaining dev pairs (~740 Groq calls); plus 42 DEDALE alerts missing from the NCE cache (42 calls) | API budget | ~1-3 days of quota |
+| **E2b** | **Finish the interrupted C1 runs** (found during M1): the undefended agent on the remaining dev pairs (~640 Gemini calls) and gpt-oss-20b on the remaining dev pairs (~740 Groq calls); plus 42 DEDALE alerts missing from the NCE cache (42 calls) | API budget | **done 2026-10-20** (undefended run 2026-10-18; gpt-oss-20b all 500 dev pairs 2026-10-20) |
 | E3 | Optional: AIT-LDS v2 generality check of C2-C3. See below | download approval | ~1 week |
 
 - **E1 in detail:**
@@ -99,14 +100,15 @@ Package installs (npm for the frontend; nothing new for Python) need approval, a
 | # | Milestone | Depends on | Who | Size |
 |:--|:--|:--|:--|:--|
 | M1 | E2: freeze, results tables, `REPRODUCE.md` | — | Claude | **done 2026-10-18** |
-| M2 | E2b (finish the interrupted runs) and E1 (contamination through the full loop) | API budget approval | Claude | **E1 and the undefended run done 2026-10-18; gpt-oss-20b resumes daily (Groq cap)** |
+| M2 | E2b (finish the interrupted runs) and E1 (contamination through the full loop) | API budget approval | Claude | **done 2026-10-20** (E1 and the undefended run 2026-10-18; gpt-oss-20b 2026-10-20) |
 | M3 | Paper draft. Outline first; Claude drafts methods and results from the M1-M2 tables; the team writes the introduction, related work and discussion | M1, M2 | team + Claude | outline done 2026-10-18; **full draft 2026-10-19** (`paper/agentsoc_combined.tex`): Claude drafted every section (P6) and checked all 15 references; the team revises; authors TODO |
 | M4 | Demo backend: live runner + recovery, read APIs, accounts | — (alongside M3) | Claude | **done 2026-10-18** (`soc_server/`, `DEMO_BACKEND_DESIGN.md`) |
 | M5 | Frontend | M4, npm approval | Claude + team | **first version done 2026-10-19** (`frontend/`); **polish done 2026-10-19** (P6): possible-steering marks in the case view (section 5, item 3), verdict withdrawal, follow mode, login lockout message; accounts managed fully in the browser (first-run admin setup, own password, admin role / enable / reset) |
-| M6 | Optional E3 (AIT-LDS) | decided after M3 | Claude | ~1 week |
+| M6 | Optional E3 (AIT-LDS) | decided after M3 | team (P7) | ~1 week |
 | M7 | Venue choice, final paper, demo video, README | all | team | ~1 week |
+| M8 | **Handover (P7):** (1) finish open items: gpt-oss-20b run (done 2026-10-20), final tables (done), paper figures; (2) stability: full-replay soak test, fresh-clone check, one-command end-to-end browser check; (3) frontend design pass and the Contamination Lab (GUIDE); (4) `HANDOVER.md`, adding-a-dataset guide and a `--dataset` switch in the server, repository cleanup | P7 | Claude | in progress |
 
-Order: M1 -> M2 -> M3 and M4 in parallel -> M5 -> (M6) -> M7.
+Order: M1 -> M2 -> M3 and M4 in parallel -> M5 -> M8 (handover) -> the team: (M6) -> M7.
 
 ## 7. Rules
 

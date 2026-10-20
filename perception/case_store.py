@@ -682,6 +682,12 @@ class CaseStore:
         c["case_key"] = json.loads(c["case_key"])
         return c
 
+    def opened_per_hour(self, since: datetime) -> dict[tuple[str, bool], int]:
+        """Cases opened per hour since `since`: {("YYYY-MM-DDTHH", sent for review): count}."""
+        rows = self._rows("SELECT substr(opened, 1, 13) AS hour, review_status != 'none' AS review, COUNT(*) AS n"
+                          " FROM cases WHERE opened >= ? GROUP BY hour, review", (_iso(since),))
+        return {(r["hour"], bool(r["review"])): r["n"] for r in rows}
+
     def alert_total(self) -> int:
         """Alerts of all recorded cases (the loop records cases after its training window only)."""
         return self._con.execute("SELECT COALESCE(SUM(alert_count), 0) FROM cases").fetchone()[0]

@@ -79,6 +79,20 @@ def _pattern_type(case: dict) -> str:
     return key[1] if key and key[0] == "host" else "network"
 
 
+def group_key(case: dict) -> str:
+    """
+    Cases an analyst would judge together (the queue shows them as one row): a network
+    signature on the same host whatever the external endpoint (STUN requests to many servers,
+    or their responses from many), or a host pattern on any host.
+    """
+    k = list(case.get("case_key") or [])
+    if k and k[0] == "host":
+        return "host|" + "|".join(str(x) for i, x in enumerate(k) if i != 2)     # drop the host
+    if k:
+        return f"net|{k[0]}|{case.get('host') or k[1:]}"                       # signature + our host
+    return "case|" + str(case.get("case_id"))
+
+
 def host_peers(case: dict, pool: list[dict]) -> int:
     """Other cases in `pool` on the same host, opened in the PEER_WINDOW before this one."""
     opened = _t(case["opened"])
@@ -161,9 +175,30 @@ class ReviewService:
             items.append({"case_id": c["case_id"], "title": c["title"], "host": c["host"],
                           "opened": c["opened"], "alert_count": c["alert_count"],
                           "review_status": c["review_status"], "claimed_by": c["claimed_by"],
-                          "priority": points, "priority_reasons": why})
+                          "priority": points, "priority_reasons": why,
+                          "kind": c.get("kind"), "host_tier": c.get("host_tier"), "group": group_key(c),
+                          "techniques": sorted({h["technique_id"] for h in (d or {}).get("hypotheses", [])
+                                                if h.get("sse_verdict") == "FEASIBLE"})})
         items.sort(key=lambda i: (-i["priority"], i["opened"], i["case_id"]))
         return items[:limit]
+
+    def host_timeline(self, host: str, limit: int = 500) -> dict:
+        """
+        Every case the SOC opened on a host, oldest first: what it saw there and what happened to
+        each case (triage outcome, review, verdict, containment).  Pipeline data only, no labels.
+        """
+        cases = sorted(self.store.cases(host=host, limit=100_000), key=lambda c: (c["opened"], c["case_id"]))
+        items = []
+        for c in cases[-limit:]:
+            d = self.store.decision(c["case_id"]) or {}
+            acts = self.store.actions(c["case_id"])
+            items.append({k: c[k] for k in ("case_id", "title", "kind", "opened", "last_seen", "alert_count", "outcome",
+                                            "review_status", "verdict")}
+                         | {"techniques": sorted({h["technique_id"] for h in d.get("hypotheses", [])
+                                                  if h.get("sse_verdict") == "FEASIBLE"}),
+                            "actions": [{"action": a["action"], "target": a["target"], "status": a["status"]} for a in acts]})
+        tiers = [c["host_tier"] for c in cases if c.get("host_tier") is not None]
+        return {"host": host, "tier": tiers[0] if tiers else None, "total": len(cases), "cases": items}
 
     def case_view(self, case_id: str) -> dict:
         c = self.store.case(case_id)

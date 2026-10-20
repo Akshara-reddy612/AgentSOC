@@ -17,7 +17,7 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
 | Data | Where | Notes |
 |:--|:--|:--|
 | GUIDE corpus v2 | `GUIDE_Dataset/processed/v2/guide_v2_{dev,heldout}.json` (in the repo) | Rebuild with `python -m corpus.build_v2` |
-| GUIDE v2 live LLM outputs | `agent/v2_results/` (in the repo) | Recorded live runs (gemini-3.1-flash-lite; partial gpt-oss-20b; undefended agent) |
+| GUIDE v2 live LLM outputs | `agent/v2_results/` (in the repo) | Recorded live runs (gemini-3.1-flash-lite dev + held-out; gpt-oss-20b dev; undefended agent dev) |
 | DEDALE | `<data>/dedale/` | Inria DEDALE, DOI 10.57745/Y5JLDG, CC BY 4.0. Files: `system_logs_labels.zip`, `suricata_alerts.zip`, `system_logs_winlogbeat.zip` (27.1 GB), plus the Zeek router logs used for network labels (`experiments/DEDALE_DATA_NOTES.md`) |
 | DEDALE NCE cache | `<data>/runs/nce_cache_host.jsonl` | Recorded live NCE hypotheses per host alert (Phase 3) |
 
@@ -36,6 +36,7 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
      - `python -m experiments.era_offline --report`
 4. **C2–C5, DEDALE:** `python -m experiments.freeze_dedale --workers 6` runs all 29 replay conditions (about 30–60 min) and scores them into `experiments/dedale_results/final_{host,network}_scores.json`.
 5. **The tables:** `python -m experiments.build_results` writes `experiments/RESULTS.md`.
+6. **The paper's figures:** `python -m experiments.build_figures` writes `paper/fig_*.dat` from the same frozen files; `pdflatex agentsoc_combined.tex` in `paper/` (twice) draws them.
 
 ## 4. Determinism
 
@@ -46,4 +47,4 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
 ## 5. What cannot be reproduced offline
 
 - **New LLM output.** Re-running NCE live gives different hypotheses: the model is not deterministic, and model versions change. The recorded outputs are the evidence.
-- **The interrupted runs** (undefended agent; gpt-oss-20b). They cover the pairs listed in `RESULTS.md` and resume with `agent/run_v2_undefended.py` / `agent/run_v2_eval.py` (needs API keys and an approved call budget).
+- **The comparison runs** (undefended agent; gpt-oss-20b), complete on all 500 dev pairs. Re-running them (`agent/run_v2_undefended.py` / `agent/run_v2_eval.py`) needs API keys and an approved call budget, and gives new LLM output.

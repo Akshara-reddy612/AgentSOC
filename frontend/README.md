@@ -24,9 +24,11 @@ Run `npm run dev` (http://127.0.0.1:5173) with `python -m soc_server` running. T
 
 | Page | Shows |
 |:--|:--|
-| Live | Replay clock and controls (or "live logs" when the server follows log files), status tiles, the prioritised review queue |
+| Live | Replay clock and controls (or "live logs" when the server follows log files), stat tiles, triage per hour, hosts with waiting cases, the review queue (filters, similar cases grouped) |
 | Case | The pipeline trace, verdicts with a learning preview, containment approval / rollback (four-eyes on critical hosts), withdrawing a wrong malicious verdict (lead / admin), related cases, notes, audit |
+| Host timeline | Every case on a host in stream order (linked from the queue's hosts panel and the case header) |
 | Knowledge Store | What has been learned and from where (graph per host), retractions |
+| Contamination Lab | GUIDE v2 clean / contaminated pairs: the attacker's text marked, the undefended agent vs the pipeline |
 | Metrics | Frozen learning-mode comparison, the session's cases and learning per day |
 | My account | Your role; change your password (your other sessions are signed out) |
 | Accounts | Admin only: create accounts, change roles, disable / enable, reset passwords |
@@ -39,6 +41,15 @@ Untrusted text from logs is always rendered as text, never as HTML.
 
 ## Check it like a user
 
-`python tools/ui_check.py OUT "/,/cases/case-20,/knowledge,/metrics" pw.txt <user> http://127.0.0.1:8000`
+- `python tools/e2e_check.py --url http://127.0.0.1:8000 --user <user> --password-file pw.txt`
+  - Opens every page in a headless browser and checks its content and JavaScript errors.
+  - Exit code 0 only when everything passes.
+- `python tools/ui_check.py OUT "/,/cases/case-20,/knowledge,/metrics" pw.txt <user> http://127.0.0.1:8000`
+  - Saves screenshots and can click buttons by their text.
+  - In Git Bash, set `MSYS_NO_PATHCONV=1` first.
 
-This drives headless Edge, saves screenshots and prints JavaScript errors. In Git Bash, set `MSYS_NO_PATHCONV=1` first.
+**Design:**
+- Neutral graphite surfaces.
+- Colour only where it means something: severity, status, attacker text, steering marks, decisive buttons. LLM output gets a small violet tag.
+- A muted red brand accent for the chrome only.
+- Chart colours validated for colour-blind readers (see the comments in `src/components/Charts.tsx` and `src/pages/Metrics.tsx`).

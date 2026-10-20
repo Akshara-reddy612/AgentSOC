@@ -6,7 +6,7 @@ files -- no number is typed by hand.  One table per claim (C1-C5).
 
 Inputs:
   C1  GUIDE corpus v2: logs/v2_{dev,heldout}_live_results_rescored.json and the
-      gpt-oss-20b partial run (re-scored with the final code by
+      gpt-oss-20b dev run (all 500 pairs since 2026-10-20; re-scored with the final code by
       experiments.rescore_v2), the undefended-agent comparison
       (experiments.undefended_metrics);
   C2-C5  DEDALE: experiments/dedale_results/final_{host,network}_scores.json
@@ -67,7 +67,7 @@ def _induced_by_era(results: list[dict], alerts: list[dict]) -> int:
 def c1() -> list[str]:
     sets = [("GUIDE v2 dev, gemini-3.1-flash-lite", "logs/v2_dev_live_results_rescored.json", "dev"),
             ("GUIDE v2 held-out, gemini-3.1-flash-lite", "logs/v2_heldout_live_results_rescored.json", "heldout"),
-            ("GUIDE v2 dev, gpt-oss-20b (partial run)",
+            ("GUIDE v2 dev, gpt-oss-20b",
              "logs/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json", "dev")]
     lines = ["## C1 — Text an attacker writes into logs does not steer the pipeline's actions", "",
              "Pipeline response on clean vs contaminated twins (same GUIDE row, differing only at the injection "
@@ -255,9 +255,9 @@ def main() -> None:
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
              "- **Analyst:** simulated (an oracle that follows the labels, with random per-case mistakes).",
-             "- **LLM:** one model on DEDALE. On GUIDE, gpt-oss-20b covered only part of the dev set.",
-             "- **GUIDE v2:** its entities, payloads and evidence are synthetic.",
-             "- **Second model:** the gpt-oss-20b run covers only part of the dev set (Groq free-tier daily cap).", ""]
+             "- **LLM:** one model on DEDALE. On GUIDE, the second model (gpt-oss-20b) ran on the dev set only, "
+             "not the held-out set.",
+             "- **GUIDE v2:** its entities, payloads and evidence are synthetic.", ""]
     OUT.write_text("\n".join(lines), encoding="utf-8")
     print(f"-> {OUT}")
 

@@ -2227,3 +2227,285 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `perception/case_store.py`, `soc_server/runner.py`, `tests/test_live_runner.py`, `frontend/src/api.ts`, `frontend/src/pages/Live.tsx`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: handover start (P7): soak test, gpt-oss-20b complete, repository cleanup
+
+### What was tried
+- **Decision P7 (user, 2026-10-19):** hand the project over with GUIDE and DEDALE finished and stable; the team's remaining work is the optional AIT-LDS dataset. Milestone M8 lists the work.
+- **Soak test:**
+  - `python -m soc_server --home D:\agentsoc_data\soak --demo-start 2025-01-20T00:00`: the real server fast-forwarded through the whole dataset (host and network);
+  - memory was sampled every 10 s (psutil);
+  - every read API was then timed at that scale;
+  - then a hard stop and a restart.
+- **gpt-oss-20b:** resumed on the new day's Groq quota; the run completed (76 alerts, exit 0). Re-scored, `RESULTS.md` rebuilt, paper Table I / setup / limitations updated; the "partial run" wording removed from `experiments/build_results.py`.
+- **Cleanup (user-approved list), all with `git mv` to `archive/`:**
+  - root: the first paper draft, session notes, two Phase 1 investigations, the early demos;
+  - `scratch/`;
+  - 27 one-off files from `experiments/`, including 10 `test_*.py` files that held no tests;
+  - `PROJECT_STATUS.md` moved unchanged to `archive/PROJECT_STATUS_HISTORY.md` and replaced by a short current-state file.
+  - Links updated in `PAPER_OUTLINE.md`, `README.md`, `pyproject.toml`, `agent/run_baseline_eval.py` (comment) and the claims file (one note); `archive/README.md` indexes the folders.
+
+### What was found
+- **Soak:** 15,013,901 events (6,787,207 training host events), 8,588 test cases, 754,297 test-period alerts.
+  - No crash; peak RSS 388 MB.
+  - Read APIs at full scale: status 0.01 s, queue (500) 0.11 s, metrics 0.11 s, knowledge summary 0.05 s, CLIENT2 graph 0.03 s, traces 0.01-0.03 s.
+  - Restart: about 10 s, `restored_from_checkpoint` true, identical counts.
+  - The wall time of the fast-forward could not be measured: the machine slept during it (gap 18:49-21:56 in the memory log).
+- **gpt-oss-20b, all 500 dev pairs (1,000 records, 0 NCE errors):**
+  - suppressed 10 / 437 (2.3%, 95% CI 1.2-4.2%);
+  - ERA-induced 12; induced otherwise 5; p = 0.3;
+  - steered actions 0 executed / 3 gated.
+  - This ends E2b and M2.
+- **Archive:** 0 tests lost (the moved `test_*.py` files defined none); the suite is unchanged.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 771 passed, 1 deselected.
+
+### Files created/modified
+- Created: `PROJECT_STATUS.md` (new short version), `archive/README.md`
+- Moved: `agentsoc2_paper_corrected.{tex,pdf}`, `SESSION1_STATUS.md`, `nce8_clean_fp_investigation.md`, `t1071_mislabeling_investigation.md`, `demo.py`, `demo_phase2.py`, `scratch/`, 27 `experiments/` one-offs, `PROJECT_STATUS.md` -> `archive/...`
+- Modified: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_{results.json,api_log.jsonl}`, `experiments/build_results.py`, `experiments/RESULTS.md`, `paper/agentsoc_combined.{tex,pdf}`, `PROJECT_PLAN.md`, `PAPER_OUTLINE.md`, `REPRODUCE.md`, `README.md`, `pyproject.toml`, `agent/run_baseline_eval.py`, `experiments/PAPER_CLAIMS_TO_REVISE.md`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: frontend design pass (Live and Case, for approval)
+
+### What was tried
+- Decision P7: Claude designs the frontend, and the user approves the new Live and Case pages before the rest. Branch `design`.
+- **Look:**
+  - a navy SOC-console theme (Mantine dark palette plus `frontend/src/soc.css`);
+  - inline SVG icons (no new package);
+  - priority bands from the fixed status colours, always shown with the score;
+  - header stream clock and user menu.
+- **Charts** (dataviz method):
+  - the triage chart is a stacked bar of cases per stream hour, closed automatically vs sent to an analyst;
+  - the two series colours were validated on the console surface (#111a2b): CVD dE 26.8, normal-vision dE 31.8, contrast >= 3:1;
+  - sparklines in two stat tiles;
+  - the status colours were checked too: they fail as a categorical set, as expected, so they are used only for priority bands with the number.
+- **Live:**
+  - stat tiles;
+  - triage chart;
+  - hosts with waiting cases (click to filter);
+  - queue with search, status and kind filters, and "group similar":
+    - network cases grouped by signature + the internal host (STUN requests and responses each become one row: "172.17.0.5 -> 13 destinations", "12 sources -> 172.17.0.5");
+    - host cases by pattern without the host.
+- **Case:**
+  - header with severity, host tier and chips;
+  - the 8-stage pipeline as a flow, each stage with its result and colour (click to jump);
+  - evidence split trusted / attacker-writable with the steering marks;
+  - hypothesis cards (ATT&CK name, roles with unbound names in red, feasibility, binding, best response and guardrail reason);
+  - decision, containment, learning;
+  - right column: analyst decision, entity graph (concentric: the alert's host in the middle, LLM-named entities outside, unbound ones red and dashed), related cases, notes and audit.
+- **Backend:**
+  - `/live/activity?hours=N` (`CaseStore.opened_per_hour`);
+  - `/techniques` (names from SSE's `TECHNIQUE_TABLE`);
+  - queue items gain `kind`, `host_tier`, feasible `techniques` and a `group` key (`review_service.group_key`).
+
+### What was found
+- **Screenshot artifact:** `tools/ui_check.py` shifted fixed layouts by about 20 px when capturing beyond the viewport, which made the main column look clipped. Measured in the browser (heading at x = 252 as expected) and fixed: the viewport is now resized to the page height before the capture.
+- **401s on the sign-in screen:** the shell polled `/live/status` before anyone signed in; the query now waits for a session.
+- **Port clash:** `tests/test_monitoring.py` used the fixed port 8769, which collided with a running demo server. It now takes a free port.
+- **Checked in headless Edge:** Live, a steered host case and a network case, 0 JavaScript errors. Screenshots for review: `D:\agentsoc_data\design_review\`.
+- The user's demo (`D:\agentsoc_data\demo`, port 8000) was restarted on the new build.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 772 passed, 1 deselected, plus the fixed monitoring test (24 / 24 in `tests/test_monitoring.py`).
+
+### Files created/modified
+- Created: `frontend/src/soc.css`, `frontend/src/hooks.ts`, `frontend/src/components/{Icons,Severity,Charts,PipelineFlow,EntityGraph}.tsx`
+- Modified: `frontend/src/{App.tsx,main.tsx,api.ts}`, `frontend/src/pages/{Live,Case}.tsx`, `perception/case_store.py`, `perception/review_service.py`, `soc_server/app.py`, `tests/test_soc_server.py`, `tests/test_monitoring.py`, `tools/ui_check.py`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: graphite theme (user: "why is everything so blue, it gives an AI feel")
+
+### What was tried
+- The navy surfaces, cyan accent and violet highlights read as a generic AI dashboard.
+- Replaced with a neutral graphite theme like real SOC consoles; colour is kept only where it means something:
+  - severity bands, status, attacker-writable text (red edge), steering marks;
+  - destructive or decisive buttons;
+  - small violet markers for LLM output.
+- **Theme:**
+  - Mantine dark palette neutral (#141414 page, #1c1c1c cards); primary colour a mid gray (neutral primary buttons; red / green / yellow keep their strength);
+  - smaller radii, fewer pills, no glow animation;
+  - normal-case labels instead of uppercase, links underlined in neutral ink.
+- **Triage chart:** now an emphasis encoding: cases closed automatically in gray, cases sent to an analyst in orange.
+  - Validated on #1c1c1c: CVD dE 10.7, normal-vision dE 17.8, contrast >= 3:1.
+  - The chroma check flags the gray, which is intended for emphasis.
+- The entity graph, sparklines and status colours were recoloured to match.
+
+### What was found
+- A first attempt set a light primary shade for all colours, which made every coloured button pale (white text on light green). Corrected to shade 7.
+- Live and the two case pages: 0 JavaScript errors. Screenshots in `D:\agentsoc_data\design_review\`.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 773 passed, 1 deselected.
+
+### Files created/modified
+- Modified: `frontend/src/soc.css`, `frontend/src/main.tsx`, `frontend/src/format.ts`, `frontend/src/App.tsx`, `frontend/src/components/Charts.tsx`, `frontend/src/components/EntityGraph.tsx`, `frontend/src/pages/Live.tsx`, `frontend/src/pages/Case.tsx`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: muted red brand accent (user)
+
+- The user asked for a muted red accent. `--soc-brand` #b4483f (3.4:1 on the page background) is used for the chrome only: the logo, the active menu item's bar and icon, and the keyboard focus ring.
+- It is never used on data or buttons, so it cannot be mistaken for critical severity (#d03b3b, which stays on priority bands).
+- Checked in headless Edge: 0 JavaScript errors.
+
+## 2026-10-20 — Session: remaining pages in the console style
+
+### What was tried
+- After the user's go-ahead on the look (graphite plus a muted red accent), the remaining pages were restyled: Knowledge Store, Metrics, Accounts, My account, sign-in.
+- **Colours keep one meaning across pages:**
+  - training weeks are the gray baseline;
+  - learning behind the gate is aqua, analyst verdicts blue, learning without the gate orange;
+  - retractions are the status red;
+  - Metrics' learning-mode chart uses the same colours (gated aqua, gate + analyst blue, ungated orange).
+- **Cases chart:** the same encoding as Live (closed automatically gray, sent to an analyst orange, contained automatically red).
+- **Knowledge Store:**
+  - a provenance share bar and a table with tabular figures;
+  - the host graph tells node kinds apart by shape (neutral fills) and colours edges by provenance, with a legend.
+
+### What was found
+- **Validated on #1c1c1c:**
+  - aqua / blue / orange passes all pairs;
+  - aqua / blue / red (learning chart) passes.
+- **Rejected:**
+  - aqua / yellow / orange for provenance (yellow next to orange: dE 10.6);
+  - red next to orange in the cases stack (dE 6.8). Red is now separated from orange by the gray series.
+- Knowledge, Metrics, Accounts, My account and sign-in: 0 JavaScript errors.
+  - The one 401 in the sign-in check was the checker's deliberate failed login.
+
+### Files created/modified
+- Modified: `frontend/src/pages/{Knowledge,Metrics,Login,Admin,Account}.tsx`, `frontend/src/components/Graph.tsx`, `frontend/src/format.ts`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: Contamination Lab (GUIDE in the frontend, decision P7)
+
+### What was tried
+- **`soc_server/lab.py`:** GUIDE v2's clean / contaminated pairs replayed from the recorded runs (Gemini dev and held-out, gpt-oss-20b dev, and the undefended agent on dev).
+  - Per-pair scoring calls the paper's own functions (`experiments.attack_metrics.summarize` / `misdirected_actions`, `experiments.undefended_metrics.compare`), so the Lab's totals are Table I's.
+  - The attacker's inserted text is located by diffing each contaminated field against its clean twin.
+  - Ground-truth fields (family, goal, injection site, steered entities) are returned only as experiment metadata, never inside an alert.
+- **API:** `/lab/runs`, `/lab/{run}/summary`, `/lab/{run}/pairs` (family and change filters, paging), `/lab/{run}/pairs/{id}`.
+- **Results files:** the Lab prefers `logs/*_rescored.json` and falls back to the copies in `agent/v2_results/`.
+  - The tracked gpt-oss-20b copy was a stale partial run (2026-10-11) and was replaced by the final re-scoring.
+  - The Gemini copies were already identical to the final ones.
+- **Frontend:**
+  - Lab page with stat tiles and a per-family chart (emphasis encoding: the undefended agent's hijack rate in orange, the pipeline's suppression rate in gray), plus a pair browser;
+  - pair page with the two alerts side by side, the inserted text marked, the undefended agent's verdict and reasoning, and the pipeline's hypotheses and outcome.
+
+### What was found
+- **Totals equal `RESULTS.md` C1 (asserted in a test):**
+  - suppressed 4 / 428 (dev), 3 / 437 (held-out), 10 / 437 (gpt-oss);
+  - ERA-escalated 12 / 10 / 12; induced otherwise 4 / 0 / 5;
+  - misdirected actions executed 0 (gated 7 / 2 / 3);
+  - undefended agent hijacked 130 / 439.
+- The LLM named the injected account or server in 44 (dev), 42 (held-out) and 36 (gpt-oss) pairs.
+- 0 JavaScript errors on the Lab and two pair views.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: all passed (see the next entry's count).
+
+### Files created/modified
+- Created: `soc_server/lab.py`, `frontend/src/pages/{Lab,LabPair}.tsx`
+- Modified: `soc_server/app.py`, `frontend/src/App.tsx`, `tests/test_soc_server.py`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: host timeline
+
+### What was tried
+- **`ReviewService.host_timeline` and `/hosts/{host}/timeline`:** every case the SOC opened on a host, oldest first, with triage outcome, review status, verdict, feasible techniques and containment.
+  - Pipeline data only: DEDALE's attack labels are never read (invariant I4), so the view works on any dataset.
+- **Frontend:** the host page has counts, an activity strip over stream time (closed by the pipeline in gray, sent to an analyst in orange, a red ring for confirmed malicious; click a dot to open the case) and a day-by-day chronology. It is linked from the Live hosts panel and the case header.
+
+### What was found
+- CLIENT2's morning reads as the attack as the SOC saw it, from 10:01: a PowerShell script fingerprint, ZIP files, a "Dotted Quad Host ZIP Request" to 172.19.1.1, and so on.
+- **First version:** the strip's time axis showed the browser's local time (IST, +5:30) while every other time in the console is UTC. It now sets ECharts `useUTC`.
+- 0 JavaScript errors.
+
+### Files created/modified
+- Created: `frontend/src/pages/Host.tsx`
+- Modified: `perception/review_service.py`, `soc_server/app.py`, `tests/test_soc_server.py`, `frontend/src/{App.tsx,pages/Live.tsx,pages/Case.tsx}`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: one-command end-to-end check
+
+- **`tools/browser.py`:** the headless-browser driver (Edge / Chrome / Chromium over the DevTools protocol; own temporary profile; sign-in, API calls with the session, navigation, clicks, page text, full-page screenshots, JavaScript errors).
+  - It finds the browser on Windows, macOS and Linux, or takes `--browser` / `$BROWSER`.
+- **`tools/ui_check.py`:** now a thin wrapper over it, with the same command line.
+- **`tools/e2e_check.py`:** signs in and opens every page as a user would, checking each for its expected text and for JavaScript errors. Read-only. Exit code 0 only if every check passes.
+  - The pages: overview, the top queued case, its host timeline, Knowledge Store, Metrics, Contamination Lab and one pair, My account, Accounts (for admins).
+- **Run on the steering-scenario server:** 9 / 9 passed. With a wrong password: "FAIL sign in", exit code 1.
+
+## 2026-10-20 — Session: paper Figs. 2 and 3
+
+- **`experiments/build_figures.py`:** writes `paper/fig_reviews_by_day.dat` and `paper/fig_analyst_delay.dat` from the frozen score files only. The earlier note that the per-day series were missing was wrong: they are under `reviews_per_day.by_day`.
+- **Fig. 2:** reviews per day over the 14 test days (gated, gate + analyst, ungated); "no learning" is off the scale and referred to Table III.
+- **Fig. 3:** analyst response time (log axis) against reviews per day, with the no-analyst level as a reference line read from the data file.
+  - Containment time is not drawn: it equals the delay, so a second y axis would only repeat the x axis. It is stated in the caption.
+- **Look:** both plots use the console's colours plus markers and dashes, so they survive grayscale print.
+  - Fig. 3's legend first covered the reference line and was moved.
+- **Paper:** compiles cleanly, 5 pages.
+
+## 2026-10-20 — Session: dataset registry for the server (`--dataset`)
+
+### What was tried
+- **`soc_server/datasets.py`:** a `Dataset` record holding everything the server needs to know about a dataset. DEDALE is registered; factories import lazily.
+  - The fields: environment profile, seed, training window, demo start, replay source factories, recorded NCE cache, frozen comparison runs, and contamination families with their recorded answers.
+- **`python -m soc_server --dataset dedale`** (the default) reads everything from the registry.
+  - Non-DEDALE homes get `<data>/live_<name>`; their source ids are prefixed with the dataset name. DEDALE homes keep their ids, so they still restore.
+- **API:**
+  - `/live/status` carries the dataset label;
+  - Metrics takes the comparison runs from the dataset;
+  - new `/knowledge/hostnames` (hosts in the store, natural order).
+- **Frontend:** the header label and Live text come from the dataset; the Knowledge Store's host picker comes from the store instead of a hard-coded DEDALE list.
+
+### What was found
+- The steering-scenario home restored with the refactored CLI (no retraining).
+- `tools/e2e_check.py`: 9 / 9.
+
+### Test verification
+- New `tests/test_datasets.py` (2) and a hostnames / label test.
+- Full suite: see the commit.
+
+### Files created/modified
+- Created: `soc_server/datasets.py`, `tests/test_datasets.py`
+- Modified: `soc_server/__main__.py`, `soc_server/app.py`, `soc_server/reader.py`, `tests/test_soc_server.py`, `frontend/src/{api.ts,App.tsx,pages/Live.tsx,pages/Knowledge.tsx}`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: handover documents
+
+- **`HANDOVER.md`** (for the team):
+  - where the project stands and what is left (E3, M7);
+  - the first hour (setup, tests, demo, end-to-end check);
+  - the system on one page (modules per stage, invariants I1–I6, tool, research);
+  - how the numbers are made;
+  - working rules (branches, tracking docs, LLM budgets, keys in `.env`, data outside the repository, the locked normalizer);
+  - a document map.
+- **`docs/ADDING_A_DATASET.md`:** the E3 recipe in nine steps, each pointing at its DEDALE file to copy.
+  - The steps: data, package and environment model, Linux host detectors, labels for scoring only, replays, freeze and scores, LLM answers, demo registration, paper and tracking.
+  - Ends with a checklist.
+- **README and `frontend/README.md`:** the new pages, `--dataset`, the end-to-end check and the design notes.
+
+## 2026-10-20 — Session: narrow-window check
+
+- **The user's question (Lab: 130 / 439 vs 4 / 428):** the denominators differ by design.
+  - 439 = pairs where the undefended agent did not dismiss the clean alert on its own (it dismissed 61 of 500).
+  - 428 = pairs where the pipeline responded to the clean alert (it closed 72 of 500 on its own).
+  - Each rate is "the attack worked when it had something to suppress", the same as Table I.
+- **The cut-off in the user's screenshot:** no window controls or address-bar icons are visible at its right edge, so the screenshot is cropped. At that width there was no overflow.
+- **Probe:** every page in headless Edge at 900 / 1,000 / 1,100 / 1,280 px, listing elements past the window's right edge.
+  - Found: below about 1,050 px the Lab's pair table (and the Knowledge Store provenance table) were wider than their cards, and the card clipped the last columns.
+  - Fixed: both now scroll horizontally (Mantine `Table.ScrollContainer`). No page is wider than the window at 900–1,280 px.
+
+## 2026-10-20 — Session: reproduction from a fresh clone
+
+### What was tried
+- **Setup:**
+  - `git clone --branch design` into a scratch folder;
+  - the project venv's Python, with imports checked to resolve to the clone;
+  - `AGENTSOC_DATA_DIR` set to an isolated root: a junction to the DEDALE folder, empty `runs/` and `ks/`, and copies of the recorded NCE caches.
+- **Ran:**
+  - the full test suite;
+  - REPRODUCE steps 3–6: the three `rescore_v2` runs, `freeze_dedale --workers 6` (29 replays), `build_results`, `build_figures`.
+- **Static check:** every third-party import in tracked code (outside `archive/`) is pinned in `requirements-lock.txt`.
+
+### What was found
+- **Tests:** 778 passed.
+- **GUIDE:** re-scorings byte-identical; `RESULTS.md` identical apart from the date line; figure data identical.
+- **DEDALE freeze:** 29 / 29 replays exit 0 (about 25 minutes with 6 workers); `final_host_scores.json` and `final_network_scores.json` byte-identical to the frozen ones; `RESULTS.md` rebuilt from them identical.
+- **Not run:**
+  - a clean-environment install (`pip install -r requirements-lock.txt`, `npm ci`): it needs package downloads, which need approval;
+  - the clone used the existing environment instead.
+- **Cleanup:** the junction was removed with `rmdir` (link only) before deleting the scratch copies, and the DEDALE folder's size was checked unchanged (31,262,042 KB before and after).

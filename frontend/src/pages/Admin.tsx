@@ -36,7 +36,7 @@ export default function Admin() {
   return (
     <Stack>
       <div>
-        <Title order={3}>Accounts</Title>
+        <Title order={2}>Accounts</Title>
         <Text size="sm" c="dimmed">
           Analysts review and approve; leads also control the replay; admins also manage accounts. Containment of a critical
           host needs two different analysts.

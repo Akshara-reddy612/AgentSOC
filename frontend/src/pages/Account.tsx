@@ -42,7 +42,7 @@ export default function Account() {
 
   return (
     <Stack maw={520}>
-      <Title order={3}>My account</Title>
+      <Title order={2}>My account</Title>
       <Card withBorder>
         <Group gap="xs">
           <Text fw={600}>{session?.username}</Text>
