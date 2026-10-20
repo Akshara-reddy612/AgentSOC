@@ -9,6 +9,7 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
   - `python -m venv .venv`
   - `.venv\Scripts\python -m pip install -r requirements-lock.txt` (Linux: `.venv/bin/python ...`)
 - Run everything from the repository root with `python -m ...`.
+- Download the text-risk detector's embedding model once (88 MB): `.venv\Scripts\python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"`.
 - Set `HF_HUB_OFFLINE=1` for the tests.
 - Data lives outside the repository. The default is `../agentsoc_data`; override it with `AGENTSOC_DATA_DIR`. For example, `D:\agentsoc_data`.
 
@@ -18,8 +19,8 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
 |:--|:--|:--|
 | GUIDE corpus v2 | `GUIDE_Dataset/processed/v2/guide_v2_{dev,heldout}.json` (in the repo) | Rebuild with `python -m corpus.build_v2` |
 | GUIDE v2 live LLM outputs | `agent/v2_results/` (in the repo) | Recorded live runs (gemini-3.1-flash-lite dev + held-out; gpt-oss-20b dev; undefended agent dev) |
-| DEDALE | `<data>/dedale/` | Inria DEDALE, DOI 10.57745/Y5JLDG, CC BY 4.0. Files: `system_logs_labels.zip`, `suricata_alerts.zip`, `system_logs_winlogbeat.zip` (27.1 GB), plus the Zeek router logs used for network labels (`experiments/DEDALE_DATA_NOTES.md`) |
-| DEDALE NCE cache | `<data>/runs/nce_cache_host.jsonl` | Recorded live NCE hypotheses per host alert (Phase 3) |
+| DEDALE | `<data>/dedale/` | Inria DEDALE, DOI 10.57745/Y5JLDG, CC BY 4.0. Files: `system_logs_labels.zip`, `suricata_alerts.zip`, `system_logs_winlogbeat.zip` (27.1 GB) and `zeek_router1.zip` (4.4 GB, network labels); see `experiments/DEDALE_DATA_NOTES.md` |
+| DEDALE NCE caches | `experiments/dedale_results/nce_cache/` (in the repo) | Recorded live NCE hypotheses per host alert (Phase 3, and E1's three payload families). Copied to `<data>/runs/` the first time a replay or the server needs them. |
 
 ## 3. Steps
 

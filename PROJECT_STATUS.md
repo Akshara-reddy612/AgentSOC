@@ -56,7 +56,7 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
   - Live, Case (8-stage trace with possible-steering marks), Knowledge Store, Metrics;
   - My account; Accounts (admin);
   - first-run admin setup in the browser.
-- **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 771 passed, 1 deselected.
+- **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 780 passed, 1 deselected (no dataset needed: with an empty data folder 779 pass, 1 skips).
 - **Soak test (2026-10-19/20):**
   - the server fast-forwarded through the whole dataset, 15,013,901 events: two training weeks and 14 test days, 8,588 test cases;
   - no crash, peak memory 388 MB;

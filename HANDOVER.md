@@ -11,7 +11,7 @@ For the team taking over AgentSOC 2.0 (2026-10-20). Start here; the other docume
 | Paper | Full draft: `paper/agentsoc_combined.tex`, 5 pages; every number comes from frozen results; 15 checked references |
 | Results | Claims C1–C5 final: `experiments/RESULTS.md`, rebuilt from frozen files by one command |
 | Tool | Demo server and web console, with accounts; the whole pipeline on the DEDALE attack, live log ingestion, a contamination scenario, and the GUIDE Contamination Lab |
-| Tests | `HF_HUB_OFFLINE=1 python -m pytest -q` (778 pass), plus an end-to-end browser check of the console |
+| Tests | `HF_HUB_OFFLINE=1 python -m pytest -q` (780 pass; no dataset needed), plus an end-to-end browser check of the console |
 
 **Left for the team:**
 1. **Optional third dataset (E3, AIT-LDS):** follow [docs/ADDING_A_DATASET.md](docs/ADDING_A_DATASET.md). Decide first whether the paper needs it (`PROJECT_PLAN.md`, section 4).
@@ -30,13 +30,23 @@ Windows, Python 3.13 and Node 22. Run everything from the repository root.
 ```
 python -m venv .venv
 .venv\Scripts\python -m pip install -r requirements-lock.txt
+.venv\Scripts\python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 set HF_HUB_OFFLINE=1
 .venv\Scripts\python -m pytest -q                        # all tests, a few minutes
 ```
 
+- The third line downloads, once, the 88 MB embedding model of the text-risk detector. Everything after that runs offline.
+- The tests need no dataset: with an empty data folder one data-dependent test is skipped.
+
 **For the demo:**
 
-1. **Data:** put DEDALE in `<data>/dedale/`; `<data>` is `AGENTSOC_DATA_DIR`, or `../agentsoc_data` by default. Then extract the host events once (about an hour):
+1. **Data:** put DEDALE in `<data>/dedale/`; `<data>` is `AGENTSOC_DATA_DIR`, or `../agentsoc_data` by default.
+   - The files come from Recherche Data Gouv, doi:10.57745/Y5JLDG, CC BY 4.0.
+   - The demo needs `system_logs_winlogbeat.zip` (27.1 GB), `suricata_alerts.zip` and `system_logs_labels.zip`.
+   - Reproducing the network results also needs `zeek_router1.zip` (4.4 GB).
+   - The recorded LLM answers need nothing: they ship in `experiments/dedale_results/nce_cache/` and are copied into `<data>/runs/` on first use.
+
+   Then extract the host events once (about an hour):
    ```
    python -m experiments.dedale_extract_winlogbeat
    ```

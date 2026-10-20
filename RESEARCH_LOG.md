@@ -2509,3 +2509,22 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
   - a clean-environment install (`pip install -r requirements-lock.txt`, `npm ci`): it needs package downloads, which need approval;
   - the clone used the existing environment instead.
 - **Cleanup:** the junction was removed with `rmdir` (link only) before deleting the scratch copies, and the DEDALE folder's size was checked unchanged (31,262,042 KB before and after).
+
+## 2026-10-20 — Session: what a teammate's fresh machine is missing
+
+### What was tried
+- The user asked whether a teammate only has to clone and install. Checked what lives outside git.
+- **Recorded DEDALE NCE answers:** `nce_cache_host.jsonl` (497 answers) and E1's three family caches (38 each), about 0.4 MB, lived only in `<data>/runs/`.
+  - Without them, the demo's LLM stage has no answers and the DEDALE reproduction differs on C4.
+  - They are now in `experiments/dedale_results/nce_cache/`.
+  - `LiveNCE` copies a recorded cache into the data folder when that folder has none. Live answers are only ever appended to the copy; the tracked files are never written. Tests added.
+- **Embedding model:** the text-risk detector loads `all-MiniLM-L6-v2` (88 MB) from the Hugging Face cache, so with `HF_HUB_OFFLINE=1` a fresh machine fails until it is downloaded once. The command is now in README, HANDOVER and REPRODUCE.
+- **DEDALE files the code reads:** `system_logs_winlogbeat.zip` (27.1 GB), `suricata_alerts.zip`, `system_logs_labels.zip`, and `zeek_router1.zip` (4.4 GB; network labels, scoring only). The syslog and user-behaviour archives are not used. Documented.
+- **Tests without data:** run with `AGENTSOC_DATA_DIR` pointing at an empty folder: 779 passed, 1 skipped, and nothing was written to the folder.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 780 passed, 1 deselected.
+
+### Files created/modified
+- Created: `experiments/dedale_results/nce_cache/nce_cache_host{,_fake_approval,_steer,_suppress}.jsonl`, `tests/test_nce_cache_seed.py`
+- Modified: `experiments/dedale_nce.py`, `README.md`, `HANDOVER.md`, `REPRODUCE.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
