@@ -24,11 +24,11 @@ The goal now is the handover (decision P7). Before the project goes to the team,
 | gpt-oss-20b run, final tables | Done 2026-10-20 |
 | Full-replay soak test | Done 2026-10-20 (below) |
 | Repository cleanup | Done 2026-10-20 (`archive/README.md`) |
-| Frontend design pass (Live and Case first, for approval) | Live and Case done 2026-10-20 on branch `design`; awaiting the user's approval, then the other pages |
+| Frontend design pass | Done 2026-10-20: graphite console theme with a muted red accent (user-approved); every page restyled; host timeline added |
 | Contamination Lab page (GUIDE) | Done 2026-10-20 (totals asserted equal to Table I) |
 | Paper Figs. 2 and 3 | Done 2026-10-20 (`experiments/build_figures.py`) |
 | Fresh-clone check; one-command end-to-end browser check | E2E check done 2026-10-20 (`tools/e2e_check.py`, 9 / 9); fresh-clone check to do |
-| `HANDOVER.md`, adding-a-dataset guide, `--dataset` switch in the server | To do |
+| `HANDOVER.md`, adding-a-dataset guide, `--dataset` switch in the server | Done 2026-10-20 (`HANDOVER.md`, `docs/ADDING_A_DATASET.md`, `soc_server/datasets.py`) |
 
 ## Results
 

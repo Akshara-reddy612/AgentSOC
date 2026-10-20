@@ -2463,3 +2463,17 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `soc_server/datasets.py`, `tests/test_datasets.py`
 - Modified: `soc_server/__main__.py`, `soc_server/app.py`, `soc_server/reader.py`, `tests/test_soc_server.py`, `frontend/src/{api.ts,App.tsx,pages/Live.tsx,pages/Knowledge.tsx}`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: handover documents
+
+- **`HANDOVER.md`** (for the team):
+  - where the project stands and what is left (E3, M7);
+  - the first hour (setup, tests, demo, end-to-end check);
+  - the system on one page (modules per stage, invariants I1–I6, tool, research);
+  - how the numbers are made;
+  - working rules (branches, tracking docs, LLM budgets, keys in `.env`, data outside the repository, the locked normalizer);
+  - a document map.
+- **`docs/ADDING_A_DATASET.md`:** the E3 recipe in nine steps, each pointing at its DEDALE file to copy.
+  - The steps: data, package and environment model, Linux host detectors, labels for scoring only, replays, freeze and scores, LLM answers, demo registration, paper and tracking.
+  - Ends with a checklist.
+- **README and `frontend/README.md`:** the new pages, `--dataset`, the end-to-end check and the design notes.

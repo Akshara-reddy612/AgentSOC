@@ -84,6 +84,7 @@ The demo is a day in the SOC during the DEDALE attack. The server replays DEDALE
 
 | Option | Default | Meaning |
 |:--|:--|:--|
+| `--dataset` | `dedale` | Which dataset to replay (`soc_server/datasets.py`; a new one is added with [docs/ADDING_A_DATASET.md](docs/ADDING_A_DATASET.md)) |
 | `--home` | `<data>/live` | Server state: stores, checkpoints, accounts. A home is tied to its sources; use a new one to change them. |
 | `--sources` | `host,network` | Replay the Windows events, the Suricata alerts, or both |
 | `--speed` | `600` | Stream seconds per wall second (also adjustable in the app) |
@@ -96,14 +97,34 @@ The demo is a day in the SOC during the DEDALE attack. The server replays DEDALE
 
 **Pages:**
 
-- **Live:** stream clock and controls, status, and the prioritised review queue.
-- **Case:** the eight-stage pipeline trace; verdicts with a preview of what the store will learn; containment approval and rollback; related cases, notes and audit.
-- **Knowledge Store:** what was learned, from where, and what was retracted.
+- **Live (SOC overview):**
+  - stream clock and controls, and stat tiles;
+  - triage per hour (closed automatically vs sent to an analyst);
+  - hosts with waiting cases;
+  - the prioritised review queue, with filters and similar cases grouped.
+- **Case:**
+  - the eight pipeline stages as a flow;
+  - evidence, with trusted fields apart from attacker-writable text and steered names marked;
+  - LLM hypotheses with their checks, and the entity graph;
+  - verdicts with a preview of what the store will learn;
+  - containment approval and rollback;
+  - related cases, notes and audit.
+- **Host timeline:** every case on a host in stream order.
+- **Knowledge Store:** what was learned, from where (provenance), and what was retracted.
 - **Metrics:** the frozen comparison runs and the session's own counts.
+- **Contamination Lab:** GUIDE v2's clean / contaminated pairs.
+  - What an undefended LLM agent did with the attacker's text, against what the pipeline did.
+  - Totals equal the paper's Table I.
 - **My account:** your role, and changing your password.
 - **Accounts:** admin only. Create accounts, change roles, disable or enable, reset passwords.
 
 The API reference is at `/api/docs`. More detail, including development mode, is in [frontend/README.md](frontend/README.md) and [DEMO_BACKEND_DESIGN.md](DEMO_BACKEND_DESIGN.md).
+
+**Check a running console end to end** (read-only; every page, expected content, no JavaScript errors):
+
+```
+python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-file <file>
+```
 
 **Following live logs:**
 
@@ -156,13 +177,14 @@ No step makes an API call: live LLM output was recorded once and is replayed.
 | `paper/` | Paper draft (LaTeX) |
 | `tests/` | Test suite |
 | `monitoring/` | Earlier real-time monitoring layer (tested; its Streamlit tab is archived) |
-| `tools/` | `ui_check.py`: drives a headless browser over the app and saves screenshots |
+| `tools/` | `e2e_check.py` (end-to-end check of the console), `ui_check.py` (screenshots), `browser.py` (the headless-browser driver they share) |
 | `archive/` | Superseded material kept for reference: the Streamlit demo, the first paper draft, early demos, one-off scripts and notes (`archive/README.md`) |
 
 ## Project documents
 
 | File | What it holds |
 |:--|:--|
+| [HANDOVER.md](HANDOVER.md) | Start here if you are taking the project over |
 | [PROJECT_PLAN.md](PROJECT_PLAN.md) | Goals, claims C1-C5, milestones; work outside it goes to "Later" |
 | [PROJECT_STATUS.md](PROJECT_STATUS.md) | Current state, updated in place |
 | [RESEARCH_LOG.md](RESEARCH_LOG.md) | Dated log of every session: what was tried and found |
@@ -170,3 +192,4 @@ No step makes an API call: live LLM output was recorded once and is replayed.
 | [experiments/PAPER_CLAIMS_TO_REVISE.md](experiments/PAPER_CLAIMS_TO_REVISE.md) | What may and may not be claimed |
 | [PAPER_OUTLINE.md](PAPER_OUTLINE.md) | Paper structure and who writes what |
 | `experiments/*_DESIGN.md`, `experiments/DEDALE_*` | Design notes and per-phase results |
+| [docs/ADDING_A_DATASET.md](docs/ADDING_A_DATASET.md) | Bringing a third dataset (AIT-LDS) into the experiments and the demo |
