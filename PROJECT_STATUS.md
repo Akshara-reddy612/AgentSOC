@@ -27,7 +27,7 @@ The goal now is the handover (decision P7). Before the project goes to the team,
 | Frontend design pass | Done 2026-10-20: graphite console theme with a muted red accent (user-approved); every page restyled; host timeline added |
 | Contamination Lab page (GUIDE) | Done 2026-10-20 (totals asserted equal to Table I) |
 | Paper Figs. 2 and 3 | Done 2026-10-20 (`experiments/build_figures.py`) |
-| Fresh-clone check; one-command end-to-end browser check | E2E check done 2026-10-20 (`tools/e2e_check.py`, 9 / 9); fresh-clone check to do |
+| Fresh-clone check; one-command end-to-end browser check | Done 2026-10-20: E2E check 9 / 9; a fresh clone passes all tests and reproduces every result byte-identically (below) |
 | `HANDOVER.md`, adding-a-dataset guide, `--dataset` switch in the server | Done 2026-10-20 (`HANDOVER.md`, `docs/ADDING_A_DATASET.md`, `soc_server/datasets.py`) |
 
 ## Results
@@ -62,6 +62,10 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
   - no crash, peak memory 388 MB;
   - every read API answered in at most 0.12 s at that scale;
   - a hard stop and restart restored an identical state in about 10 s.
+- **Reproduction from a fresh clone (2026-10-20):** a clean `git clone`, with only `AGENTSOC_DATA_DIR` set and an isolated data root (the original runs untouched).
+  - All 778 tests pass.
+  - The three GUIDE re-scorings, `RESULTS.md` (apart from its date line) and the figure data are identical.
+  - The full DEDALE freeze (29 replays, all exit 0) gives byte-identical `final_host_scores.json` and `final_network_scores.json`.
 
 ## Known limits and open issues
 

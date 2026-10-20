@@ -2488,3 +2488,24 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - **Probe:** every page in headless Edge at 900 / 1,000 / 1,100 / 1,280 px, listing elements past the window's right edge.
   - Found: below about 1,050 px the Lab's pair table (and the Knowledge Store provenance table) were wider than their cards, and the card clipped the last columns.
   - Fixed: both now scroll horizontally (Mantine `Table.ScrollContainer`). No page is wider than the window at 900–1,280 px.
+
+## 2026-10-20 — Session: reproduction from a fresh clone
+
+### What was tried
+- **Setup:**
+  - `git clone --branch design` into a scratch folder;
+  - the project venv's Python, with imports checked to resolve to the clone;
+  - `AGENTSOC_DATA_DIR` set to an isolated root: a junction to the DEDALE folder, empty `runs/` and `ks/`, and copies of the recorded NCE caches.
+- **Ran:**
+  - the full test suite;
+  - REPRODUCE steps 3–6: the three `rescore_v2` runs, `freeze_dedale --workers 6` (29 replays), `build_results`, `build_figures`.
+- **Static check:** every third-party import in tracked code (outside `archive/`) is pinned in `requirements-lock.txt`.
+
+### What was found
+- **Tests:** 778 passed.
+- **GUIDE:** re-scorings byte-identical; `RESULTS.md` identical apart from the date line; figure data identical.
+- **DEDALE freeze:** 29 / 29 replays exit 0 (about 25 minutes with 6 workers); `final_host_scores.json` and `final_network_scores.json` byte-identical to the frozen ones; `RESULTS.md` rebuilt from them identical.
+- **Not run:**
+  - a clean-environment install (`pip install -r requirements-lock.txt`, `npm ci`): it needs package downloads, which need approval;
+  - the clone used the existing environment instead.
+- **Cleanup:** the junction was removed with `rmdir` (link only) before deleting the scratch copies, and the DEDALE folder's size was checked unchanged (31,262,042 KB before and after).
