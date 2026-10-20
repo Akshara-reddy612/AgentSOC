@@ -3,7 +3,7 @@
 - **Thesis** (`PROJECT_PLAN.md` P1): an LLM-driven SOC has two attack surfaces, the LLM reading log text an attacker can write and the memory that learns from what it sees, and the full pipeline defends both while keeping the workload benefit of automation.
 - **Format:** IEEE conference, about 8 pages (the venue is chosen after the draft, P2).
 - **Source of every number:** `experiments/RESULTS.md`.
-- **Old draft:** `agentsoc2_paper_corrected.tex` (contamination only). Its architecture sections are reused. Its results sections (n = 400, n = 320, n = 60, ApprovalClaimDetector, RSEM tie-blindness) are replaced; see `experiments/PAPER_CLAIMS_TO_REVISE.md`.
+- **Old draft:** `archive/paper_v1/agentsoc2_paper_corrected.tex` (contamination only). Its architecture sections are reused. Its results sections (n = 400, n = 320, n = 60, ApprovalClaimDetector, RSEM tie-blindness) are replaced; see `experiments/PAPER_CLAIMS_TO_REVISE.md`.
 
 **Working title:** *Securing Autonomous Defense: Contamination and Memory Poisoning in a Learning Agentic SOC.*
 
@@ -40,5 +40,5 @@
 - Authors and the repository link (team).
 - Fig. 2 and Fig. 3 are not drawn yet: the frozen score files have no per-day series, so Fig. 2 needs a small extraction from the run stores.
 
-- The gpt-oss-20b GUIDE dev run (590 / 1,000; resumes daily).
+- (Done 2026-10-20) The gpt-oss-20b GUIDE dev run: all 500 pairs; Table I final.
 - **Optional E3 (AIT-LDS):** decided after this draft (plan section 4).

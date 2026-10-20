@@ -156,9 +156,8 @@ No step makes an API call: live LLM output was recorded once and is replayed.
 | `paper/` | Paper draft (LaTeX) |
 | `tests/` | Test suite |
 | `monitoring/` | Earlier real-time monitoring layer (tested; its Streamlit tab is archived) |
-| `archive/streamlit/` | The retired Streamlit demo |
 | `tools/` | `ui_check.py`: drives a headless browser over the app and saves screenshots |
-| `scratch/` | One-off investigation scripts from earlier phases |
+| `archive/` | Superseded material kept for reference: the Streamlit demo, the first paper draft, early demos, one-off scripts and notes (`archive/README.md`) |
 
 ## Project documents
 

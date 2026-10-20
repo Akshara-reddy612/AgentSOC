@@ -2227,3 +2227,41 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `perception/case_store.py`, `soc_server/runner.py`, `tests/test_live_runner.py`, `frontend/src/api.ts`, `frontend/src/pages/Live.tsx`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: handover start (P7): soak test, gpt-oss-20b complete, repository cleanup
+
+### What was tried
+- **Decision P7 (user, 2026-10-19):** hand the project over with GUIDE and DEDALE finished and stable; the team's remaining work is the optional AIT-LDS dataset. Milestone M8 lists the work.
+- **Soak test:**
+  - `python -m soc_server --home D:\agentsoc_data\soak --demo-start 2025-01-20T00:00`: the real server fast-forwarded through the whole dataset (host and network);
+  - memory was sampled every 10 s (psutil);
+  - every read API was then timed at that scale;
+  - then a hard stop and a restart.
+- **gpt-oss-20b:** resumed on the new day's Groq quota; the run completed (76 alerts, exit 0). Re-scored, `RESULTS.md` rebuilt, paper Table I / setup / limitations updated; the "partial run" wording removed from `experiments/build_results.py`.
+- **Cleanup (user-approved list), all with `git mv` to `archive/`:**
+  - root: the first paper draft, session notes, two Phase 1 investigations, the early demos;
+  - `scratch/`;
+  - 27 one-off files from `experiments/`, including 10 `test_*.py` files that held no tests;
+  - `PROJECT_STATUS.md` moved unchanged to `archive/PROJECT_STATUS_HISTORY.md` and replaced by a short current-state file.
+  - Links updated in `PAPER_OUTLINE.md`, `README.md`, `pyproject.toml`, `agent/run_baseline_eval.py` (comment) and the claims file (one note); `archive/README.md` indexes the folders.
+
+### What was found
+- **Soak:** 15,013,901 events (6,787,207 training host events), 8,588 test cases, 754,297 test-period alerts.
+  - No crash; peak RSS 388 MB.
+  - Read APIs at full scale: status 0.01 s, queue (500) 0.11 s, metrics 0.11 s, knowledge summary 0.05 s, CLIENT2 graph 0.03 s, traces 0.01-0.03 s.
+  - Restart: about 10 s, `restored_from_checkpoint` true, identical counts.
+  - The wall time of the fast-forward could not be measured: the machine slept during it (gap 18:49-21:56 in the memory log).
+- **gpt-oss-20b, all 500 dev pairs (1,000 records, 0 NCE errors):**
+  - suppressed 10 / 437 (2.3%, 95% CI 1.2-4.2%);
+  - ERA-induced 12; induced otherwise 5; p = 0.3;
+  - steered actions 0 executed / 3 gated.
+  - This ends E2b and M2.
+- **Archive:** 0 tests lost (the moved `test_*.py` files defined none); the suite is unchanged.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: 771 passed, 1 deselected.
+
+### Files created/modified
+- Created: `PROJECT_STATUS.md` (new short version), `archive/README.md`
+- Moved: `agentsoc2_paper_corrected.{tex,pdf}`, `SESSION1_STATUS.md`, `nce8_clean_fp_investigation.md`, `t1071_mislabeling_investigation.md`, `demo.py`, `demo_phase2.py`, `scratch/`, 27 `experiments/` one-offs, `PROJECT_STATUS.md` -> `archive/...`
+- Modified: `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_{results.json,api_log.jsonl}`, `experiments/build_results.py`, `experiments/RESULTS.md`, `paper/agentsoc_combined.{tex,pdf}`, `PROJECT_PLAN.md`, `PAPER_OUTLINE.md`, `REPRODUCE.md`, `README.md`, `pyproject.toml`, `agent/run_baseline_eval.py`, `experiments/PAPER_CLAIMS_TO_REVISE.md`, `RESEARCH_LOG.md`
