@@ -4,7 +4,7 @@ Serves the demo in `PROJECT_PLAN.md` section 5: a day in the SOC during the DEDA
 
 ## Shape: one server process
 
-`python -m soc_server --data <dir>` runs one process:
+`python -m soc_server [--home <dir>]` runs one process:
 
 - **Runner thread:** the SOC loop, fed by a replay source (DEDALE host events or network alerts) at an adjustable speed.
 - **FastAPI app:** the existing review API, plus live control, read APIs and accounts.
@@ -32,10 +32,14 @@ Each step is committed with tests. No new Python packages are needed.
 | Contamination scenario | `--inject suppress|fake_approval|steer` (plan section 5, item 7): the attacker's command lines carry E1's payloads, and with `--nce cache` the LLM answers are E1's recorded ones |
 | Login throttling | 5 failures per user + address, or 20 per address, in 15 min lock that key for 15 min (HTTP 429 with Retry-After) |
 | Withdrawing a verdict | `POST /cases/{id}/withdraw` (lead / admin): a wrong 'malicious' verdict is withdrawn; the loop ends the host's watch, restores the patterns it retracted and the destination's previous reputation, and the case returns to the queue |
+| Accounts in the browser | First-run admin setup (`/auth/setup`, once, only while no account exists); own password (`/auth/password`); admin role change, enable, password reset (`/admin/users/*`) |
+| Console data | `/live/activity` (cases per stream hour, closed vs sent to an analyst), `/techniques` (ATT&CK names), queue items with kind, tier, feasible techniques and a grouping key, `/hosts/{host}/timeline`, `/knowledge/hostnames` |
+| Contamination Lab | `/lab/*` (`soc_server/lab.py`): GUIDE v2 pairs replayed from the recorded runs; totals equal the paper's Table I (tested) |
+| Dataset registry | `soc_server/datasets.py`; `--dataset` picks one (DEDALE registered). Status carries the dataset label; Metrics' comparison runs come from the dataset |
 
 ## Not built
 
 - TLS.
 - Multi-tenant.
 - An environment model for networks other than DEDALE: followed logs must come from DEDALE's hosts.
-- Highlighting the injected span of untrusted text (plan section 5, item 3): the trace shows the text and the entity-binding flags; marking the span is left to frontend polish.
+- Highlighting suppression payloads in the case view: the console marks names a steered hypothesis took from attacker text (entity binding); text that names no entity is shown but not marked. (The Contamination Lab marks the exact inserted text, since there the clean twin is known.)

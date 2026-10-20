@@ -106,7 +106,7 @@ Package installs (npm for the frontend; nothing new for Python) need approval, a
 | M5 | Frontend | M4, npm approval | Claude + team | **first version done 2026-10-19** (`frontend/`); **polish done 2026-10-19** (P6): possible-steering marks in the case view (section 5, item 3), verdict withdrawal, follow mode, login lockout message; accounts managed fully in the browser (first-run admin setup, own password, admin role / enable / reset) |
 | M6 | Optional E3 (AIT-LDS) | decided after M3 | team (P7) | ~1 week |
 | M7 | Venue choice, final paper, demo video, README | all | team | ~1 week |
-| M8 | **Handover (P7):** (1) finish open items: gpt-oss-20b run (done 2026-10-20), final tables (done), paper figures; (2) stability: full-replay soak test, fresh-clone check, one-command end-to-end browser check; (3) frontend design pass and the Contamination Lab (GUIDE); (4) `HANDOVER.md`, adding-a-dataset guide and a `--dataset` switch in the server, repository cleanup | P7 | Claude | in progress |
+| M8 | **Handover (P7):** (1) finish open items: gpt-oss-20b run (done 2026-10-20), final tables (done), paper figures; (2) stability: full-replay soak test, fresh-clone check, one-command end-to-end browser check; (3) frontend design pass and the Contamination Lab (GUIDE); (4) `HANDOVER.md`, adding-a-dataset guide and a `--dataset` switch in the server, repository cleanup | P7 | Claude | **done 2026-10-21** (`HANDOVER.md`; pushed) |
 
 Order: M1 -> M2 -> M3 and M4 in parallel -> M5 -> M8 (handover) -> the team: (M6) -> M7.
 

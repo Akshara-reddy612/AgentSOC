@@ -2,7 +2,7 @@
 
 The current state of AgentSOC 2.0, updated in place. Scope and decisions: [PROJECT_PLAN.md](PROJECT_PLAN.md). Dated history: [RESEARCH_LOG.md](RESEARCH_LOG.md). The full status as it stood before this file was shortened, with every earlier phase, is in [archive/PROJECT_STATUS_HISTORY.md](archive/PROJECT_STATUS_HISTORY.md).
 
-## Where things stand (2026-10-20)
+## Where things stand (2026-10-21)
 
 The goal now is the handover (decision P7). Before the project goes to the team, everything for GUIDE and DEDALE is finished and stable. The team's remaining work is the optional third dataset (AIT-LDS, E3) and the M7 items: venue, authors, demo video.
 
@@ -10,12 +10,12 @@ The goal now is the handover (decision P7). Before the project goes to the team,
 |:--|:--|
 | M1 Freeze, `RESULTS.md`, `REPRODUCE.md` | Done 2026-10-18 |
 | M2 Interrupted runs, E1 | Done 2026-10-20 (gpt-oss-20b complete: all 500 dev pairs) |
-| M3 Paper draft | Full draft 2026-10-19 (`paper/agentsoc_combined.tex`, 5 pages, 15 checked references). The team revises it; authors and the repository link are TODO; Figs. 2 and 3 are not drawn yet |
+| M3 Paper draft | Full draft 2026-10-19 (`paper/agentsoc_combined.tex`, 5 pages, 15 checked references). Figs. 2 and 3 drawn 2026-10-20. The team revises it; authors and the repository link are TODO |
 | M4 Demo backend | Done 2026-10-18; extended 2026-10-19 (network alerts, live logs, contamination scenario, accounts in the browser) |
-| M5 Frontend | Working version 2026-10-19; design pass in M8 |
+| M5 Frontend | Done 2026-10-20 (design pass, Contamination Lab, host timeline in M8) |
 | M6 E3 (AIT-LDS) | Optional; for the team (P7) |
 | M7 Venue, final paper, demo video | Team |
-| M8 Handover | In progress, see below |
+| M8 Handover | Done 2026-10-21, see below |
 
 **M8 handover checklist:**
 
@@ -53,9 +53,12 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
 
 - **Server:** `python -m soc_server`. It runs the DEDALE replay (host and network), follows live log files (`--follow`), or runs the contamination scenario (`--inject`). NCE replays recorded answers by default; `--nce live` takes a daily budget.
 - **Frontend:**
-  - Live, Case (8-stage trace with possible-steering marks), Knowledge Store, Metrics;
+  - Live (SOC overview), Case (8-stage pipeline flow with possible-steering marks and an entity graph), host timeline, Knowledge Store, Metrics, Contamination Lab (GUIDE);
   - My account; Accounts (admin);
   - first-run admin setup in the browser.
+- **Datasets:** `soc_server/datasets.py` holds everything dataset-specific; DEDALE is registered (`--dataset dedale`).
+- **Checks:** `tools/e2e_check.py` opens every page of a running console (9 / 9 pass).
+- **Data for teammates:** `dedale_for_team.zip` (321 MB, processed DEDALE files) replaces the 31.5 GB raw download; see `HANDOVER.md`. The recorded LLM answers ship in the repository.
 - **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 780 passed, 1 deselected (no dataset needed: with an empty data folder 779 pass, 1 skips).
 - **Soak test (2026-10-19/20):**
   - the server fast-forwarded through the whole dataset, 15,013,901 events: two training weeks and 14 test days, 8,588 test cases;
