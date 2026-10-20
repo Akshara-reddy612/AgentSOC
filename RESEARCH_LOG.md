@@ -2428,3 +2428,13 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - **`tools/e2e_check.py`:** signs in and opens every page as a user would, checking each for its expected text and for JavaScript errors. Read-only. Exit code 0 only if every check passes.
   - The pages: overview, the top queued case, its host timeline, Knowledge Store, Metrics, Contamination Lab and one pair, My account, Accounts (for admins).
 - **Run on the steering-scenario server:** 9 / 9 passed. With a wrong password: "FAIL sign in", exit code 1.
+
+## 2026-10-20 — Session: paper Figs. 2 and 3
+
+- **`experiments/build_figures.py`:** writes `paper/fig_reviews_by_day.dat` and `paper/fig_analyst_delay.dat` from the frozen score files only. The earlier note that the per-day series were missing was wrong: they are under `reviews_per_day.by_day`.
+- **Fig. 2:** reviews per day over the 14 test days (gated, gate + analyst, ungated); "no learning" is off the scale and referred to Table III.
+- **Fig. 3:** analyst response time (log axis) against reviews per day, with the no-analyst level as a reference line read from the data file.
+  - Containment time is not drawn: it equals the delay, so a second y axis would only repeat the x axis. It is stated in the caption.
+- **Look:** both plots use the console's colours plus markers and dashes, so they survive grayscale print.
+  - Fig. 3's legend first covered the reference line and was moved.
+- **Paper:** compiles cleanly, 5 pages.

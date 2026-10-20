@@ -38,7 +38,7 @@
 ## Open before the draft is final
 
 - Authors and the repository link (team).
-- Fig. 2 and Fig. 3 are not drawn yet: the frozen score files have no per-day series, so Fig. 2 needs a small extraction from the run stores.
+- (Done 2026-10-20) Fig. 2 (reviews per day by learning mode) and Fig. 3 (analyst response time vs reviews per day), from `experiments/build_figures.py`. The per-day series were in the frozen score files after all (`reviews_per_day.by_day`). Fig. 3 plots one measure: containment time equals the delay, so it is stated in the caption instead of a second axis.
 
 - (Done 2026-10-20) The gpt-oss-20b GUIDE dev run: all 500 pairs; Table I final.
 - **Optional E3 (AIT-LDS):** decided after this draft (plan section 4).

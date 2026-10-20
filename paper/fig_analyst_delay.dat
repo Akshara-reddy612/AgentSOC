@@ -1,0 +1,5 @@
+delay_h reviews_per_day contained_after_min no_analyst
+1 33.1 60.0 65.2
+4 34.1 240.0 65.2
+24 38.1 1440.0 65.2
+72 51.5 4320.0 65.2

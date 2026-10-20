@@ -36,6 +36,7 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
      - `python -m experiments.era_offline --report`
 4. **C2–C5, DEDALE:** `python -m experiments.freeze_dedale --workers 6` runs all 29 replay conditions (about 30–60 min) and scores them into `experiments/dedale_results/final_{host,network}_scores.json`.
 5. **The tables:** `python -m experiments.build_results` writes `experiments/RESULTS.md`.
+6. **The paper's figures:** `python -m experiments.build_figures` writes `paper/fig_*.dat` from the same frozen files; `pdflatex agentsoc_combined.tex` in `paper/` (twice) draws them.
 
 ## 4. Determinism
 

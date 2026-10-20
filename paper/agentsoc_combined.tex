@@ -13,6 +13,10 @@
 \usepackage{url}
 \usepackage{balance}
 \usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+% Figure colours as in the demo console (validated categorical slots), plus marks and dashes for grayscale print.
+\definecolor{cgate}{HTML}{199E70}\definecolor{canalyst}{HTML}{3987E5}\definecolor{cungated}{HTML}{D95926}
 \usetikzlibrary{arrows.meta,positioning,fit,backgrounds}
 
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
@@ -256,7 +260,29 @@ the training weeks cuts this to 65 per day while all 72 attack cases still reach
 1.2 min after it began, lateral movement after 28.5 min). Learning without the gate cuts further, to 27.4, but only
 by learning the attacker: 38 attack cases' patterns became routine and only 99 of the 400 attack events raised
 alerts. On network alerts, learning cuts 552 to 26 reviews per day; without the gate, 4 of 7 attack-related cases
-were hidden.
+were hidden. Fig.~\ref{fig:days} shows the workload day by day.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=\columnwidth, height=4.6cm, xmin=0.5, xmax=14.5, ymin=0, ymax=185,
+  xtick={1,...,14}, xticklabel style={font=\scriptsize}, yticklabel style={font=\scriptsize},
+  xlabel={test day}, ylabel={reviews per day}, label style={font=\footnotesize},
+  legend style={font=\scriptsize, at={(0.02,0.98)}, anchor=north west, draw=none, fill=white, fill opacity=0.85},
+  ymajorgrids, grid style={gray!25}]
+\addplot[cgate, thick, mark=*, mark size=1.4pt] table[x=day, y=gated] {fig_reviews_by_day.dat};
+\addlegendentry{learning behind the gate}
+\addplot[canalyst, thick, dashed, mark=diamond*, mark size=1.8pt] table[x=day, y=analyst] {fig_reviews_by_day.dat};
+\addlegendentry{gate + analyst (4\,h, unlearning)}
+\addplot[cungated, thick, dotted, mark=triangle*, mark size=1.8pt] table[x=day, y=ungated] {fig_reviews_by_day.dat};
+\addlegendentry{learning without the gate}
+\end{axis}
+\end{tikzpicture}
+\caption{Analyst reviews per day on DEDALE's host logs over the 14 test days (attack in the first week). Without
+learning the workload is off this scale (Table~\ref{tab:c2}). The ungated store's lower load is the attacker learned
+as routine (C3).}
+\label{fig:days}
+\end{figure}
 
 \begin{table}[t]
 \caption{Learning modes on DEDALE host logs (14 test days).}\label{tab:c2}
@@ -308,7 +334,27 @@ in the loop, NCE adds little (33.2 reviews per day with NCE, 34.1 without, both 
 Detection does not depend on how fast analysts answer, but workload does: host reviews per day rise from 33.1 to
 51.5 as the delay grows from 1 h to 72 h, because benign patterns are learned only when their verdict arrives.
 On the network, the attacker's server stays reachable until the verdict: containment came 60 min to 72 h after the
-first alert, equal to the delay.
+first alert, equal to the delay (Fig.~\ref{fig:delay}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=\columnwidth, height=4.2cm, xmode=log, log basis x=10, xmin=0.8, xmax=90, ymin=0, ymax=75,
+  xtick={1,4,24,72}, xticklabels={1\,h,4\,h,24\,h,72\,h}, xticklabel style={font=\scriptsize}, yticklabel style={font=\scriptsize},
+  xlabel={analyst response time}, ylabel={reviews per day}, label style={font=\footnotesize},
+  legend style={font=\scriptsize, at={(0.98,0.05)}, anchor=south east, draw=none, fill=white, fill opacity=0.85},
+  ymajorgrids, grid style={gray!25}]
+\addplot[gray, dashed, thick] table[x=delay_h, y=no_analyst] {fig_analyst_delay.dat};
+\addlegendentry{no analyst (gate only)}
+\addplot[canalyst, thick, mark=diamond*, mark size=2pt] table[x=delay_h, y=reviews_per_day] {fig_analyst_delay.dat};
+\addlegendentry{gate + analyst (unlearning on)}
+\end{axis}
+\end{tikzpicture}
+\caption{Analyst response time sets the workload (host logs): benign patterns are learned only when the verdict
+arrives. Detection is unchanged (all 400 attack events alert at every delay), and on the network the attacker's
+server was contained exactly one response time after its first alert.}
+\label{fig:delay}
+\end{figure}
 
 \section{Discussion and Limitations}
 % Drafted by Claude 2026-10-19 from RESULTS.md; for the team to revise.
