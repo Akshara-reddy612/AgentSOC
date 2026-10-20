@@ -137,3 +137,29 @@ def test_injected_source_passes_events_through_the_injector():
 
     out = list(InjectedSource(Src(), lambda e: dict(e, cmd=e["cmd"] + " # x")).events(1))
     assert out == [(2, "t2", {"cmd": "b # x"})]
+
+
+def test_activity_queue_fields_and_techniques(server):
+    client, runner, h = server
+    act = client.get("/live/activity?hours=48", headers=h["alice"]).json()["hours"]
+    assert len(act) == 48 and act[-1]["hour"].startswith("2025-01-07T12")
+    assert sum(x["sent_to_analyst"] + x["closed_automatically"] for x in act) == len(runner.cases.cases())
+    q = client.get("/queue", headers=h["alice"]).json()
+    assert q and all({"kind", "host_tier", "group", "techniques"} <= set(i) for i in q)
+    assert all(i["group"].startswith("host|") and "CLIENT2" not in i["group"] for i in q)
+    t = client.get("/techniques", headers=h["alice"]).json()
+    assert t["T1078"]["name"] == "Valid Accounts" and t["T1071"]["name"]
+
+
+def test_group_key_drops_the_varying_endpoint():
+    from perception.review_service import group_key
+    a = {"case_key": [2016149, "172.17.0.5", "185.208.37.90"], "host": "vpnserver"}
+    b = {"case_key": [2016149, "172.17.0.5", "64.131.63.216"], "host": "vpnserver"}
+    r = {"case_key": [2016150, "64.131.63.216", "172.17.0.5"], "host": "vpnserver"}
+    r2 = {"case_key": [2016150, "77.72.169.212", "172.17.0.5"], "host": "vpnserver"}
+    c = {"case_key": [2016149, "172.17.0.9", "185.208.37.90"], "host": "webserver"}
+    assert group_key(a) == group_key(b) != group_key(c)
+    assert group_key(r) == group_key(r2) != group_key(a)
+    h1 = {"case_key": ["host", "lineage", "CLIENT1", "-", "c:\\windows\\system32\\usoclient.exe"]}
+    h2 = {"case_key": ["host", "lineage", "CLIENT9", "-", "c:\\windows\\system32\\usoclient.exe"]}
+    assert group_key(h1) == group_key(h2)

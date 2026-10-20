@@ -79,6 +79,20 @@ def _pattern_type(case: dict) -> str:
     return key[1] if key and key[0] == "host" else "network"
 
 
+def group_key(case: dict) -> str:
+    """
+    Cases an analyst would judge together (the queue shows them as one row): a network
+    signature on the same host whatever the external endpoint (STUN requests to many servers,
+    or their responses from many), or a host pattern on any host.
+    """
+    k = list(case.get("case_key") or [])
+    if k and k[0] == "host":
+        return "host|" + "|".join(str(x) for i, x in enumerate(k) if i != 2)     # drop the host
+    if k:
+        return f"net|{k[0]}|{case.get('host') or k[1:]}"                       # signature + our host
+    return "case|" + str(case.get("case_id"))
+
+
 def host_peers(case: dict, pool: list[dict]) -> int:
     """Other cases in `pool` on the same host, opened in the PEER_WINDOW before this one."""
     opened = _t(case["opened"])
@@ -161,7 +175,10 @@ class ReviewService:
             items.append({"case_id": c["case_id"], "title": c["title"], "host": c["host"],
                           "opened": c["opened"], "alert_count": c["alert_count"],
                           "review_status": c["review_status"], "claimed_by": c["claimed_by"],
-                          "priority": points, "priority_reasons": why})
+                          "priority": points, "priority_reasons": why,
+                          "kind": c.get("kind"), "host_tier": c.get("host_tier"), "group": group_key(c),
+                          "techniques": sorted({h["technique_id"] for h in (d or {}).get("hypotheses", [])
+                                                if h.get("sse_verdict") == "FEASIBLE"})})
         items.sort(key=lambda i: (-i["priority"], i["opened"], i["case_id"]))
         return items[:limit]
 

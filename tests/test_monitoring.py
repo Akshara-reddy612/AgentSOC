@@ -426,8 +426,15 @@ def test_jsonl_tail_source(tmp_path):
 # 7. APISource Tests (Phase 2)
 # ---------------------------------------------------------------------------
 
+def _free_port() -> int:
+    import socket
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
 def test_api_source_health_and_ingestion():
-    port = 8769  # Use test-specific port to avoid collisions
+    port = _free_port()  # a fixed port collided with a running demo server (2026-10-20)
     state = MonitoringState()
     worker = MonitoringWorker(state=state, use_live_nce=False)
     api = APISource(host="127.0.0.1", port=port, worker=worker)

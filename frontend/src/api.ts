@@ -77,6 +77,10 @@ export interface QueueItem {
   claimed_by: string | null;
   priority: number;
   priority_reasons: string[];
+  kind?: string;
+  host_tier?: number | null;
+  group?: string;
+  techniques?: string[];
 }
 
 export interface Action {

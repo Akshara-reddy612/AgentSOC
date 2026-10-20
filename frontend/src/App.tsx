@@ -1,10 +1,9 @@
-import { AppShell, Badge, Button, Center, Group, Loader, NavLink, Stack, Text, Title } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
-import { NavLink as RouterLink, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { api, type LiveStatus } from "./api";
+import { AppShell, Avatar, Center, Group, Loader, Menu, NavLink, Stack, Text, UnstyledButton } from "@mantine/core";
+import { lazy, Suspense, type ReactNode } from "react";
+import { NavLink as RouterLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth";
-import { when } from "./format";
+import { useLive } from "./hooks";
+import { IconKnowledge, IconLive, IconLogo, IconMetrics, IconUser, IconUsers } from "./components/Icons";
 import CasePage from "./pages/Case";
 import Live from "./pages/Live";
 import Login from "./pages/Login";
@@ -15,45 +14,34 @@ const Account = lazy(() => import("./pages/Account"));
 const Knowledge = lazy(() => import("./pages/Knowledge"));
 const MetricsPage = lazy(() => import("./pages/Metrics"));
 
-const NAV = [
-  { to: "/", label: "Live", hint: "stream and review queue" },
-  { to: "/knowledge", label: "Knowledge Store", hint: "what has been learned" },
-  { to: "/metrics", label: "Metrics", hint: "workload and learning" },
+const NAV: { to: string; label: string; hint: string; icon: ReactNode }[] = [
+  { to: "/", label: "Live", hint: "stream and review queue", icon: <IconLive /> },
+  { to: "/knowledge", label: "Knowledge Store", hint: "what has been learned", icon: <IconKnowledge /> },
+  { to: "/metrics", label: "Metrics", hint: "workload and learning", icon: <IconMetrics /> },
 ];
 
-function SourceLabel() {
-  const { data } = useQuery({ queryKey: ["live"], queryFn: () => api<LiveStatus>("/live/status"), refetchInterval: 2000 });
-  return (
-    <Text size="xs" c="dimmed">
-      {data?.mode === "follow" ? "live logs" : "DEDALE replay"}
-    </Text>
-  );
-}
-
 function StreamClock() {
-  const { data } = useQuery({ queryKey: ["live"], queryFn: () => api<LiveStatus>("/live/status"), refetchInterval: 2000 });
+  const { data } = useLive();
   if (!data) return null;
-  const color = data.state === "running" ? "green" : data.state === "finished" ? "gray" : "yellow";
+  const t = new Date(data.stream_time);
+  const date = t.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  const time = t.toISOString().slice(11, 19);
   return (
-    <Group gap="xs">
-      <Badge color={color} variant="light">
-        {data.state}
-      </Badge>
-      <Text size="sm" ff="monospace">
-        {when(data.stream_time)}
-      </Text>
-      {data.mode !== "follow" && (
-        <Text size="xs" c="dimmed">
-          ×{data.speed}
-        </Text>
-      )}
-    </Group>
+    <div className="soc-clock" title={`${data.state}; stream time (UTC)`}>
+      <span className="soc-dot" data-state={data.state} />
+      <Text size="xs" c="dimmed" tt="uppercase" fw={600}>{data.state}</Text>
+      <Text size="sm" ff="monospace" fw={600}>{time}</Text>
+      <Text size="xs" c="dimmed">{date} UTC</Text>
+      {data.mode !== "follow" && <Text size="xs" c="dimmed">×{data.speed}</Text>}
+    </div>
   );
 }
 
 export default function App() {
   const { session, loading, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const live = useLive(!!session);
 
   if (loading)
     return (
@@ -63,53 +51,68 @@ export default function App() {
     );
   if (!session) return <Login />;
 
+  const active = (to: string) =>
+    to === "/" ? location.pathname === "/" || location.pathname.startsWith("/cases") : location.pathname.startsWith(to);
+
   return (
-    <AppShell header={{ height: 56 }} navbar={{ width: 220, breakpoint: "sm" }} padding="md">
-      <AppShell.Header>
-        <Group h="100%" px="md" justify="space-between">
-          <Group gap="sm">
-            <Title order={4}>AgentSOC</Title>
-            <SourceLabel />
+    <AppShell header={{ height: 60 }} navbar={{ width: 232, breakpoint: "sm" }} padding="lg">
+      <AppShell.Header className="soc-header">
+        <Group h="100%" px="lg" justify="space-between" wrap="nowrap">
+          <Group gap={10} wrap="nowrap">
+            <span style={{ color: "var(--soc-accent)", display: "flex" }}><IconLogo size={26} /></span>
+            <div>
+              <Text fw={700} size="lg" lh={1.1}>AgentSOC</Text>
+              <Text size="xs" c="dimmed" lh={1.1}>{live.data?.mode === "follow" ? "live logs" : "DEDALE replay"}</Text>
+            </div>
           </Group>
           <StreamClock />
-          <Group gap="xs">
-            <Text size="sm">{session.username}</Text>
-            <Badge variant="outline">{session.role}</Badge>
-            <Button size="xs" variant="subtle" onClick={() => void logout()}>
-              Sign out
-            </Button>
-          </Group>
+          <Menu position="bottom-end" width={200} withArrow>
+            <Menu.Target>
+              <UnstyledButton>
+                <Group gap={8} wrap="nowrap">
+                  <Avatar size={30} radius="xl" color="cyan" variant="light">{session.username.slice(0, 2).toUpperCase()}</Avatar>
+                  <div>
+                    <Text size="sm" fw={600} lh={1.1}>{session.username}</Text>
+                    <Text size="xs" c="dimmed" lh={1.1}>{session.role}</Text>
+                  </div>
+                </Group>
+              </UnstyledButton>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item onClick={() => navigate("/account")}>My account</Menu.Item>
+              {session.role === "admin" && <Menu.Item onClick={() => navigate("/admin")}>Accounts</Menu.Item>}
+              <Menu.Divider />
+              <Menu.Item color="red" onClick={() => void logout()}>Sign out</Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
         </Group>
       </AppShell.Header>
-      <AppShell.Navbar p="sm">
+      <AppShell.Navbar p="sm" className="soc-navbar">
         <Stack gap={4}>
           {NAV.map((n) => (
-            <NavLink
-              key={n.to}
-              component={RouterLink}
-              to={n.to}
-              label={n.label}
-              description={n.hint}
-              active={n.to === "/" ? location.pathname === "/" || location.pathname.startsWith("/cases") : location.pathname.startsWith(n.to)}
-            />
+            <NavLink key={n.to} className="soc-nav-item" component={RouterLink} to={n.to} label={n.label}
+              description={n.hint} leftSection={n.icon} active={active(n.to)} />
           ))}
+          <Text size="xs" c="dimmed" tt="uppercase" fw={600} mt="md" mb={2} px="sm">Account</Text>
           {session.role === "admin" && (
-            <NavLink component={RouterLink} to="/admin" label="Accounts" description="users and roles" active={location.pathname === "/admin"} />
+            <NavLink className="soc-nav-item" component={RouterLink} to="/admin" label="Accounts" description="users and roles"
+              leftSection={<IconUsers />} active={active("/admin")} />
           )}
-          <NavLink component={RouterLink} to="/account" label="My account" description="role and password" active={location.pathname === "/account"} />
+          <NavLink className="soc-nav-item" component={RouterLink} to="/account" label="My account" description="role and password"
+            leftSection={<IconUser />} active={active("/account")} />
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>
         <Suspense fallback={<Loader />}>
-        <Routes>
-          <Route path="/" element={<Live />} />
-          <Route path="/cases/:caseId" element={<CasePage />} />
-          <Route path="/knowledge" element={<Knowledge />} />
-          <Route path="/metrics" element={<MetricsPage />} />
-          <Route path="/admin" element={session.role === "admin" ? <Admin /> : <Navigate to="/" />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<Live />} />
+            <Route path="/cases/:caseId" element={<CasePage />} />
+            <Route path="/knowledge" element={<Knowledge />} />
+            <Route path="/metrics" element={<MetricsPage />} />
+            <Route path="/admin" element={session.role === "admin" ? <Admin /> : <Navigate to="/" />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
         </Suspense>
       </AppShell.Main>
     </AppShell>

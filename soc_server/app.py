@@ -15,6 +15,7 @@ accounts, analysts' actions stamped with the stream's clock), plus
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Query
@@ -54,6 +55,30 @@ def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | Non
     @app.get("/live/status")
     def live_status(p=Depends(principal)) -> dict:
         return runner.status()
+
+    @app.get("/live/activity")
+    def live_activity(hours: int = Query(24, ge=1, le=24 * 31), p=Depends(principal)) -> dict:
+        """Cases opened per stream hour, closed automatically vs sent to an analyst (the last `hours`)."""
+        end = runner.now()
+        start = (end - timedelta(hours=hours - 1)).replace(minute=0, second=0, microsecond=0)
+        counts = runner.cases.opened_per_hour(start)
+        out, t = [], start
+        while t <= end:
+            key = t.strftime("%Y-%m-%dT%H")
+            out.append({"hour": t.isoformat(), "closed_automatically": counts.get((key, False), 0),
+                        "sent_to_analyst": counts.get((key, True), 0)})
+            t += timedelta(hours=1)
+        return {"hours": out}
+
+    @app.get("/techniques")
+    def techniques(p=Depends(principal)) -> dict:
+        """ATT&CK techniques the pipeline reasons about: {id: {name, detail}} (from SSE's table)."""
+        from perception.sse import TECHNIQUE_TABLE
+        out = {}
+        for tid, c in TECHNIQUE_TABLE.items():
+            name, _, detail = c.description.partition(" — ")
+            out[tid] = {"name": name.strip(), "detail": detail.strip()}
+        return out
 
     @app.post("/live/start")
     def live_start(p=Depends(role("lead", "admin"))) -> dict:

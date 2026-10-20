@@ -91,9 +91,12 @@ try:
             settle(3)
         metrics = cmd("Page.getLayoutMetrics")
         size = metrics["cssContentSize"]
-        h = min(int(size["height"]), 6000)
-        shot = cmd("Page.captureScreenshot", format="png", captureBeyondViewport=True,
-                   clip={"x": 0, "y": 0, "width": 1440, "height": max(h, 1000), "scale": 1})
+        h = max(min(int(size["height"]), 6000), 1000)
+        # a viewport as tall as the page (capturing beyond the viewport shifted fixed layouts)
+        cmd("Emulation.setDeviceMetricsOverride", width=1440, height=h, deviceScaleFactor=1, mobile=False)
+        settle(1)
+        shot = cmd("Page.captureScreenshot", format="png")
+        cmd("Emulation.setDeviceMetricsOverride", width=1440, height=1000, deviceScaleFactor=1, mobile=False)
         name = (path.strip("/").replace("/", "_") or "live") + ".png"
         (OUT / name).write_bytes(base64.b64decode(shot["data"]))
         print(f"{path:22s} -> {name}  height {h}px  js errors: {len(errors)}")
