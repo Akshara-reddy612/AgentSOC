@@ -2528,3 +2528,11 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `experiments/dedale_results/nce_cache/nce_cache_host{,_fake_approval,_steer,_suppress}.jsonl`, `tests/test_nce_cache_seed.py`
 - Modified: `experiments/dedale_nce.py`, `README.md`, `HANDOVER.md`, `REPRODUCE.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-21 — Session: DEDALE package for teammates
+
+- Built `D:\dedale_for_team.zip` (321 MB): `derived/` (1,344 hourly host-event files and `zeek_router1_attack_flows.jsonl`), `suricata_alerts.zip`, `system_logs_labels.zip`.
+- Verified by unpacking it into an empty data root:
+  - `derived/` contents identical (md5 of every file);
+  - the code reads host events, host labels (10,593), Suricata alerts and Zeek attack flows (84) from it.
+- It replaces the 27.1 GB Windows-log archive, the 4.4 GB Zeek archive and the hour-long extraction for the demo and all DEDALE experiments. Documented in `HANDOVER.md`.
