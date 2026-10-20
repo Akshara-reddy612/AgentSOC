@@ -2419,3 +2419,12 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `frontend/src/pages/Host.tsx`
 - Modified: `perception/review_service.py`, `soc_server/app.py`, `tests/test_soc_server.py`, `frontend/src/{App.tsx,pages/Live.tsx,pages/Case.tsx}`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: one-command end-to-end check
+
+- **`tools/browser.py`:** the headless-browser driver (Edge / Chrome / Chromium over the DevTools protocol; own temporary profile; sign-in, API calls with the session, navigation, clicks, page text, full-page screenshots, JavaScript errors).
+  - It finds the browser on Windows, macOS and Linux, or takes `--browser` / `$BROWSER`.
+- **`tools/ui_check.py`:** now a thin wrapper over it, with the same command line.
+- **`tools/e2e_check.py`:** signs in and opens every page as a user would, checking each for its expected text and for JavaScript errors. Read-only. Exit code 0 only if every check passes.
+  - The pages: overview, the top queued case, its host timeline, Knowledge Store, Metrics, Contamination Lab and one pair, My account, Accounts (for admins).
+- **Run on the steering-scenario server:** 9 / 9 passed. With a wrong password: "FAIL sign in", exit code 1.
