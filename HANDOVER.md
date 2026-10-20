@@ -45,6 +45,7 @@ set HF_HUB_OFFLINE=1
    - The demo needs `system_logs_winlogbeat.zip` (27.1 GB), `suricata_alerts.zip` and `system_logs_labels.zip`.
    - Reproducing the network results also needs `zeek_router1.zip` (4.4 GB).
    - The recorded LLM answers need nothing: they ship in `experiments/dedale_results/nce_cache/` and are copied into `<data>/runs/` on first use.
+   - **Shortcut from a teammate:** `dedale_for_team.zip` (321 MB) holds `derived/` (the extracted Windows events and the Zeek attack flows), `suricata_alerts.zip` and `system_logs_labels.zip`. Unzipped into `<data>/dedale/`, it replaces the 27.1 GB and 4.4 GB archives and the extraction step below, for the demo and for every DEDALE experiment. Only re-extracting from the raw logs needs the big archives.
 
    Then extract the host events once (about an hour):
    ```
