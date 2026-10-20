@@ -3,7 +3,7 @@ import { lazy, Suspense, type ReactNode } from "react";
 import { NavLink as RouterLink, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./auth";
 import { useLive } from "./hooks";
-import { IconKnowledge, IconLive, IconLogo, IconMetrics, IconUser, IconUsers } from "./components/Icons";
+import { IconKnowledge, IconLab, IconLive, IconLogo, IconMetrics, IconUser, IconUsers } from "./components/Icons";
 import CasePage from "./pages/Case";
 import Live from "./pages/Live";
 import Login from "./pages/Login";
@@ -13,11 +13,14 @@ const Admin = lazy(() => import("./pages/Admin"));
 const Account = lazy(() => import("./pages/Account"));
 const Knowledge = lazy(() => import("./pages/Knowledge"));
 const MetricsPage = lazy(() => import("./pages/Metrics"));
+const Lab = lazy(() => import("./pages/Lab"));
+const LabPair = lazy(() => import("./pages/LabPair"));
 
 const NAV: { to: string; label: string; hint: string; icon: ReactNode }[] = [
   { to: "/", label: "Live", hint: "stream and review queue", icon: <IconLive /> },
   { to: "/knowledge", label: "Knowledge Store", hint: "what has been learned", icon: <IconKnowledge /> },
   { to: "/metrics", label: "Metrics", hint: "workload and learning", icon: <IconMetrics /> },
+  { to: "/lab", label: "Contamination Lab", hint: "GUIDE: attacker text vs pipeline", icon: <IconLab /> },
 ];
 
 function StreamClock() {
@@ -109,6 +112,8 @@ export default function App() {
             <Route path="/cases/:caseId" element={<CasePage />} />
             <Route path="/knowledge" element={<Knowledge />} />
             <Route path="/metrics" element={<MetricsPage />} />
+            <Route path="/lab" element={<Lab />} />
+            <Route path="/lab/:run/:pairId" element={<LabPair />} />
             <Route path="/admin" element={session.role === "admin" ? <Admin /> : <Navigate to="/" />} />
             <Route path="/account" element={<Account />} />
             <Route path="*" element={<Navigate to="/" />} />

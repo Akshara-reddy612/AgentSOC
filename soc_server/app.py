@@ -18,11 +18,12 @@ import json
 from datetime import timedelta
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Query
+from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from perception.review_service import ReviewService
 from review_api import create_app
+from soc_server.lab import Lab
 from soc_server.reader import KnowledgeReader, metrics
 from soc_server.runner import LiveRunner
 
@@ -69,6 +70,34 @@ def build_app(runner: LiveRunner, *, accounts=None, tokens: dict[str, str] | Non
                         "sent_to_analyst": counts.get((key, True), 0)})
             t += timedelta(hours=1)
         return {"hours": out}
+
+    lab = Lab()
+
+    def _lab(call):
+        try:
+            return call()
+        except KeyError as e:
+            raise HTTPException(404, f"unknown {e.args[0]!r}") from None
+        except FileNotFoundError as e:
+            raise HTTPException(503, f"recorded results missing: {e}") from None
+
+    @app.get("/lab/runs")
+    def lab_runs(p=Depends(principal)) -> list[dict]:
+        """The Contamination Lab's recorded GUIDE v2 runs (soc_server/lab.py)."""
+        return lab.runs()
+
+    @app.get("/lab/{run}/summary")
+    def lab_summary(run: str, p=Depends(principal)) -> dict:
+        return _lab(lambda: lab.summary(run))
+
+    @app.get("/lab/{run}/pairs")
+    def lab_pairs(run: str, family: str | None = None, change: str | None = None,
+                  limit: int = Query(50, ge=1, le=500), offset: int = Query(0, ge=0), p=Depends(principal)) -> dict:
+        return _lab(lambda: lab.pairs(run, family=family, change=change, limit=limit, offset=offset))
+
+    @app.get("/lab/{run}/pairs/{pair_id}")
+    def lab_pair(run: str, pair_id: str, p=Depends(principal)) -> dict:
+        return _lab(lambda: lab.pair(run, pair_id))
 
     @app.get("/techniques")
     def techniques(p=Depends(principal)) -> dict:

@@ -163,3 +163,24 @@ def test_group_key_drops_the_varying_endpoint():
     h1 = {"case_key": ["host", "lineage", "CLIENT1", "-", "c:\\windows\\system32\\usoclient.exe"]}
     h2 = {"case_key": ["host", "lineage", "CLIENT9", "-", "c:\\windows\\system32\\usoclient.exe"]}
     assert group_key(h1) == group_key(h2)
+
+
+def test_contamination_lab_reproduces_table_one(server):
+    client, runner, h = server
+    runs = client.get("/lab/runs", headers=h["alice"]).json()
+    assert [r["id"] for r in runs] == ["dev_gemini", "heldout_gemini", "dev_gptoss"]
+    expected = {"dev_gemini": (4, 428, 12, 4), "heldout_gemini": (3, 437, 10, 0), "dev_gptoss": (10, 437, 12, 5)}
+    for run, (supp, resp, era, other) in expected.items():                     # experiments/RESULTS.md, C1
+        t = client.get(f"/lab/{run}/summary", headers=h["alice"]).json()["total"]
+        assert (t["suppressed"], t["clean_responded"], t["induced_by_era"], t["induced"]) == (supp, resp, era, other)
+        assert t["pairs"] == 500 and t["misdirect_executed"] == 0
+    und = client.get("/lab/dev_gemini/summary", headers=h["alice"]).json()["undefended"]
+    assert (und["hijacked"], und["clean_not_dismissed"]) == (130, 439)
+    rows = client.get("/lab/dev_gemini/pairs?change=suppressed", headers=h["alice"]).json()
+    assert rows["total"] == 4
+    pair = client.get(f"/lab/dev_gemini/pairs/{rows['items'][0]['pair_id']}", headers=h["alice"]).json()
+    x = pair["variants"]["contaminated"]
+    (field, (a, b)), = x["injected"].items()
+    assert field == pair["metadata"]["site"] and 0 <= a < b <= len(x["untrusted"][field])
+    assert not any(k.startswith("_") for k in {**x["trusted"], **x["untrusted"]})   # no ground truth in the alert
+    assert client.get("/lab/nope/summary", headers=h["alice"]).status_code == 404

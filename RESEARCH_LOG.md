@@ -2372,3 +2372,34 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 
 ### Files created/modified
 - Modified: `frontend/src/pages/{Knowledge,Metrics,Login,Admin,Account}.tsx`, `frontend/src/components/Graph.tsx`, `frontend/src/format.ts`, `RESEARCH_LOG.md`
+
+## 2026-10-20 — Session: Contamination Lab (GUIDE in the frontend, decision P7)
+
+### What was tried
+- **`soc_server/lab.py`:** GUIDE v2's clean / contaminated pairs replayed from the recorded runs (Gemini dev and held-out, gpt-oss-20b dev, and the undefended agent on dev).
+  - Per-pair scoring calls the paper's own functions (`experiments.attack_metrics.summarize` / `misdirected_actions`, `experiments.undefended_metrics.compare`), so the Lab's totals are Table I's.
+  - The attacker's inserted text is located by diffing each contaminated field against its clean twin.
+  - Ground-truth fields (family, goal, injection site, steered entities) are returned only as experiment metadata, never inside an alert.
+- **API:** `/lab/runs`, `/lab/{run}/summary`, `/lab/{run}/pairs` (family and change filters, paging), `/lab/{run}/pairs/{id}`.
+- **Results files:** the Lab prefers `logs/*_rescored.json` and falls back to the copies in `agent/v2_results/`.
+  - The tracked gpt-oss-20b copy was a stale partial run (2026-10-11) and was replaced by the final re-scoring.
+  - The Gemini copies were already identical to the final ones.
+- **Frontend:**
+  - Lab page with stat tiles and a per-family chart (emphasis encoding: the undefended agent's hijack rate in orange, the pipeline's suppression rate in gray), plus a pair browser;
+  - pair page with the two alerts side by side, the inserted text marked, the undefended agent's verdict and reasoning, and the pipeline's hypotheses and outcome.
+
+### What was found
+- **Totals equal `RESULTS.md` C1 (asserted in a test):**
+  - suppressed 4 / 428 (dev), 3 / 437 (held-out), 10 / 437 (gpt-oss);
+  - ERA-escalated 12 / 10 / 12; induced otherwise 4 / 0 / 5;
+  - misdirected actions executed 0 (gated 7 / 2 / 3);
+  - undefended agent hijacked 130 / 439.
+- The LLM named the injected account or server in 44 (dev), 42 (held-out) and 36 (gpt-oss) pairs.
+- 0 JavaScript errors on the Lab and two pair views.
+
+### Test verification
+- `HF_HUB_OFFLINE=1 python -m pytest -q`: all passed (see the next entry's count).
+
+### Files created/modified
+- Created: `soc_server/lab.py`, `frontend/src/pages/{Lab,LabPair}.tsx`
+- Modified: `soc_server/app.py`, `frontend/src/App.tsx`, `tests/test_soc_server.py`, `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json`, `RESEARCH_LOG.md`
