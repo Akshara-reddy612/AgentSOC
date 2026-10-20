@@ -3,7 +3,8 @@ import { useEffect, useRef } from "react";
 import type { GraphData } from "../api";
 import { PROVENANCE_COLOR } from "../format";
 
-const NODE_COLOR: Record<string, string> = { host: "#ff922b", image: "#74c0fc", account: "#b197fc", script: "#ffe066" };
+// Kinds are told apart by shape (neutral fills); colour is kept for provenance on the edges.
+const NODE_SHAPE: Record<string, string> = { host: "round-rectangle", image: "diamond", account: "ellipse", script: "triangle" };
 
 /** What the store has learned around one host. Labels are set as data (text), never as HTML. */
 export default function Graph({ data, height = 460 }: { data: GraphData; height?: number }) {
@@ -24,20 +25,23 @@ export default function Graph({ data, height = 460 }: { data: GraphData; height?
           selector: "node",
           style: {
             label: "",
-            "font-size": 18,
-            color: "#e9ecef",
+            "font-size": 16,
+            color: "#ececec",
             "text-valign": "bottom",
             "text-margin-y": 6,
-            "text-background-color": "#1a1b1e",
-            "text-background-opacity": 0.8,
+            "text-background-color": "#1c1c1c",
+            "text-background-opacity": 0.85,
             "text-background-padding": "2px",
             width: (n: cytoscape.NodeSingular) => Math.min(30, 8 + 3 * n.degree(false)),
             height: (n: cytoscape.NodeSingular) => Math.min(30, 8 + 3 * n.degree(false)),
-            "background-color": (n: cytoscape.NodeSingular) => NODE_COLOR[String(n.data("kind"))] ?? "#868e96",
+            shape: ((n: cytoscape.NodeSingular) => NODE_SHAPE[String(n.data("kind"))] ?? "ellipse") as unknown as cytoscape.Css.NodeShape,
+            "background-color": "#3a3a3a",
+            "border-width": 1.5,
+            "border-color": "#8a8a8a",
           },
         },
         { selector: "node.hub, node.hover, node[kind = 'host']", style: { label: "data(label)" } },
-        { selector: "node[kind = 'host']", style: { "border-width": 3, "border-color": "#ffffff" } },
+        { selector: "node[kind = 'host']", style: { "border-width": 3, "border-color": "#d9d9d9", "background-color": "#2c2c2c" } },
         {
           selector: "edge",
           style: {
@@ -61,5 +65,5 @@ export default function Graph({ data, height = 460 }: { data: GraphData; height?
     };
   }, [data]);
 
-  return <div ref={ref} style={{ height, width: "100%", border: "1px solid var(--mantine-color-dark-4)", borderRadius: 8 }} />;
+  return <div ref={ref} style={{ height, width: "100%", border: "1px solid var(--soc-border)", borderRadius: 4 }} />;
 }

@@ -33,14 +33,26 @@ export const VERDICT_COLOR: Record<string, string> = {
   needs_info: "yellow",
 };
 
+// Where a learned pattern came from. Training is the gray baseline; the three ways of learning afterwards
+// share the validated aqua / blue / orange trio (all pairs pass on #1c1c1c); retractions use the status red.
 export const PROVENANCE_COLOR: Record<string, string> = {
-  training: "#4dabf7",
-  closed_benign: "#38d9a9",
-  analyst: "#ffd43b",
-  ungated: "#ff8787",
-  telemetry: "#adb5bd",
-  config: "#868e96",
-  retracted: "#fa5252",
+  training: "#8a8a8a",
+  closed_benign: "#199e70",
+  analyst: "#3987e5",
+  ungated: "#d95926",
+  telemetry: "#5c5c5c",
+  config: "#4a4a4a",
+  retracted: "#d03b3b",
+};
+
+export const PROVENANCE_LABEL: Record<string, string> = {
+  training: "training weeks",
+  closed_benign: "behind the gate",
+  analyst: "analyst verdicts",
+  ungated: "without the gate",
+  telemetry: "seen in telemetry",
+  config: "inventory",
+  retracted: "retracted",
 };
 
 /** Render any JSON value as a short single line (for table cells). */

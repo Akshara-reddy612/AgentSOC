@@ -1,7 +1,8 @@
-import { Alert, Button, Card, Center, Loader, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, Card, Center, Group, Loader, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, api } from "../api";
 import { useAuth } from "../auth";
+import { IconLogo } from "../components/Icons";
 
 /** Sign-in; on a server with no accounts yet, first-run setup of the first admin instead. */
 export default function Login() {
@@ -55,7 +56,10 @@ export default function Login() {
         <form onSubmit={submit}>
           <Stack>
             <div>
-              <Title order={3}>AgentSOC</Title>
+              <Group gap={8} mb={2}>
+                <span style={{ color: "var(--soc-brand)", display: "flex" }}><IconLogo size={26} /></span>
+                <Title order={3}>AgentSOC</Title>
+              </Group>
               <Text size="sm" c="dimmed">
                 {needsSetup ? "First run — create the admin account" : "Analyst console — sign in"}
               </Text>

@@ -2345,3 +2345,30 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - The user asked for a muted red accent. `--soc-brand` #b4483f (3.4:1 on the page background) is used for the chrome only: the logo, the active menu item's bar and icon, and the keyboard focus ring.
 - It is never used on data or buttons, so it cannot be mistaken for critical severity (#d03b3b, which stays on priority bands).
 - Checked in headless Edge: 0 JavaScript errors.
+
+## 2026-10-20 — Session: remaining pages in the console style
+
+### What was tried
+- After the user's go-ahead on the look (graphite plus a muted red accent), the remaining pages were restyled: Knowledge Store, Metrics, Accounts, My account, sign-in.
+- **Colours keep one meaning across pages:**
+  - training weeks are the gray baseline;
+  - learning behind the gate is aqua, analyst verdicts blue, learning without the gate orange;
+  - retractions are the status red;
+  - Metrics' learning-mode chart uses the same colours (gated aqua, gate + analyst blue, ungated orange).
+- **Cases chart:** the same encoding as Live (closed automatically gray, sent to an analyst orange, contained automatically red).
+- **Knowledge Store:**
+  - a provenance share bar and a table with tabular figures;
+  - the host graph tells node kinds apart by shape (neutral fills) and colours edges by provenance, with a legend.
+
+### What was found
+- **Validated on #1c1c1c:**
+  - aqua / blue / orange passes all pairs;
+  - aqua / blue / red (learning chart) passes.
+- **Rejected:**
+  - aqua / yellow / orange for provenance (yellow next to orange: dE 10.6);
+  - red next to orange in the cases stack (dE 6.8). Red is now separated from orange by the gray series.
+- Knowledge, Metrics, Accounts, My account and sign-in: 0 JavaScript errors.
+  - The one 401 in the sign-in check was the checker's deliberate failed login.
+
+### Files created/modified
+- Modified: `frontend/src/pages/{Knowledge,Metrics,Login,Admin,Account}.tsx`, `frontend/src/components/Graph.tsx`, `frontend/src/format.ts`, `RESEARCH_LOG.md`
