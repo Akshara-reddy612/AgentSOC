@@ -1,6 +1,8 @@
 % Draft (M3, 2026-10-19). Every number comes from experiments/RESULTS.md, built from frozen result files
 % (REPRODUCE.md). All sections drafted by Claude (decision P6 for the abstract, introduction, related work and
 % conclusion); the team revises them. Authors: team.
+% Revised 2026-10-27 (Claude): wording fixed where a reviewer could object (ERA defined, denominators, gated vs
+% frozen, choices made on DEDALE, network ground truth, GUIDE runs the single-alert pipeline); see RESEARCH_LOG.md.
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
@@ -34,11 +36,13 @@ An LLM-driven security operations centre (SOC) has two attack surfaces. Its mode
 can write, and its memory learns what is normal from what it sees and from its analysts. We build the full pipeline
 of an agentic SOC: LLM hypotheses, structural checks against a knowledge graph, response ranking, guardrails, a
 learning Knowledge Store behind a learning gate, an outcome monitor and an analyst review loop. We evaluate both
-surfaces, on 1,000 clean/contaminated alert pairs built from GUIDE and on the real telemetry of the DEDALE dataset.
+surfaces, on 1,000 clean/contaminated alert pairs built from GUIDE and on four weeks of labelled telemetry from
+DEDALE, a testbed company with an APT-style intrusion.
 Text that hijacks an undefended LLM agent on 29.6\% of pairs suppresses the pipeline's response on 0.9\%, and no
-misdirected action is executed. On real telemetry, attacker text gets a few attack cases dismissed, but the learning
-gate keeps every one of them from being learned. Learning cuts analyst reviews from 6,095 to 65 per day without
-losing the attack; learning without the gate learns the attacker. Analyst mistakes are the larger poisoning route,
+misdirected action is executed. On DEDALE, attacker text gets a few attack cases dismissed, but the learning
+gate keeps every one of them from being learned. Learning the benign weeks cuts analyst reviews from 6,095 to 65
+per day while every step of the attack still reaches an analyst; continuing to learn without a gate learns the
+attacker. Analyst mistakes are the larger poisoning route,
 and retracting what was learned on a host once it is confirmed compromised closes it.
 \end{abstract}
 
@@ -66,19 +70,20 @@ checked against trusted structured fields and an environment model before any re
 decide what may run without an analyst; and only structured fields, never text, are learned, behind a learning gate
 that holds back anything near an escalation. Analysts' verdicts pass through an inbox that the loop applies, and a
 host confirmed compromised has its recent learning retracted. We measure the pipeline on a contamination corpus
-built from GUIDE~\cite{guide} and on four weeks of real host and network telemetry with an APT-style intrusion
-from the DEDALE dataset~\cite{dedale}. Our contributions:
+built from GUIDE~\cite{guide} and on DEDALE~\cite{dedale}: four weeks of labelled host and network telemetry from a
+testbed company, with an APT-style intrusion. Our contributions:
 \begin{itemize}
 \item \textbf{C1:} attacker-written text does not steer the pipeline's actions. It hijacks an undefended LLM agent
-on 29.6\% of 500 alert pairs but suppresses the pipeline's response on 0.9\%, with no misdirected action executed.
-On real telemetry, through the full loop, it teaches the store none of the attacker's patterns.
-\item \textbf{C2:} a learning store behind a gate cuts analyst reviews from 6,095 to 65 per day on DEDALE's host
-logs while every attack case still reaches review.
+on 29.6\% of alert pairs but suppresses the pipeline's response on 0.9\%, with no misdirected action executed.
+On DEDALE, through the full loop, it teaches the store none of the attacker's patterns.
+\item \textbf{C2:} a store that learns the benign weeks cuts analyst reviews from 6,095 to 65 per day on DEDALE's
+host logs while every step of the attack still reaches review; with correct analyst verdicts it learns further,
+to 31--34 per day.
 \item \textbf{C3:} memory poisoning is real. Without the gate the store learns the attacker, and an analyst who
-misses 20\% of attacks silences over a third of the attack's events. Retracting what was learned on a host once it
-is confirmed compromised removes the effect.
-\item \textbf{C4:} on real telemetry the LLM's contribution is modest, and a closed-world feasibility check
-dismissed real attacks until hosts without telemetry were treated as unknown.
+misses 20\% of attacks silences over a third of the attack events that would otherwise alert. Retracting what was
+learned on a host once it is confirmed compromised removes the effect.
+\item \textbf{C4:} on DEDALE the LLM's contribution is modest, and a closed-world feasibility check dismissed two
+attack cases, which led us to treat hosts without telemetry as unknown.
 \item \textbf{C5:} the analyst's response time sets the workload and the time to containment, not detection.
 \end{itemize}
 All numbers are reproducible offline from recorded LLM outputs.
@@ -113,8 +118,8 @@ and unlearning on confirmed compromise is a targeted, provenance-based form of i
 fatigue and desensitisation~\cite{alahmadi}. Learning routine activity is the main lever on that workload, which
 is why the memory surface matters as much as the model surface.
 
-These lines of work mostly study one surface at a time. Here both are evaluated in one SOC pipeline, on real
-telemetry, with the analyst included as a route for poisoning.
+These lines of work mostly study one surface at a time. Here both are evaluated in one SOC pipeline, on labelled
+testbed telemetry, with the analyst included as a route for poisoning.
 
 \section{Threat Model}
 The attacker controls the free text of their own activity as sensors record it: command lines, script text, raw
@@ -164,7 +169,8 @@ fields at the sensor is out of scope for the defences; we measure its effect sep
 \draw[back] (ks.north east) -- node[right, pos=0.5]{graph} (sse.south west);
 \draw[back] (monitor) -- node[left]{escalate} (gate);
 \end{tikzpicture}
-\caption{The pipeline (top) and the loop around it. Attacker-writable text reaches only the NCE (violet); the
+\caption{The pipeline (top) and the loop around it. Attacker-writable text reaches only the NCE (violet) and the
+text-risk check ERA (not drawn), which can only escalate; the
 Knowledge Store (cyan) learns structured patterns only, behind the learning gate or from analyst verdicts, and
 retracts what was learned on a host confirmed compromised.}
 \label{fig:pipeline}
@@ -172,8 +178,10 @@ retracts what was learned on a host confirmed compromised.}
 Fig.~\ref{fig:pipeline} shows the system, which extends AgentSOC~\cite{agentsoc}. For each new case, the Narrative Counterfactual Engine (NCE), an LLM, proposes ATT\&CK~\cite{attack} hypotheses from the alert.
 The Structural Simulation Engine (SSE) checks each against a knowledge graph of hosts, accounts, access and network
 reachability; entity binding compares the entities a hypothesis names with the alert's trusted fields; RSEM ranks
-responses by containment and business impact; guardrails decide what may run automatically. Around this
-single-alert pipeline runs the loop:
+responses by containment and business impact; guardrails decide what may run automatically. Evidence Risk
+Assessment (ERA) scores the attacker-writable text with pattern, embedding-similarity, approval-claim and
+split-field detectors; a medium or high score sends the case to an analyst, and ERA never dismisses one. Around
+this single-alert pipeline runs the loop:
 \begin{itemize}
 \item a \emph{triage gate} skips patterns the store has learned as routine and reuses decisions for unchanged cases;
 \item a \emph{learning Knowledge Store} learns structured patterns only (never text; scripts as fingerprints), from
@@ -189,27 +197,38 @@ SSE treats hosts without telemetry as unknown, not as impossible targets (open w
 \section{Evaluation Setup}
 \textbf{GUIDE corpus v2.} 500 development and 500 held-out pairs built from Microsoft GUIDE incidents~\cite{guide}: each pair is
 a clean alert and a contaminated twin that differs only at the injection site, across 10 payload families
-(suppression and identity steering), with entities from a synthetic enterprise inventory.
+(suppression and identity steering), with entities from a synthetic enterprise inventory. Each alert goes through
+the single-alert pipeline (NCE, SSE with entity binding, RSEM, guardrails and ERA) on its own; the loop around it
+is evaluated on DEDALE.
 
-\textbf{DEDALE~\cite{dedale}.} Four weeks of a simulated company's telemetry with an APT-style intrusion and exact labels of the
-malicious host events on the two attacked Windows clients. The first two weeks are benign and used for training;
-the attack and the remaining activity fall in the 14 test days (2025-01-06 to 01-19). Detection on host logs comes
-from the store itself: an event whose structured pattern the store has not learned becomes an alert.
+\textbf{DEDALE~\cite{dedale}.} Four weeks of host and network logs recorded in a testbed that emulates a small
+company (30 Windows clients, servers, a DMZ), with an APT-style intrusion and exact labels of the malicious host
+events on the two attacked clients. The first two weeks are benign and used for training; the attack and the
+remaining activity fall in the 14 test days (2025-01-06 to 01-19). Detection on host logs comes from the store
+itself: six detectors turn events into structured patterns (process lineage, named pipes, executable file writes,
+PowerShell script fingerprints, logons, LSASS access), and an event whose pattern the store has not learned becomes
+an alert. Network alerts come from Suricata. The loop runs without ERA.
 
 \textbf{Conditions.} Learning modes: static (nothing learned), frozen (training only), gated, ungated. A simulated
 analyst gives verdicts from the labels after a delay, with optional seeded mistakes. NCE is
-\texttt{gemini-3.1-flash-lite} (and \texttt{gpt-oss-20b} on the GUIDE development set); live outputs are recorded and replayed,
-so every number is reproducible offline.
+\texttt{gemini-3.1-flash-lite} (and \texttt{gpt-oss-20b} on the GUIDE development set). It proposes techniques from
+a fixed list that SSE can check: 7 on GUIDE, 18 on DEDALE's host logs. On DEDALE, NCE is off unless stated (C2,
+C3, C5), so every case the store cannot explain goes to review; it is on in E1 and C4. Live outputs are recorded
+and replayed, so every number is reproducible offline.
 
 \section{Results}
 
 \subsection{Contamination (C1)}\label{sec:c1}
 Table~\ref{tab:c1} compares responses on clean and contaminated twins. Contamination suppressed a response the clean
-twin received in 4 of 428 (development) and 3 of 437 (held-out) pairs; the opposite flips not caused by our ERA
-escalation were 4 and 0 (McNemar $p=1.0$ and $0.25$). The LLM followed identity-steering payloads, but every steered
-hypothesis was flagged by entity binding and no misdirected action was executed. On the same 500 development pairs,
-the undefended LLM triage agent was hijacked into dismissing 130 of 439 contaminated alerts (29.6\%, 95\% CI
-25.5--34.0\%, $p=6.5\times10^{-17}$), against 4 of 428 for the pipeline. With a second model,
+twin received in 4 of 428 (development) and 3 of 437 (held-out) pairs; the opposite flips, apart from 12 and 10
+caused by ERA escalation, were 4 and 0 (McNemar $p=1.0$ and $0.25$). ERA flagged 65 and 56 of the 500
+contaminated alerts and no clean one; a flagged alert cannot be suppressed. The LLM followed identity-steering
+payloads, but every steered hypothesis was flagged by entity binding and no misdirected action was executed. On
+the same 500 development pairs, an undefended triage agent (the same LLM, given the alert's fields and asked for a
+verdict) was hijacked into dismissing 130 of the 439 contaminated alerts whose clean twin it did not dismiss
+(29.6\%, 95\% CI 25.5--34.0\%, $p=6.5\times10^{-17}$), against 4 of 428 for the pipeline. The two measures differ
+in kind, the agent's own verdict against the pipeline's decision, and we did not evaluate a prompt-level
+defence~\cite{spotlighting,struq} as a further baseline. With a second model,
 \texttt{gpt-oss-20b}, as the NCE, the pipeline's response was suppressed on 10 of 437 development pairs (2.3\%, 95\%
 CI 1.2--4.2\%) against 5 opposite flips ($p=0.3$), and again no misdirected action was executed.
 
@@ -230,13 +249,14 @@ Undefended agent, dev & 130/439 (29.6\%) & -- & -- \\
 \end{tabular}}
 \end{table}
 
-\textbf{Through the full loop on real telemetry (E1).} On DEDALE, we appended attacker text to the command lines of
-the attacker's own 84 process events (38 cases expose it to NCE), in three variants: a maintenance claim, a fake SOC
-approval, and an instruction to isolate the domain controller instead. Without an analyst, 1, 3 and 1 of the 72
-attack cases were dismissed (none in the clean run); with an analyst, none. In every run the learning gate dropped
-the dismissed cases, so no attack pattern was learned and all 400 labelled attack events still raised alerts. The
-LLM named the steered host in 30--32 of 38 cases; entity binding flagged every such hypothesis and no containment
-targeted it (Table~\ref{tab:e1}).
+\textbf{Through the full loop on DEDALE (E1).} We appended attacker text to the command lines of the attacker's own
+84 process events (38 cases expose it to NCE), in three variants: a maintenance claim, a fake SOC approval, and an
+instruction to isolate the domain controller instead. Without an analyst, 1, 3 and 1 of the 72 attack cases were
+dismissed (none in the clean run); with an analyst, none. In every run the learning gate dropped the dismissed
+cases, so no attack pattern was learned and the same 400 labelled attack events as in the clean run raised alerts.
+The LLM named the steered host in 30--32 of 38 cases; entity binding flagged every such hypothesis and no
+containment targeted it (Table~\ref{tab:e1}). ERA is not part of these runs, so the structure and the gate held on
+their own.
 
 \begin{table}[t]
 \caption{E1: attacker text through the full loop (DEDALE).}\label{tab:e1}
@@ -256,11 +276,16 @@ steer to the DC & 1 / 0 & 0 & 400 \\
 
 \subsection{The learning store (C2)}
 Table~\ref{tab:c2}: without learning, every unseen pattern is a case, 6,095 reviews per day on host logs. Learning
-the training weeks cuts this to 65 per day while all 72 attack cases still reach review (initial access surfaced
-1.2 min after it began, lateral movement after 28.5 min). Learning without the gate cuts further, to 27.4, but only
+the training weeks cuts this to 65 per day. It also silences 73 of the 473 labelled attack events that alert when
+nothing is learned, because their patterns occur in benign activity too; every step of the attack still reaches
+review, as early as without learning (initial access 1.2 min after it began, lateral movement after 28.5 min).
+Gated learning adds nothing here (gated equals frozen): the gate learns only cases dismissed without escalation,
+and with NCE and the analyst off nothing is dismissed. Learning without the gate cuts further, to 27.4, but only
 by learning the attacker: 38 attack cases' patterns became routine and only 99 of the 400 attack events raised
-alerts. On network alerts, learning cuts 552 to 26 reviews per day; without the gate, 4 of 7 attack-related cases
-were hidden. Fig.~\ref{fig:days} shows the workload day by day.
+alerts. On network alerts, learning cuts 552 to 26 reviews per day. Suricata alerted on only one of the 84
+labelled attack flows at DEDALE's company router, the dropper download; without the gate the store learned that
+download as routine, and with the gate it learned nothing of the attack. Fig.~\ref{fig:days} shows the workload
+day by day.
 
 \begin{figure}[t]
 \centering
@@ -285,7 +310,7 @@ as routine (C3).}
 \end{figure}
 
 \begin{table}[t]
-\caption{Learning modes on DEDALE host logs (14 test days).}\label{tab:c2}
+\caption{Learning modes on DEDALE host logs (14 test days, NCE off).}\label{tab:c2}
 \centering\small
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lrrrr@{}}
@@ -327,7 +352,8 @@ misses 20\% & 30.1 / 34.1 & 20 / 0 & 256 / 400 \\
 With NCE, reviews fall from 65.2 to 54.8 per day (16\%), by dismissing cases whose hypotheses are all structurally
 infeasible. Under a closed-world check this dismissed 2 of the 72 attack cases: the attacker copied data from a
 server the store has no telemetry for, and ``no record of access'' was read as ``impossible''. Treating hosts
-without telemetry as unknown removed both misses at no cost (89 benign dismissals either way). With an analyst
+without telemetry as unknown removed both misses at no cost (89 benign dismissals either way). We adopted this
+open-world rule after seeing the two misses, on the same data, so its 0 of 72 is not an independent test. With an analyst
 in the loop, NCE adds little (33.2 reviews per day with NCE, 34.1 without, both with unlearning).
 
 \subsection{Operating the loop (C5)}
@@ -370,7 +396,7 @@ happens when it does.
 \textbf{Memory is the larger surface.} A system that learns what is normal is a classic poisoning
 target~\cite{antidote}, and agents' memories and knowledge bases have the same weakness~\cite{agentpoison,poisonedrag}.
 On DEDALE, learning without the gate cut the labelled attack events that raised alerts from 400 to 99; with the
-gate, all 400 still did.
+gate, none was lost.
 The weaker route is the analyst. Verdicts bypass the gate by design, and with a simulated analyst who missed 20\% of the
 attacks, only 256 of the 400 still raised alerts. Unlearning on confirmed compromise closed this route: a targeted form of machine
 unlearning~\cite{unlearning} that retracts what was recently learned on a host once the host is confirmed
@@ -383,15 +409,19 @@ because the store had no telemetry from the server the attacker copied data from
 hypotheses inherits the coverage of its environment model. Hosts without telemetry must be treated as unknown, and
 a deployment needs to know which hosts it cannot see.
 
-\textbf{Workload.} Most of the reduction comes from learning: 6,095 to 65 reviews per day. Analyst verdicts feeding
+\textbf{Workload.} Most of the reduction comes from learning the benign weeks: 6,095 to 65 reviews per day. Analyst verdicts feeding
 the store take it to 34. The LLM cuts reviews by 16\% on its own, and by little once an analyst is in the loop
 (34.1 to 33.2). On this data, the LLM's measurable effect on workload is modest. We did not measure its effect on
 how fast or how accurately analysts decide, which is where its explanations would matter.
 
 \textbf{Limitations.}
 \begin{itemize}
-\item One real dataset. Labels exist for two attacked Windows clients, and the network results rest on few
-malicious verdicts.
+\item One labelled dataset, from a testbed. Labels exist for two attacked Windows clients. Most labelled attack
+events on them (DLL loads, ordinary file writes) are of kinds the host detectors do not cover. Suricata alerted on
+1 of the 84 labelled attack flows, so the network results rest on very few attack cases.
+\item Choices made on DEDALE itself: the host detectors were selected by measuring, on the test weeks, how often
+benign and labelled attack events produce new patterns; the open-world rule followed the two misses
+(Section~\ref{sec:c4}); and the prototype's review-queue order was tuned on this data and is not evaluated.
 \item A simulated analyst: an oracle with random, per-case mistakes. Real analysts' mistakes are likely correlated
 with how well the attacker blends in, which would make C3 harder.
 \item One LLM on DEDALE (\texttt{gemini-3.1-flash-lite}). The second model, \texttt{gpt-oss-20b}, was run on the GUIDE
@@ -400,7 +430,8 @@ development set only (Table~\ref{tab:c1}).
 payload families.
 \item Tampering with structured sensor fields is outside the defences (Section~\ref{sec:c1}).
 \item All containment is simulated.
-\item The prototype's review-queue order was tuned on DEDALE and is not evaluated.
+\item Each LLM condition was run once. Replaying the recorded outputs makes every number reproducible, but
+run-to-run variation of the model is not measured.
 \end{itemize}
 
 \textbf{What a deployment would need:}
@@ -409,8 +440,8 @@ payload families.
 as they are;
 \item known telemetry coverage per host;
 \item a study with real analysts, who face alert fatigue~\cite{alahmadi};
-\item a second dataset, to check that the gate's settings transfer (a 24\,h delay, and a hold while related cases are
-escalated).
+\item a second dataset, to check that the detectors and the gate's settings (a 24\,h delay, and a hold while
+related cases are escalated) transfer.
 \end{itemize}
 
 \section{Conclusion}
@@ -420,7 +451,7 @@ and the environment model, steered targets were flagged, and no misdirected acti
 risk. Learning made the workload manageable (6,095 to 65 reviews per day on DEDALE's host logs) and, without a
 gate, also learned the attacker. The gate held, and the weakest remaining route, wrong analyst verdicts, was closed
 by retracting what was learned on a host once it was confirmed compromised. A deployment would need a maintained
-environment model, known telemetry coverage, and evaluation with real analysts and more than one real dataset.
+environment model, known telemetry coverage, and evaluation with real analysts and on more than one dataset.
 The pipeline, the demo and the scripts that rebuild every number are available \todo{repository link}.
 
 % References drafted 2026-10-19 (Claude). All checked: agentsoc against its PDF; dedale against DataCite;
