@@ -2,7 +2,7 @@
 
 The current state of AgentSOC 2.0, updated in place. Scope and decisions: [PROJECT_PLAN.md](PROJECT_PLAN.md). Dated history: [RESEARCH_LOG.md](RESEARCH_LOG.md). The full status as it stood before this file was shortened, with every earlier phase, is in [archive/PROJECT_STATUS_HISTORY.md](archive/PROJECT_STATUS_HISTORY.md).
 
-## Where things stand (2026-10-21)
+## Where things stand (2026-10-27)
 
 The goal now is the handover (decision P7). Before the project goes to the team, everything for GUIDE and DEDALE is finished and stable. The team's remaining work is the optional third dataset (AIT-LDS, E3) and the M7 items: venue, authors, demo video.
 
@@ -10,7 +10,7 @@ The goal now is the handover (decision P7). Before the project goes to the team,
 |:--|:--|
 | M1 Freeze, `RESULTS.md`, `REPRODUCE.md` | Done 2026-10-18 |
 | M2 Interrupted runs, E1 | Done 2026-10-20 (gpt-oss-20b complete: all 500 dev pairs) |
-| M3 Paper draft | Full draft 2026-10-19 (`paper/agentsoc_combined.tex`, 5 pages, 15 checked references). Figs. 2 and 3 drawn 2026-10-20. The team revises it; authors and the repository link are TODO |
+| M3 Paper draft | Full draft 2026-10-19 (`paper/agentsoc_combined.tex`, 5 pages, 15 checked references). Figs. 2 and 3 drawn 2026-10-20. Reviewer pass 2026-10-27: wording fixed where a reviewer could object (`RESEARCH_LOG.md`). The team revises it; authors and the repository link are TODO |
 | M4 Demo backend | Done 2026-10-18; extended 2026-10-19 (network alerts, live logs, contamination scenario, accounts in the browser) |
 | M5 Frontend | Done 2026-10-20 (design pass, Contamination Lab, host timeline in M8) |
 | M6 E3 (AIT-LDS) | Optional; for the team (P7) |
@@ -39,8 +39,8 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
   - The undefended agent on the same dev pairs was hijacked on 130 / 439 (29.6%).
   - With gpt-oss-20b on the dev pairs: 10 / 437 (2.3%, p = 0.3).
   - 0 misdirected actions executed in every run.
-  - E1 on DEDALE through the full loop: 1-3 of 72 attack cases dismissed without an analyst (0 with one), 0 attack patterns learned, all 400 labelled attack events still alerted.
-- **C2, gated learning:** host reviews fell from 6,095 to 65 per day, with all 72 attack cases raised. Network: 552 to 26 per day.
+  - E1 on DEDALE through the full loop: 1-3 of 72 attack cases dismissed without an analyst (0 with one), 0 attack patterns learned, the same 400 labelled attack events as the clean run still alerted.
+- **C2, gated learning:** learning the benign weeks cut host reviews from 6,095 to 65 per day, and every attack step still reached review (72 attack cases; 400 of the 473 labelled attack events that alert with nothing learned). Without NCE or an analyst, gated = frozen: the gate learns only dismissed cases. Correct analyst verdicts take it to 31-34. Network: 552 to 26 per day.
 - **C3, poisoning:**
   - Ungated learning learned 38 attack patterns.
   - An analyst who misses 20% of the attacks: 20 patterns learned and 256 / 400 attack events still alerted. With unlearning on confirmed compromise: 0 learned, 400 / 400 alerted.
@@ -72,13 +72,16 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
 
 ## Known limits and open issues
 
-**Research limits** (also in `RESULTS.md`):
-- one real dataset, with 2 labelled attacked hosts;
+**Research limits** (all in the paper's Limitations; the first six also in `RESULTS.md`):
+- one labelled testbed dataset, with 2 labelled attacked hosts;
 - a simulated analyst;
 - one LLM on DEDALE;
 - GUIDE's entities and payloads are synthetic;
 - E1 injects text into command lines only;
-- containment is simulated.
+- containment is simulated;
+- the host detectors (chosen from a test-week measurement that included the labelled attack events) and the open-world rule (adopted after the closed-world misses) were chosen on DEDALE itself;
+- Suricata alerted on 1 of the 84 labelled attack flows, so the network results rest on very few attack cases;
+- each LLM condition was run once.
 
 **Tool:**
 - The review-queue order is tuned on DEDALE host data. Benign STUN cases on the VPN server rank level with the attack cases ("Later": count host peers by distinct pattern; drop placeholder targets such as "unknown").

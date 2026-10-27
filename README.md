@@ -30,7 +30,7 @@ All numbers are from [experiments/RESULTS.md](experiments/RESULTS.md), built fro
 - **C1, attacker text does not steer actions:**
   - On 500 GUIDE v2 dev pairs, an undefended LLM agent was hijacked into dismissing 130 / 439 contaminated alerts (29.6%).
   - The defended pipeline's response was suppressed on 4 / 428 (0.9%, McNemar p = 1.0), with 0 misdirected actions executed.
-  - On DEDALE, through the full loop, text appended to the attacker's own command lines taught the store 0 attack patterns, and all 400 labelled attack events still alerted.
+  - On DEDALE, through the full loop, text appended to the attacker's own command lines taught the store 0 attack patterns, and the same 400 labelled attack events as the clean run still alerted.
 - **C2, gated learning cuts analyst load:** on DEDALE host logs, reviews fell from 6,095 to 65 per day, with all 72 attack cases still raised.
 - **C3, memory poisoning:**
   - Without the gate, the store learned 38 attack patterns.

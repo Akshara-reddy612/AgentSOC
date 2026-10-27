@@ -2544,3 +2544,32 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
   - `PROJECT_PLAN.md` M8 row (was "in progress");
   - `PROJECT_STATUS.md`: milestone rows for M3 (said Figs. 2 and 3 not drawn), M5 and M8; the tool section, which now covers the host timeline, Lab, dataset registry, e2e check and the team data package;
   - `DEMO_BACKEND_DESIGN.md`: named a `--data` flag the server does not have (it is `--home`); now lists accounts in the browser, console data endpoints, the Lab and the dataset registry; its "not built" note on highlighting is corrected.
+
+## 2026-10-27 — Session: reviewer pass on the paper
+
+- **Asked:** is the paper free of loopholes, and is the pipeline the same for GUIDE and DEDALE?
+- **Numbers:** every number in `paper/agentsoc_combined.tex` checked against `experiments/RESULTS.md` and the frozen score files; all match.
+- **Pipeline:** both datasets use `perception.defended_pipeline.run_downstream` (grounding, entity binding, SSE, RSEM, guardrails, outcome).
+  - GUIDE (C1): per alert, from recorded NCE answers (`experiments/rescore_v2.py`); ERA on; NCE vocabulary of 7 techniques; synthetic inventory graph; no loop.
+  - DEDALE: inside `SocLoop` (triage gate, store, learning gate, outcome monitor, analyst loop); ERA off (the triage gate passes no ERA level); 18 techniques; graph learned from the benign weeks.
+- **Found, each checked against the result files:**
+  - ERA counted in C1's numbers but never introduced. It flags 65 / 500 (dev) and 56 / 500 (held-out) contaminated alerts, 0 / 1,000 clean (`era_scores_*.json`).
+  - "All 400 labelled attack events": static alerts 473, frozen 400; first-case times per attack step identical (`final_host_scores.json`).
+  - Gated = frozen with NCE and the analyst off (host 65.2 / 913; network 26.1): the gate learns only dismissed cases.
+  - Network "4 of 7 hidden" under ungated learning: the 4 probably-benign TikTok DNS cases of the heuristic tier; the confirmed dropper case stays in review, but its pattern is learned as routine (`final_network_scores.json`).
+  - Open-world rule adopted after the closed-world misses; host detectors chosen from a test-week measurement that included the labels.
+  - "Real telemetry" for a testbed dataset.
+  - Undefended agent vs pipeline: different measures; no prompt-level baseline. (Checked: same model, gemini-3.1-flash-lite, 1,000 records; v2 severity comes from Category, so there is no label leak; 439 = pairs whose clean twin the agent did not dismiss.)
+  - Each LLM condition run once.
+- **Changed (wording only; no new runs, no API calls):**
+  - abstract; contributions C1-C4; related-work close;
+  - System: ERA defined; Fig. 1 caption;
+  - Evaluation Setup: GUIDE runs the single-alert pipeline; DEDALE described as a testbed, its six host detectors, Suricata, no ERA; technique lists (7 / 18); NCE off in C2, C3, C5;
+  - C1: ERA counts, undefended agent defined, measures differ, no prompt-level baseline;
+  - E1: "the same 400"; runs without ERA;
+  - C2: 73 of 473; gated = frozen and why; network: the dropper download learned without the gate; Table III caption (NCE off);
+  - C4: open-world rule adopted after the misses;
+  - Discussion, Limitations (testbed; detector coverage; Suricata 1 / 84; choices made on DEDALE; one run per LLM condition), deployment needs, conclusion.
+- Compiled: 5 pages, no undefined references, no overfull lines.
+- Also updated: `README.md` and `PROJECT_STATUS.md` ("all 400" lines, C2 line, research limits); `experiments/PAPER_CLAIMS_TO_REVISE.md` (entries dated 2026-10-27).
+- **Not changed:** `experiments/RESULTS.md` (generated). Its network column "Attack-related cases hidden" counts the heuristic tier; read it with the footnote in `DEDALE_PHASE1_RESULTS.md`.
