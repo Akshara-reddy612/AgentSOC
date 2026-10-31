@@ -1,7 +1,7 @@
 # Viva preparation — questions and short answers (draft, 2026-10-31)
 
-Simple answers to questions an examiner is likely to ask. Numbers come from `experiments/RESULTS.md`; those marked
-**(verify)** depend on the DEDALE re-freeze running when this was written.
+Simple answers to questions an examiner is likely to ask. Numbers come from `experiments/RESULTS.md`; the DEDALE
+numbers were checked against the full re-freeze of 2026-10-31.
 
 ---
 
@@ -36,7 +36,10 @@ The structured fields that sensors record (host name, account, parent process, t
 IP addresses and ports, event ids), the company's asset inventory and network plan, and the patterns the store has
 learned behind the gate. It does not cover free text: command lines, script text, raw log lines, file and tool
 names. Those the attacker controls, so only the LLM and the text-risk check (ERA) read them, and both can only
-escalate. Tampering with the structured fields at the sensor itself is outside our threat model.
+escalate. The LLM is shown the first 512 characters of each field: on DEDALE the command line is almost always
+fully visible (1 of 797 is longer), but the raw log line is cut in 718 of 856 cases, so attacker text late in it is
+not seen; under asymmetric trust that can only cost a missed escalation. Tampering with the structured fields at
+the sensor itself is outside our threat model.
 
 **5. If the rule is so strong, why does GUIDE still show 4 of 428 suppressed?**
 
@@ -59,7 +62,7 @@ Two reasons. Coverage: the six detectors look at process launches, named pipes, 
 scripts, logons and access to the credential process (LSASS); most labelled events are DLL loads and ordinary file
 writes, which happen too often to learn reliably and were left out. Novelty: after learning the benign weeks, an
 event whose pattern also appears in normal activity is treated as routine; 73 of the 473 labelled attack events
-that alert with nothing learned stay silent **(verify)**. Every step of the attack still reached an analyst.
+that alert with nothing learned stay silent. Every step of the attack still reached an analyst.
 
 **8. What does asymmetric trust cost?**
 
