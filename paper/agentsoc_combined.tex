@@ -243,9 +243,16 @@ analyst gives verdicts from the labels after a delay, with optional seeded mista
 \texttt{gemini-3.1-flash-lite} (and \texttt{gpt-oss-20b} on the GUIDE development set). It proposes techniques from
 a fixed list that SSE can check: 7 on GUIDE, 18 on DEDALE's host logs. On DEDALE, NCE is off unless stated (C2,
 C3, C5), so every case the store cannot explain goes to review; it is on in E1 and C4. Live outputs are recorded
-and replayed, so every number is reproducible offline. Every condition with the NCE is run twice from the same
-recorded answers: as the pipeline that acts on the NCE's hypotheses, and under asymmetric trust (C6); the rule
-changes what the answers may cause, not the answers.
+and replayed, so every number is reproducible offline.
+
+\textbf{Two rules for the model's output.} Results are reported under two rules. Under the \emph{acting rule} the
+NCE's hypotheses decide like any other evidence: a case whose hypotheses are all structurally infeasible is
+dismissed, and an action they support may run without an analyst. Under \emph{asymmetric trust} (C6), which the
+prototype runs by default, they can only send a case to review. Every condition with the NCE is run under both
+rules from the same recorded answers; the rule changes what an answer may cause, not the answer. Without the NCE
+(C2, C3, C5 and the network results) there are no hypotheses, and both rules give the same result.
+Tables~\ref{tab:c1} and~\ref{tab:e1} and the C4 figures of 54.8 and 33.2 reviews per day use the acting rule;
+Table~\ref{tab:asym} compares the two.
 
 \section{Results}
 
