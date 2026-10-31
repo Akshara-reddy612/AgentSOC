@@ -123,11 +123,11 @@ class SocLoop:
 
     def process(self, alert: dict, at: datetime) -> None:
         """One network alert (src_ip / dst_ip): entity fields from the store, then the shared alert path."""
+        self._advance(at)                # a refused event still moves the clock, as every event did before
         problem = malformed_network_alert(alert)
         if problem:
             self._reject(alert, at, problem)
             return
-        self._advance(at)
         a = with_entities(alert, self.db)
         self.monitor.observe(a, at)
         self._handle_alert(a, at)
@@ -138,11 +138,11 @@ class SocLoop:
         learned (shadow mode).  Afterwards: a key the store has not learned becomes a
         host alert on the shared alert path (perception/host_detection.py).
         """
+        self._advance(at)                # a refused event still moves the clock, as every event did before
         problem = malformed_host_event(event)
         if problem:
             self._reject(event, at, problem)
             return
-        self._advance(at)
         if self._in_training:
             self.counts["events_training"] += 1
             if self.updater is not None:
