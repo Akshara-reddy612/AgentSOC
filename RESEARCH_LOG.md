@@ -2702,3 +2702,24 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 
 ### Files created/modified
 - Modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `experiments/build_results.py`, `PAPER_OUTLINE.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-31 — Session: re-freeze after the fail-safe merge verified; paper merged; RESULTS.md rebuilt
+
+### What was tried
+- **Re-freeze on `main` after merging asymmetric trust, fail-safe processing and the clock fix** (`freeze_dedale --workers 6 --rerun`, 43 replays, recorded answers only).
+- **GUIDE:** the three runs re-scored with `main`'s code, both rules.
+- **Paper:** `paper-asymmetric-trust` merged; `build_results` re-run.
+
+### What was found
+- 43 / 43 replays exit 0; `final_host_scores.json`, `final_network_scores.json` and `e1_scores.json` rewritten and byte-identical to the committed versions; 156 per-result comparisons (reviews per day, attack cases and dismissals, events alerted, patterns learned, network hidden / containment, E1) all match. The malformed-event check refused 0 events in all 43 replays.
+- GUIDE, acting rule: the three re-scores have the same SHA-256 as the committed `agent/v2_results/*_rescored.json`; asymmetric trust: byte-identical to the afternoon's outputs.
+- `RESULTS.md` rebuilt with the pre-merge builder: identical (date line included); figure data byte-identical.
+- So the fail-safe changes, the bounded grounding check and the decision-cache versions change no frozen result.
+- After the paper merge, `RESULTS.md` changed by additions only (136 old lines all present in order, 21 rows extended, 0 values changed): the ERA share of removed containments (17 / 18 / 17), GUIDE outcomes per run (dev: REVIEW 532, AUTO_APPROVED 336, both rules; lines 24 and 27), and a reviews-per-day column in the E1 table.
+- Share of DEDALE first alerts longer than NCE's 512-character view (`gated_nce_F_nce` case store): 718 of 856 have a field over 512, all of them the raw log line; 1 of 797 command lines is over 512.
+
+### Test verification
+- Full suite on the merged `main`: 804 passed, 1 deselected.
+
+### Files created/modified
+- Modified: `experiments/RESULTS.md`, `RESEARCH_LOG.md`, `PROJECT_STATUS.md`
