@@ -2723,3 +2723,16 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 
 ### Files created/modified
 - Modified: `experiments/RESULTS.md`, `RESEARCH_LOG.md`, `PROJECT_STATUS.md`
+
+## 2026-10-31 — Session: which rule produces which result; LLM-off rule check
+
+### What was tried
+- `README.md`: a section "Which rule produces which result" (acting rule vs asymmetric trust: what the LLM's hypotheses may do, which commands and results use which); the reproduce snippet now says 43 replays, about 2 h.
+- `paper/agentsoc_combined.tex`: a "Two rules for the model's output" paragraph in the Evaluation Setup (Tables I and II and C4's 54.8 / 33.2 use the acting rule; Table III compares the two; without the NCE both rules give the same result). Compiles to 7 pages, no undefined references or overfull boxes.
+- **Rule check:** the LLM-off gated condition replayed under asymmetric trust (`dedale_host_replay --mode gated --llm-authority escalate --tag RULECHECK_gated`, recorded data only).
+
+### What was found
+- The rule-check run equals the frozen `gated_F_gated` in all 9 score fields (65.2 reviews per day, 913 cases, 72 / 72 attack cases reviewed, 400 events alerted, nothing learned, per-day series and attack steps identical): without hypotheses the two rules decide the same. C3, C5 and the network replays take the same code path (the network replay never gets an NCE).
+
+### Files created/modified
+- Modified: `README.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `RESEARCH_LOG.md`
