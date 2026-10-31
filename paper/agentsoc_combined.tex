@@ -3,6 +3,8 @@
 % conclusion); the team revises them. Authors: team.
 % Revised 2026-10-27 (Claude): wording fixed where a reviewer could object (ERA defined, denominators, gated vs
 % frozen, choices made on DEDALE, network ground truth, GUIDE runs the single-alert pipeline); see RESEARCH_LOG.md.
+% Revised 2026-10-31 (Claude): asymmetric trust (decision P9 A, contribution C6) and fail-safe processing added;
+% numbers from experiments/RESULTS.md as rebuilt that day (current pipeline and asymmetric trust side by side).
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
@@ -40,9 +42,12 @@ surfaces, on 1,000 clean/contaminated alert pairs built from GUIDE and on four w
 DEDALE, a testbed company with an APT-style intrusion.
 Text that hijacks an undefended LLM agent on 29.6\% of pairs suppresses the pipeline's response on 0.9\%, and no
 misdirected action is executed. On DEDALE, attacker text gets a few attack cases dismissed, but the learning
-gate keeps every one of them from being learned. Learning the benign weeks cuts analyst reviews from 6,095 to 65
-per day while every step of the attack still reaches an analyst; continuing to learn without a gate learns the
-attacker. Analyst mistakes are the larger poisoning route,
+gate keeps every one of them from being learned. We then make the model's output asymmetric: it may raise scrutiny
+but never lower it, so nothing automatic rests on it. With the same recorded model answers, no attack case is
+dismissed, and text no longer delays automatic containment, which it did for 11\% of the contained GUIDE alerts,
+mostly through our own text-risk check; the cost is 0.9 reviews per day with an analyst. Learning the benign weeks
+cuts analyst reviews from 6,095 to 65 per day while every step of the attack still reaches an analyst; continuing
+to learn without a gate learns the attacker. Analyst mistakes are the larger poisoning route,
 and retracting what was learned on a host once it is confirmed compromised closes it.
 \end{abstract}
 
@@ -69,7 +74,9 @@ This paper evaluates both surfaces in one pipeline. The LLM's output is treated 
 checked against trusted structured fields and an environment model before any response is ranked; guardrails
 decide what may run without an analyst; and only structured fields, never text, are learned, behind a learning gate
 that holds back anything near an escalation. Analysts' verdicts pass through an inbox that the loop applies, and a
-host confirmed compromised has its recent learning retracted. We measure the pipeline on a contamination corpus
+host confirmed compromised has its recent learning retracted. Finally, the model's authority is asymmetric: its
+hypotheses can send a case to an analyst, but every dismissal, automatic action and learned pattern must follow
+from what the attacker cannot write. We measure the pipeline on a contamination corpus
 built from GUIDE~\cite{guide} and on DEDALE~\cite{dedale}: four weeks of labelled host and network telemetry from a
 testbed company, with an APT-style intrusion. Our contributions:
 \begin{itemize}
@@ -85,6 +92,11 @@ learned on a host once it is confirmed compromised removes the effect.
 \item \textbf{C4:} on DEDALE the LLM's contribution is modest, and a closed-world feasibility check dismissed two
 attack cases, which led us to treat hosts without telemetry as unknown.
 \item \textbf{C5:} the analyst's response time sets the workload and the time to containment, not detection.
+\item \textbf{C6:} asymmetric trust, a design rule for LLM-assisted triage: the outcome is the decision the
+pipeline reaches without the model's hypotheses, or review. It removes every dismissal that attacker text achieved
+on DEDALE (1, 3 and 1 of 72 attack cases, to none) and stops text from delaying automatic containment (11\% of the
+contained GUIDE alerts, to none), for 0.9 more reviews per day with an analyst. It cannot help where the model
+itself is the detector, which is an argument for letting the memory detect and the model only add.
 \end{itemize}
 All numbers are reproducible offline from recorded LLM outputs.
 
@@ -105,7 +117,9 @@ provenance of untrusted input in the prompt~\cite{spotlighting}, training models
 separate trusted channel~\cite{struq}, or building a system layer that keeps untrusted data out of an agent's
 control flow~\cite{camel}. A SOC is an unusually direct case: the attacker writes the very evidence the model must
 read. Our defences are of the system kind; they bound what the model's output can cause rather than whether the
-model is fooled.
+model is fooled. Unlike designs that keep untrusted data out of the control flow altogether~\cite{camel}, we let
+the model read the attacker's text, because in a SOC that text is often the evidence, and restrict only the
+direction of its influence: it may add scrutiny, never remove it.
 
 \textbf{Poisoning what a system learns.} Detectors that learn normal behaviour can be poisoned through their
 training data so that later attacks pass unnoticed~\cite{antidote}. LLM agents inherit the problem through their
@@ -126,7 +140,8 @@ The attacker controls the free text of their own activity as sensors record it: 
 log lines and the names they give their tools. They do not control structured sensor fields (host, account,
 parent process, image path as recorded, addresses), the asset inventory, the learning gate, or the analyst.
 Their goals are \emph{suppression} (their activity is dismissed, or learned as routine so that it stops raising
-alerts) and \emph{misdirection} (containment aimed at the wrong host or account). Tampering with structured
+alerts) and \emph{misdirection} (containment aimed at the wrong host or account). We also consider input that makes
+the pipeline fail or stall, since a pipeline that stops raises no alerts. Tampering with structured
 fields at the sensor is out of scope for the defences; we measure its effect separately (Section~\ref{sec:c1}).
 
 \section{System}
@@ -170,7 +185,8 @@ fields at the sensor is out of scope for the defences; we measure its effect sep
 \draw[back] (monitor) -- node[left]{escalate} (gate);
 \end{tikzpicture}
 \caption{The pipeline (top) and the loop around it. Attacker-writable text reaches only the NCE (violet) and the
-text-risk check ERA (not drawn), which can only escalate; the
+text-risk check ERA (not drawn), which can only escalate; under asymmetric trust the NCE's output can only escalate
+too; the
 Knowledge Store (cyan) learns structured patterns only, behind the learning gate or from analyst verdicts, and
 retracts what was learned on a host confirmed compromised.}
 \label{fig:pipeline}
@@ -194,6 +210,19 @@ this single-alert pipeline runs the loop:
 \end{itemize}
 SSE treats hosts without telemetry as unknown, not as impossible targets (open world, Section~\ref{sec:c4}).
 
+\textbf{Asymmetric trust.} The NCE reads text the attacker writes, so nothing automatic may rest on its output.
+For each case the pipeline also decides without the NCE's hypotheses, from the trusted fields, the store, ERA and
+a check of any external destination the network telemetry recorded; for a pattern the store has never learned,
+this \emph{text-free decision} is review. The final outcome is the text-free decision or review. The NCE's
+hypotheses can send a case to an analyst, add reasons and propose actions, but they cannot dismiss it, lower its
+priority or trigger an action; an action only they support becomes a proposal. Only the text-free decision's
+actions run without an analyst, and they run even when the NCE's hypotheses ask for review, so escalating cannot
+delay containment. Since the learning gate learns dismissed cases only, the NCE's output cannot make a case
+learnable either. These properties hold by construction, independently of the model, and the review queue's
+priority, which only adds points, cannot be lowered by the NCE either. A failure fails the same way: an error in
+the pipeline sends the case to an analyst, an event the pipeline fails on is quarantined while the loop recovers
+from its last checkpoint, and malformed events are refused and counted rather than dropped.
+
 \section{Evaluation Setup}
 \textbf{GUIDE corpus v2.} 500 development and 500 held-out pairs built from Microsoft GUIDE incidents~\cite{guide}: each pair is
 a clean alert and a contaminated twin that differs only at the injection site, across 10 payload families
@@ -214,7 +243,9 @@ analyst gives verdicts from the labels after a delay, with optional seeded mista
 \texttt{gemini-3.1-flash-lite} (and \texttt{gpt-oss-20b} on the GUIDE development set). It proposes techniques from
 a fixed list that SSE can check: 7 on GUIDE, 18 on DEDALE's host logs. On DEDALE, NCE is off unless stated (C2,
 C3, C5), so every case the store cannot explain goes to review; it is on in E1 and C4. Live outputs are recorded
-and replayed, so every number is reproducible offline.
+and replayed, so every number is reproducible offline. Every condition with the NCE is run twice from the same
+recorded answers: as the pipeline that acts on the NCE's hypotheses, and under asymmetric trust (C6); the rule
+changes what the answers may cause, not the answers.
 
 \section{Results}
 
@@ -270,6 +301,47 @@ none & 0 / 0 & 0 & 400 \\
 maintenance claim & 1 / 0 & 0 & 400 \\
 fake SOC approval & 3 / 0 & 0 & 400 \\
 steer to the DC & 1 / 0 & 0 & 400 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Asymmetric trust (C6)}\label{sec:asym}
+Table~\ref{tab:asym} replays the same recorded answers under asymmetric trust. On DEDALE no attack case was
+dismissed with any of the three texts, with or without an analyst, against 1, 3 and 1 before; nothing was learned
+and the same 400 attack events alerted. The model still followed the steering text (it named the domain controller
+in 30--32 of 38 cases), entity binding still flagged every such hypothesis, and no containment targeted the steered
+host. The attacker's text no longer changes anything automatic, and it adds no work either: with every text the
+load was the clean run's, 65.2 reviews per day without an analyst and 34.1 with one.
+
+The table also shows a failure the suppression measure of Table~\ref{tab:c1} does not see. In the pipeline that
+acts on the NCE's hypotheses, a review outcome holds back every automatic response of the alert, so text that
+sends a case to review delays its containment. Among the GUIDE pairs whose clean twin blocked a destination
+automatically, contamination removed that block in 20 of 178 (development), 18 of 168 (held-out) and 21 of 176
+(\texttt{gpt-oss-20b}) pairs, 11\%. In 17, 18 and 17 of them the review came from ERA: the defence's own detector
+was the attacker's lever. Under asymmetric trust the text-free decision's block runs whatever the text does, and
+none was removed. Suppression on GUIDE is unchanged, at 4 of 428, 3 of 437 and 10 of 437: in those pairs the clean
+twin's response came from the model reading the clean text, and without its hypotheses the pipeline had nothing to
+act on. A rule about what the model's output may cause cannot stop text that blinds a model which is itself the
+detector; in the loop, the detector is the store, and the model only adds. On GUIDE the rule cost nothing: the
+same 532 alerts went to review and 336 were contained automatically (development set), because every automatic
+action there was the text-free destination block.
+
+\begin{table}[t]
+\caption{The same recorded answers without and with asymmetric trust.}\label{tab:asym}
+\centering\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrr@{}}
+\toprule
+ & Acts on the NCE & Asymmetric trust \\
+\midrule
+E1 attack cases dismissed, no analyst (3 texts) & 1 / 3 / 1 & 0 / 0 / 0 \\
+E1 attack cases dismissed, analyst & 0 / 0 / 0 & 0 / 0 / 0 \\
+Reviews/day, NCE on (no analyst / analyst) & 54.8 / 33.2 & 65.2 / 34.1 \\
+\midrule
+GUIDE containment removed, dev & 20/178 & 0/178 \\
+GUIDE containment removed, held-out & 18/168 & 0/168 \\
+GUIDE containment removed, gpt-oss-20b & 21/176 & 0/178 \\
+GUIDE responses suppressed (dev / held-out / gpt-oss) & 4 / 3 / 10 & 4 / 3 / 10 \\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -354,7 +426,9 @@ infeasible. Under a closed-world check this dismissed 2 of the 72 attack cases: 
 server the store has no telemetry for, and ``no record of access'' was read as ``impossible''. Treating hosts
 without telemetry as unknown removed both misses at no cost (89 benign dismissals either way). We adopted this
 open-world rule after seeing the two misses, on the same data, so its 0 of 72 is not an independent test. With an analyst
-in the loop, NCE adds little (33.2 reviews per day with NCE, 34.1 without, both with unlearning).
+in the loop, NCE adds little (33.2 reviews per day with NCE, 34.1 without, both with unlearning). The whole
+reduction is the NCE dismissing cases, the same path the attacker used in E1; under asymmetric trust the NCE
+dismisses nothing and the load is the NCE-off load (Section~\ref{sec:asym}).
 
 \subsection{Operating the loop (C5)}
 Detection does not depend on how fast analysts answer, but workload does: host reviews per day rise from 33.1 to
@@ -391,7 +465,25 @@ target the trusted fields do not support is flagged, not acted on. Only structur
 the principle of recent designs that keep untrusted data out of an agent's control flow~\cite{camel}, applied to a
 SOC: the LLM's output is advisory, and what it may cause is decided by components it cannot write to. Prompt-level
 defences~\cite{spotlighting,struq} reduce how often a model follows injected text; our measurements concern what
-happens when it does.
+happens when it does. Asymmetric trust makes the principle precise and cheap to check: compare the decision with
+and without the model's output, and let the model only add review. It does not make detection robust where the
+model is the detector: on GUIDE, text that kept the model from flagging an alert still suppressed the response.
+Detection should therefore rest on something the attacker cannot write, here novelty against a learned store,
+with the model adding scrutiny.
+
+\textbf{Escalation must not cancel containment.} A pipeline that escalates on suspicious text hands the attacker a
+lever if escalation also holds back what trusted telemetry already supports. In the pipeline that acts on the
+NCE's hypotheses, ERA's correct escalation of injected text held back the automatic block in 17 of 20, 18 of 18
+and 17 of 21 of the GUIDE pairs where contamination removed it. Review must be added to an automatic response, not
+substituted for it.
+
+\textbf{Failures must fail towards scrutiny.} Building the system, we found two ways input could stop or stall it
+without any injection: an event the pipeline failed on ended the live loop while its status still read running,
+and the check of the evidence for C2 indicators slowed down quadratically with the length of crafted text, so that
+a few long command lines could stall the pipeline. Failing events are now quarantined and the loop recovers from
+its last checkpoint, pipeline errors send the case to an analyst, and the check reads only what the model was
+shown, in bounded time. These are engineering fixes, but a defence evaluation that ignores availability measures a
+pipeline the attacker can switch off.
 
 \textbf{Memory is the larger surface.} A system that learns what is normal is a classic poisoning
 target~\cite{antidote}, and agents' memories and knowledge bases have the same weakness~\cite{agentpoison,poisonedrag}.
@@ -411,8 +503,10 @@ a deployment needs to know which hosts it cannot see.
 
 \textbf{Workload.} Most of the reduction comes from learning the benign weeks: 6,095 to 65 reviews per day. Analyst verdicts feeding
 the store take it to 34. The LLM cuts reviews by 16\% on its own, and by little once an analyst is in the loop
-(34.1 to 33.2). On this data, the LLM's measurable effect on workload is modest. We did not measure its effect on
-how fast or how accurately analysts decide, which is where its explanations would matter.
+(34.1 to 33.2). On this data, the LLM's measurable effect on workload is modest, and it came entirely from
+dismissals, the path the attacker used; asymmetric trust gives it up for 0.9 reviews per day with an analyst. We
+did not measure the model's effect on how fast or how accurately analysts decide, which is where its explanations
+would matter.
 
 \textbf{Limitations.}
 \begin{itemize}
@@ -429,6 +523,9 @@ development set only (Table~\ref{tab:c1}).
 \item GUIDE v2's entities, evidence and payloads are synthetic. E1 injects text only into command lines, with three
 payload families.
 \item Tampering with structured sensor fields is outside the defences (Section~\ref{sec:c1}).
+\item Asymmetric trust covers what the model's output can cause. It does not cover text aimed at the analyst, who
+reads it, or activity that resembles routine patterns. The model is shown the first 512 characters of each evidence
+field, and most DEDALE alerts are longer; text pushed out of that view can only cost an escalation.
 \item All containment is simulated.
 \item Each LLM condition was run once. Replaying the recorded outputs makes every number reproducible, but
 run-to-run variation of the model is not measured.
@@ -447,7 +544,9 @@ related cases are escalated) transfer.
 \section{Conclusion}
 An LLM-driven SOC can be attacked through what its model reads and through what its memory learns. In our
 pipeline, the model was easy to steer, but its output was advisory: hypotheses were checked against trusted fields
-and the environment model, steered targets were flagged, and no misdirected action ran. The memory was the larger
+and the environment model, steered targets were flagged, and no misdirected action ran. Making that asymmetry a
+rule, so that the model's output can add review but never remove it, left attacker text no dismissal on DEDALE and
+no delayed containment on GUIDE, at almost no cost once an analyst is in the loop. The memory was the larger
 risk. Learning made the workload manageable (6,095 to 65 reviews per day on DEDALE's host logs) and, without a
 gate, also learned the attacker. The gate held, and the weakest remaining route, wrong analyst verdicts, was closed
 by retracting what was learned on a host once it was confirmed compromised. A deployment would need a maintained

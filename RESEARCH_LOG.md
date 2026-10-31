@@ -2683,3 +2683,22 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 ### Files created/modified
 - Created: `tests/test_fail_safe.py`
 - Modified: `soc_server/runner.py`, `perception/soc_loop.py`, `perception/host_detection.py`, `perception/network_alert.py`, `perception/knowledge_db.py`, `perception/case_store.py`, `perception/nce_engine.py`, `README.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-31 — Session: paper, contribution C6 (asymmetric trust) and fail-safe processing
+
+### What was changed
+- **`paper/agentsoc_combined.tex`** (numbers from `experiments/RESULTS.md` as rebuilt by `build_results`):
+  - abstract, introduction (the rule; contribution **C6**), related work (positioning against designs that keep untrusted data out of the control flow: here the model reads the text and only the direction of its influence is restricted), threat model (input that makes the pipeline fail or stall);
+  - System: an "Asymmetric trust" paragraph (the text-free decision; outcome = text-free or REVIEW; only text-free actions execute and escalation cannot delay them; nothing learnable; the queue priority only adds; failures fail towards scrutiny); Fig. 1 caption;
+  - Evaluation setup: every NCE condition run twice from the same recorded answers;
+  - Results: new subsection C6 and Table III (E1 dismissals 1 / 3 / 1 -> 0, workload as clean; GUIDE containment removed 20 / 178, 18 / 168, 21 / 176 -> 0, 17 / 18 / 17 via ERA; suppression unchanged; no cost on GUIDE); C4 connected (the reduction was dismissals, the attacker's path);
+  - Discussion: the model as detector vs the store as detector; escalation must not cancel containment; failures must fail towards scrutiny (the runner and the grounding check, without machine-dependent timings); workload; limitations (scope of the rule; the model sees 512 characters per field); conclusion.
+- **`experiments/build_results.py`:** every number the new text cites is in `RESULTS.md`: the containment column now gives how many removals were ERA-flagged; GUIDE outcome counts per run; a reviews-per-day column in the E1 table.
+- `PAPER_OUTLINE.md` (section 6.2 C6, table list), `PROJECT_PLAN.md` (claim C6 row).
+
+### What was found
+- Compiles with MiKTeX: 7 pages (was 5), no undefined references, no overfull boxes. Pages checked as images.
+- `RESULTS.md` is rebuilt after the running re-freeze of all 43 replays (merged A + fail-safe code) finishes.
+
+### Files created/modified
+- Modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `experiments/build_results.py`, `PAPER_OUTLINE.md`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

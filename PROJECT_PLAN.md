@@ -42,6 +42,7 @@ Decided 2026-10-12 with Abhishek. This file sets the scope. Work outside it goes
 | **C3** Memory poisoning and its defences: without the gate, or through analyst mistakes, the store learns the attacker; the gate and unlearning-on-confirmation prevent it | Ungated: 38 attack patterns learned; 99 attack events alerted, against 400 gated. Analyst missing 20% of attacks: 400 -> 256 attack events alerted; with unlearning, 400 / 400 (+10% reviews) | Have |
 | **C4** What the LLM adds on real telemetry, and a failure mode | NCE: -16% reviews alone, -3% on top of an analyst. Closed-world feasibility dismissed 2 real attack cases; the open-world rule fixed it (0 / 72) | Have |
 | **C5** Operating the analyst loop | Analyst feedback 65 -> 31 reviews / day. Analyst delay 1 h -> 72 h: 30 -> 50 reviews / day; network containment time equals the delay | Have |
+| **C6** Asymmetric trust (added 2026-10-31, decision P9 A): the LLM's output may raise scrutiny, never lower it | The same recorded answers: E1 attack cases dismissed 1 / 3 / 1 of 72 -> 0, no extra workload; GUIDE automatic containments removed by contamination 20 / 178, 18 / 168, 21 / 176 -> 0; GUIDE suppression unchanged; cost +0.9 reviews / day with an analyst. Property checked on every recorded GUIDE dev answer of both models | Have |
 
 - **Not claimed:** the review-queue order (in-sample; it stays a tool feature).
 - **Limits to state:**

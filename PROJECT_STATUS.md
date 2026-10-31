@@ -10,7 +10,7 @@ The goal now is the handover (decision P7). Before the project goes to the team,
 |:--|:--|
 | M1 Freeze, `RESULTS.md`, `REPRODUCE.md` | Done 2026-10-18 |
 | M2 Interrupted runs, E1 | Done 2026-10-20 (gpt-oss-20b complete: all 500 dev pairs) |
-| M3 Paper draft | Full draft 2026-10-19 (`paper/agentsoc_combined.tex`, 5 pages, 15 checked references). Figs. 2 and 3 drawn 2026-10-20. Reviewer pass 2026-10-27: wording fixed where a reviewer could object (`RESEARCH_LOG.md`). The team revises it; authors and the repository link are TODO |
+| M3 Paper draft | Full draft 2026-10-19 (`paper/agentsoc_combined.tex`, 15 checked references). Figs. 2 and 3 drawn 2026-10-20. Reviewer pass 2026-10-27: wording fixed where a reviewer could object (`RESEARCH_LOG.md`). 2026-10-31: contribution C6 (asymmetric trust: System paragraph, Results subsection and Table III, Discussion) and the fail-safe findings added; 7 pages. The team revises it; authors and the repository link are TODO |
 | M4 Demo backend | Done 2026-10-18; extended 2026-10-19 (network alerts, live logs, contamination scenario, accounts in the browser) |
 | M5 Frontend | Done 2026-10-20 (design pass, Contamination Lab, host timeline in M8) |
 | M6 E3 (AIT-LDS) | Optional; for the team (P7) |
