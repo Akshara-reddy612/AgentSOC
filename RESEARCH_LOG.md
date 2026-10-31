@@ -2573,3 +2573,29 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - Compiled: 5 pages, no undefined references, no overfull lines.
 - Also updated: `README.md` and `PROJECT_STATUS.md` ("all 400" lines, C2 line, research limits); `experiments/PAPER_CLAIMS_TO_REVISE.md` (entries dated 2026-10-27).
 - **Not changed:** `experiments/RESULTS.md` (generated). Its network column "Attack-related cases hidden" counts the heuristic tier; read it with the footnote in `DEDALE_PHASE1_RESULTS.md`.
+
+## 2026-10-31 — Session: review change 8, checkpoint loading (decision P8)
+
+### What was tried
+- **The risk:** the server's checkpoints pickle the loop's state; `pickle.load` can run code, and the restore loaded `state.pkl` from the home with no restriction. A crash between `checkpoint()`'s two renames (`checkpoint` -> `checkpoint.old`, then `checkpoint.tmp` -> `checkpoint`) left no `checkpoint/`, so the restart would not have found any checkpoint.
+- **Listed what a real checkpoint holds** (the demo home, 14 KB `state.pkl`, recorded with a logging unpickler): `SocLoop`, `CaseBuilder`, `Case`, `alert_case_key`, `KnowledgeUpdater`, `OutcomeMonitor`, `TriageGate`, `Decision`, `Counter`, `OrderedDict`, `datetime` / `timedelta` / `timezone`, `itertools.count`, and `builtins.getattr` (the bound method `OutcomeMonitor.reasons`, the gate's watch hook).
+- **`soc_server/runner.py`:**
+  - `_Unpickler.find_class` resolves only exact (module, name) pairs in `_ALLOWED` (the list above plus the loop's other classes: `ProposedResponse`, `Watch`, `DailyBudget`, `network_case_key`, `set`, `frozenset`, `defaultdict`, `deque`, `date`). Whole packages are not allowed: `experiments` holds functions that start subprocesses. `getattr` is replaced by `_bound_method`, which allows only `(OutcomeMonitor, "reasons")`; a plain `getattr` would reach `__globals__` and from there `os`.
+  - Each checkpoint gets `manifest.json`: SHA-256 of `ks.sqlite`, `cases.sqlite`, `state.pkl` and an HMAC over them with a per-user key (`AGENTSOC_CHECKPOINT_KEY`, default `~/.agentsoc/checkpoint.key`, 32 random bytes made on first use). The restore checks it before deleting or replacing any live file.
+  - No `checkpoint/` but a complete `checkpoint.old/`: restore that.
+  - A checkpoint without a manifest (written before this change) loads under the allowlist; the server prints a note and the next checkpoint is signed.
+- **`soc_server/__main__.py`:** a refused checkpoint (changed, other key, or a class outside the allowlist) ends the server with the message, like a home built from other sources.
+- **`tests/conftest.py`** (new): the suite signs with a key in a temporary folder, never in the user's profile.
+
+### What was found
+- The demo home's checkpoint (written before this change) loads under the allowlist (stream time 2025-01-06 08:00).
+- The restart tests for host, merged host + network and follow homes pass, so the allowlist covers the state those produce.
+- Not covered: the live databases of a running server; they are protected only by the home's file permissions (README security notes). Analysts' actions after the last checkpoint are still lost on a crash (at most one checkpoint interval, as before).
+
+### Test verification
+- New in `tests/test_live_runner.py`: a changed checkpoint is refused and the live store is untouched; a checkpoint signed with another key is refused; a crash between the renames restores `checkpoint.old` and gives the uninterrupted run's state (no event lost or processed twice); an unsigned checkpoint loads and the next one is signed; a crafted pickle (`os.system` writing a marker file) is refused and the marker is never written; `_bound_method` refuses `__init__`, `__class__` and other names.
+- Full suite: 785 passed, 1 deselected (780 before; +5). `~/.agentsoc/checkpoint.key` was not created by the tests.
+
+### Files created/modified
+- Created: `tests/conftest.py`
+- Modified: `soc_server/runner.py`, `soc_server/__main__.py`, `tests/test_live_runner.py`, `README.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
