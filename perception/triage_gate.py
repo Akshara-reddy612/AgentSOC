@@ -23,6 +23,11 @@ experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md).  In this order:
   4. Otherwise the defended pipeline (perception/defended_pipeline.run_downstream)
      runs.  NCE is called only if a function is given and the daily budget
      allows; cases that wanted a call and got none are counted as backlog.
+     With `llm_authority="escalate"` (asymmetric trust, 2026-10-31, decision
+     P9 A) NCE's hypotheses may only raise the decision the pipeline reaches
+     without them (perception/defended_pipeline.asymmetric_downstream); for a
+     pattern the store never learned that decision is REVIEW (D7 below), so NCE
+     cannot dismiss it.  The default, "full", is the pipeline of the frozen runs.
 
 Open decision D7 (policy for unreasoned cases): when NCE did not run and the
 pipeline found nothing actionable for a case the store has never learned,
@@ -42,7 +47,7 @@ from datetime import date, datetime
 from typing import Callable
 
 from perception.case_builder import Case
-from perception.defended_pipeline import run_downstream
+from perception.defended_pipeline import LLM_AUTHORITIES, asymmetric_downstream, run_downstream
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_updater import pattern_edge
 from perception.nce_contract import NCEHypothesis
@@ -60,12 +65,13 @@ class Decision:
     at: datetime
     path: str                       # "baseline" | "cache" | "pipeline"
     outcome: str                    # final outcome (AUTO_APPROVED / REVIEW / LOW_PRIORITY / NO_ACTIONABLE)
-    pipeline_outcome: str | None    # run_downstream's own outcome; None if the pipeline did not run
+    pipeline_outcome: str | None    # run_downstream's own outcome (NCE's hypotheses deciding); None if it did not run
     reasons: list[str]
     nce: str                        # "disabled" | "ran" | "budget_exhausted" | "error" | "not_needed"
     hypotheses: list[dict] = field(default_factory=list)
     store_seq: int = 0              # store version the decision was made on
     escalations: list[str] = field(default_factory=list)   # trusted-field escalation reasons (also in reasons)
+    text_free_outcome: str | None = None    # asymmetric trust: the decision without NCE's hypotheses (D7 applied)
 
 
 class DailyBudget:
@@ -93,13 +99,16 @@ class TriageGate:
 
     def __init__(self, db: KnowledgeDB, *, nce: Callable[[dict], list[NCEHypothesis]] | None = None,
                  budget: DailyBudget | None = None, unreasoned: str = "review",
-                 watch: Callable[[dict, datetime], list[str]] | None = None) -> None:
+                 watch: Callable[[dict, datetime], list[str]] | None = None, llm_authority: str = "full") -> None:
         if unreasoned not in UNREASONED_POLICIES:
             raise ValueError(f"unreasoned must be one of {UNREASONED_POLICIES}")
+        if llm_authority not in LLM_AUTHORITIES:
+            raise ValueError(f"llm_authority must be one of {LLM_AUTHORITIES}")
         self.db = db
         self.nce = nce
         self.budget = budget
         self.unreasoned = unreasoned
+        self.llm_authority = llm_authority      # "escalate": asymmetric trust (perception/defended_pipeline.py)
         self.watch = watch
         self._cache: dict[tuple, tuple[Decision, tuple[int, int, str]]] = {}
         self.backlog = 0
@@ -126,7 +135,14 @@ class TriageGate:
                                 d.nce, d.hypotheses, self.db.last_seq())
 
         hypotheses, nce_status = self._reason(alert, at)
-        res = run_downstream(hypotheses, alert, kg)
+        failed = False
+        try:
+            res = self._downstream(hypotheses, alert, kg)
+        except Exception as e:  # noqa: BLE001 -- 2026-10-31: a pipeline error sends the case to an analyst
+            failed = True       # (never a dismissal, an automatic action or learning; not cached)
+            res = {"hypotheses": [], "outcome": REVIEW, "outcome_own": None, "text_free_outcome": None,
+                   "outcome_reasons": [f"The pipeline failed on this alert ({type(e).__name__}): it goes to an "
+                                       "analyst and nothing runs automatically."]}
         outcome, reasons = res["outcome"], list(res["outcome_reasons"])
         if escalations and outcome != REVIEW:
             outcome, reasons = REVIEW, [*escalations, *reasons]
@@ -136,11 +152,27 @@ class TriageGate:
                 and self.unreasoned == "review"):
             outcome = REVIEW
             reasons = [*reasons, f"Pattern not learned as routine and not reasoned about (NCE {nce_status})."]
-        decision = Decision(case.case_id, at, "pipeline", outcome, res["outcome"], reasons, nce_status,
-                            res["hypotheses"], self.db.last_seq(), list(escalations))
-        if not escalations:
+        decision = Decision(case.case_id, at, "pipeline", outcome, res["outcome_own"], reasons, nce_status,
+                            res["hypotheses"], self.db.last_seq(), list(escalations), res.get("text_free_outcome"))
+        if not escalations and not failed:
             self._cache[case.key] = (decision, versions)
         return decision
+
+    def _downstream(self, hypotheses: list[NCEHypothesis], alert: dict, kg) -> dict:
+        """The pipeline after NCE: as the frozen runs ran it ("full"), or under asymmetric trust ("escalate")."""
+        if getattr(self, "llm_authority", "full") != "escalate":      # gates restored from older checkpoints: full
+            res = run_downstream(hypotheses, alert, kg)
+            res["outcome_own"] = res["outcome"]
+            return res
+        text_free = run_downstream([], alert, kg)
+        floor = text_free
+        if text_free["outcome"] == NO_ACTIONABLE and self.unreasoned == "review":
+            floor = {**text_free, "outcome": REVIEW, "outcome_reasons": [
+                *text_free["outcome_reasons"],
+                "Pattern not learned as routine: without NCE's hypotheses it goes to an analyst."]}
+        res = asymmetric_downstream(hypotheses, alert, kg, text_free=floor)
+        res["outcome_own"] = res["llm_outcome"] or text_free["outcome"]
+        return res
 
     def policy(self) -> str:
         """What a decision depends on besides the store: cached decisions are reused only under the same policy."""
@@ -148,7 +180,8 @@ class TriageGate:
             nce = "off"
         else:       # an NCE without a version (tests, ad-hoc callables) is identified by its object
             nce = getattr(self.nce, "version", None) or f"{type(self.nce).__qualname__}@{id(self.nce):x}"
-        return f"triage-v{POLICY_VERSION}|unreasoned={self.unreasoned}|nce={nce}"
+        return (f"triage-v{POLICY_VERSION}|unreasoned={self.unreasoned}|nce={nce}"
+                f"|llm={getattr(self, 'llm_authority', 'full')}")
 
     def _reason(self, alert: dict, at: datetime) -> tuple[list[NCEHypothesis], str]:
         if self.nce is None:

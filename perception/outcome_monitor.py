@@ -57,6 +57,7 @@ class ProposedResponse:
     target: str
     target_kind: str                 # "destination" | "host" | "account"
     playbook_status: str             # "AUTO_APPROVED" | "PENDING_ANALYST_REVIEW"
+    text_free: bool = False          # from the decision without NCE's hypotheses (asymmetric trust, 2026-10-31)
 
 
 def proposed_responses(decision: Decision) -> list[ProposedResponse]:
@@ -69,8 +70,17 @@ def proposed_responses(decision: Decision) -> list[ProposedResponse]:
         kind = TARGET_KIND[action]
         target = row.get("top_target_account") if kind == "account" else row.get("top_target_host")
         if target:
-            out.append(ProposedResponse(i, action, str(target), kind, status))
+            out.append(ProposedResponse(i, action, str(target), kind, status, bool(row.get("text_free"))))
     return out
+
+
+def executes_now(decision: Decision, r: ProposedResponse) -> bool:
+    """
+    Does this response execute without an analyst?  An auto-approved response of an auto-approved decision
+    does; under asymmetric trust (perception/defended_pipeline.py) so does an auto-approved response of the
+    text-free decision when NCE's hypotheses sent the case to review: escalating must not delay it.
+    """
+    return r.playbook_status == AUTO_APPROVED and (decision.outcome == AUTO_APPROVED or r.text_free)
 
 
 @dataclass
@@ -105,11 +115,11 @@ class OutcomeMonitor:
         Start watching the targets of the responses this decision auto-approved,
         or, with `approved_by`, the responses an analyst approved from review.
         """
-        if approved_by is None and decision.outcome != AUTO_APPROVED:
-            return []
-        executed = {AUTO_APPROVED} if approved_by is None else {AUTO_APPROVED, "PENDING_ANALYST_REVIEW"}
+        if approved_by is None:
+            return [self.start(decision.case_id, r.action, r.target, r.target_kind, at)
+                    for r in proposed_responses(decision) if executes_now(decision, r)]
         return [self.start(decision.case_id, r.action, r.target, r.target_kind, at)
-                for r in proposed_responses(decision) if r.playbook_status in executed]
+                for r in proposed_responses(decision) if r.playbook_status in (AUTO_APPROVED, "PENDING_ANALYST_REVIEW")]
 
     def start(self, case_id: str, action: str, target: str, target_kind: str, at: datetime) -> Watch:
         """Start watching one executed response (simulated) on its target."""

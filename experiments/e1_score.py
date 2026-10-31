@@ -29,6 +29,9 @@ from perception.case_store import CaseStore
 
 RUNS = {"clean": ("gated_nce_F_nce", "gated_nce_analyst_F_nce_d4"),
         **{f: (f"gated_nce_E1_{f}", f"gated_nce_analyst_E1_{f}") for f in FAMILIES}}
+# Asymmetric trust (2026-10-31, decision P9 A): the same conditions with `--llm-authority escalate`.
+RUNS_HARDENED = {"clean": ("gated_nce_A_nce", "gated_nce_analyst_A_nce_d4"),
+                 **{f: (f"gated_nce_A_E1_{f}", f"gated_nce_analyst_A_E1_{f}") for f in FAMILIES}}
 
 
 def _steered(value) -> bool:
@@ -72,25 +75,33 @@ def injected_cases(run: str, family: str | None, alert_ids: set[str] | None = No
     return dict(c), ids
 
 
+def _exists(run: str) -> bool:
+    return (data_dir().parent / "runs" / f"dedale_host_{run}" / "summary.json").exists()
+
+
 def main() -> None:
     labels = load_host_labels()
     out = {}
-    ids = {cond: injected_cases(RUNS["suppress"][i], "suppress")[1] for i, cond in enumerate(("no_analyst", "analyst"))}
-    for family, (plain, analyst) in RUNS.items():
-        for cond, run in (("no_analyst", plain), ("analyst", analyst)):
-            if not (data_dir().parent / "runs" / f"dedale_host_{run}" / "summary.json").exists():
-                continue
-            s = score_run(run, labels)
-            mal = s["cases_by_ground_truth"].get("malicious", {})
-            row = {"run": run, "reviews_per_day": s["reviews_per_day"]["mean"],
-                   "malicious_cases": mal, "labelled_events_alerted": s["labelled_events_alerted"].get("class_1", 0),
-                   "attack_keys_learned": s["attack_keys_learned_as_routine"],
-                   "injected_first_alert_cases": injected_cases(run, None if family == "clean" else family,
-                                                                ids[cond])[0]}
-            out[f"{family}/{cond}"] = row
-            print(f"{family:14s} {cond:10s} reviews/day {row['reviews_per_day']:5.1f} | malicious {mal} | events "
-                  f"{row['labelled_events_alerted']} | learned {row['attack_keys_learned']} | injected cases "
-                  f"{row['injected_first_alert_cases']}")
+    for prefix, runs in (("", RUNS), ("hardened:", RUNS_HARDENED)):
+        if not _exists(runs["suppress"][0]) or not _exists(runs["suppress"][1]):
+            continue
+        ids = {cond: injected_cases(runs["suppress"][i], "suppress")[1]
+               for i, cond in enumerate(("no_analyst", "analyst"))}
+        for family, (plain, analyst) in runs.items():
+            for cond, run in (("no_analyst", plain), ("analyst", analyst)):
+                if not _exists(run):
+                    continue
+                s = score_run(run, labels)
+                mal = s["cases_by_ground_truth"].get("malicious", {})
+                row = {"run": run, "reviews_per_day": s["reviews_per_day"]["mean"],
+                       "malicious_cases": mal, "labelled_events_alerted": s["labelled_events_alerted"].get("class_1", 0),
+                       "attack_keys_learned": s["attack_keys_learned_as_routine"],
+                       "injected_first_alert_cases": injected_cases(run, None if family == "clean" else family,
+                                                                    ids[cond])[0]}
+                out[f"{prefix}{family}/{cond}"] = row
+                print(f"{prefix}{family:14s} {cond:10s} reviews/day {row['reviews_per_day']:5.1f} | malicious {mal} "
+                      f"| events {row['labelled_events_alerted']} | learned {row['attack_keys_learned']} | injected "
+                      f"cases {row['injected_first_alert_cases']}")
     (RESULTS / "e1_scores.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"-> {RESULTS / 'e1_scores.json'}")
 

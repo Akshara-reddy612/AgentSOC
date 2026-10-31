@@ -11,6 +11,9 @@ Run the demo server (M4.4):
 - Later starts resume from the latest checkpoint.
 - The replay starts paused; a lead or admin starts it (POST /live/start or the frontend).
 - NCE uses the recorded hypotheses (cache only, no API calls).
+- Asymmetric trust is on (--llm-authority escalate, 2026-10-31, decision P9 A):
+  NCE's hypotheses can send a case to review, never dismiss it or trigger an
+  action on their own.  --llm-authority full runs the earlier pipeline.
 - Accounts live in <home>/auth.sqlite. Create the first admin with:
       python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin
 - Binds 127.0.0.1 by default. The API reference is at /docs.
@@ -78,6 +81,9 @@ def main() -> None:
     ap.add_argument("--nce", default="cache", choices=["cache", "live", "off"],
                     help="cache: recorded LLM answers only (no API calls); live: Gemini, limited by --nce-per-day")
     ap.add_argument("--nce-per-day", type=int, default=200, help="live NCE: at most this many calls per stream day")
+    ap.add_argument("--llm-authority", default="escalate", choices=["escalate", "full"],
+                    help="escalate: NCE may raise scrutiny, never lower it (asymmetric trust); full: the earlier "
+                         "pipeline, where NCE's hypotheses can dismiss a case or justify an automatic action")
     ap.add_argument("--follow", default="", help="follow live log files: host=<path>,network=<path> (either or both)")
     ap.add_argument("--inject", default=None,
                     help="contamination scenario: the attacker's command lines carry this payload family "
@@ -147,6 +153,7 @@ def main() -> None:
         gate_options["nce"] = nce
         if args.nce == "live":
             gate_options["budget"] = DailyBudget(args.nce_per_day)
+    gate_options["llm_authority"] = args.llm_authority
 
     def make_loop(db, cases):
         return SocLoop(db, mode="gated", training_end=ds.training_end, case_store=cases, gate_options=gate_options)
@@ -160,6 +167,9 @@ def main() -> None:
         sys.exit(str(e))
     if runner.unsigned_checkpoint:
         print("restored a checkpoint written before checkpoints were signed; the next checkpoint is signed", flush=True)
+    # A restored loop keeps its pickled gate: apply this start's authority (cached decisions made under another
+    # authority are not reused, perception/triage_gate.TriageGate.policy).
+    runner.loop.gate.llm_authority = args.llm_authority
     if not runner.restored and follow:
         print("first start: learning the benign training window, then following " + ", ".join(follow.values()), flush=True)
         n = runner.run_until(ds.training_end, source=replay)

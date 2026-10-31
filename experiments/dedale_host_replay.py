@@ -111,6 +111,8 @@ def main() -> None:
     ap.add_argument("--tag", default=None, help="suffix for the run name (keeps earlier runs of the same condition)")
     ap.add_argument("--case-store", action="store_true", help="also record cases in a case store (review loop)")
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--llm-authority", default="full", choices=["full", "escalate"],
+                    help="escalate: asymmetric trust, NCE may raise scrutiny but never lower it (decision P9 A)")
     args = ap.parse_args()
 
     run = args.mode + ("_nce" if args.nce != "off" else "") + ("_analyst" if args.analyst == "oracle" else "")
@@ -183,6 +185,8 @@ def main() -> None:
                 from experiments.dedale_inject import InjectedRouter
                 nce = InjectedRouter(args.inject, nce, LiveNCE(None, cache_only=True, cache_path=nce_cache))
             gate_options = {"nce": nce}
+        if args.llm_authority != "full":
+            gate_options["llm_authority"] = args.llm_authority
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
@@ -214,7 +218,7 @@ def main() -> None:
            if args.analyst == "oracle" else {}),
         "nce": args.nce, "nce_live_calls": nce.live_calls if nce else 0, "nce_cache_hits": nce.cache_hits if nce else 0,
         "nce_cache_misses": nce.cache_misses if nce else 0, "unlearn_on_confirm": not args.no_unlearn,
-        "closed_world": args.closed_world, "inject": args.inject,
+        "closed_world": args.closed_world, "inject": args.inject, "llm_authority": args.llm_authority,
         "injected_events": injector.injected if injector else 0,
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
