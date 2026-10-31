@@ -532,7 +532,9 @@ payload families.
 \item Tampering with structured sensor fields is outside the defences (Section~\ref{sec:c1}).
 \item Asymmetric trust covers what the model's output can cause. It does not cover text aimed at the analyst, who
 reads it, or activity that resembles routine patterns. The model is shown the first 512 characters of each evidence
-field, and most DEDALE alerts are longer; text pushed out of that view can only cost an escalation.
+field. On DEDALE the command line is almost always fully visible (1 of 797 is longer), but the raw log line is cut
+in 718 of 856 cases, so attacker text late in it is not seen; under asymmetric trust this can only cost a missed
+escalation.
 \item All containment is simulated.
 \item Each LLM condition was run once. Replaying the recorded outputs makes every number reproducible, but
 run-to-run variation of the model is not measured.

@@ -107,6 +107,8 @@ Host logs, gated. NCE = gemini-3.1-flash-lite hypotheses from the cache of the l
 | NCE on, asymmetric trust (NCE may only escalate) | 65.2 | 0 / 72 | 0 | 0 |
 | NCE on + analyst, asymmetric trust | 34.1 | 0 / 72 | 0 | 0 |
 
+**What NCE is shown.** The NCE prompt holds the first 512 characters of each evidence field. In the first alert of each test case of the NCE run (856 cases): the command line is longer than that in 1 of 797; the raw log line in 718 of 856.
+
 ## C5 — Operating the analyst loop
 
 Simulated analyst (oracle) through the case-store inbox, B5 on, different response times.
