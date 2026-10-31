@@ -15,7 +15,11 @@ experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md).  In this order:
   3. Decision cache: the same case key decided before, and nothing the store
      knows about its two endpoints changed since -> the same decision.
      A decision made while the NCE budget was exhausted is not reused once
-     the budget allows a call again.
+     the budget allows a call again.  Nor is one made under another decision
+     policy (2026-10-31): the triage rules' version, the unreasoned policy and
+     the NCE's version (model, recorded or live answers, prompt).  The server
+     pickles the cache into its checkpoints and attaches the NCE given on the
+     command line, so a restart with another --nce must not reuse old decisions.
   4. Otherwise the defended pipeline (perception/defended_pipeline.run_downstream)
      runs.  NCE is called only if a function is given and the daily budget
      allows; cases that wanted a call and got none are counted as backlog.
@@ -45,6 +49,9 @@ from perception.nce_contract import NCEHypothesis
 from perception.outcome import LOW_PRIORITY, NO_ACTIONABLE, REVIEW, known_bad_contact
 
 UNREASONED_POLICIES = ("review", "no_actionable")
+# Bump when a change to the triage or guardrail rules can change a decision: cached decisions made under
+# an earlier version are then not reused (checkpoints keep the cache across restarts).
+POLICY_VERSION = 1
 
 
 @dataclass
@@ -94,7 +101,7 @@ class TriageGate:
         self.budget = budget
         self.unreasoned = unreasoned
         self.watch = watch
-        self._cache: dict[tuple, tuple[Decision, tuple[int, int]]] = {}
+        self._cache: dict[tuple, tuple[Decision, tuple[int, int, str]]] = {}
         self.backlog = 0
 
     def triage(self, case: Case, alert: dict, at: datetime) -> Decision:
@@ -104,7 +111,7 @@ class TriageGate:
         if self.watch is not None:
             escalations += self.watch(alert, at)
         src, dst, pattern_key = pattern_edge(self.db, alert)
-        versions = (self.db.node_version(src), self.db.node_version(dst))
+        versions = (self.db.node_version(src), self.db.node_version(dst), self.policy())
 
         if not escalations:
             if kg.graph.has_edge(src, dst, pattern_key):
@@ -134,6 +141,14 @@ class TriageGate:
         if not escalations:
             self._cache[case.key] = (decision, versions)
         return decision
+
+    def policy(self) -> str:
+        """What a decision depends on besides the store: cached decisions are reused only under the same policy."""
+        if self.nce is None:
+            nce = "off"
+        else:       # an NCE without a version (tests, ad-hoc callables) is identified by its object
+            nce = getattr(self.nce, "version", None) or f"{type(self.nce).__qualname__}@{id(self.nce):x}"
+        return f"triage-v{POLICY_VERSION}|unreasoned={self.unreasoned}|nce={nce}"
 
     def _reason(self, alert: dict, at: datetime) -> tuple[list[NCEHypothesis], str]:
         if self.nce is None:

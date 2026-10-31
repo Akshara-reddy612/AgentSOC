@@ -78,7 +78,12 @@ class InjectedRouter:
     """
 
     def __init__(self, family: str, main, family_nce) -> None:
-        self.templates, self.main, self.family_nce = FAMILIES[family], main, family_nce
+        self.family, self.templates, self.main, self.family_nce = family, FAMILIES[family], main, family_nce
+
+    @property
+    def version(self) -> str:
+        """For the triage gate's decision cache (see LiveNCE.version)."""
+        return f"inject={self.family}|{getattr(self.main, 'version', '?')}|{getattr(self.family_nce, 'version', '?')}"
 
     def injected(self, alert: dict) -> bool:
         cmd = alert.get("command_line") or ""
