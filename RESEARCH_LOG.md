@@ -2736,3 +2736,9 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 
 ### Files created/modified
 - Modified: `README.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `RESEARCH_LOG.md`
+
+## 2026-10-31 — Session: drafts for the paper's limitations and the viva
+
+- `docs/LIMITATIONS_DRAFT.md` (new): a plain-language Limitations section (one testbed dataset with two attacked hosts; simulated analyst; one model on DEDALE; the analyst channel; what the model is shown, 1 of 797 command lines and 718 of 856 raw log lines over 512 characters; GUIDE 4 / 428 where the model is the detector; routine-looking activity, 73 of 473; no prompt-level baseline yet), a LaTeX version and a sources table.
+- `docs/VIVA_QA.md` (new): ten questions with short answers (what the work adds to AgentSOC; asymmetric trust and why it holds by construction; what "the attacker can't write" covers; GUIDE's 4 / 428; the analyst channel; why detectors miss labelled events; cost; containment; reproducibility and bad input). Every number traced to `RESULTS.md` or the test file; DEDALE numbers checked against the 2026-10-31 re-freeze.
+- Files created: `docs/LIMITATIONS_DRAFT.md`, `docs/VIVA_QA.md`; modified: `RESEARCH_LOG.md`
