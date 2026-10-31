@@ -158,11 +158,23 @@ python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-fi
 Follow [REPRODUCE.md](REPRODUCE.md). In short:
 
 ```
-python -m experiments.freeze_dedale --workers 6      # the 29 DEDALE conditions (30-60 min)
+python -m experiments.freeze_dedale --workers 6      # the 43 DEDALE replays (about 2 h with 6 workers)
 python -m experiments.build_results                  # writes experiments/RESULTS.md
 ```
 
 No step makes an API call: live LLM output was recorded once and is replayed.
+
+## Which rule produces which result
+
+Since 2026-10-31 the pipeline has two rules for what the LLM's hypotheses (NCE) may cause. Both run on the same recorded LLM answers: the rule changes what an answer may cause, never the answer.
+
+| Rule | What the LLM's hypotheses may do | Where it is used |
+|:--|:--|:--|
+| **Acting rule** (`--llm-authority full`; the default of the replays and the GUIDE re-scoring) | Decide like any other evidence: a case whose hypotheses are all infeasible is dismissed, an action they support may run automatically, "expected activity" lowers a case's priority | Every frozen result from before 2026-10-31: the GUIDE C1 rows (`rescore_v2` without the flag), DEDALE C2-C5 (`freeze_dedale`, `F_*` conditions), the first eight E1 rows; in the paper, Tables I, II, IV and V, Figs. 2 and 3, and C4's 54.8 and 33.2 reviews per day |
+| **Asymmetric trust** (`--llm-authority escalate`) | Only add review: no dismissal, no automatic action, nothing learnable. The outcome is the decision the pipeline reaches without the hypotheses, or review | The demo server (`python -m soc_server`, its default); the "asymmetric trust" rows of `experiments/RESULTS.md` (`freeze_dedale`, `A_*` conditions; `rescore_v2 --llm-authority escalate`); in the paper, Section C6 and Table III |
+
+- **Without the LLM** (NCE off: C2, C3, C5 and every network result) there are no hypotheses, so both rules give the same result.
+- **Code:** `perception/triage_gate.py` (`TriageGate(llm_authority=...)`, default `"full"`) and `perception/defended_pipeline.py` (`asymmetric_downstream`). `tests/test_asymmetric_trust.py` checks the rule.
 
 ## Data
 
