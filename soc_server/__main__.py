@@ -41,6 +41,7 @@ Contamination scenario (PROJECT_PLAN section 5, item 7):
 from __future__ import annotations
 
 import argparse
+import pickle
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -155,8 +156,10 @@ def main() -> None:
                             handle=handle_merged, seed=ds.seed,
                             externals=externals, speed=args.speed, source_id=source_id, paced=not follow,
                             idle_clock=(lambda: datetime.now(timezone.utc)) if args.follow_clock == "wall" else None)
-    except ValueError as e:
+    except (ValueError, pickle.UnpicklingError) as e:        # another home's sources; a changed or foreign checkpoint
         sys.exit(str(e))
+    if runner.unsigned_checkpoint:
+        print("restored a checkpoint written before checkpoints were signed; the next checkpoint is signed", flush=True)
     if not runner.restored and follow:
         print("first start: learning the benign training window, then following " + ", ".join(follow.values()), flush=True)
         n = runner.run_until(ds.training_end, source=replay)

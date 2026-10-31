@@ -148,6 +148,8 @@ python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-fi
 - Logins are throttled: 5 failures per user and address, or 20 per address, lock that key for 15 minutes.
 - Text from logs is always shown as text, never as HTML.
 - All containment is simulated: nothing touches a real network.
+- Checkpoints in the server's home are signed with a per-user key outside the home (`~/.agentsoc/checkpoint.key`, or the file `AGENTSOC_CHECKPOINT_KEY` names). A checkpoint that was changed, or signed with another key, is refused; loading resolves only the classes a checkpoint holds. The live databases of a running server are protected only by the home's file permissions, so keep the home writable by the server's user alone.
+- The audit logs are append-only through SQLite triggers. Someone who can write the database files can still change them.
 
 ## Reproduce the results
 

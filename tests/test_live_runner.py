@@ -163,6 +163,88 @@ def test_merged_source_interleaves_and_resumes(tmp_path):
     again.stop()
 
 
+def _half_run(home):
+    r = _runner(home)
+    r.run_until(START + timedelta(days=7, hours=12))
+    r.stop()
+    return home / "checkpoint"
+
+
+def test_checkpoints_are_signed_and_a_changed_one_is_refused(tmp_path):
+    # Review item 8 (2026-10-31): a changed checkpoint is refused before any live file is touched.
+    import pytest
+    cp = _half_run(tmp_path / "s")
+    assert (cp / "manifest.json").exists()
+    live = (tmp_path / "s" / "ks.sqlite").read_bytes()
+    with open(cp / "state.pkl", "ab") as f:
+        f.write(b"\x00")
+    with pytest.raises(ValueError, match="manifest"):
+        _runner(tmp_path / "s")
+    assert (tmp_path / "s" / "ks.sqlite").read_bytes() == live
+
+
+def test_a_checkpoint_signed_with_another_key_is_refused(tmp_path, monkeypatch):
+    import pytest
+    _half_run(tmp_path / "k")
+    monkeypatch.setenv("AGENTSOC_CHECKPOINT_KEY", str(tmp_path / "other.key"))
+    with pytest.raises(ValueError, match="manifest"):
+        _runner(tmp_path / "k")
+
+
+def test_a_crash_between_the_renames_restores_the_previous_checkpoint(tmp_path):
+    end = START + timedelta(days=11)
+    whole = _runner(tmp_path / "a")
+    whole.run_until(end)
+    expected = _snapshot(whole)
+    whole.stop()
+    cp = _half_run(tmp_path / "b")
+    cp.rename(cp.with_name("checkpoint.old"))                  # checkpoint() stopped after its first rename
+    again = _runner(tmp_path / "b")
+    assert again.restored
+    again.run_until(end)
+    assert _snapshot(again) == expected                        # no event lost or processed twice
+    again.stop()
+
+
+def test_an_unsigned_checkpoint_loads_and_the_next_one_is_signed(tmp_path):
+    cp = _half_run(tmp_path / "u")
+    (cp / "manifest.json").unlink()                            # as written before 2026-10-31
+    again = _runner(tmp_path / "u")
+    assert again.restored and again.unsigned_checkpoint
+    again.stop()
+    assert (cp / "manifest.json").exists()
+    assert not _runner(tmp_path / "u").unsigned_checkpoint
+
+
+class _Payload:
+    def __init__(self, marker):
+        self.marker = marker
+
+    def __reduce__(self):
+        import os
+        return os.system, (f'echo ran > "{self.marker}"',)
+
+
+def test_a_crafted_checkpoint_is_refused_before_it_runs(tmp_path):
+    import pickle
+
+    import pytest
+    from soc_server.runner import _bound_method
+    from perception.outcome_monitor import OutcomeMonitor
+    cp = _half_run(tmp_path / "p")
+    marker = tmp_path / "marker.txt"
+    (cp / "state.pkl").write_bytes(pickle.dumps({"loop": _Payload(marker)}))
+    (cp / "manifest.json").unlink()                            # unsigned: only the allowlist stands in the way
+    with pytest.raises(pickle.UnpicklingError, match="os|nt"):
+        _runner(tmp_path / "p")
+    assert not marker.exists()
+    monitor = OutcomeMonitor.__new__(OutcomeMonitor)
+    assert _bound_method(monitor, "reasons")                   # the one bound method a checkpoint holds
+    for name in ("__init__", "__class__", "register"):
+        with pytest.raises(pickle.UnpicklingError):
+            _bound_method(monitor, name)
+
+
 def test_a_home_refuses_other_sources(tmp_path):
     import pytest
     r = _merged_runner(tmp_path / "h")

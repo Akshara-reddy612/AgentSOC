@@ -26,11 +26,31 @@ checkpoints and restart recovery.
     On start, the latest checkpoint is restored and the stream resumes after
     its position, so a crash loses at most one checkpoint interval (stream
     work and analysts' actions alike).
+  - Checkpoint integrity (2026-10-31, review item 8).  A pickle can run code
+    when it is loaded, so:
+      * loading resolves only the classes and functions the loop's state is
+        made of (`_ALLOWED`), and bound methods only from `_ALLOWED_METHODS`;
+        anything else is refused before it runs;
+      * each checkpoint carries `manifest.json`: the SHA-256 of its three files
+        and an HMAC over them with a per-user key kept outside the home
+        (`AGENTSOC_CHECKPOINT_KEY`, default ~/.agentsoc/checkpoint.key).  A
+        checkpoint changed after it was written is refused before any live file
+        is touched.  Checkpoints written before this change have no manifest:
+        they load (under the allowlist) and the next checkpoint is signed;
+      * a crash between checkpoint()'s two renames leaves only
+        `checkpoint.old`, which is then restored.
+    This protects checkpoints at rest.  The live databases of a running server
+    are protected only by the home directory's permissions.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import itertools
+import json
+import os
 import pickle
+import secrets
 import shutil
 import threading
 import time
@@ -41,6 +61,7 @@ from typing import Any, Callable, Iterator, Protocol
 from perception.case_store import CaseStore
 from perception.environment import EnvironmentProfile
 from perception.knowledge_db import KnowledgeDB
+from perception.outcome_monitor import OutcomeMonitor
 from perception.soc_loop import SocLoop
 
 BATCH_EVENTS = 500
@@ -74,6 +95,33 @@ class _Pickler(pickle.Pickler):
         return NotImplemented
 
 
+# What the loop's pickled state is made of (module, name).  A new class in the loop's state must be added here,
+# or restoring a checkpoint fails with "checkpoint refers to ..." (tests/test_live_runner.py restores each source).
+_ALLOWED = frozenset({
+    ("builtins", "set"), ("builtins", "frozenset"),
+    ("collections", "Counter"), ("collections", "OrderedDict"), ("collections", "defaultdict"), ("collections", "deque"),
+    ("datetime", "date"), ("datetime", "datetime"), ("datetime", "timedelta"), ("datetime", "timezone"),
+    ("itertools", "count"),
+    ("perception.case_builder", "Case"), ("perception.case_builder", "CaseBuilder"),
+    ("perception.case_builder", "alert_case_key"), ("perception.case_builder", "network_case_key"),
+    ("perception.knowledge_updater", "KnowledgeUpdater"),
+    ("perception.outcome_monitor", "OutcomeMonitor"), ("perception.outcome_monitor", "ProposedResponse"),
+    ("perception.outcome_monitor", "Watch"),
+    ("perception.soc_loop", "SocLoop"),
+    ("perception.triage_gate", "DailyBudget"), ("perception.triage_gate", "Decision"),
+    ("perception.triage_gate", "TriageGate"),
+})
+# Bound methods in the state (pickled as getattr(obj, name)): the gate's watch hook.
+_ALLOWED_METHODS = frozenset({(OutcomeMonitor, "reasons")})
+CHECKPOINT_FILES = ("ks.sqlite", "cases.sqlite", "state.pkl")
+
+
+def _bound_method(obj, name):
+    if (type(obj), name) not in _ALLOWED_METHODS:
+        raise pickle.UnpicklingError(f"checkpoint refers to {type(obj).__qualname__}.{name}")
+    return getattr(obj, name)
+
+
 class _Unpickler(pickle.Unpickler):
     def __init__(self, f, externals: dict[str, Any]):
         super().__init__(f)
@@ -81,6 +129,48 @@ class _Unpickler(pickle.Unpickler):
 
     def persistent_load(self, pid):
         return self.externals[pid]
+
+    def find_class(self, module, name):
+        if (module, name) == ("builtins", "getattr"):
+            return _bound_method
+        if (module, name) not in _ALLOWED:
+            raise pickle.UnpicklingError(f"checkpoint refers to {module}.{name}, which a checkpoint never holds")
+        return super().find_class(module, name)
+
+
+def _key() -> bytes:
+    """The per-user checkpoint key, created on first use (outside the home: whoever can write a home cannot sign)."""
+    path = Path(os.environ.get("AGENTSOC_CHECKPOINT_KEY") or Path.home() / ".agentsoc" / "checkpoint.key")
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(secrets.token_bytes(32))
+    return path.read_bytes()
+
+
+def _digests(d: Path) -> tuple[dict[str, str], str]:
+    files = {}
+    for name in CHECKPOINT_FILES:
+        with open(d / name, "rb") as f:
+            files[name] = hashlib.file_digest(f, "sha256").hexdigest()
+    mac = hmac.new(_key(), json.dumps(files, sort_keys=True).encode("utf-8"), "sha256").hexdigest()
+    return files, mac
+
+
+def _sign(d: Path) -> None:
+    files, mac = _digests(d)
+    (d / "manifest.json").write_text(json.dumps({"files": files, "hmac": mac}, indent=1), encoding="utf-8")
+
+
+def _verify(d: Path) -> bool:
+    """True if `d` matches its manifest, False if it has none (written before 2026-10-31); raises if it was changed."""
+    if not (d / "manifest.json").exists():
+        return False
+    stored = json.loads((d / "manifest.json").read_text(encoding="utf-8"))
+    files, mac = _digests(d)
+    if not hmac.compare_digest(mac, str(stored.get("hmac"))) or files != stored.get("files"):
+        raise ValueError(f"{d} does not match its manifest (changed after it was written, or signed with another "
+                         f"key): refusing to load it. Use another home directory, or remove that checkpoint.")
+    return True
 
 
 class LiveRunner:
@@ -105,15 +195,24 @@ class LiveRunner:
         self.last_checkpoint: datetime | None = None
         self._dirty = False                               # events processed since the last checkpoint
         ks, cs = self.home / "ks.sqlite", self.home / "cases.sqlite"
-        cp = self.home / "checkpoint"
+        cp, old = self.home / "checkpoint", self.home / "checkpoint.old"
+        if not (cp / "state.pkl").exists() and (old / "state.pkl").exists():
+            cp = old                                      # a crash between checkpoint()'s two renames
+        self.unsigned_checkpoint = False
         if (cp / "state.pkl").exists():                   # restart: restore the latest checkpoint
+            self.unsigned_checkpoint = not _verify(cp)    # before any live file is touched
             for name in ("ks.sqlite", "cases.sqlite"):
                 for suffix in ("", "-wal", "-shm"):
                     (self.home / f"{name}{suffix}").unlink(missing_ok=True)
                 shutil.copyfile(cp / name, self.home / name)
             self.db, self.cases = KnowledgeDB(ks), CaseStore(cs)
-            with open(cp / "state.pkl", "rb") as f:
-                st = _Unpickler(f, {"ks": self.db, "cases": self.cases, **self.extra}).load()
+            try:
+                with open(cp / "state.pkl", "rb") as f:
+                    st = _Unpickler(f, {"ks": self.db, "cases": self.cases, **self.extra}).load()
+            except pickle.UnpicklingError:
+                self.db.close()
+                self.cases.close()
+                raise
             if st.get("source_id", "default") != source_id:
                 self.db.close()
                 self.cases.close()
@@ -317,6 +416,7 @@ class LiveRunner:
                                          "source_id": self.source_id,
                                          "alert_cap": dict(self.cases._alert_cap),
                                          "events_processed": self.events_processed})
+        _sign(tmp)
         shutil.rmtree(old, ignore_errors=True)
         if cp.exists():
             cp.rename(old)

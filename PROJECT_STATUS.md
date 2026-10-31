@@ -59,7 +59,8 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
 - **Datasets:** `soc_server/datasets.py` holds everything dataset-specific; DEDALE is registered (`--dataset dedale`).
 - **Checks:** `tools/e2e_check.py` opens every page of a running console (9 / 9 pass).
 - **Data for teammates:** `dedale_for_team.zip` (321 MB, processed DEDALE files) replaces the 31.5 GB raw download; see `HANDOVER.md`. The recorded LLM answers ship in the repository.
-- **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 780 passed, 1 deselected (no dataset needed: with an empty data folder 779 pass, 1 skips).
+- **Checkpoints (2026-10-31, review change 8):** loading resolves only the classes a checkpoint holds; each checkpoint is signed (HMAC, per-user key outside the home) and a changed one is refused before any live file is touched; a crash between the checkpoint's two renames restores `checkpoint.old`. Older unsigned checkpoints still load and the next one is signed.
+- **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 785 passed, 1 deselected, with the DEDALE package in the data folder (2026-10-31). No dataset is needed: with an empty data folder the one data-dependent test skips (780 / 779 before change 8).
 - **Soak test (2026-10-19/20):**
   - the server fast-forwarded through the whole dataset, 15,013,901 events: two training weeks and 14 test days, 8,588 test cases;
   - no crash, peak memory 388 MB;
