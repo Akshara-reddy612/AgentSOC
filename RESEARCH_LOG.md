@@ -2742,3 +2742,9 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 - `docs/LIMITATIONS_DRAFT.md` (new): a plain-language Limitations section (one testbed dataset with two attacked hosts; simulated analyst; one model on DEDALE; the analyst channel; what the model is shown, 1 of 797 command lines and 718 of 856 raw log lines over 512 characters; GUIDE 4 / 428 where the model is the detector; routine-looking activity, 73 of 473; no prompt-level baseline yet), a LaTeX version and a sources table.
 - `docs/VIVA_QA.md` (new): ten questions with short answers (what the work adds to AgentSOC; asymmetric trust and why it holds by construction; what "the attacker can't write" covers; GUIDE's 4 / 428; the analyst channel; why detectors miss labelled events; cost; containment; reproducibility and bad input). Every number traced to `RESULTS.md` or the test file; DEDALE numbers checked against the 2026-10-31 re-freeze.
 - Files created: `docs/LIMITATIONS_DRAFT.md`, `docs/VIVA_QA.md`; modified: `RESEARCH_LOG.md`
+
+## 2026-10-31 — Session: second LLM-off rule check (C3, analyst always right, B5 on)
+
+- Replayed `--mode gated --analyst oracle --case-store --llm-authority escalate --tag RULECHECK_d4` (recorded data only; same arguments as the frozen `F_d4` plus the rule).
+- Equal to the frozen `gated_analyst_F_d4` in all 9 score fields: 34.1 reviews per day, 477 test cases, 72 / 72 attack cases reviewed, 400 events alerted, nothing learned, and the analyst's verdicts (405 benign, 72 malicious).
+- With the gated check, two LLM-off conditions confirm the README and paper statement that without the LLM both rules give the same result, the analyst path included.
