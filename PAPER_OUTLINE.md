@@ -11,29 +11,32 @@
 
 | # | Section | Content | Evidence | Writer |
 |:--|:--|:--|:--|:--|
-| 1 | Introduction | Agentic SOCs reason over attacker-writable logs and learn from them. Two attack surfaces; why both matter together; contributions C1-C5 | — | Claude draft (P6, 2026-10-19); team revises |
+| 1 | Introduction | Agentic SOCs reason over attacker-writable logs and learn from them. Two attack surfaces; why both matter together; contributions C1-C6 | — | Claude draft (P6, 2026-10-19; C6 2026-10-31); team revises |
 | 2 | Background and related work | Agentic SOCs (AgentSOC base paper), prompt injection / log contamination, memory poisoning in learning systems, alert triage and fatigue, datasets (GUIDE, DEDALE) | — | Claude draft (P6, 2026-10-19); team revises |
 | 3 | Threat model | Attacker controls free text in their own telemetry (command lines, raw logs), not structured sensor fields, the inventory, the gate or the analyst. Goals: suppress (dismissal / learning as routine), misdirect (wrong containment). Out of scope: tampering at the sensor (discussed via the GUIDE structured-field test) | — | Claude |
 | 4 | System | One pipeline: NCE -> SSE + entity binding (open world) -> RSEM -> guardrails -> triage gate -> learning Knowledge Store (trusted-only writes, learning gate) -> outcome monitor -> analyst review loop (inbox, four-eyes, unlearning). One figure. Invariants I1-I6 | architecture docs | Claude (reuse old section 4) |
 | 5 | Evaluation setup | GUIDE corpus v2 (clean / contaminated twins, 10 payload families, dev / held-out); DEDALE (4 weeks, 2 benign training weeks, exact host labels); learning modes; simulated analyst; models; metrics; reproducibility (`REPRODUCE.md`) | — | Claude |
 | 6.1 | Results: contamination (C1) | GUIDE dev / held-out suppression vs induced; undefended agent vs defended pipeline (29.6% vs 0.9%); E1 on real telemetry | RESULTS C1 tables | Claude |
-| 6.2 | Results: the learning store (C2) | Static / frozen / gated / ungated on host and network | RESULTS C2 | Claude |
-| 6.3 | Results: poisoning (C3) | Ungated learns the attacker; analyst mistakes; unlearning on confirmation | RESULTS C3 | Claude |
-| 6.4 | Results: the LLM's contribution (C4) | Modest reduction; closed-world failure and the open-world fix | RESULTS C4 | Claude |
-| 6.5 | Results: operating the loop (C5) | Analyst delay, containment time, false alarms | RESULTS C5 | Claude |
+| 6.2 | Results: asymmetric trust (C6, added 2026-10-31, decision P9) | The same recorded answers without and with the rule: E1 dismissals 1 / 3 / 1 -> 0, no extra workload; GUIDE automatic containments removed by contamination 11% -> 0 (mostly via ERA's escalation); GUIDE suppression unchanged (the model as detector); cost +0.9 reviews / day with an analyst | RESULTS C1 tables (asymmetric-trust rows), E1 table, C4 table | Claude |
+| 6.3 | Results: the learning store (C2) | Static / frozen / gated / ungated on host and network | RESULTS C2 | Claude |
+| 6.4 | Results: poisoning (C3) | Ungated learns the attacker; analyst mistakes; unlearning on confirmation | RESULTS C3 | Claude |
+| 6.5 | Results: the LLM's contribution (C4) | Modest reduction (all of it dismissals, the attacker's path; none under asymmetric trust); closed-world failure and the open-world fix | RESULTS C4 | Claude |
+| 6.6 | Results: operating the loop (C5) | Analyst delay, containment time, false alarms | RESULTS C5 | Claude |
 | 7 | Discussion and limitations | One real dataset (2 attacked hosts), simulated analyst, one LLM on DEDALE (second model on GUIDE), synthetic GUIDE evidence; what a deployment would need | RESULTS "Limits" | Claude draft (2026-10-19); team revises |
 | 8 | Conclusion | — | — | Claude draft (P6, 2026-10-19); team revises |
 
 ## Figures and tables (draft)
 
 - **Fig. 1** — pipeline and loop (sections 4, 6).
-- **Table 1** — C1: GUIDE suppression, undefended vs defended.
-- **Table 2** — E1.
-- **Table 3** — C2 host + network.
-- **Table 4** — C3 analyst mistakes, B5 on / off.
+- **Table I** — C1: GUIDE suppression, undefended vs defended.
+- **Table II** — E1.
+- **Table III** — C6: the same recorded answers without and with asymmetric trust (added 2026-10-31).
+- **Table IV** — C2 host learning modes.
+- **Table V** — C3 analyst mistakes, B5 on / off.
 - **Fig. 2** — reviews / day over the 14 test days per learning mode (data in `final_host_scores.json`, `by_day`).
-- **Table 5** — C4.
 - **Fig. 3** — analyst delay vs reviews / day and containment time (C5).
+
+As of 2026-10-31 the draft compiles to 7 pages (C6 and the fail-safe paragraph added).
 
 ## Open before the draft is final
 
