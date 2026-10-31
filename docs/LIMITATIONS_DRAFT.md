@@ -1,8 +1,8 @@
 # Limitations — draft for the paper (2026-10-31)
 
 A plain-language draft of the paper's Limitations section, for the team to revise. Every number comes from
-`experiments/RESULTS.md` or a file named in the "Source" column at the end. Numbers marked **(verify)** depend on
-the DEDALE re-freeze that was running when this was written; check them against the final `RESULTS.md`.
+`experiments/RESULTS.md` or a file named in the "Source" column at the end. The DEDALE numbers were checked
+against the full re-freeze of 2026-10-31 (all three score files byte-identical to the committed ones).
 
 ## Draft text
 
@@ -29,9 +29,10 @@ something it should not learn. Unlearning on confirmed compromise undoes this fo
 that host as compromised; it does not help before that.
 
 **The model sees part of each field.** The model is shown the first 512 characters of each evidence field. On
-DEDALE many alerts carry longer text, mostly their raw log line **(verify the share)**. Text beyond the cut is never
-seen by the model. Under asymmetric trust this can only cost an escalation the model might otherwise have raised;
-it cannot cause a dismissal or an action.
+DEDALE the command line is almost always fully visible: 1 of 797 command lines is longer than 512 characters. The
+raw log line, which records the whole event, is cut in 718 of 856 cases, so attacker text late in the raw line is
+not seen by the model. Under asymmetric trust this only costs a missed escalation: text the model never sees
+cannot cause a dismissal or an action either.
 
 **Where the model is the only detector, contamination still suppresses.** On GUIDE each alert goes through the
 single-alert pipeline, with no learned store, so the model's hypotheses are what raises a response. Injected text
@@ -42,8 +43,8 @@ case was dismissed there under the rule.
 
 **Activity that looks routine stays silent.** The store learns what normal activity looks like and alerts on what
 it has not seen. Attack activity whose structured pattern also occurs in normal activity does not alert: 73 of the
-473 labelled attack events that alert when nothing is learned stay silent after the benign weeks are learned
-**(verify)**. Many labelled attack events are also of kinds our detectors do not cover at all (DLL loads, ordinary
+473 labelled attack events that alert when nothing is learned stay silent after the benign weeks are learned.
+Many labelled attack events are also of kinds our detectors do not cover at all (DLL loads, ordinary
 file writes). Every step of the attack still reached an analyst, but no novelty detector can see activity that is
 truly indistinguishable from routine.
 
@@ -68,8 +69,9 @@ with how well the attacker blends in.
 Each model condition was run once.
 \item The analyst channel: asymmetric trust limits what the model's output can cause, not what an analyst decides.
 A misled analyst can still teach the store; unlearning helps only after a host is confirmed compromised.
-\item The model sees the first 512 characters of each evidence field; under asymmetric trust, text beyond the cut
-can only cost an escalation.
+\item The model sees the first 512 characters of each evidence field. The command line is almost always fully
+visible (1 of 797 is longer); the raw log line is cut in 718 of 856 cases, so attacker text late in it is not seen.
+Under asymmetric trust this only costs a missed escalation.
 \item Where the model is the only detector (GUIDE), injected text still suppressed 4 of 428 responses, with or
 without asymmetric trust.
 \item Activity whose structured pattern also occurs in normal activity stays silent (73 of the 473 labelled attack
@@ -84,5 +86,5 @@ events that alert when nothing is learned); many labelled events are of kinds th
 | 1 of 84 labelled attack flows alerted | `experiments/DEDALE_PHASE1_RESULTS.md:74` ("83 of the 84 labelled attack flows raised no Suricata alert") and `:95`; `experiments/DEDALE_DATA_NOTES.md:112`. Not in `RESULTS.md`: it is a data finding of Phase 1, not a scored condition |
 | 4 of 428, 3 of 437, 10 of 437 | `experiments/RESULTS.md`, C1 table; recomputed 2026-10-31 from `agent/v2_results/*_rescored.json` |
 | 512 characters | `risk_assessment/config.py:115` (`MAX_PROMPT_FIELD_LENGTH`), applied in `prompt_construction/nce_prompt_builder.py:148-149`; unchanged since 2026-08-03 |
-| 73 of 473 **(verify)** | `experiments/RESULTS.md`, C2 table (static 473, frozen 400) |
-| Share of DEDALE alerts longer than 512 characters **(verify)** | count from the NCE runs' case stores after the re-freeze |
+| 73 of 473 | `experiments/RESULTS.md`, C2 table: static 473, frozen 400 (`final_host_scores.json`, confirmed by the 2026-10-31 re-freeze) |
+| 1 of 797 command lines, 718 of 856 raw log lines over 512 characters | First alert of each test case in the case store of `gated_nce_F_nce` (written by `freeze_dedale`; `<data>/runs/dedale_host_gated_nce_F_nce/cases.sqlite`), counted 2026-10-31. **Not in `RESULTS.md`**: add it to `experiments/build_results.py` before citing it in the paper |
