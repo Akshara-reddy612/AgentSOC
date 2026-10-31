@@ -52,16 +52,16 @@ from __future__ import annotations
 
 import heapq
 import itertools
-from collections import Counter
+from collections import Counter, deque
 from datetime import datetime, timedelta
 from typing import Callable
 
 from perception.case_builder import Case, CaseBuilder, alert_case_key
 from perception.case_store import CaseStore, approvals_needed, host_tier, other_targets
-from perception.host_detection import DETECTORS, host_alert, learn_key, novel_keys
+from perception.host_detection import DETECTORS, host_alert, learn_key, malformed_host_event, novel_keys
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, endpoint_node_id, ensure_endpoint
-from perception.network_alert import with_entities
+from perception.network_alert import malformed_network_alert, with_entities
 from perception.network_model import KNOWN_BAD, UNKNOWN
 from perception.outcome import AUTO_APPROVED, REVIEW
 from perception.outcome_monitor import OutcomeMonitor, proposed_responses
@@ -112,9 +112,21 @@ class SocLoop:
         self.counts: Counter[str] = Counter()
         self._decisions: dict[str, Decision] = {}
         self._in_training = True
+        # Malformed input (2026-10-31): refused before it touches any state, counted ("events_rejected") and kept
+        # here (the live runner writes them to its quarantine file).  Never silently dropped: an event the loop
+        # cannot attribute is an event nobody would see.
+        self.rejected: deque[tuple[datetime, str, dict]] = deque(maxlen=1000)
+
+    def _reject(self, event, at: datetime, problem: str) -> None:
+        self.counts["events_rejected"] += 1
+        self.rejected.append((at, problem, event if isinstance(event, dict) else {"value": repr(event)[:500]}))
 
     def process(self, alert: dict, at: datetime) -> None:
         """One network alert (src_ip / dst_ip): entity fields from the store, then the shared alert path."""
+        problem = malformed_network_alert(alert)
+        if problem:
+            self._reject(alert, at, problem)
+            return
         self._advance(at)
         a = with_entities(alert, self.db)
         self.monitor.observe(a, at)
@@ -126,6 +138,10 @@ class SocLoop:
         learned (shadow mode).  Afterwards: a key the store has not learned becomes a
         host alert on the shared alert path (perception/host_detection.py).
         """
+        problem = malformed_host_event(event)
+        if problem:
+            self._reject(event, at, problem)
+            return
         self._advance(at)
         if self._in_training:
             self.counts["events_training"] += 1
@@ -272,22 +288,28 @@ class SocLoop:
         if self.case_store is None:
             return
         for cmd in self.case_store.pending_commands(upto):
-            if cmd.kind == "verdict":
-                result = self.apply_verdict(cmd.case_id, cmd.verdict, cmd.actor.removeprefix("analyst:"), cmd.at)
-            elif cmd.kind == "execute":
-                act = self.case_store.action(cmd.action_id)
-                w = self.monitor.start(act["case_id"], act["action"], act["target"], act["target_kind"], cmd.at)
-                result = {"applied": True, "watch_id": w.watch_id, "mode": "simulated"}
-            elif cmd.kind == "withdraw":
-                result = self.withdraw_verdict(cmd.case_id, cmd.actor.removeprefix("analyst:"), cmd.at)
-            elif cmd.kind == "rollback":
-                act = self.case_store.action(cmd.action_id)
-                w = self.monitor.roll_back(act["watch_id"], cmd.at) if act["watch_id"] else None
-                result = ({"applied": True, "watch_id": w.watch_id} if w is not None else
-                          {"applied": False, "reason": "no active watch for this action in this loop"})
-            else:
-                result = {"applied": False, "reason": f"unknown command kind {cmd.kind!r}"}
+            try:            # 2026-10-31: a command that fails is recorded as failed, not retried on every tick
+                with self.db.savepoint(), self.case_store.savepoint():
+                    result = self._apply_command(cmd)
+            except Exception as e:  # noqa: BLE001 -- its writes are undone; the loop and other commands go on
+                result = {"applied": False, "error": f"{type(e).__name__}: {e}"[:500]}
             self.case_store.mark_applied(cmd.cmd_id, now or upto, result)
+
+    def _apply_command(self, cmd) -> dict:
+        if cmd.kind == "verdict":
+            return self.apply_verdict(cmd.case_id, cmd.verdict, cmd.actor.removeprefix("analyst:"), cmd.at)
+        if cmd.kind == "execute":
+            act = self.case_store.action(cmd.action_id)
+            w = self.monitor.start(act["case_id"], act["action"], act["target"], act["target_kind"], cmd.at)
+            return {"applied": True, "watch_id": w.watch_id, "mode": "simulated"}
+        if cmd.kind == "withdraw":
+            return self.withdraw_verdict(cmd.case_id, cmd.actor.removeprefix("analyst:"), cmd.at)
+        if cmd.kind == "rollback":
+            act = self.case_store.action(cmd.action_id)
+            w = self.monitor.roll_back(act["watch_id"], cmd.at) if act["watch_id"] else None
+            return ({"applied": True, "watch_id": w.watch_id} if w is not None else
+                    {"applied": False, "reason": "no active watch for this action in this loop"})
+        return {"applied": False, "reason": f"unknown command kind {cmd.kind!r}"}
 
     def _confirmed_malicious(self, case: Case, d: Decision, at: datetime, writer: str,
                              execute_proposed: bool) -> dict:

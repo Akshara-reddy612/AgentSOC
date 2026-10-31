@@ -335,13 +335,26 @@ class CaseStore:
 
     def __init__(self, path: str | Path, *, created_at: datetime | None = None) -> None:
         self.path = str(path)
+        self._lock = threading.RLock()
+        self._depth = 0
+        self._alert_cap: dict[str, int] = {}          # open cases recorded by this process -> alerts to store
+        self._connect(created_at)
+
+    def reconnect(self, *, created_at: datetime | None = None) -> None:
+        """
+        Open the store's file again after it was replaced on disk (the live runner's recovery from a
+        checkpoint, 2026-10-31).  The object stays the same, so the review API that holds it keeps working;
+        call it holding the lock, after close().
+        """
+        self._depth = 0
+        self._alert_cap.clear()
+        self._connect(created_at)
+
+    def _connect(self, created_at: datetime | None) -> None:
         self._con = sqlite3.connect(self.path, isolation_level=None, check_same_thread=False)
         if self.path != ":memory:":
             self._con.execute("PRAGMA journal_mode=WAL")
             self._con.execute("PRAGMA synchronous=NORMAL")
-        self._lock = threading.RLock()
-        self._depth = 0
-        self._alert_cap: dict[str, int] = {}          # open cases recorded by this process -> alerts to store
         self._con.executescript(_SCHEMA)
         row = self._con.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
         if row is None:
@@ -393,6 +406,19 @@ class CaseStore:
                 self._con.execute("COMMIT")
             finally:
                 self._depth = 0
+
+    @contextmanager
+    def savepoint(self) -> Iterator[None]:
+        """Undo this block's writes if it raises, then re-raise; a batch around it stays open (2026-10-31)."""
+        with self.batch():
+            self._con.execute("SAVEPOINT block")
+            try:
+                yield
+            except BaseException:
+                self._con.execute("ROLLBACK TO block")
+                self._con.execute("RELEASE block")
+                raise
+            self._con.execute("RELEASE block")
 
     def _audit(self, at: datetime, actor: str, op: str, case_id: str | None, payload: dict) -> int:
         cur = self._con.execute("INSERT INTO audit (at, actor, op, case_id, payload) VALUES (?, ?, ?, ?, ?)",

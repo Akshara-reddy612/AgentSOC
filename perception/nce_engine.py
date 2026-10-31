@@ -54,6 +54,7 @@ from dataclasses import dataclass
 from typing import Any, Sequence
 
 from perception.environment import DEFAULT_PROFILE, EnvironmentProfile
+from risk_assessment.config import MAX_PROMPT_FIELD_LENGTH
 from perception.nce_contract import (
     HypothesisStatus,
     MissingContextFlag,
@@ -574,13 +575,24 @@ def label_t1071_grounding(
     The legacy dropping filter is kept for reproducing historical results.
     `profile` (design step S1): which addresses / names are internal; default
     profile if None.
+
+    Bounded (2026-10-31): the evidence is scanned only when there is a T1071
+    hypothesis to label, and only as far as NCE was shown it (each field up to
+    MAX_PROMPT_FIELD_LENGTH, as the prompt builder truncates).  The domain
+    pattern backtracks quadratically on long dotted or hyphenated text, which
+    the attacker writes: 40,000 characters took about a minute, on every
+    pipeline run.  An indicator past the cap was never evidence NCE saw;
+    missing it labels the hypothesis "ungrounded", which routes it to review.
     """
     import dataclasses
 
+    if not any(h.technique_id == "T1071" for h in hypotheses):
+        return list(hypotheses)
+    shown = {k: str(v)[:MAX_PROMPT_FIELD_LENGTH] for k, v in evidence_fields.items()}
     grounded = (
-        _has_external_ip(evidence_fields, profile)
-        or _has_non_internal_domain(evidence_fields, profile)
-        or _has_beaconing_command(evidence_fields)
+        _has_external_ip(shown, profile)
+        or _has_non_internal_domain(shown, profile)
+        or _has_beaconing_command(shown)
     )
     label = "grounded" if grounded else "ungrounded"
     return [

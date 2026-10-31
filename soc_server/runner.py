@@ -54,6 +54,7 @@ import secrets
 import shutil
 import threading
 import time
+import traceback
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Iterator, Protocol
@@ -194,44 +195,75 @@ class LiveRunner:
         self.events_processed = 0
         self.last_checkpoint: datetime | None = None
         self._dirty = False                               # events processed since the last checkpoint
-        ks, cs = self.home / "ks.sqlite", self.home / "cases.sqlite"
-        cp, old = self.home / "checkpoint", self.home / "checkpoint.old"
-        if not (cp / "state.pkl").exists() and (old / "state.pkl").exists():
-            cp = old                                      # a crash between checkpoint()'s two renames
+        self._profile, self._start, self._make_loop, self._seed = profile, start, make_loop, seed
+        self.quarantined: set[str] = set()                # repr(position) of events that failed (2026-10-31)
+        self.events_failed = 0
+        self._current: tuple | None = None                # (position, time, event) being handled
+        self._checkpoint_soon = False                     # after a recovery: checkpoint once past the bad event
         self.unsigned_checkpoint = False
-        if (cp / "state.pkl").exists():                   # restart: restore the latest checkpoint
-            self.unsigned_checkpoint = not _verify(cp)    # before any live file is touched
-            for name in ("ks.sqlite", "cases.sqlite"):
-                for suffix in ("", "-wal", "-shm"):
-                    (self.home / f"{name}{suffix}").unlink(missing_ok=True)
-                shutil.copyfile(cp / name, self.home / name)
-            self.db, self.cases = KnowledgeDB(ks), CaseStore(cs)
-            try:
-                with open(cp / "state.pkl", "rb") as f:
-                    st = _Unpickler(f, {"ks": self.db, "cases": self.cases, **self.extra}).load()
-            except pickle.UnpicklingError:
-                self.db.close()
-                self.cases.close()
-                raise
-            if st.get("source_id", "default") != source_id:
-                self.db.close()
-                self.cases.close()
-                raise ValueError(f"{self.home} was built from sources {st.get('source_id', 'default')!r}, not "
-                                 f"{source_id!r}: use another home directory")
-            self.loop, self.pos, self.clock = st["loop"], st["pos"], st["clock"]
-            self.cases._alert_cap.update(st["alert_cap"])
-            self.events_processed = st["events_processed"]
-            self.restored = True
+        self.db: KnowledgeDB | None = None
+        self.cases: CaseStore | None = None
+        cp = self._latest_checkpoint()
+        if cp is not None:                                # restart: restore the latest checkpoint
+            self._restore(cp)
         else:
-            self.db = KnowledgeDB(ks, profile, created_at=start)
-            if seed is not None:
-                seed(self.db)
-            self.cases = CaseStore(cs, created_at=start)
-            self.loop = make_loop(self.db, self.cases)
-            self.pos, self.clock = None, start
-            self.restored = False
+            self._fresh()
+        self.restored = cp is not None
         self._iter: Iterator | None = None
         self._pending = None
+
+    def _latest_checkpoint(self) -> Path | None:
+        cp, old = self.home / "checkpoint", self.home / "checkpoint.old"
+        if (cp / "state.pkl").exists():
+            return cp
+        return old if (old / "state.pkl").exists() else None    # a crash between checkpoint()'s two renames
+
+    def _replace_live_files(self, cp: Path | None) -> None:
+        """The live stores' files become the checkpoint's copies (None: no files, a fresh start)."""
+        for name in ("ks.sqlite", "cases.sqlite"):
+            for suffix in ("", "-wal", "-shm"):
+                (self.home / f"{name}{suffix}").unlink(missing_ok=True)
+            if cp is not None:
+                shutil.copyfile(cp / name, self.home / name)
+
+    def _open_cases(self, created_at: datetime | None = None) -> None:
+        if self.cases is None:
+            self.cases = CaseStore(self.home / "cases.sqlite", created_at=created_at)
+        else:                                             # same object: the review API holds it
+            self.cases.reconnect(created_at=created_at)
+
+    def _restore(self, cp: Path) -> None:
+        self.unsigned_checkpoint = not _verify(cp)        # before any live file is touched
+        self._replace_live_files(cp)
+        self.db = KnowledgeDB(self.home / "ks.sqlite")
+        self._open_cases()
+        try:
+            with open(cp / "state.pkl", "rb") as f:
+                st = _Unpickler(f, {"ks": self.db, "cases": self.cases, **self.extra}).load()
+        except pickle.UnpicklingError:
+            self.db.close()
+            self.cases.close()
+            raise
+        if st.get("source_id", "default") != self.source_id:
+            self.db.close()
+            self.cases.close()
+            raise ValueError(f"{self.home} was built from sources {st.get('source_id', 'default')!r}, not "
+                             f"{self.source_id!r}: use another home directory")
+        self.loop, self.pos, self.clock = st["loop"], st["pos"], st["clock"]
+        self.cases._alert_cap.update(st["alert_cap"])
+        self.events_processed = st["events_processed"]
+        self.quarantined |= set(st.get("quarantined", ()))
+        self.events_failed = max(self.events_failed, st.get("events_failed", 0))
+
+    def _fresh(self) -> None:
+        self._replace_live_files(None)                    # no checkpoint: nothing consistent to keep
+        self.db = KnowledgeDB(self.home / "ks.sqlite", self._profile, created_at=self._start)
+        if self._seed is not None:
+            self._seed(self.db)
+        self._open_cases(created_at=self._start)
+        self.loop = self._make_loop(self.db, self.cases)
+        self.pos, self.clock = None, self._start
+        self.events_processed = 0
 
     # -- what the API sees ------------------------------------------------------
 
@@ -245,7 +277,9 @@ class LiveRunner:
                 "events_processed": self.events_processed, "counts": dict(self.loop.counts),
                 "alerts_test": self.cases.alert_total(),       # loop.counts["alerts"] includes training
                 "last_checkpoint": self.last_checkpoint.isoformat() if self.last_checkpoint else None,
-                "restored_from_checkpoint": self.restored}
+                "restored_from_checkpoint": self.restored,
+                "events_failed": self.events_failed,                       # quarantined (2026-10-31)
+                "events_rejected": int(self.loop.counts.get("events_rejected", 0))}
 
     # -- control (any thread) -----------------------------------------------------
 
@@ -314,12 +348,71 @@ class LiveRunner:
                 if until_wall is not None and self._due(at) > until_wall:
                     break
                 self.clock = max(self.clock, at)
-                self.handle(self.loop, event, self.clock)
+                if repr(pos) not in self.quarantined:          # an event that failed before is skipped
+                    self._current = (pos, at, event)
+                    self.handle(self.loop, event, self.clock)
+                    self._current = None
                 self.pos, self._pending = pos, None
                 n += 1
         self.events_processed += n
         self._dirty = self._dirty or n > 0
+        self._write_rejected()
         return n
+
+    def _process_guarded(self, until_wall: float | None, limit: int, until_time: datetime | None = None, *,
+                         source: Source | None = None) -> int:
+        """
+        _process, except that an event the pipeline fails on does not stop the SOC (2026-10-31).  Its chunk's
+        transaction is rolled back (batch), the event is quarantined (quarantine.jsonl, status), the stores and
+        the loop are restored from the latest checkpoint -- a consistent state, unlike the loop's memory after a
+        half-handled event -- and the stream resumes from there without that event.  `source`: the one being
+        read (run_until's training replay), if not the runner's own.
+        """
+        try:
+            return self._process(until_wall, limit, until_time)
+        except Exception as e:  # noqa: BLE001 -- any failure on one event; others propagate from _process
+            if self._current is None:
+                raise
+            self._quarantine(e)
+            self._recover(source)
+            return 1                                       # the stream moved on (past the quarantined event)
+
+    def _quarantine(self, e: Exception) -> None:
+        pos, at, event = self._current
+        self._current = None
+        self.quarantined.add(repr(pos))
+        self.events_failed += 1
+        rec = {"kind": "failed", "position": repr(pos), "event_time": at.isoformat(),
+               "error": f"{type(e).__name__}: {e}"[:500], "traceback": traceback.format_exc(limit=12)[-6000:],
+               "event": event}
+        with open(self.home / "quarantine.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, default=str) + "\n")
+        print(f"an event failed in the pipeline and was quarantined ({type(e).__name__}); the runner restores its "
+              f"latest checkpoint and continues without it: {self.home / 'quarantine.jsonl'}", flush=True)
+
+    def _write_rejected(self) -> None:
+        """Events the loop refused as malformed (SocLoop.rejected) go to the quarantine file too."""
+        rejected = getattr(self.loop, "rejected", None)
+        if not rejected:
+            return
+        with open(self.home / "quarantine.jsonl", "a", encoding="utf-8") as f:
+            for at, problem, event in rejected:
+                f.write(json.dumps({"kind": "rejected", "event_time": at.isoformat(), "error": problem,
+                                    "event": event}, default=str) + "\n")
+        rejected.clear()
+
+    def _recover(self, source: Source | None) -> None:
+        with self.cases._lock:                            # the review API waits instead of meeting a closed store
+            self.db.close()
+            self.cases.close()
+            cp = self._latest_checkpoint()
+            if cp is not None:
+                self._restore(cp)
+            else:
+                self._fresh()
+        self._iter = source.events(self.pos) if source is not None else None
+        self._pending, self._current = None, None
+        self._dirty = self._checkpoint_soon = True        # past the bad event, checkpoint: a repeat costs less
 
     def run_until(self, t: datetime, source: Source | None = None) -> int:
         """
@@ -330,7 +423,7 @@ class LiveRunner:
         if source is not None:
             self._iter, self._pending = source.events(None), None
         total = 0
-        while n := self._process(None, BATCH_EVENTS * 20, until_time=t):
+        while n := self._process_guarded(None, BATCH_EVENTS * 20, until_time=t, source=source):
             total += n
         if source is not None:
             self._iter, self._pending, self.pos = None, None, None
@@ -397,8 +490,8 @@ class LiveRunner:
                 with self._cond:
                     self._cond.wait(min(self._due(item[1]) - now, 0.25))
                 continue
-            self._process(now if self.paced else None, BATCH_EVENTS)
-            if time.monotonic() - last_cp > self.checkpoint_every:
+            self._process_guarded(now if self.paced else None, BATCH_EVENTS)
+            if self._checkpoint_soon or time.monotonic() - last_cp > self.checkpoint_every:
                 self.checkpoint()
                 last_cp = time.monotonic()
         self.checkpoint()
@@ -415,14 +508,16 @@ class LiveRunner:
             _Pickler(f, externals).dump({"loop": self.loop, "pos": self.pos, "clock": self.clock,
                                          "source_id": self.source_id,
                                          "alert_cap": dict(self.cases._alert_cap),
-                                         "events_processed": self.events_processed})
+                                         "events_processed": self.events_processed,
+                                         "quarantined": sorted(self.quarantined),
+                                         "events_failed": self.events_failed})
         _sign(tmp)
         shutil.rmtree(old, ignore_errors=True)
         if cp.exists():
             cp.rename(old)
         tmp.rename(cp)
         shutil.rmtree(old, ignore_errors=True)
-        self.last_checkpoint, self._dirty = self.clock, False
+        self.last_checkpoint, self._dirty, self._checkpoint_soon = self.clock, False, False
 
 
 def stream_after(events: list[tuple[datetime, dict]], after: int | None) -> Iterator[tuple[int, datetime, dict]]:
