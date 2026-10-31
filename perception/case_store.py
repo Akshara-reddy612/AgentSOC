@@ -51,8 +51,8 @@ from perception.case_builder import Case
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import host_node_id
 from perception.knowledge_store import KnowledgeFact
-from perception.outcome import AUTO_APPROVED, REVIEW
-from perception.outcome_monitor import TARGET_KIND, ProposedResponse, proposed_responses
+from perception.outcome import REVIEW
+from perception.outcome_monitor import TARGET_KIND, ProposedResponse, executes_now, proposed_responses
 from perception.triage_gate import Decision
 
 SCHEMA_VERSION = 1
@@ -429,7 +429,7 @@ class CaseStore:
             self._audit(at, "loop", "case_opened", case.case_id,
                         {"outcome": decision.outcome, "path": decision.path, "review_status": review})
             for r in proposed_responses(decision):
-                executed = decision.outcome == AUTO_APPROVED and r.playbook_status == AUTO_APPROVED
+                executed = executes_now(decision, r)
                 status, needed = ("executed", 1) if executed else ("proposed", approvals(r))
                 action_id = f"{case.case_id}:a{r.row}"
                 self._con.execute("INSERT INTO actions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",

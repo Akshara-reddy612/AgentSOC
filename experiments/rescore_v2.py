@@ -11,7 +11,11 @@ hypothesis rows; NCE confidence and evidence refs are not stored there, and
 neither is used downstream (grounding is re-labelled from the alert).
 
     python -m experiments.rescore_v2 agent/v2_results/v2_dev_live_results.json [--set dev]
-    -> logs/<input stem>_rescored.json
+                                     [--llm-authority escalate]
+    -> logs/<input stem>_rescored.json (escalate: logs/<input stem>_rescored_escalate.json)
+
+`--llm-authority escalate` (2026-10-31, decision P9 A): asymmetric trust, NCE's
+hypotheses may raise scrutiny but never lower it (perception/defended_pipeline.py).
 """
 from __future__ import annotations
 
@@ -19,7 +23,7 @@ import json
 import sys
 from pathlib import Path
 
-from perception.defended_pipeline import run_downstream
+from perception.defended_pipeline import asymmetric_downstream, run_downstream
 from perception.entity_binding import TELEMETRY_REF
 from perception.knowledge_graph import KnowledgeStoreGraph
 from perception.nce_contract import MissingContextFlag, NCEHypothesis
@@ -49,6 +53,10 @@ def main() -> None:
         sys.exit(1)
     src = Path(args[0])
     set_name = args[args.index("--set") + 1] if "--set" in args else "dev"
+    authority = args[args.index("--llm-authority") + 1] if "--llm-authority" in args else "full"
+    if authority not in ("full", "escalate"):
+        sys.exit("--llm-authority must be full or escalate")
+    downstream = asymmetric_downstream if authority == "escalate" else run_downstream
     alerts = {a["alert_id"]: a for a in json.loads((V2_DIR / f"guide_v2_{set_name}.json").read_text(encoding="utf-8"))}
     kg = KnowledgeStoreGraph()
     era = {}
@@ -63,10 +71,10 @@ def main() -> None:
             continue
         alert = {k: v for k, v in alerts[rec["alert_id"]].items() if not k.startswith("_")}
         new = {k: v for k, v in rec.items() if k not in ("hypotheses", "outcome", "outcome_reasons")}
-        new.update(run_downstream(rebuild(rec), alert, kg, era_level=era.get(rec["alert_id"])))
+        new.update(downstream(rebuild(rec), alert, kg, era_level=era.get(rec["alert_id"])))
         new["era_level"] = era.get(rec["alert_id"])
         out.append(new)
-    dst = PROJECT_ROOT / "logs" / f"{src.stem}_rescored.json"
+    dst = PROJECT_ROOT / "logs" / f"{src.stem}_rescored{'_escalate' if authority == 'escalate' else ''}.json"
     dst.parent.mkdir(exist_ok=True)
     dst.write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(f"{len(out)} records -> {dst}")

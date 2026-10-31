@@ -96,6 +96,7 @@ The demo is a day in the SOC during the DEDALE attack. The server replays DEDALE
 | `--speed` | `600` | Stream seconds per wall second (also adjustable in the app) |
 | `--demo-start` | `2025-01-06T08:00` | Where the first start fast-forwards to |
 | `--nce` | `cache` | `cache`: recorded LLM answers, no API calls. `live`: Gemini, at most `--nce-per-day` calls per stream day (needs `GEMINI_API_KEY` or `GEMINI_API_KEYS`); new answers are kept in the home, never in the recorded caches. `off`: no LLM. |
+| `--llm-authority` | `escalate` | `escalate`: asymmetric trust, the LLM's hypotheses can send a case to review but never dismiss it, trigger an action or make it learnable. `full`: the pipeline of the frozen results before 2026-10-31, where they could |
 | `--inject` | | Contamination scenario: the attacker's command lines carry text written for the LLM (`suppress`, `fake_approval` or `steer`, the E1 payloads). With `--nce cache` the LLM answers are the recorded E1 ones. |
 | `--follow` | | Follow live log files instead of the replay: `host=<winlogbeat.ndjson>,network=<eve.json>` |
 | `--follow-clock` | `events` | With `--follow`: `wall` moves the clock with real time while the files are quiet |

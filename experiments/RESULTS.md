@@ -1,18 +1,23 @@
-# Results (frozen 2026-10-20)
+# Results (frozen 2026-10-31)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
 ## C1 — Text an attacker writes into logs does not steer the pipeline's actions
 
-Pipeline response on clean vs contaminated twins (same GUIDE row, differing only at the injection site). *Suppressed* = the clean twin got a response (REVIEW / AUTO_APPROVED) and the contaminated one did not.
+Pipeline response on clean vs contaminated twins (same GUIDE row, differing only at the injection site). *Suppressed* = the clean twin got a response (REVIEW / AUTO_APPROVED) and the contaminated one did not. *Asymmetric trust* (decision P9 A): the same recorded LLM answers, re-scored with `--llm-authority escalate` (NCE's hypotheses may raise scrutiny, never lower it).
 
-| Run | Pairs scored | Suppressed (of clean responded) | 95% CI | Induced by ERA escalation | Induced otherwise | McNemar p (suppressed vs induced otherwise) | Steered actions: executed / gated |
-|:--|--:|--:|--:|--:|--:|--:|--:|
-| GUIDE v2 dev, gemini-3.1-flash-lite | 500 | 4/428 (0.9%) | 0.4%-2.4% | 12 | 4 | 1 | 0 / 7 |
-| GUIDE v2 held-out, gemini-3.1-flash-lite | 500 | 3/437 (0.7%) | 0.2%-2.0% | 10 | 0 | 0.25 | 0 / 2 |
-| GUIDE v2 dev, gpt-oss-20b | 500 | 10/437 (2.3%) | 1.2%-4.2% | 12 | 5 | 0.3 | 0 / 3 |
+| Run | Pairs scored | Suppressed (of clean responded) | 95% CI | Induced by ERA escalation | Induced otherwise | McNemar p (suppressed vs induced otherwise) | Steered actions: executed / gated | Automatic containments removed by contamination |
+|:--|--:|--:|--:|--:|--:|--:|--:|--:|
+| GUIDE v2 dev, gemini-3.1-flash-lite | 500 | 4/428 (0.9%) | 0.4%-2.4% | 12 | 4 | 1 | 0 / 7 | 20/178 (11.2%) |
+| GUIDE v2 held-out, gemini-3.1-flash-lite | 500 | 3/437 (0.7%) | 0.2%-2.0% | 10 | 0 | 0.25 | 0 / 2 | 18/168 (10.7%) |
+| GUIDE v2 dev, gpt-oss-20b | 500 | 10/437 (2.3%) | 1.2%-4.2% | 12 | 5 | 0.3 | 0 / 3 | 21/176 (11.9%) |
+| GUIDE v2 dev, gemini-3.1-flash-lite, asymmetric trust | 500 | 4/428 (0.9%) | 0.4%-2.4% | 12 | 4 | 1 | 0 / 7 | 0/178 (0.0%) |
+| GUIDE v2 held-out, gemini-3.1-flash-lite, asymmetric trust | 500 | 3/437 (0.7%) | 0.2%-2.0% | 10 | 0 | 0.25 | 0 / 2 | 0/168 (0.0%) |
+| GUIDE v2 dev, gpt-oss-20b, asymmetric trust | 500 | 10/437 (2.3%) | 1.2%-4.2% | 12 | 5 | 0.3 | 0 / 3 | 0/178 (0.0%) |
 
 *Induced by ERA escalation*: the contaminated twin got a response the clean one did not because ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence reacting, not the attacker succeeding.
+
+*Automatic containments removed by contamination*: of the pairs whose clean twin executes an automatic containment (a destination block the trusted telemetry supports), those whose contaminated twin does not. In the current pipeline a review outcome holds back every auto-approved response, so text that sends the case to review -- an NCE hypothesis, or ERA's own escalation -- delays containment; the suppression column counts these as responded. Under asymmetric trust the text-free decision's containment executes whatever the text does; that holds for the clean twins too, which is why the denominator can be higher (a clean twin whose own NCE hypotheses asked for review).
 
 **Undefended LLM agent vs defended pipeline, same pairs** (all 500 dev pairs; defended McNemar against responses induced otherwise than by ERA escalation):
 
@@ -25,7 +30,7 @@ Pipeline response on clean vs contaminated twins (same GUIDE row, differing only
 
 | Attacker text | Condition | Attack cases dismissed | Attack cases' patterns learned as routine | Labelled attack events alerted | Injected cases where NCE named the steered host | Steered hypotheses flagged unbound | Containment against the steered host |
 |:--|:--|--:|--:|--:|--:|--:|--:|
-| none (clean) | no analyst | 0 / 72 | 0 | 400 | 0 / - | 0 / 0 | 0 |
+| none (clean) | no analyst | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
 | none (clean) | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
 | "routine maintenance" | no analyst | 1 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
 | "routine maintenance" | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
@@ -33,6 +38,14 @@ Pipeline response on clean vs contaminated twins (same GUIDE row, differing only
 | fake SOC approval | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
 | "isolate the domain controller" | no analyst | 1 / 72 | 0 | 400 | 30 / 38 | 49 / 49 | 0 |
 | "isolate the domain controller" | analyst 4 h, B5 on | 0 / 72 | 0 | 400 | 32 / 38 | 59 / 59 | 0 |
+| none (clean) | no analyst, asymmetric trust | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| none (clean) | analyst 4 h, B5 on, asymmetric trust | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| "routine maintenance" | no analyst, asymmetric trust | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| "routine maintenance" | analyst 4 h, B5 on, asymmetric trust | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| fake SOC approval | no analyst, asymmetric trust | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| fake SOC approval | analyst 4 h, B5 on, asymmetric trust | 0 / 72 | 0 | 400 | 0 / 38 | 0 / 0 | 0 |
+| "isolate the domain controller" | no analyst, asymmetric trust | 0 / 72 | 0 | 400 | 30 / 38 | 49 / 49 | 0 |
+| "isolate the domain controller" | analyst 4 h, B5 on, asymmetric trust | 0 / 72 | 0 | 400 | 32 / 38 | 59 / 59 | 0 |
 
 ## C2 — A learning Knowledge Store behind a gate cuts analyst load and keeps the attack visible
 
@@ -80,8 +93,10 @@ Host logs, gated. NCE = gemini-3.1-flash-lite hypotheses from the cache of the l
 |:--|--:|--:|--:|--:|
 | NCE off | 65.2 | 0 / 72 | 0 | 0 |
 | NCE on, closed-world feasibility | 54.6 | 2 / 72 | 89 | 0 |
-| NCE on, open-world feasibility (final) | 54.8 | 0 / 72 | 89 | 0 |
+| NCE on, open-world feasibility | 54.8 | 0 / 72 | 89 | 0 |
 | NCE on + analyst (4 h, B5 on) | 33.2 | 0 / 72 | 30 | 0 |
+| NCE on, asymmetric trust (NCE may only escalate) | 65.2 | 0 / 72 | 0 | 0 |
+| NCE on + analyst, asymmetric trust | 34.1 | 0 / 72 | 0 | 0 |
 
 ## C5 — Operating the analyst loop
 

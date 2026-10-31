@@ -40,18 +40,19 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
   - With gpt-oss-20b on the dev pairs: 10 / 437 (2.3%, p = 0.3).
   - 0 misdirected actions executed in every run.
   - E1 on DEDALE through the full loop: 1-3 of 72 attack cases dismissed without an analyst (0 with one), 0 attack patterns learned, the same 400 labelled attack events as the clean run still alerted.
+  - **Asymmetric trust (2026-10-31, decision P9 A; `--llm-authority escalate`):** NCE's hypotheses may raise scrutiny, never lower it. E1: 0 of 72 attack cases dismissed in every family and condition (was 1 / 3 / 1), 0 learned, 400 alerted; the attacker's text changes no workload (65.2 / 34.1 reviews per day, as clean). GUIDE: suppression unchanged (4 / 428, 3 / 437, 10 / 437: those responses depended on the LLM reading the text), and automatic containments removed by contamination 20 / 178, 18 / 168, 21 / 176 (11%, mostly ERA's own escalation holding back the block) -> 0. Cost on DEDALE: +0.9 reviews per day with an analyst (34.1 vs 33.2), +10.4 without (65.2 vs 54.8); on GUIDE, none.
 - **C2, gated learning:** learning the benign weeks cut host reviews from 6,095 to 65 per day, and every attack step still reached review (72 attack cases; 400 of the 473 labelled attack events that alert with nothing learned). Without NCE or an analyst, gated = frozen: the gate learns only dismissed cases. Correct analyst verdicts take it to 31-34. Network: 552 to 26 per day.
 - **C3, poisoning:**
   - Ungated learning learned 38 attack patterns.
   - An analyst who misses 20% of the attacks: 20 patterns learned and 256 / 400 attack events still alerted. With unlearning on confirmed compromise: 0 learned, 400 / 400 alerted.
-- **C4, the LLM on real telemetry:** -16% reviews. The closed-world feasibility check dismissed 2 attack cases; the open-world check dismisses 0.
+- **C4, the LLM on real telemetry:** -16% reviews. The closed-world feasibility check dismissed 2 attack cases; the open-world check dismisses 0. That reduction is NCE dismissing cases (89 without an analyst, 30 with one), the same path E1's attacker uses; under asymmetric trust NCE dismisses nothing (65.2 / 34.1 reviews per day, as with NCE off).
 - **C5, the analyst loop:** 33 to 52 reviews per day as the analyst's delay grows from 1 h to 72 h. Network containment time equals the delay.
 
 **What may and may not be claimed:** [experiments/PAPER_CLAIMS_TO_REVISE.md](experiments/PAPER_CLAIMS_TO_REVISE.md).
 
 ## The tool
 
-- **Server:** `python -m soc_server`. It runs the DEDALE replay (host and network), follows live log files (`--follow`), or runs the contamination scenario (`--inject`). NCE replays recorded answers by default; `--nce live` takes a daily budget.
+- **Server:** `python -m soc_server`. It runs the DEDALE replay (host and network), follows live log files (`--follow`), or runs the contamination scenario (`--inject`). NCE replays recorded answers by default; `--nce live` takes a daily budget. Asymmetric trust is on by default (`--llm-authority escalate`; `full` runs the earlier pipeline).
 - **Frontend:**
   - Live (SOC overview), Case (8-stage pipeline flow with possible-steering marks and an entity graph), host timeline, Knowledge Store, Metrics, Contamination Lab (GUIDE);
   - My account; Accounts (admin);
@@ -61,7 +62,8 @@ All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md)
 - **Data for teammates:** `dedale_for_team.zip` (321 MB, processed DEDALE files) replaces the 31.5 GB raw download; see `HANDOVER.md`. The recorded LLM answers ship in the repository.
 - **Checkpoints (2026-10-31, review change 8):** loading resolves only the classes a checkpoint holds; each checkpoint is signed (HMAC, per-user key outside the home) and a changed one is refused before any live file is touched; a crash between the checkpoint's two renames restores `checkpoint.old`. Older unsigned checkpoints still load and the next one is signed.
 - **Decision cache (2026-10-31, review change 5):** a cached decision is reused only under the same decision policy (triage-rule version, unreasoned policy, NCE version), so a restart with another `--nce` does not reuse old decisions. Re-freeze: frozen scores byte-identical.
-- **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 788 passed, 1 deselected, with the DEDALE package in the data folder (2026-10-31; 780 before changes 5 and 8). No dataset is needed: with an empty data folder the one data-dependent test skips.
+- **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 798 passed, 1 deselected, with the DEDALE package in the data folder (2026-10-31; 780 before changes 5 and 8 and asymmetric trust). No dataset is needed: with an empty data folder the one data-dependent test skips.
+- **Reproduction:** `freeze_dedale` now also runs E1 and the asymmetric-trust conditions (43 replays: 20 host, 12 E1, 11 network); on this machine the 8 current-pipeline E1 rows reproduce the committed `e1_scores.json` exactly (before, E1 could not be rebuilt from `REPRODUCE.md`).
 - **Soak test (2026-10-19/20):**
   - the server fast-forwarded through the whole dataset, 15,013,901 events: two training weeks and 14 test days, 8,588 test cases;
   - no crash, peak memory 388 MB;

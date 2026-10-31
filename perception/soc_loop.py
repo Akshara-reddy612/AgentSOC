@@ -63,8 +63,8 @@ from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, endpoint_node_id, ensure_endpoint
 from perception.network_alert import with_entities
 from perception.network_model import KNOWN_BAD, UNKNOWN
-from perception.outcome import AUTO_APPROVED, REVIEW
-from perception.outcome_monitor import OutcomeMonitor, proposed_responses
+from perception.outcome import REVIEW
+from perception.outcome_monitor import OutcomeMonitor, executes_now, proposed_responses
 from perception.source_systems import SourceSystem
 from perception.triage_gate import Decision, TriageGate
 
@@ -173,7 +173,7 @@ class SocLoop:
                 if self.analyst is not None and d.outcome == REVIEW:
                     heapq.heappush(self._reviews, (at + self.analyst_delay, next(self._review_seq), case, d))
                 if self.case_store is not None:
-                    auto = [r.row for r in proposed_responses(d) if r.playbook_status == AUTO_APPROVED]
+                    auto = [r.row for r in proposed_responses(d) if executes_now(d, r)]
                     self.case_store.case_opened(case, a, at, d, approvals=lambda r: approvals_needed(self.db, r),
                                                 host_tier=host_tier(self.db, str(a.get("target_host") or "")),
                                                 watch_ids={row: w.watch_id for row, w in zip(auto, started)},

@@ -2627,3 +2627,35 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `tests/conftest.py`
 - Modified: `soc_server/runner.py`, `soc_server/__main__.py`, `tests/test_live_runner.py`, `README.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-31 — Session: contribution A, asymmetric trust (decision P9)
+
+### What was tried
+- **The rule:** NCE reads text the attacker writes, so its output may raise scrutiny but never lower it. `perception/defended_pipeline.asymmetric_downstream` compares the pipeline with NCE's hypotheses against the same pipeline without them (the *text-free decision*: trusted fields, the store, ERA, the telemetry C2 check):
+  - the outcome is the text-free decision or REVIEW;
+  - only the text-free decision's actions execute without an analyst, and they execute even when NCE's hypotheses ask for review (`perception/outcome_monitor.executes_now`, used by the monitor, the loop and the case store); an action only NCE's hypotheses support becomes a proposal (`PENDING_ANALYST_REVIEW`);
+  - the learning gate learns dismissed cases only, so NCE's output cannot make a case learnable.
+- **`perception/triage_gate.py`:** `llm_authority="full"` (default: the frozen pipeline) or `"escalate"`. For a pattern the store never learned, the text-free decision is REVIEW (D7). `Decision.text_free_outcome` is recorded; `pipeline_outcome` keeps what NCE's hypotheses alone would have given. The authority is part of the decision-cache policy (change 5).
+- **Fail-safe (F3):** an error evaluating NCE's hypotheses keeps the text-free decision and sends the case to review; any other pipeline error in triage sends it to review with the error as its reason, nothing automatic, not cached.
+- **Options:** `dedale_host_replay --llm-authority`, `rescore_v2 --llm-authority` (writes `*_rescored_escalate.json`), `soc_server --llm-authority` (default `escalate`; also applied to a restored gate). `freeze_dedale` now runs E1 (it was never part of the freeze) and the asymmetric-trust conditions (`A_` tags), and scores E1 (`e1_score`, `hardened:` rows); `F_nce` writes a case store (E1's clean twin).
+
+### What was found
+- **Two loopholes in the current pipeline**, each shown by a test: NCE's hypotheses could justify an automatic block that DEDALE's policy reserves for an analyst (`test_soc_loop.test_reasoned_c2_is_contained_and_watched`), and any review outcome held back the alert's auto-approved responses, so asking for review delayed containment.
+- **GUIDE** (recorded answers re-scored, no new calls):
+  - suppression unchanged: 4 / 428 (dev), 3 / 437 (held-out), 10 / 437 (gpt-oss-20b). Those clean twins' responses came from the LLM reading the clean text; without NCE's hypotheses the pipeline had nothing to act on;
+  - automatic containments removed by contamination: 20 / 178, 18 / 168, 21 / 176 (11%) -> 0 / 178, 0 / 168, 0 / 178; in 17 / 18 / 17 of them ERA's own escalation held the block back;
+  - no cost: REVIEW 532 and AUTO_APPROVED 336 (dev) in both; every auto-approved action in GUIDE is the telemetry check's destination block, which is text-free. LOW_PRIORITY (NCE "expected activity") becomes NO_ACTIONABLE; neither is reviewed.
+- **DEDALE** (15 replays from the recorded caches, 0 cache misses):
+  - E1 attack cases dismissed: "routine maintenance" 1 -> 0, fake SOC approval 3 -> 0, "isolate the domain controller" 1 -> 0 of 72 without an analyst; 0 -> 0 with one. 0 attack patterns learned and the same 400 attack events alerted in every run. NCE still followed the steering text (30 / 38 and 32 / 38 cases); entity binding flagged every steered hypothesis (49 / 49, 59 / 59); no containment against the steered host.
+  - The attacker's text changes no workload under asymmetric trust: 65.2 / 34.1 reviews per day with every payload, as clean.
+  - C4: NCE on 54.8 -> 65.2 reviews per day (89 benign dismissals gone), with an analyst 33.2 -> 34.1 (30 gone); i.e. NCE-off levels. The dismissals NCE made were the same path E1's attacker used.
+- **Reproduction:** the 8 current-pipeline E1 rows reproduce the committed `e1_scores.json` exactly on this machine. The committed clean / no-analyst row had empty injected-case counts (its twin's case store was never produced; RESULTS showed "0 / -"); now 38 cases, all REVIEW. `F_nce` re-run with a case store: scores identical. `final_network_scores.json` unchanged; `final_host_scores.json` and `e1_scores.json` changed only by added rows.
+- **NCE's view:** NCE is shown only the first 512 characters of each evidence field; most DEDALE first alerts are longer (their raw log line). Under asymmetric trust, text pushed out of view can only cost an escalation.
+
+### Test verification
+- New `tests/test_asymmetric_trust.py` (10): the three properties on every recorded GUIDE dev answer of both models and on 300 randomized adversarial cases; an NCE dismissal becomes review; an NCE-justified block becomes a proposal; escalation cannot delay a text-free block (the current pipeline holds it back); a pipeline error and an error on NCE output fail safe; in the loop an NCE that tries to dismiss everything makes nothing learnable beyond what no LLM learns.
+- Full suite: 798 passed, 1 deselected.
+
+### Files created/modified
+- Created: `tests/test_asymmetric_trust.py`
+- Modified: `perception/defended_pipeline.py`, `perception/triage_gate.py`, `perception/outcome_monitor.py`, `perception/case_store.py`, `perception/soc_loop.py`, `experiments/dedale_host_replay.py`, `experiments/rescore_v2.py`, `experiments/freeze_dedale.py`, `experiments/e1_score.py`, `experiments/build_results.py`, `experiments/RESULTS.md`, `experiments/dedale_results/final_host_scores.json`, `experiments/dedale_results/e1_scores.json`, `experiments/PAPER_CLAIMS_TO_REVISE.md`, `soc_server/__main__.py`, `README.md`, `REPRODUCE.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

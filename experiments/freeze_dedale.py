@@ -12,6 +12,12 @@ recorded and the case goes to review unreasoned).
 
 Conditions (tag -> replay arguments).  "B5" = unlearn on confirmed compromise
 (decision B5 a, default on); "_nob5" runs switch it off for the ablation.
+
+Since 2026-10-31 (decision P9 A) the freeze also runs E1 (the contamination
+replays, scored by experiments/e1_score.py into e1_scores.json), and every NCE
+condition twice: as the current pipeline ("full") and under asymmetric trust
+("A_" tags, `--llm-authority escalate`: NCE may raise scrutiny, never lower it).
+Runs that already have a summary are skipped unless --rerun.
 """
 from __future__ import annotations
 
@@ -42,10 +48,18 @@ HOST = {  # C2-C5 on host logs
     "F_m20_nob5": ["--mode", "gated", *ORACLE, "--analyst-miss", "0.2", "--no-unlearn"],
     "F_fa5": ["--mode", "gated", *ORACLE, "--analyst-false-alarm", "0.05"],
     "F_fa5_nob5": ["--mode", "gated", *ORACLE, "--analyst-false-alarm", "0.05", "--no-unlearn"],
-    "F_nce": ["--mode", "gated", "--nce", "cache"],
+    "F_nce": ["--mode", "gated", "--nce", "cache", "--case-store"],      # case store: E1's clean twin
     "F_nce_closed": ["--mode", "gated", "--nce", "cache", "--closed-world"],
     "F_nce_d4": ["--mode", "gated", "--nce", "cache", *ORACLE],
+    "A_nce": ["--mode", "gated", "--nce", "cache", "--case-store", "--llm-authority", "escalate"],
+    "A_nce_d4": ["--mode", "gated", "--nce", "cache", *ORACLE, "--llm-authority", "escalate"],
 }
+E1 = [  # C1 through the full loop (E1): the attacker's own command lines carry text; current pipeline and A_
+    (f"{prefix}E1_{family}", ["--mode", "gated", "--nce", "cache", "--inject", family, *who, *authority])
+    for prefix, authority in (("", []), ("A_", ["--llm-authority", "escalate"]))
+    for family in ("suppress", "fake_approval", "steer")
+    for who in (["--case-store"], ORACLE)
+]
 NETWORK = {  # C2, C5 on network alerts
     "F_static": ["--mode", "static"],
     "F_frozen": ["--mode", "frozen"],
@@ -72,7 +86,7 @@ def run_name(kind: str, tag: str, args: list[str]) -> str:
 
 
 def jobs() -> list[tuple[str, str, list[str], str]]:
-    out = [("host", t, a, f"dedale_host_{run_name('host', t, a)}") for t, a in HOST.items()]
+    out = [("host", t, a, f"dedale_host_{run_name('host', t, a)}") for t, a in [*HOST.items(), *E1]]
     out += [("network", t, a, f"dedale_{run_name('network', t, a)}") for t, a in NETWORK.items()]
     return out
 
@@ -115,6 +129,7 @@ def main() -> None:
                     "--out", "final_host_scores.json"], env=env, check=True)
     subprocess.run([sys.executable, "-m", "experiments.dedale_score", "--runs", *net_runs,
                     "--out", "final_network_scores.json"], env=env, check=True)
+    subprocess.run([sys.executable, "-m", "experiments.e1_score"], env=env, check=True)
 
 
 if __name__ == "__main__":
