@@ -2574,6 +2574,34 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 - Also updated: `README.md` and `PROJECT_STATUS.md` ("all 400" lines, C2 line, research limits); `experiments/PAPER_CLAIMS_TO_REVISE.md` (entries dated 2026-10-27).
 - **Not changed:** `experiments/RESULTS.md` (generated). Its network column "Attack-related cases hidden" counts the heuristic tier; read it with the footnote in `DEDALE_PHASE1_RESULTS.md`.
 
+## 2026-10-31 — Session: external review (ten weaknesses), decisions P8 and P9; review change 5
+
+### The review
+- The user pasted a review listing ten "loopholes". Its README line references (up to line 271) match no README version in git history, so each claim was checked against the code instead:
+  1. *Untrusted text never reaches the LLM*: wrong for this system. Attacker text reaches NCE escaped and length-limited inside `<untrusted_evidence>` (`prompt_construction/serializers.py`). Related real limit: detection keys leave out command lines by measured choice (a command-line detector gave 2,467 new keys / day; `perception/host_detection.py`).
+  2. *ERA cannot catch every injection*: agreed; ERA only escalates. (The paper did not define ERA; fixed by the 2026-10-27 pass.)
+  3. *Feasible is not happening*: handled. Hard-floor actions always need an analyst; unbound or conditionally feasible hypotheses go to review (`perception/action_playbook.py`).
+  4. *The gate can learn bad patterns*: valid; it is C3.
+  5. *Decision-cache poisoning*: partly. Structured key; escalations bypass the cache; reuse only while both endpoints' store versions are unchanged. Missing: policy / model version (fixed below).
+  6. *Analyst verdicts as a poisoning channel*: partly. Roles enforced server-side; four-eyes = two different users, tested over HTTP. Gap: one analyst's `benign` teaches the store.
+  7. *Unlearning misses effects*: partly. 7-day, host-scoped retraction; decisions that used a retracted pattern are not traced; late discovery untested.
+  8. *Pickle checkpoints*: valid as hardening (no allowlist on load).
+  9. *Audit log not tamper-proof*: valid as hardening (triggers only).
+  10. *Schema-valid output can be wrong*: agreed and designed for (confidence advisory, entity binding, SSE, unreasoned -> review).
+- Also found: the paper's "all 400 labelled attack events" (static alerts 473); already fixed by the 2026-10-27 reviewer pass.
+- **Facts behind P9** (frozen score files): in every DEDALE host run the LLM's only effect on outcomes is dismissal (`NO_ACTIONABLE`: 89 cases without an analyst, 30 with one; no `AUTO_APPROVED`); E1's 1-3 dismissed attack cases came through that path; with an analyst, NCE moved reviews only from 34.1 to 33.2 / day.
+- **Decisions:** P8 (work through the review's changes one per branch) and, later the same day, P9 (move to the pipeline's defences: A, B, C on GUIDE and DEDALE; D needs a budget; E3 not now). Both in `PROJECT_PLAN.md`.
+
+### Change 5: decision-cache policy versions
+- **The gap:** a cached decision was reused while the store's versions of both endpoints were unchanged. The server pickles the cache into its checkpoints and attaches the NCE from the command line, so a restart of a home with another `--nce` (or after a triage-rule change) reused decisions made under the old setup.
+- **`perception/triage_gate.py`:** the cache entry's version tuple now ends with `TriageGate.policy()`: `POLICY_VERSION` (bump on triage / guardrail rule changes), the unreasoned policy and the NCE's `version`. Entries from older checkpoints (two-element tuples) never match, so no retraining.
+- **`experiments/dedale_nce.py`:** `LiveNCE.version` = model | recorded or live | cache file (+ a fingerprint of `prompt_construction/nce_prompt_builder.py` and the technique list in live mode). **`experiments/dedale_inject.py`:** `InjectedRouter.version` names the family and both NCEs.
+- **Tests:** 3 new (policy change: other NCE, NCE off, unreasoned policy, `POLICY_VERSION`; old-format entries not reused; NCE versions tell recorded / live / injected apart). Full suite 783 passed, 1 deselected (780 before).
+- **Re-freeze** (`freeze_dedale --workers 6`, 29 replays, all exit 0, about 70 min while the test suite also ran): `final_host_scores.json` and `final_network_scores.json` rewritten and byte-identical to the committed ones.
+
+### Files created/modified
+- Modified: `perception/triage_gate.py`, `experiments/dedale_nce.py`, `experiments/dedale_inject.py`, `tests/test_triage_gate.py`, `tests/test_nce_cache_seed.py`, `PROJECT_PLAN.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
 ## 2026-10-31 — Session: review change 8, checkpoint loading (decision P8)
 
 ### What was tried

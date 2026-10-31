@@ -19,10 +19,12 @@ API keys are never printed or logged.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import time
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 
 from dedale import data_dir
@@ -50,6 +52,16 @@ def _de(d: dict) -> NCEHypothesis:
                          nce_confidence=float(d["nce_confidence"]),
                          supporting_evidence_refs=list(d["supporting_evidence_refs"] or ["raw_log_line"]),
                          missing_context_flags=[MissingContextFlag(f) for f in d["missing_context_flags"]])
+
+
+@lru_cache(maxsize=1)
+def prompt_fingerprint() -> str:
+    """Short hash of the NCE prompt builder's source and the technique vocabulary: changes when the prompt can."""
+    from prompt_construction import nce_prompt_builder
+
+    h = hashlib.sha256(Path(nce_prompt_builder.__file__).read_bytes())
+    h.update(",".join(sorted(TECHNIQUE_TABLE)).encode("utf-8"))
+    return h.hexdigest()[:12]
 
 
 class CallCap:
@@ -89,6 +101,12 @@ class LiveNCE:
                     self.cache[rec["alert_id"]] = rec
         self.live_calls = 0
         self.cache_hits = 0
+
+    @property
+    def version(self) -> str:
+        """For the triage gate's decision cache: recorded answers by their file; live ones also by the prompt."""
+        v = f"{self.model}|{'recorded' if self.cache_only else 'live'}|{self.cache_path.name}"
+        return v if self.cache_only else f"{v}|prompt={prompt_fingerprint()}"
 
     def __call__(self, alert: dict) -> list[NCEHypothesis]:
         rec = self.cache.get(alert["alert_id"])

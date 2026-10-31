@@ -102,6 +102,42 @@ def test_decision_cache_reuses_until_the_store_changes(db):
     assert gate.triage(_case(a, 3), a, T0 + timedelta(hours=4)).path == "pipeline"
 
 
+class _NCE:
+    def __init__(self, version):
+        self.version = version
+
+    def __call__(self, alert):
+        return []
+
+
+def test_decision_cache_is_not_reused_under_another_policy(db, monkeypatch):
+    # The server pickles the cache into its checkpoints and attaches the NCE from the command line on restart.
+    a = _alert(db)
+    gate = TriageGate(db, nce=_NCE("m|recorded|nce_cache_host.jsonl"))
+    gate.triage(_case(a, 1), a, T0)
+    assert gate.triage(_case(a, 2), a, T0 + timedelta(hours=1)).path == "cache"
+    gate.nce = _NCE("m|live|nce_cache_host.jsonl|prompt=abc")
+    assert gate.triage(_case(a, 3), a, T0 + timedelta(hours=2)).path == "pipeline"
+    gate.nce = None
+    assert gate.triage(_case(a, 4), a, T0 + timedelta(hours=3)).path == "pipeline"
+    gate.unreasoned = "no_actionable"
+    assert gate.triage(_case(a, 5), a, T0 + timedelta(hours=4)).path == "pipeline"
+    assert gate.triage(_case(a, 6), a, T0 + timedelta(hours=5)).path == "cache"          # same policy again
+    monkeypatch.setattr("perception.triage_gate.POLICY_VERSION", 2)
+    assert gate.triage(_case(a, 7), a, T0 + timedelta(hours=6)).path == "pipeline"
+
+
+def test_cache_entries_from_older_checkpoints_are_not_reused(db):
+    a = _alert(db)
+    gate = TriageGate(db)
+    gate.triage(_case(a, 1), a, T0)
+    key = _case(a).key
+    decision, versions = gate._cache[key]
+    gate._cache[key] = (decision, versions[:2])          # the format before 2026-10-31: endpoint versions only
+    assert gate.triage(_case(a, 2), a, T0 + timedelta(hours=1)).path == "pipeline"
+    assert gate.triage(_case(a, 3), a, T0 + timedelta(hours=2)).path == "cache"
+
+
 def test_nce_budget_backlog_and_reuse(db):
     calls = []
     gate = TriageGate(db, nce=lambda alert: calls.append(alert["alert_id"]) or [], budget=DailyBudget(1))
