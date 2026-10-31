@@ -22,6 +22,17 @@ from __future__ import annotations
 from perception.knowledge_db import KnowledgeDB
 
 
+def malformed_network_alert(alert) -> str | None:
+    """Why a network alert cannot be processed safely, or None (2026-10-31): it needs both addresses as text."""
+    if not isinstance(alert, dict):
+        return "not an object"
+    for f in ("src_ip", "dst_ip"):
+        v = alert.get(f)
+        if not isinstance(v, str) or not v.strip():
+            return f"no {f}"
+    return None
+
+
 def with_entities(alert: dict, db: KnowledgeDB) -> dict:
     """A copy of a network alert (src_ip / dst_ip) with the pipeline's entity fields set."""
     src, dst = alert["src_ip"], alert["dst_ip"]

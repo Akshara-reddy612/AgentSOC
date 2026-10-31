@@ -309,6 +309,26 @@ class KnowledgeDB:
         self._con.execute("COMMIT")
         self._in_batch = False
 
+    @contextmanager
+    def savepoint(self) -> Iterator[None]:
+        """
+        Undo this block's writes if it raises, projection included, then re-raise -- also inside a batch, which
+        stays open (2026-10-31: one analyst command that fails must not take the loop's other writes with it).
+        """
+        if not self._in_batch:
+            with self.batch():
+                yield
+            return
+        self._con.execute("SAVEPOINT block")
+        try:
+            yield
+        except BaseException:
+            self._con.execute("ROLLBACK TO block")
+            self._con.execute("RELEASE block")
+            self._reload_projection()
+            raise
+        self._con.execute("RELEASE block")
+
     def add_node(self, node_id: str, attrs: dict, *, writer: str, at: datetime, learned_from: str) -> None:
         with self.batch():
             self._add_node(node_id, attrs, writer, at, learned_from)

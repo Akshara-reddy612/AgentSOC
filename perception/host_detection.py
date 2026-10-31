@@ -160,6 +160,29 @@ DETECTORS: dict[str, HostDetector] = {d.name: d for d in (
 )}
 
 
+# Fields detectors and host alerts read as text (paths, names, addresses, command and script text).
+_TEXT_FIELDS = ("image", "parent_image", "user", "cmd", "script", "pipe", "file", "ip", "target_image",
+                "parent_cmd", "subject", "workstation", "process", "query", "integrity", "access")
+
+
+def malformed_host_event(event) -> str | None:
+    """
+    Why a host event cannot be processed safely, or None (2026-10-31).  A host event needs a host name (the
+    detectors' keys and the store's nodes are per host) and its text fields must be text; anything else made
+    a detector fail, which stopped the live runner.  The loop refuses such events and counts them.
+    """
+    if not isinstance(event, dict):
+        return "not an object"
+    host = event.get("host")
+    if not isinstance(host, str) or not host.strip():
+        return "no host name"
+    for f in _TEXT_FIELDS:
+        v = event.get(f)
+        if v is not None and not isinstance(v, str):
+            return f"field {f!r} is not text"
+    return None
+
+
 def novel_keys(db: KnowledgeDB, event: dict, detectors: tuple[str, ...]) -> list[tuple[str, tuple]]:
     """(detector, key) for every enabled detector whose key for this event the store has not learned."""
     g = db.graph.graph

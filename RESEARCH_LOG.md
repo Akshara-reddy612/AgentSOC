@@ -2659,3 +2659,27 @@ A paired evaluation on 320 contaminated alerts and their 320 clean twins found t
 ### Files created/modified
 - Created: `tests/test_asymmetric_trust.py`
 - Modified: `perception/defended_pipeline.py`, `perception/triage_gate.py`, `perception/outcome_monitor.py`, `perception/case_store.py`, `perception/soc_loop.py`, `experiments/dedale_host_replay.py`, `experiments/rescore_v2.py`, `experiments/freeze_dedale.py`, `experiments/e1_score.py`, `experiments/build_results.py`, `experiments/RESULTS.md`, `experiments/dedale_results/final_host_scores.json`, `experiments/dedale_results/e1_scores.json`, `experiments/PAPER_CLAIMS_TO_REVISE.md`, `soc_server/__main__.py`, `README.md`, `REPRODUCE.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-10-31 — Session: fail-safe processing (user: "make sure that the pipeline is failproof")
+
+### What was tried
+An audit of the ways the pipeline could still fail on input an attacker shapes. Found and fixed:
+- **F1, one event could stop the SOC.** `LiveRunner._process` called the loop with no error handling: an exception killed the runner thread, the status still said "running", and every later event went unprocessed. A host record without `agent.hostname` (`dedale/winlogbeat.compact` sets `host=None`) was enough in `--follow` mode.
+  - `perception/host_detection.malformed_host_event`, `perception/network_alert.malformed_network_alert`: an event without a usable host name, with non-text text fields, or a network alert without both addresses is refused by the loop before it touches any state, counted (`events_rejected`) and kept (`SocLoop.rejected`, written by the runner to `<home>/quarantine.jsonl`).
+  - `soc_server/runner.py`: an unexpected failure on an event rolls back its chunk (batch), quarantines the event (`quarantine.jsonl` with the traceback; `events_failed` in `/live/status`), restores both stores and the loop from the latest checkpoint (or starts over if there is none), and resumes without the event; the next checkpoint is taken right after. The review API keeps the same `CaseStore` object (`CaseStore.reconnect`, under its lock). Quarantined positions are kept in checkpoints, so a restart skips them too.
+  - Savepoints per event were measured and rejected: 9 us each, about 134 s more on the demo's first start (7.5 M events, two stores).
+- **F2, crafted text could stall the pipeline.** `label_t1071_grounding` ran on every pipeline run, over the full, untruncated evidence, and its domain pattern backtracks quadratically: 40,000 characters of `ab-c.` took 62 s, 16,000 of `a.` 19 s. It now runs only when there is a T1071 hypothesis to label, over what NCE was shown (`MAX_PROMPT_FIELD_LENGTH`, 512 characters per field): 0.02-0.04 s on the same inputs. An indicator past the cap was never evidence NCE saw; missing it labels the hypothesis ungrounded, which routes it to review.
+- **Analyst commands.** A command the loop could not apply raised out of `tick` (stopping the runner) and stayed pending (failing again after a restart). Each command now runs in a savepoint of both stores (`KnowledgeDB.savepoint`, `CaseStore.savepoint`); a failure undoes its writes and is recorded as the command's result (`applied: false`, the error).
+
+### What was found
+- The review queue's priority is additive; NCE-derived points (a feasible hypothesis, another target named) only add, so NCE output cannot lower a case below its text-free priority.
+- Also quadratic, outside the loop: the approval-claim detector's nested field pattern (24,000 characters: 4.8 s). ERA runs only in the offline GUIDE evaluation today; to be bounded before ERA is used in the loop.
+- Not covered: the loop's in-memory state is consistent after a recovery (restored from a checkpoint), but a command's in-memory effects (watches started) before its failure are not undone; they err towards more scrutiny.
+
+### Test verification
+- New `tests/test_fail_safe.py` (6): an event that fails after a checkpoint is quarantined and the final state equals a run without it; a failure before the first checkpoint starts over without the event; a restart skips the quarantined event; malformed events are refused, counted and written, nothing else changes; a failing command is recorded as failed and the next one applies; crafted 32,000-40,000-character texts take under a second, and an indicator past the cap is not grounding.
+- Full suite: 794 passed, 1 deselected.
+
+### Files created/modified
+- Created: `tests/test_fail_safe.py`
+- Modified: `soc_server/runner.py`, `perception/soc_loop.py`, `perception/host_detection.py`, `perception/network_alert.py`, `perception/knowledge_db.py`, `perception/case_store.py`, `perception/nce_engine.py`, `README.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
