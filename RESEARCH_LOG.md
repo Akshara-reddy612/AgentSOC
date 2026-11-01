@@ -2748,3 +2748,10 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 - Replayed `--mode gated --analyst oracle --case-store --llm-authority escalate --tag RULECHECK_d4` (recorded data only; same arguments as the frozen `F_d4` plus the rule).
 - Equal to the frozen `gated_analyst_F_d4` in all 9 score fields: 34.1 reviews per day, 477 test cases, 72 / 72 attack cases reviewed, 400 events alerted, nothing learned, and the analyst's verdicts (405 benign, 72 malicious).
 - With the gated check, two LLM-off conditions confirm the README and paper statement that without the LLM both rules give the same result, the analyst path included.
+
+## 2026-10-31 — Session: what NCE is shown, traceable in RESULTS.md
+
+- `experiments/build_results.py`: `_nce_view` reads, read-only, the first alert of every test case in the NCE run's case store (`gated_nce_F_nce`, written by `freeze_dedale`) and counts command lines and raw log lines longer than `MAX_PROMPT_FIELD_LENGTH` (512). `RESULTS.md` gains one paragraph under C4: 856 cases; command line longer in 1 of 797; raw log line in 718 of 856 (the counts made by hand earlier the same day, reproduced exactly).
+- `paper/agentsoc_combined.tex`: the Limitations bullet now says the command line is almost always fully visible (1 of 797) and the raw log line is cut in 718 of 856, instead of "most DEDALE alerts are longer". 7 pages, no undefined references or overfull boxes.
+- `experiments/PAPER_CLAIMS_TO_REVISE.md`: the same precision in the "do not claim fail-proof" entry.
+- Files modified: `experiments/build_results.py`, `experiments/RESULTS.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `experiments/PAPER_CLAIMS_TO_REVISE.md`, `RESEARCH_LOG.md`

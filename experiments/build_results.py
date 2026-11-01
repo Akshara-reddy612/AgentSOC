@@ -201,6 +201,32 @@ def _e1_row(label: str, cname: str, r: dict) -> str:
 
 # -- DEDALE ------------------------------------------------------------------------------
 
+def _nce_view(run: str) -> dict | None:
+    """
+    How much of each evidence field NCE is shown (2026-10-31): over the first alert of every test case in `run`'s
+    case store (the alert NCE reads), how many command lines and raw log lines are longer than
+    MAX_PROMPT_FIELD_LENGTH, the per-field cut of the NCE prompt.  Read-only; None if the run has no case store.
+    """
+    import sqlite3
+
+    from risk_assessment.config import MAX_PROMPT_FIELD_LENGTH
+
+    path = data_dir().parent / "runs" / f"dedale_host_{run}" / "cases.sqlite"
+    if not path.exists():
+        return None
+    con = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        rows = con.execute("SELECT a.untrusted FROM alerts a JOIN (SELECT case_id, MIN(n) AS n FROM alerts "
+                           "GROUP BY case_id) f ON a.case_id = f.case_id AND a.n = f.n").fetchall()
+    finally:
+        con.close()
+    out = {"limit": MAX_PROMPT_FIELD_LENGTH, "cases": len(rows)}
+    for field in ("command_line", "raw_log_line"):
+        values = [str(v) for (u,) in rows if (v := json.loads(u).get(field))]
+        out[field] = (sum(len(v) > MAX_PROMPT_FIELD_LENGTH for v in values), len(values))
+    return out
+
+
 def _host(scores: dict, run: str) -> dict:
     r = scores["runs"][run]
     truth = r["cases_by_ground_truth"]
@@ -292,6 +318,12 @@ def dedale() -> list[str]:
         h = H[k]
         out.append(f"| {label} | {h['reviews']} | {h['mal_dismissed']} / {h['mal_total']} | {h['ben_dismissed']} | "
                    f"{h['cache_misses']} |")
+    view = _nce_view(_h("F_nce", nce=True))
+    if view:
+        out += ["", f"**What NCE is shown.** The NCE prompt holds the first {view['limit']} characters of each evidence "
+                    f"field. In the first alert of each test case of the NCE run ({view['cases']} cases): the command "
+                    f"line is longer than that in {view['command_line'][0]} of {view['command_line'][1]}; the raw log "
+                    f"line in {view['raw_log_line'][0]} of {view['raw_log_line'][1]}."]
     out += ["", "## C5 — Operating the analyst loop", "",
             "Simulated analyst (oracle) through the case-store inbox, B5 on, different response times.", "",
             "**Host logs**", "", *hhead, hrow("no analyst (gated)", H["gated"]), hrow("analyst after 1 h", H["d1"]),
