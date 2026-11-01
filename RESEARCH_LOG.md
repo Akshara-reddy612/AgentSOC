@@ -2768,3 +2768,32 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 - `docs/LIMITATIONS_DRAFT.md`: the plain-language paragraph and the LaTeX item on the prompt-level baseline now say what the paper bullet says. No prompt-level defence was evaluated as a baseline. A hardened-prompt comparison was prepared on DEDALE but not completed, because of API overload errors (HTTP 503). No result is claimed.
 - The sources table gets a row for that statement. The 512-character row now points to `RESULTS.md` (C4, "What NCE is shown"), where the counts have been since the `view-counts` merge; it said "not in `RESULTS.md`".
 - Files modified: `docs/LIMITATIONS_DRAFT.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-11-01 — Session: a new paper, `paper/agentsoc_v2.tex` (branch `paper-v2`, not merged)
+
+### What was tried
+- **Base paper read from the PDF the user supplied:** Roy and Singh, AgentSOC, ICAIC 2026, arXiv:2604.20134v1, 7 pages. Each claim the new paper makes about it was tabled with its page and section. That table is a scratch file outside the repository.
+- **Outline approved with changes:**
+  - "by construction" always qualified: "for what the LLM's output can cause";
+  - "hijacked" and "suppressed" kept apart as different measures;
+  - "in E1 on DEDALE" next to every E1 0/72;
+  - Table I's failure-handling row worded as "this work adds";
+  - only the 15 existing references, with unchanged details.
+- **The paper:** `paper/agentsoc_v2.tex`, written fresh, not edited from `paper/agentsoc_combined.tex`. It has these sections: abstract, introduction with 3 contributions, base paper and related work, comparison Table I, system (Fig. 1, a new diagram), evaluation setup, results C1-C6 (Tables II-III, Fig. 2), discussion and limitations, and conclusion. Authors and the repository link are TODOs. C6 (asymmetric trust) is sourced from the asymmetric-trust rows of `RESULTS.md` C1 and C4, and the paper says so.
+
+### What was found / checks
+- **Compile:** 6 pages, 0 undefined references, 0 overfull boxes. The tables were first 35 pt and 1 pt too wide and are now scaled to the column.
+- **Numbers:**
+  - All 280 numeric tokens are traced: 271 appear in `RESULTS.md`.
+  - 9 have other listed sources: the base paper's 5,000 events, 50 nodes, 506 ms and 480 ms; the derived 73 (= 473 − 400, C2); and the 503 of the required limitation wording.
+  - The table, by paper location with the `RESULTS.md` section, is in `paper/agentsoc_v2_numbers.md`.
+  - One citation was corrected: "2 attacked clients" comes from the Limits section of `RESULTS.md`, not C2.
+- **Overlap (runs of 8 or more consecutive words, bibliographies excluded):**
+  - The first draft shared 2 runs with the base paper and 22 with the old paper. All were rewritten except the "no prompt-level defence" limitation bullet, which is kept word for word, as instructed.
+  - Final: 0 runs with the base paper; with the old paper, only that required bullet.
+- **Claims:** no "fail-proof" or "guaranteed"; no baseline result.
+- **Untouched:** `paper/agentsoc_combined.*`, every frozen result, all pipeline code. No API call.
+
+### Files created/modified
+- Created: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`
+- Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
