@@ -535,6 +535,10 @@ reads it, or activity that resembles routine patterns. The model is shown the fi
 field. On DEDALE the command line is almost always fully visible (1 of 797 is longer), but the raw log line is cut
 in 718 of 856 cases, so attacker text late in it is not seen; under asymmetric trust this can only cost a missed
 escalation.
+\item No prompt-level defence~\cite{spotlighting,struq} was evaluated as a baseline: the pipeline is compared only
+with an undefended triage agent. A comparison with a hardened prompt, in which the untrusted fields are delimited
+and declared to be data, was prepared on DEDALE but could not be completed, because the model's API returned only
+overload errors (HTTP 503) during the attempts.
 \item All containment is simulated.
 \item Each LLM condition was run once. Replaying the recorded outputs makes every number reproducible, but
 run-to-run variation of the model is not measured.

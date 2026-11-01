@@ -2755,3 +2755,9 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 - `paper/agentsoc_combined.tex`: the Limitations bullet now says the command line is almost always fully visible (1 of 797) and the raw log line is cut in 718 of 856, instead of "most DEDALE alerts are longer". 7 pages, no undefined references or overfull boxes.
 - `experiments/PAPER_CLAIMS_TO_REVISE.md`: the same precision in the "do not claim fail-proof" entry.
 - Files modified: `experiments/build_results.py`, `experiments/RESULTS.md`, `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `experiments/PAPER_CLAIMS_TO_REVISE.md`, `RESEARCH_LOG.md`
+
+## 2026-11-01 — Session: paper limitation on the missing prompt-level baseline (branch, not merged)
+
+- `paper/agentsoc_combined.tex`: a Limitations item states that no prompt-level defence was evaluated as a baseline (the pipeline is compared only with an undefended triage agent). It also says that a hardened-prompt comparison was prepared on DEDALE but could not be completed, because the model's API returned only overload errors (HTTP 503) in the two pilot attempts. No baseline result is claimed. The Results sentence ("we did not evaluate a prompt-level defence as a further baseline") is unchanged.
+- Compiles to 7 pages, with 0 undefined references and 0 overfull boxes.
+- Files modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
