@@ -48,10 +48,12 @@ Many labelled attack events are also of kinds our detectors do not cover at all 
 file writes). Every step of the attack still reached an analyst, but no novelty detector can see activity that is
 truly indistinguishable from routine.
 
-**No prompt-level baseline yet.** We compare the pipeline with an undefended model, not with prompt-level defences
-such as marking untrusted input in the prompt or training the model to follow a trusted channel. Those reduce how
-often a model follows injected text; our results concern what happens when it does. Running them as baselines needs
-new model calls and is future work.
+**No prompt-level baseline.** No prompt-level defence was evaluated as a baseline: the pipeline is compared only
+with an undefended triage agent. Prompt-level defences, such as marking untrusted input in the prompt or training
+the model to follow a trusted channel, reduce how often a model follows injected text; our results concern what
+happens when it does. A comparison with a hardened prompt, in which the untrusted fields are delimited and declared
+to be data, was prepared on DEDALE but could not be completed, because the model's API returned only overload
+errors (HTTP 503) during the attempts. No result from it is reported.
 
 **Also (one line each, already in the paper):** tampering with structured sensor fields is outside the defences;
 all containment is simulated; the host detectors, the open-world rule and the review-queue order were chosen on
@@ -76,7 +78,10 @@ Under asymmetric trust this only costs a missed escalation.
 without asymmetric trust.
 \item Activity whose structured pattern also occurs in normal activity stays silent (73 of the 473 labelled attack
 events that alert when nothing is learned); many labelled events are of kinds the detectors do not cover.
-\item No prompt-level defence was evaluated as a baseline; this needs new model calls and is future work.
+\item No prompt-level defence~\cite{spotlighting,struq} was evaluated as a baseline: the pipeline is compared only
+with an undefended triage agent. A comparison with a hardened prompt, in which the untrusted fields are delimited
+and declared to be data, was prepared on DEDALE but could not be completed, because the model's API returned only
+overload errors (HTTP 503) during the attempts.
 ```
 
 ## Sources
@@ -87,4 +92,5 @@ events that alert when nothing is learned); many labelled events are of kinds th
 | 4 of 428, 3 of 437, 10 of 437 | `experiments/RESULTS.md`, C1 table; recomputed 2026-10-31 from `agent/v2_results/*_rescored.json` |
 | 512 characters | `risk_assessment/config.py:115` (`MAX_PROMPT_FIELD_LENGTH`), applied in `prompt_construction/nce_prompt_builder.py:148-149`; unchanged since 2026-08-03 |
 | 73 of 473 | `experiments/RESULTS.md`, C2 table: static 473, frozen 400 (`final_host_scores.json`, confirmed by the 2026-10-31 re-freeze) |
-| 1 of 797 command lines, 718 of 856 raw log lines over 512 characters | First alert of each test case in the case store of `gated_nce_F_nce` (written by `freeze_dedale`; `<data>/runs/dedale_host_gated_nce_F_nce/cases.sqlite`), counted 2026-10-31. **Not in `RESULTS.md`**: add it to `experiments/build_results.py` before citing it in the paper |
+| 1 of 797 command lines, 718 of 856 raw log lines over 512 characters | `experiments/RESULTS.md`, C4, "What NCE is shown" (since 2026-11-01; `experiments/build_results.py` counts them, read-only, from the first alert of each test case in the case store of `gated_nce_F_nce`, `<data>/runs/dedale_host_gated_nce_F_nce/cases.sqlite`) |
+| Hardened-prompt comparison prepared, not completed (HTTP 503) | `RESEARCH_LOG.md` on main, 2026-11-01 (paper limitation entry): only overload errors (HTTP 503) in the two pilot attempts. The counts (6 calls, 24 requests, 0 answers) are in the log and the answers file of the unmerged branch `baseline-prompt`, with the design (`experiments/BASELINE_PROMPT_DESIGN.md`). No result is claimed |

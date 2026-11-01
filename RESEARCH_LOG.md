@@ -2761,3 +2761,10 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 - `paper/agentsoc_combined.tex`: a Limitations item states that no prompt-level defence was evaluated as a baseline (the pipeline is compared only with an undefended triage agent). It also says that a hardened-prompt comparison was prepared on DEDALE but could not be completed, because the model's API returned only overload errors (HTTP 503) in the two pilot attempts. No baseline result is claimed. The Results sentence ("we did not evaluate a prompt-level defence as a further baseline") is unchanged.
 - Compiles to 7 pages, with 0 undefined references and 0 overfull boxes.
 - Files modified: `paper/agentsoc_combined.tex`, `paper/agentsoc_combined.pdf`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-11-01 — Session: limitations draft matches the paper's baseline bullet
+
+- Merged `paper-prompt-baseline-limit` into main (no conflict).
+- `docs/LIMITATIONS_DRAFT.md`: the plain-language paragraph and the LaTeX item on the prompt-level baseline now say what the paper bullet says. No prompt-level defence was evaluated as a baseline. A hardened-prompt comparison was prepared on DEDALE but not completed, because of API overload errors (HTTP 503). No result is claimed.
+- The sources table gets a row for that statement. The 512-character row now points to `RESULTS.md` (C4, "What NCE is shown"), where the counts have been since the `view-counts` merge; it said "not in `RESULTS.md`".
+- Files modified: `docs/LIMITATIONS_DRAFT.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
