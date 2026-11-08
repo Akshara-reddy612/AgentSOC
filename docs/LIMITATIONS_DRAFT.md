@@ -48,6 +48,17 @@ Many labelled attack events are also of kinds our detectors do not cover at all 
 file writes). Every step of the attack still reached an analyst, but no novelty detector can see activity that is
 truly indistinguishable from routine.
 
+**Evasion by mimicry.** The detectors' patterns are built from sensor fields, but some of those values are chosen
+by whoever runs the program: program names and paths, pipe names, the type of file written, and PowerShell script
+text (kept only as a hash). An attacker who copies a learned pattern, for example by naming and placing a binary
+like a routine program and starting it from its usual parent, raises no alert. Asymmetric trust does not help
+here, because it limits what the model's output can cause, not what the detectors see. We did not evaluate such
+deliberate mimicry.
+
+**Triage happens once per case.** A case is decided when its first alert arrives. Later alerts with the same
+pattern join the open case without a new decision, so evidence that arrives later in a case is not reasoned about
+until a new case opens.
+
 **No prompt-level baseline.** No prompt-level defence was evaluated as a baseline: the pipeline is compared only
 with an undefended triage agent. Prompt-level defences, such as marking untrusted input in the prompt or training
 the model to follow a trusted channel, reduce how often a model follows injected text; our results concern what
@@ -78,6 +89,12 @@ Under asymmetric trust this only costs a missed escalation.
 without asymmetric trust.
 \item Activity whose structured pattern also occurs in normal activity stays silent (73 of the 473 labelled attack
 events that alert when nothing is learned); many labelled events are of kinds the detectors do not cover.
+\item Evasion by mimicry: detection rests on the novelty of patterns built partly from values the attacker chooses
+(program names and paths, pipe names, written-file types, PowerShell script text through its hash). An attacker who
+copies a learned pattern, for example by naming and placing a binary like a routine program started by its usual
+parent, raises no alert; we did not evaluate such deliberate mimicry.
+\item Triage runs once per case, on its first alert. Later alerts with the same pattern join the open case without
+a new decision, so evidence that arrives later in a case is not reasoned about until a new case opens.
 \item No prompt-level defence~\cite{spotlighting,struq} was evaluated as a baseline: the pipeline is compared only
 with an undefended triage agent. A comparison with a hardened prompt, in which the untrusted fields are delimited
 and declared to be data, was prepared on DEDALE but could not be completed, because the model's API returned only
@@ -94,3 +111,5 @@ overload errors (HTTP 503) during the attempts.
 | 73 of 473 | `experiments/RESULTS.md`, C2 table: static 473, frozen 400 (`final_host_scores.json`, confirmed by the 2026-10-31 re-freeze) |
 | 1 of 797 command lines, 718 of 856 raw log lines over 512 characters | `experiments/RESULTS.md`, C4, "What NCE is shown" (since 2026-11-01; `experiments/build_results.py` counts them, read-only, from the first alert of each test case in the case store of `gated_nce_F_nce`, `<data>/runs/dedale_host_gated_nce_F_nce/cases.sqlite`) |
 | Hardened-prompt comparison prepared, not completed (HTTP 503) | `RESEARCH_LOG.md` on main, 2026-11-01 (paper limitation entry): only overload errors (HTTP 503) in the two pilot attempts. The counts (6 calls, 24 requests, 0 answers) are in the log and the answers file of the unmerged branch `baseline-prompt`, with the design (`experiments/BASELINE_PROMPT_DESIGN.md`). No result is claimed |
+| Detector patterns include attacker-chosen values (mimicry) | Code, not a measurement: `perception/host_detection.py`, keys of `lineage` (parent and child program paths), `pipe` (pipe name), `exec_file_write` (written file's extension), `powershell` (`script_fingerprint`, a hash of the script text). Mimicry was not evaluated |
+| Triage once per case, on its first alert | Code: `perception/soc_loop.py`, `SocLoop._handle_alert` triages only when the case builder reports "opened"; later alerts go to `CaseStore.alert_attached` without a new decision |

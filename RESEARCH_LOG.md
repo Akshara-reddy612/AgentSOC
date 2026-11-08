@@ -2868,3 +2868,35 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 
 ### Files created/modified
 - Modified: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-11-08 — Session: paper v2 accuracy fixes from the code walkthrough (branch `paper-v2-accuracy`, not merged)
+
+### What was tried
+Each fix follows the code:
+1. **Program paths and the parent process are no longer called attacker-proof.**
+   - Paper Section III-A and VIVA Q4 now say that sensors record them, but the attacker chooses the names and locations of their own programs, which can influence what the detectors see as new.
+   - Source: the keys in `perception/host_detection.py`: `lineage` paths, `pipe` name, `exec_file_write` extension, `powershell` script hash.
+   - New limitation, evasion by mimicry (not evaluated), added to the paper and to `docs/LIMITATIONS_DRAFT.md`.
+2. **The model-free decision on DEDALE is the trusted fields and the store,** with unlearned cases sent to review by the unreasoned-case rule. ERA and the destination-telemetry check apply to GUIDE.
+   - Source: `TriageGate._downstream` passes no `era_level`; `host_alert` sets no destination, so `attach_alert_context` adds no telemetry hypothesis.
+   - The text and Fig. 1's box and caption are fixed.
+3. **Learning gate:** the 24-hour delay (`GATE_DELAY`) and the rule that an escalation on the same host after the case opened blocks learning (`KnowledgeUpdater._escalated_since`, `_addresses`) are added to the paper and VIVA Q3.
+4. **Rebuild:** `build_results` also needs the DEDALE data folder (`summary.json` files, a case store) and the GUIDE re-scoring of the recorded answers. `logs/*_rescored*.json` are not tracked in git.
+5. **Fail-safe** is now stated as unit-tested, not evaluated on a dataset.
+   - 0 events refused in the 43 replays: `freeze_dedale` has 20 host + 12 E1 + 11 network replays.
+   - None of their `summary.json` counts has `events_rejected`. Those summaries were written 2026-10-31 21:18-22:56, after the refusal counter was added at 16:17 that day.
+   - Quarantine and recovery are in the live server (`LiveRunner`); the replays run `SocLoop` directly. VIVA Q10 updated.
+6. **New limitation:** triage runs once per case, on its first alert (`SocLoop._handle_alert`).
+7. **C6 sentence:** asymmetric trust reviews every unlearned case on DEDALE, 913 of 913 in the NCE run, so its workload equals NCE off (65.2; 34.1).
+   - The 913 comes from `final_host_scores.json` (`gated_nce_A_nce`), not from a RESULTS.md row. The numbers file says so.
+8. **Two new viva answers:** Q11 (an attacker mimicking a benign binary) and Q12 (why ERA does not run on DEDALE).
+
+### What was found
+- **Compile:** 7 pages, 0 undefined references, 0 overfull boxes. Rendered with `pdftocairo`: all tables and figures legible, nothing clipped.
+- **Numbers:** all 380 numeric tokens traced, 370 of them in `RESULTS.md`, and 10 from other sources (new: 43, from `freeze_dedale.py`). The 24-hour delay and the NCE run's 913 pass the token check but are listed with their real sources.
+- **Overlap (8 or more words):** 0 runs with the base paper; with the old paper, only the required limitation bullet.
+- **Unchanged:** the three "by construction ... for what the LLM's output can cause" sentences and the 58-word baseline bullet are identical to main and to the first version.
+- No API call. No pipeline code or frozen result changed.
+
+### Files created/modified
+- Modified: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`, `docs/VIVA_QA.md`, `docs/LIMITATIONS_DRAFT.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

@@ -3,8 +3,10 @@
 Every number in the paper, by where it appears, with its source: a section of `experiments/RESULTS.md`
 (C1-C5, Limits) or a page of the base paper (Roy and Singh, AgentSOC, ICAIC 2026, arXiv:2604.20134v1). RESULTS.md
 has no C6 section: the paper's C6 (asymmetric trust) uses the rows marked "asymmetric trust" in C1 and C4.
-A script check (2026-11-08, Tables II and III restored next to the figures) found each of the paper's 374
-numeric tokens either in RESULTS.md (365) or in the "other sources" list below (9). Figure layout values (bar widths, offsets,
+A script check (2026-11-08, accuracy fixes on branch `paper-v2-accuracy`) found each of the paper's 380 numeric
+tokens either in RESULTS.md (370) or in the "other sources" list below (10). Two numbers pass that token check but
+come from elsewhere, and are listed with their real source: the 24-hour gate delay (a code constant) and the NCE
+run's 913 of 913 reviewed cases (the frozen score file behind C4). Figure layout values (bar widths, offsets,
 axis limits, positions) are drawing geometry and are not counted; every plotted data point and every value printed
 on a bar is counted and checked like a number in the text.
 
@@ -48,6 +50,8 @@ on a bar is counted and checked like a number in the text.
 | 2 | attacked Windows clients with labels | Limits ("Labels exist for 2 attacked clients") |
 | 14 | test days | C2, header |
 | 84; 38 | E1 events carrying the text; cases whose first alert carries it | C1, E1 paragraph |
+| 24 hours | learning-gate delay after a case closes (Section III-C) | code constant, not a result: `perception/knowledge_updater.py`, `GATE_DELAY` |
+| 43; no event refused | replays behind the results; malformed events refused in them (Section III-D) | `experiments/freeze_dedale.py` (`HOST` 20 + `E1` 12 + `NETWORK` 11); each replay's `summary.json` has no `events_rejected` count, i.e. 0 (summaries written 2026-10-31 after the refusal counter was added), checked 2026-11-08 |
 
 ## Section V-A, C1, Table II, Fig. 2
 
@@ -120,6 +124,8 @@ asymmetric trust or the defence, white = the reference condition.
 | 0/72; 400; 65.2; 34.1 | E1 under asymmetric trust | C1, E1 table, asymmetric-trust rows |
 | 0 | benign cases NCE dismissed under asymmetric trust, without and with an analyst (C6 text; Table III) | C4, asymmetric-trust rows, "Benign cases dismissed" |
 | 65.2 vs 54.8; 34.1 vs 33.2 | cost without and with an analyst | C1, E1 table; C4 |
+| 913 of 913 | test cases of the NCE run under asymmetric trust that went to review | not a RESULTS.md row: `experiments/dedale_results/final_host_scores.json`, run `gated_nce_A_nce` (test_cases 913, outcomes REVIEW 913), the frozen file C4 is built from; RESULTS.md's 913 (C2) is NCE off |
+| 65.2; 34.1 | asymmetric trust's workload equals NCE off | C4 asymmetric-trust rows; NCE off: C4 "NCE off" (65.2) and C3 "analyst always right, B5 on" (34.1) |
 
 ## Section VI (discussion, limitations) and Section VII
 
@@ -144,3 +150,6 @@ asymmetric trust or the defence, white = the reference condition.
 | 480 | base paper p. 5, Table VI |
 | 73 | derived: RESULTS.md C2, 473 - 400 |
 | 503 | the current paper's Limitations bullet (required wording); RESEARCH_LOG.md 2026-11-01 |
+| 43 | `experiments/freeze_dedale.py`: 20 host + 12 E1 + 11 network replays |
+| 24 (hours) | `perception/knowledge_updater.py`, `GATE_DELAY` (passes the token check because 24 occurs in C5) |
+| 913 (NCE run) | `experiments/dedale_results/final_host_scores.json`, `gated_nce_A_nce` (passes the token check because 913 occurs in C2) |

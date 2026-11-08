@@ -173,7 +173,7 @@ dataset recorded on a testbed.
 \node[tx] (ft) at (1.8,-1.05) {Free text\\(the attacker can write it)};
 \node[tr] (nov) at (-1.8,-2.15) {Novelty against the\\learned store: a case};
 \node[lm] (nce) at (1.8,-2.15) {NCE: LLM hypotheses\\(first 512 characters)};
-\node[tr] (mf) at (-1.8,-3.3) {Model-free decision\\(fields, store, ERA)};
+\node[tr] (mf) at (-1.8,-3.3) {Model-free decision\\(fields and store;\\on GUIDE also ERA)};
 \node[lm] (ma) at (1.8,-3.3) {Model-assisted decision\\(SSE, entity binding)};
 \node[w] (out) at (0,-4.4) {Outcome: the model-free decision, or review if the model-assisted one asks};
 \node[tr] (run) at (-1.8,-5.45) {Model-free responses run,\\even when review is added};
@@ -189,22 +189,25 @@ dataset recorded on a testbed.
 \draw[->] (out.west) -- ++(-0.5,0) |- node[pos=0.25, left]{gate} (nov.west);
 \draw[->] (an.west) -- ++(-0.25,0) |- ([yshift=-2mm]nov.west);
 \end{tikzpicture}
-\caption{GuardedSOC under asymmetric trust. Green: data and decisions the attacker cannot write; orange: free
-text; blue: what depends on the LLM. The dashed arrow is ERA, which reads free text and can only escalate. The gate
-passes to the store only cases dismissed without escalation; analyst verdicts reach it directly.}
+\caption{GuardedSOC under asymmetric trust. Green: data and decisions the attacker cannot write directly (the
+detectors' patterns include program paths the attacker chooses, Section~\ref{sec:system}-A); orange: free text;
+blue: what depends on the LLM. The dashed arrow is ERA, which reads free text, can only escalate and runs on GUIDE
+only. The gate passes to the store only cases dismissed without escalation; analyst verdicts reach it directly.}
 \label{fig:system}
 \end{figure}
 
 \subsection{Pipeline}
 Fig.~\ref{fig:system} shows GuardedSOC. Events from endpoint and network sensors are normalised and split into
-two kinds of field. Structured fields (host, account, the parent process as recorded, addresses, ports, event
-identifiers) come from sensors and the asset inventory; we assume the attacker cannot alter them. Free text
-(command lines, script text, raw log records, process and file names as strings) is whatever the attacker's
-activity produced, so the attacker controls it.
+two kinds of field. Structured fields (host, account, addresses, ports, event identifiers) come from sensors and
+the asset inventory; we assume the attacker cannot alter them. Sensors also record program paths, the parent
+program's included, but the attacker chooses the names and locations of their own programs, so these values can
+influence which patterns the detectors see as new. Free text (command lines, script text, raw log records, process
+and file names as strings) is whatever the attacker's activity produced, so the attacker controls it.
 
 On host telemetry, detectors for new process lineage, named pipes, PowerShell activity, writes of executable
-files, logons and access to the credential process compare each event's structured pattern with the knowledge store and raise an
-alert when the pattern has not been learned; alerts sharing a pattern form a case. For each case NCE asks the LLM
+files, logons and access to the credential process compare each event's pattern with the knowledge store and raise
+an alert when the pattern has not been learned. A pattern is built from sensor fields: hosts, accounts, program
+paths, pipe names, written-file types, and for PowerShell a hash of the script text; alerts sharing a pattern form a case. For each case NCE asks the LLM
 for ATT\&CK-labelled hypotheses, reading the first 512 characters of every free-text field. SSE checks each
 hypothesis against the environment model, and entity binding flags a hypothesis whose host or account the
 structured fields do not support. RSEM ranks responses, and guardrails decide which of them may run without an
@@ -216,7 +219,9 @@ responses.
 In our earlier runs NCE's hypotheses fed the decision directly; we call this the \emph{acting rule}. A hypothesis
 judged infeasible could let a case be dismissed, and one that survived could lead to an automatic response within
 the guardrails. Asymmetric trust replaces it with two decisions per case. The \emph{model-free decision} uses
-everything except the LLM's output: the structured fields, the store, ERA and the check of destination telemetry.
+everything except the LLM's output. On DEDALE that is the structured fields and the store, and a case whose pattern
+the store has not learned goes to review (the rule for unreasoned cases); on GUIDE it also includes ERA and the
+check of destination telemetry.
 The \emph{model-assisted decision} adds NCE's hypotheses. The outcome is the model-free decision, unless the
 model-assisted decision asks for review, in which case the outcome is review. Responses of the model-free decision
 run automatically even when review is added; a response that only the model-assisted decision proposes waits for
@@ -229,7 +234,9 @@ tests replay recorded model answers and randomly generated adversarial hypothese
 less strict than the model-free decision.
 
 \subsection{Learning gate and unlearning}
-The store learns a case's pattern only when the case was dismissed without any escalation. Under asymmetric trust
+The store learns a case's pattern only when the case was dismissed without any escalation, and only 24 hours after
+the case closed; if a case on the same host (for network alerts, the same endpoints) was escalated after this case
+opened, the case is not learned at all. Under asymmetric trust
 that means dismissed by the model-free decision, so neither attacker text nor the model can open the gate. Analyst
 verdicts are the deliberate exception: a benign verdict teaches the store directly, which is how feedback lowers
 the workload. When an analyst confirms a host as compromised, the store retracts what it recently learned on that
@@ -242,7 +249,9 @@ and the live runner restores its last checkpoint and carries on; before this cha
 An error inside triage sends the case to review instead of dropping it, and analyst commands are applied
 atomically, so a failing command leaves no partial change. Checkpoints are signed and loaded through an allow-list
 of classes. A check that scans evidence text for command-and-control indicators reads only the part of each field
-the LLM was shown, which bounds its running time on long crafted text.
+the LLM was shown, which bounds its running time on long crafted text. These mechanisms are covered by unit tests,
+not evaluated on a dataset; in the 43 replays behind our results no event was refused. The quarantine and the
+recovery from a checkpoint belong to the live server; the experiment replays run the loop directly.
 
 \section{Evaluation Setup}\label{sec:setup}
 
@@ -271,8 +280,9 @@ alert does (C1).
 \subsection{Recorded answers, two rules, frozen results}
 Every LLM answer was recorded once (gemini-3.1-flash-lite on both datasets, gpt-oss-20b on the GUIDE development
 pairs) and is replayed, so no experiment needs a model call to reproduce. Each condition is a deterministic
-replay, and one script rebuilds our results file from the frozen outputs; every number below is taken from that
-file, and we name its section (C1--C5). The acting rule and asymmetric trust are scored on the same recorded
+replay. One script rebuilds our results file from the frozen score files in the repository, the GUIDE re-scoring
+of the recorded answers and the replays' outputs in the DEDALE data folder, so a rebuild needs that data folder as
+well as the repository; every number below is taken from that file, and we name its section (C1--C5). The acting rule and asymmetric trust are scored on the same recorded
 answers. The asymmetric-trust numbers are the rows marked as such in sections C1 and C4 of the results file.
 
 \section{Results}\label{sec:results}
@@ -545,7 +555,9 @@ responses. In E1 on DEDALE, 0/72 attack cases were dismissed for every injected 
 no pattern was learned and the same 400 events alerted. Reviews per day were 65.2 without and 34.1 with an analyst
 whatever the injected text, so the text no longer changes the workload. The cost is the dismissals NCE used to
 make; under asymmetric trust it dismissed 0 benign cases, with or without an analyst (C4). Without an analyst the
-system reviews 65.2 cases a day instead of 54.8; with one, 34.1 instead of 33.2.
+system reviews 65.2 cases a day instead of 54.8; with one, 34.1 instead of 33.2. On DEDALE, asymmetric trust thus
+reviews every case the store has not learned (913 of 913 test cases in the NCE run), and its workload equals that of
+NCE off: 65.2 reviews per day, and 34.1 with an analyst (asymmetric-trust rows of C4; NCE off in C4 and C3).
 
 \section{Discussion and Limitations}\label{sec:discussion}
 
@@ -590,6 +602,12 @@ without asymmetric trust (C1).
 \item Attack activity whose structured pattern also occurs in benign activity stays silent: of the 473 labelled
 attack events that raise alerts before any learning, 73 no longer do once the benign weeks are learned (C2). Many
 labelled events are of kinds the detectors do not watch.
+\item Evasion by mimicry: detection rests on the novelty of patterns built partly from values the attacker chooses
+(program names and paths, pipe names, written-file types, PowerShell script text through its hash). An attacker who
+copies a learned pattern, for example by naming and placing a binary like a routine program started by its usual
+parent, raises no alert; we did not evaluate such deliberate mimicry.
+\item Triage runs once per case, on its first alert. Later alerts with the same pattern join the open case without
+a new decision, so evidence that arrives later in a case is not reasoned about until a new case opens.
 \item No prompt-level defence~\cite{spotlighting,struq} was evaluated as a baseline: the pipeline is compared only
 with an undefended triage agent. A comparison with a hardened prompt, in which the untrusted fields are delimited
 and declared to be data, was prepared on DEDALE but could not be completed, because the model's API returned only
