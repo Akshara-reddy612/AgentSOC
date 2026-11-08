@@ -2848,3 +2848,23 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 
 ### Files created/modified
 - Modified: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-11-08 — Session: paper v2 with all tables and all figures (branch `paper-v2-tables`, not merged)
+
+### What was tried
+- New branch `paper-v2-tables` from main (`5476d51`), in its own worktree; nothing on main was changed or forced.
+- `paper/agentsoc_v2.tex` started from commit `fe25be1`: Tables I-III and all six figures, labels `tab:text` and `tab:dedale`, and the C6 reference "(Tables~\ref{tab:text} and~\ref{tab:dedale})".
+- The two later text additions were re-applied: 30.1 reviews per day in the C3 text, and in C6 "under asymmetric trust it dismissed 0 benign cases, with or without an analyst (C4)". The GuardedSOC name and the "builds on and extends" sentence were already in `fe25be1`.
+- No conflict: after `fe25be1` the paper changed only by removing the two tables, re-pointing the C6 reference, and these two additions, all in different places.
+- Checked by diff: against `fe25be1` only the two additions differ; against main only the restored tables and the C6 reference.
+- `paper/agentsoc_v2_numbers.md`: rows point at Tables II and III again, and at the figures where a number is in both. The rows for E1 clean reviews per day and the 4 h analyst are restored.
+
+### What was found
+- **Compile:** 7 pages, 0 undefined references, 0 overfull boxes. Rendered with `pdftocairo`: all three tables and six figures are legible, nothing clipped.
+- **Numbers:** all 374 numeric tokens traced, 365 of them in `RESULTS.md`; the 9 other sources are as before.
+- **Overlap (8 or more words):** 0 runs with the base paper; with the old paper, only the required limitation bullet.
+- **Unchanged:** the three "by construction ... for what the LLM's output can cause" sentences and the 58-word baseline limitation bullet are identical to `fe25be1` and to the first version (`4183772`). Abstract 195 words.
+- No API call. Main, the old paper, frozen results and pipeline code untouched.
+
+### Files created/modified
+- Modified: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
