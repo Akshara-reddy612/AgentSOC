@@ -332,33 +332,6 @@ alert executed one.}
 \label{fig:text}
 \end{figure}
 
-\begin{table}[t]
-\caption{Attacker-written text under the acting rule and under asymmetric trust (C1; asymmetric-trust rows of C1).
-GUIDE: pairs; E1 on DEDALE: attack cases. No steered action was executed in any run.}
-\label{tab:text}
-\centering\footnotesize
-\setlength{\tabcolsep}{3pt}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}llrr@{}}
-\toprule
-Setting & Measure & Acting rule & Asym.\ trust \\
-\midrule
-GUIDE dev, Gemini & suppressed & 4/428 & 4/428 \\
- & containments removed & 20/178 & 0/178 \\
-GUIDE held-out, Gemini & suppressed & 3/437 & 3/437 \\
- & containments removed & 18/168 & 0/168 \\
-GUIDE dev, gpt-oss-20b & suppressed & 10/437 & 10/437 \\
- & containments removed & 21/176 & 0/178 \\
-\midrule
-E1 on DEDALE, & dismissed, maintenance & 1/72 & 0/72 \\
-no analyst & dismissed, approval & 3/72 & 0/72 \\
- & dismissed, steering & 1/72 & 0/72 \\
- & reviews per day, clean & 54.8 & 65.2 \\
-E1 on DEDALE, & dismissed, each text & 0/72 & 0/72 \\
-analyst (4 h) & reviews per day, clean & 33.2 & 34.1 \\
-\bottomrule
-\end{tabular}}
-\end{table}
 
 \subsection{C2: learning behind a gate}
 
@@ -433,38 +406,12 @@ unlearning on confirmed compromise (solid).}
 
 The gate does not apply to analysts, so we simulated one who misses attacks (C3, Fig.~\ref{fig:c3}). Missing 5\% let the store learn 8
 attack cases' patterns and left 397 events alerting; missing 20\% taught it 20 patterns and reduced the malicious
-cases raised to 61 and the alerting events to 256. With unlearning on confirmed compromise, both mistake rates
+cases raised to 61 and the alerting events to 256, at 30.1 reviews per day. With unlearning on confirmed
+compromise, both mistake rates
 ended with 0 patterns learned, 72 malicious cases raised and 400 events alerting. The price is review load: 34.1
 instead of 30.9 reviews per day with an analyst who is always right, and 44.6 instead of 31.4 with one who raises
 5\% false alarms, since every false confirmation retracts benign learning.
 
-\begin{table}[t]
-\caption{DEDALE host logs, 14 test days. Top: learning and poisoning (C2, C3); bottom: the LLM (C4; the
-asymmetric-trust rows of C4). Patterns: attack cases' patterns learned as routine.}
-\label{tab:dedale}
-\centering\footnotesize
-\setlength{\tabcolsep}{3pt}
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{@{}lrrrr@{}}
-\toprule
-Condition & Reviews/day & Malicious raised & Events alerted & Patterns \\
-\midrule
-Nothing learned & 6095.4 & 80 & 473 & 0 \\
-Benign weeks learned, gate & 65.2 & 72 & 400 & 0 \\
-Learning without the gate & 27.4 & 38 & 99 & 38 \\
-Analyst misses 20\% & 30.1 & 61 & 256 & 20 \\
-\quad with unlearning & 34.1 & 72 & 400 & 0 \\
-\midrule
- & Reviews/day & Malicious dism. & Benign dism. & \\
-\midrule
-NCE, closed world & 54.6 & 2/72 & 89 & \\
-NCE, open world & 54.8 & 0/72 & 89 & \\
-NCE and analyst & 33.2 & 0/72 & 30 & \\
-NCE, asymmetric trust & 65.2 & 0/72 & 0 & \\
-NCE and analyst, asym.\ trust & 34.1 & 0/72 & 0 & \\
-\bottomrule
-\end{tabular}}
-\end{table}
 
 \subsection{C4: the LLM on testbed telemetry}
 
@@ -532,7 +479,7 @@ were raised and the same 400 labelled attack events alerted.}
 
 \subsection{C6: asymmetric trust}
 We re-scored the same recorded answers under asymmetric trust; these numbers are the asymmetric-trust rows of C1
-and C4 (Tables~\ref{tab:text} and~\ref{tab:dedale}). On GUIDE, suppression did not change (4/428, 3/437, 10/437):
+and C4 (Figs.~\ref{fig:text} and~\ref{fig:c4}). On GUIDE, suppression did not change (4/428, 3/437, 10/437):
 those clean alerts were answered only because the model read their clean text, and limiting the model's output
 cannot restore what the injected text hid. The rule removed a different effect. Under the acting rule any review
 held back an alert's automatic responses, so contamination that triggered a review cancelled a block the trusted
@@ -543,7 +490,8 @@ hypotheses ask for review. Outcome totals on the development pairs stayed at 532
 responses. In E1 on DEDALE, 0/72 attack cases were dismissed for every injected text, with and without an analyst;
 no pattern was learned and the same 400 events alerted. Reviews per day were 65.2 without and 34.1 with an analyst
 whatever the injected text, so the text no longer changes the workload. The cost is the dismissals NCE used to
-make: without an analyst the system reviews 65.2 cases a day instead of 54.8; with one, 34.1 instead of 33.2.
+make; under asymmetric trust it dismissed 0 benign cases, with or without an analyst (C4). Without an analyst the
+system reviews 65.2 cases a day instead of 54.8; with one, 34.1 instead of 33.2.
 
 \section{Discussion and Limitations}\label{sec:discussion}
 

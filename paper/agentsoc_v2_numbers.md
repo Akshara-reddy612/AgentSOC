@@ -3,8 +3,8 @@
 Every number in the paper, by where it appears, with its source: a section of `experiments/RESULTS.md`
 (C1-C5, Limits) or a page of the base paper (Roy and Singh, AgentSOC, ICAIC 2026, arXiv:2604.20134v1). RESULTS.md
 has no C6 section: the paper's C6 (asymmetric trust) uses the rows marked "asymmetric trust" in C1 and C4.
-A script check (2026-11-08, after the result figures were added) found each of the paper's 372 numeric tokens
-either in RESULTS.md (363) or in the "other sources" list below (9). Figure layout values (bar widths, offsets,
+A script check (2026-11-08, after Tables II and III were replaced by the figures) found each of the paper's 312
+numeric tokens either in RESULTS.md (303) or in the "other sources" list below (9). Figure layout values (bar widths, offsets,
 axis limits, positions) are drawing geometry and are not counted; every plotted data point and every value printed
 on a bar is counted and checked like a number in the text.
 
@@ -49,7 +49,7 @@ on a bar is counted and checked like a number in the text.
 | 14 | test days | C2, header |
 | 84; 38 | E1 events carrying the text; cases whose first alert carries it | C1, E1 paragraph |
 
-## Section V-A, C1, and Table II
+## Section V-A, C1
 
 | Number | Says | Source |
 |:--|:--|:--|
@@ -65,11 +65,9 @@ on a bar is counted and checked like a number in the text.
 | 400 | labelled attack events alerted in every E1 run | C1, E1 table |
 | 30 of 38; 32 of 38 | NCE named the steered host (no analyst; analyst) | C1, E1 table |
 | 49 of 49; 59 of 59 | steered hypotheses flagged unbound | C1, E1 table |
-| 20/178, 18/168, 21/176 -> 0/178, 0/168, 0/178 | containments removed (Table II) | C1, first table, last column |
-| 54.8 -> 65.2; 33.2 -> 34.1 | E1 clean reviews per day, acting rule -> asymmetric trust (Table II) | C1, E1 table |
-| 4 h | the analyst's delay in E1 | C1, E1 table ("analyst 4 h") |
+| 20/178, 18/168, 21/176 -> 0/178, 0/168, 0/178 | containments removed (Fig. 2, right; C6 text) | C1, first table, last column |
 
-## Sections V-B to V-E (C2-C5), Table III, Fig. 6
+## Sections V-B to V-E (C2-C5), Fig. 6
 
 | Number | Says | Source |
 |:--|:--|:--|
@@ -78,14 +76,14 @@ on a bar is counted and checked like a number in the text.
 | 27.4; 38; 38; 99 | without the gate: reviews/day, patterns learned, malicious raised, events alerted | C2, host table, ungated |
 | 552.3; 26.1; 20.6; 1 | network: static, learned, ungated reviews/day; patterns learned ungated | C2, network table |
 | 5%: 8 learned, 397 alerted | analyst misses 5%, no unlearning | C3 |
-| 20%: 20 learned, 61 raised, 256 alerted; 30.1/day | analyst misses 20%, no unlearning | C3 |
+| 20%: 20 learned, 61 raised, 256 alerted; 30.1/day | analyst misses 20%, no unlearning (30.1 stated in the C3 text) | C3: "misses 20% of attacks, B5 off" |
 | 0 learned, 72 raised, 400 alerted; 34.1/day | with unlearning, both mistake rates | C3 |
 | 34.1 vs 30.9; 44.6 vs 31.4 | cost of unlearning: perfect analyst; 5% false alarms | C3 |
 | 65.2 -> 54.6; 2/72; 89 | NCE, closed world: reviews/day; malicious and benign dismissed | C4 |
 | 54.8; 0/72; 89 | NCE, open world | C4 |
 | 33.2; 30 | NCE with an analyst: reviews/day; benign dismissed | C4 |
 | 34.1 | the same analyst without NCE | C3 (analyst always right, B5 on) |
-| 65.2; 34.1; 0/72; 0 | NCE under asymmetric trust, without and with the analyst (Table III) | C4, asymmetric-trust rows |
+| 65.2; 34.1; 0/72; 0 | NCE under asymmetric trust, without and with the analyst (Fig. 5; C6 text) | C4, asymmetric-trust rows |
 | 1 of 797; 718 of 856 | command lines and raw log lines longer than 512 characters | C4, "What NCE is shown" |
 | 33.1, 34.1, 38.1, 51.5 at 1, 4, 24, 72 h; 65.2 | host reviews/day by analyst delay; no analyst (text and Fig. 6) | C5, host table |
 | 72; 400 | malicious raised and events alerted at every delay (text, Fig. 6 caption) | C5, host table |
@@ -118,6 +116,7 @@ asymmetric trust or the defence, white = the reference condition.
 | 0 of 178, 168, 178 | containments removed under asymmetric trust | C1, asymmetric-trust rows |
 | 532; 336 | outcome totals on the development pairs (REVIEW, AUTO_APPROVED) | C1, "Outcomes per run" |
 | 0/72; 400; 65.2; 34.1 | E1 under asymmetric trust | C1, E1 table, asymmetric-trust rows |
+| 0 | benign cases NCE dismissed under asymmetric trust, without and with an analyst | C4, asymmetric-trust rows, "Benign cases dismissed" |
 | 65.2 vs 54.8; 34.1 vs 33.2 | cost without and with an analyst | C1, E1 table; C4 |
 
 ## Section VI (discussion, limitations) and Section VII

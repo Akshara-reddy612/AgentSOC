@@ -2827,3 +2827,24 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 
 ### Files created/modified
 - Modified: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-11-08 — Session: paper v2, Tables II and III replaced by the figures (branch `paper-v2`, not merged)
+
+### What was tried
+- **Tables II and III dropped** from `paper/agentsoc_v2.tex` (user decision). Table I (comparison) stays.
+- **C6 reference:** "(Tables II and III)" now reads "(Figs. 2 and 5)".
+- **Two values kept explicit,** since they had stood only in Table III:
+  - the C3 text gives 30.1 reviews per day for the analyst who misses 20% without unlearning;
+  - C6 says asymmetric trust dismissed 0 benign cases, with or without an analyst (C4, asymmetric-trust rows).
+- `paper/agentsoc_v2_numbers.md` was updated to match: the table rows are re-pointed to the figures and the text, and the C6 row for 0 benign cases is added.
+- The user's request also contained an unfilled template line for passages to simplify ("<paste the sentences here, or write "none">"). It was treated as none: no passage was rewritten.
+
+### What was found
+- **Compile:** 6 pages, 0 undefined references, 0 overfull boxes. The last page has room left.
+- **Numbers:** all 312 numeric tokens traced, 303 of them in `RESULTS.md`; the 9 other sources are as before. No number from the dropped tables is lost: every one is in the text or printed on a figure bar.
+- **Overlap (8 or more words):** 0 runs with the base paper; with the old paper, only the required limitation bullet.
+- **Unchanged:** the three "by construction ... for what the LLM's output can cause" sentences and the 58-word baseline limitation bullet are identical to the previous commit and to the first version (4183772).
+- No API call. Main, the old paper, frozen results and pipeline code untouched.
+
+### Files created/modified
+- Modified: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
