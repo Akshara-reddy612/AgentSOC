@@ -2797,3 +2797,33 @@ An audit of the ways the pipeline could still fail on input an attacker shapes. 
 ### Files created/modified
 - Created: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`
 - Modified: `PROJECT_STATUS.md`, `RESEARCH_LOG.md`
+
+## 2026-11-08 — Session: the new paper's system named GuardedSOC; four result figures (branch `paper-v2`, not merged)
+
+### What was tried
+- **Name:** the request said "<NEW NAME>"; asked, the user chose GuardedSOC. In `paper/agentsoc_v2.tex`, "AgentSOC 2.0" became GuardedSOC in the title, the introduction, the Fig. 1 caption, the Section III-A text and the header comment.
+- **New sentences:** one in the introduction says GuardedSOC builds on and extends the AgentSOC design. The abstract, which did not name the system before, now says "We implement its loop end to end as GuardedSOC".
+- **Base paper kept as AgentSOC:** every mention of it stays "AgentSOC": the abstract, the introduction, Section II-A, Table I, the conclusion and the reference.
+- **Figures:** pgfplots, values typed from `RESULTS.md`, hatched / solid / white for grayscale, each beside its paragraph:
+  - attacker text (C1, with its asymmetric-trust rows): E1 dismissals 1, 3, 1 vs 0, 0, 0, and GUIDE blocks removed, 20/178, 18/168, 21/176 vs 0/178, 0/168, 0/178;
+  - C2: host reviews per day on a log axis, 6095.4, 65.2, 27.4;
+  - C3: patterns learned (8, 20 vs 0, 0) and events alerted (397, 256 vs 400, 400) at 5% and 20% misses;
+  - C4: reviews per day 65.2, 54.6, 54.8, 33.2, 65.2, 34.1.
+- The C5 analyst-delay figure is kept.
+- Tables II and III are kept, because the paper is at 7 pages, within the budget.
+
+### What was found
+- **Compile:** 7 pages, 0 undefined references, 0 overfull boxes. The C4 figure was first 58 pt too wide (long condition names); its plot box is now sized explicitly.
+- **Rendering:** poppler's `pdftoppm` (Splash) draws stray hatched polygons for every PDF tiling pattern, including a minimal pgfplots example and the `patterns.meta` library. Ghostscript and Cairo render the same PDFs correctly, so the PDF is sound. The visual check used `pdftocairo`. The bar values are drawn as explicit nodes rather than with `nodes near coords`.
+- **Numbers:**
+  - All 372 numeric tokens are traced: 363 appear in `RESULTS.md`, and 9 have listed sources, as before.
+  - Figure layout values are not counted; data points and printed bar values are.
+  - Each figure's values are listed in `paper/agentsoc_v2_numbers.md`. The C5 figure is now Fig. 6.
+- **Overlap (8 or more words):** 0 runs with the base paper; with the old paper, only the required "no prompt-level defence" bullet, as before.
+- **Unchanged:**
+  - the three "by construction ... for what the LLM's output can cause" sentences, and the 58-word baseline limitation bullet (identical to the previous commit);
+  - `paper/agentsoc_combined.*`, frozen results, pipeline code and main.
+- No API call.
+
+### Files created/modified
+- Modified: `paper/agentsoc_v2.tex`, `paper/agentsoc_v2.pdf`, `paper/agentsoc_v2_numbers.md`, `PROJECT_STATUS.md`, `RESEARCH_LOG.md`

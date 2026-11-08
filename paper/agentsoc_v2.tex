@@ -1,4 +1,5 @@
-% AgentSOC 2.0 -- a new paper, written from the evidence (2026-11-01, branch paper-v2).
+% GuardedSOC -- a new paper, written from the evidence (2026-11-01, branch paper-v2; system name and result
+% figures 2026-11-08, see RESEARCH_LOG.md). "AgentSOC" below means the base paper (Roy and Singh) only.
 % Not derived from paper/agentsoc_combined.tex. Every number is taken from experiments/RESULTS.md; the section
 % (C1-C5) is named in the text or the table caption. Claims follow experiments/PAPER_CLAIMS_TO_REVISE.md.
 % Base-paper statements: Roy and Singh, ICAIC 2026, arXiv:2604.20134v1. Every number, with its RESULTS.md section
@@ -15,13 +16,21 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
-\usetikzlibrary{arrows.meta}
+\usetikzlibrary{arrows.meta,patterns}
 \definecolor{ctrust}{HTML}{199E70}\definecolor{cllm}{HTML}{3987E5}\definecolor{ctext}{HTML}{D95926}
+% Result figures, readable in grayscale: hatched = acting rule or no defence, solid = asymmetric trust or the
+% defence, white = the reference condition. Every value printed on a bar is typed from experiments/RESULTS.md.
+\pgfplotsset{
+  actingbar/.style={draw=black, pattern=north east lines, pattern color=ctext!80!black},
+  trustbar/.style={draw=black, fill=ctrust!55},
+  basebar/.style={draw=black, fill=white},
+}
+\tikzset{val/.style={font=\scriptsize, inner sep=1.5pt}}   % a value printed on a bar (typed from RESULTS.md)
 \newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
 
 \begin{document}
 
-\title{AgentSOC 2.0: An Agentic SOC Tested Against\\Injected Log Text and Poisoned Memory}
+\title{GuardedSOC: An Agentic SOC Tested Against\\Injected Log Text and Poisoned Memory}
 
 \author{\IEEEauthorblockN{\todo{author names}}
 \IEEEauthorblockA{\todo{affiliations and contact}}}
@@ -32,7 +41,7 @@
 Agentic designs for security operations centres (SOCs) put a large language model (LLM) and a learning knowledge
 store into the triage loop. Both consume data an attacker can shape: the model reads log text, and the store adapts
 to observed activity. AgentSOC, the framework we build on, was evaluated conceptually and on one proof-of-concept
-incident, with no adversary aimed at either. We implement its loop end to end and add
+incident, with no adversary aimed at either. We implement its loop end to end as GuardedSOC and add
 a store that learns only through a learning gate, an analyst review loop with unlearning, fail-safe processing,
 and asymmetric trust: the LLM's output may add review but cannot dismiss a case, start an automatic action or
 teach the store. On 500 GUIDE v2 alert pairs, an undefended LLM agent was hijacked on 130/439 pairs, while the
@@ -64,7 +73,10 @@ incident~\cite{agentsoc}. That scope suits the introduction of an architecture. 
 the attacker targets the model's input or the store's memory, and how the loop behaves over weeks of telemetry
 with analysts in it.
 
-We address these questions with a working system, AgentSOC~2.0, and make three contributions:
+We address these questions with a working system, GuardedSOC. GuardedSOC builds on and extends the AgentSOC
+design~\cite{agentsoc}: it keeps the LLM hypothesis engine, the structural check and the response ranking inside a
+perception--reasoning--action loop, and adds the defences and the evaluation described below. We make three
+contributions:
 \begin{enumerate}
 \item An end-to-end implementation of the perception--reasoning--action loop, extended with a knowledge store that
 learns benign behaviour only through a learning gate, an analyst inbox whose verdicts feed the store, and
@@ -177,14 +189,14 @@ dataset recorded on a testbed.
 \draw[->] (out.west) -- ++(-0.5,0) |- node[pos=0.25, left]{gate} (nov.west);
 \draw[->] (an.west) -- ++(-0.25,0) |- ([yshift=-2mm]nov.west);
 \end{tikzpicture}
-\caption{AgentSOC 2.0 under asymmetric trust. Green: data and decisions the attacker cannot write; orange: free
+\caption{GuardedSOC under asymmetric trust. Green: data and decisions the attacker cannot write; orange: free
 text; blue: what depends on the LLM. The dashed arrow is ERA, which reads free text and can only escalate. The gate
 passes to the store only cases dismissed without escalation; analyst verdicts reach it directly.}
 \label{fig:system}
 \end{figure}
 
 \subsection{Pipeline}
-Fig.~\ref{fig:system} shows AgentSOC~2.0. Events from endpoint and network sensors are normalised and split into
+Fig.~\ref{fig:system} shows GuardedSOC. Events from endpoint and network sensors are normalised and split into
 two kinds of field. Structured fields (host, account, the parent process as recorded, addresses, ports, event
 identifiers) come from sensors and the asset inventory; we assume the attacker cannot alter them. Free text
 (command lines, script text, raw log records, process and file names as strings) is whatever the attacker's
@@ -273,10 +285,52 @@ gives $p=1$, $0.25$ and $0.3$: no detectable effect. ERA's escalation produced t
 pairs. No steered hypothesis led to an executed action; 7, 2 and 3 were held for an analyst. The undefended agent
 was hijacked on 130 of 439 pairs (29.6\%, 25.5\%--34.0\%, $p=6.5\times10^{-17}$). In E1 on DEDALE, under the acting
 rule and without an analyst, the maintenance text caused 1 dismissal among the 72 attack cases, the approval text 3
-and the steering text 1; with an analyst, there were none. In every E1 run the store learned no attack pattern and the same 400
+and the steering text 1; with an analyst, there were none (Fig.~\ref{fig:text}, left). In every E1 run the store learned no attack pattern and the same 400
 labelled attack events raised alerts. The steering text did reach the model: NCE named the steered host in 30 of
 38 injected cases (32 of 38 with the analyst), entity binding flagged every steered hypothesis (49 of 49 and 59 of
 59), and no containment targeted that host.
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\pgfplotsset{twin/.style={ybar, bar width=8pt, scale only axis, width=3.05cm, height=2.5cm, ymin=0, tick pos=left,
+  font=\footnotesize, xticklabel style={font=\scriptsize, align=center}}}
+\begin{axis}[twin, name=e1, symbolic x coords={maint,appr,steer}, xtick={maint,appr,steer},
+  xticklabels={{maint.},{approval},{steering}}, enlarge x limits=0.22, ymax=4.4,
+  ylabel={attack cases dismissed}, legend to name=textlegend, legend columns=2,
+  legend style={font=\scriptsize, draw=none, /tikz/every even column/.append style={column sep=6pt}}]
+\addplot[actingbar, bar shift=-5pt] coordinates {(maint,1) (appr,3) (steer,1)};
+\addlegendentry{acting rule}
+\addplot[trustbar, bar shift=5pt] coordinates {(maint,0) (appr,0) (steer,0)};
+\addlegendentry{asymmetric trust}
+\node[val, above] at ([xshift=-5pt]axis cs:maint,1) {1};
+\node[val, above] at ([xshift=-5pt]axis cs:appr,3) {3};
+\node[val, above] at ([xshift=-5pt]axis cs:steer,1) {1};
+\node[val, above] at ([xshift=5pt]axis cs:maint,0) {0};
+\node[val, above] at ([xshift=5pt]axis cs:appr,0) {0};
+\node[val, above] at ([xshift=5pt]axis cs:steer,0) {0};
+\end{axis}
+\begin{axis}[twin, at={(e1.outer east)}, anchor=outer west, symbolic x coords={gdev,ghold,odev},
+  xtick={gdev,ghold,odev}, xticklabels={{dev\\Gemini},{held-out\\Gemini},{dev\\gpt-oss}},
+  enlarge x limits=0.22, ymax=40, ylabel={pairs with block removed}]
+\addplot[actingbar, bar shift=-5pt] coordinates {(gdev,20) (ghold,18) (odev,21)};
+\addplot[trustbar, bar shift=5pt] coordinates {(gdev,0) (ghold,0) (odev,0)};
+\node[val, rotate=90, anchor=west] at ([xshift=-5pt]axis cs:gdev,20) {20/178};
+\node[val, rotate=90, anchor=west] at ([xshift=-5pt]axis cs:ghold,18) {18/168};
+\node[val, rotate=90, anchor=west] at ([xshift=-5pt]axis cs:odev,21) {21/176};
+\node[val, rotate=90, anchor=west] at ([xshift=5pt]axis cs:gdev,0) {0/178};
+\node[val, rotate=90, anchor=west] at ([xshift=5pt]axis cs:ghold,0) {0/168};
+\node[val, rotate=90, anchor=west] at ([xshift=5pt]axis cs:odev,0) {0/178};
+\end{axis}
+\node[anchor=south] at ([yshift=1pt]e1.outer north east) {\ref{textlegend}};
+\end{tikzpicture}
+\caption{Attacker-written text under the acting rule (hatched) and asymmetric trust (solid); C1 of the results
+file, its asymmetric-trust rows for the solid bars. Left: attack cases (of 72) dismissed in E1 on DEDALE without an
+analyst, per injected text (routine-maintenance claim, fake approval, steering). Right: GUIDE pairs in which
+contamination removed an automatic block (gpt-oss: gpt-oss-20b); labels give the count over the pairs whose clean
+alert executed one.}
+\label{fig:text}
+\end{figure}
 
 \begin{table}[t]
 \caption{Attacker-written text under the acting rule and under asymmetric trust (C1; asymmetric-trust rows of C1).
@@ -307,8 +361,31 @@ analyst (4 h) & reviews per day, clean & 33.2 & 34.1 \\
 \end{table}
 
 \subsection{C2: learning behind a gate}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[ybar, bar width=18pt, ymode=log, log origin=infty, ymin=10, ymax=40000, log ticks with fixed point,
+  width=\columnwidth, height=4.1cm, symbolic x coords={none,gate,nogate}, xtick={none,gate,nogate},
+  xticklabels={{nothing learned},{benign weeks learned,\\gate on},{learning without\\the gate}},
+  xticklabel style={font=\scriptsize, align=center}, enlarge x limits=0.28, font=\footnotesize, tick pos=left,
+  ylabel={host reviews per day}]
+\addplot[basebar, bar shift=0pt] coordinates {(none,6095.4)};
+\addplot[trustbar, bar shift=0pt] coordinates {(gate,65.2)};
+\addplot[actingbar, bar shift=0pt] coordinates {(nogate,27.4)};
+\node[val, above] at (axis cs:none,6095.4) {6095.4};
+\node[val, above] at (axis cs:gate,65.2) {65.2};
+\node[val, above] at (axis cs:nogate,27.4) {27.4};
+\end{axis}
+\end{tikzpicture}
+\caption{Host reviews per day on DEDALE, log scale (C2). Learning without the gate has the fewest reviews only
+because the store learned 38 attack cases' patterns as routine: 99 labelled attack events alerted, against 400 with
+the gate.}
+\label{fig:c2}
+\end{figure}
+
 With nothing learned, the host detectors produced 6095.4 reviews per day over 85336 test cases, raising 80
-malicious cases and 473 labelled attack events (C2). After learning the benign weeks, reviews fell to 65.2 per day
+malicious cases and 473 labelled attack events (C2, Fig.~\ref{fig:c2}). After learning the benign weeks, reviews fell to 65.2 per day
 over 913 cases; 72 malicious cases were raised, every one reviewed, and 400 labelled attack events alerted.
 Continuing to learn behind the gate gave the same numbers: with neither NCE nor an analyst, no case is dismissed,
 so the gate admits nothing new, and the reduction is due to the training weeks rather than to the gate. Learning
@@ -318,7 +395,43 @@ Network alerts followed the same pattern: 552.3 reviews per day with nothing lea
 without the gate 20.6, with 1 attack pattern learned.
 
 \subsection{C3: poisoning through the analyst}
-The gate does not apply to analysts, so we simulated one who misses attacks (C3). Missing 5\% let the store learn 8
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\pgfplotsset{poison/.style={ybar, bar width=10pt, scale only axis, width=2.9cm, height=2.5cm, ymin=0, tick pos=left,
+  symbolic x coords={m5,m20}, xtick={m5,m20}, xticklabels={{misses 5\%},{misses 20\%}}, enlarge x limits=0.55,
+  font=\footnotesize, xticklabel style={font=\scriptsize}}}
+\begin{axis}[poison, name=learned, ymax=27, ylabel={attack patterns learned},
+  legend to name=poisonlegend, legend columns=2,
+  legend style={font=\scriptsize, draw=none, /tikz/every even column/.append style={column sep=6pt}}]
+\addplot[actingbar, bar shift=-6pt] coordinates {(m5,8) (m20,20)};
+\addlegendentry{without unlearning}
+\addplot[trustbar, bar shift=6pt] coordinates {(m5,0) (m20,0)};
+\addlegendentry{with unlearning}
+\node[val, above] at ([xshift=-6pt]axis cs:m5,8) {8};
+\node[val, above] at ([xshift=-6pt]axis cs:m20,20) {20};
+\node[val, above] at ([xshift=6pt]axis cs:m5,0) {0};
+\node[val, above] at ([xshift=6pt]axis cs:m20,0) {0};
+\end{axis}
+\begin{axis}[poison, at={(learned.outer east)}, anchor=outer west, ymax=520,
+  ylabel={attack events alerted}]
+\addplot[actingbar, bar shift=-6pt] coordinates {(m5,397) (m20,256)};
+\addplot[trustbar, bar shift=6pt] coordinates {(m5,400) (m20,400)};
+\node[val, above] at ([xshift=-6pt]axis cs:m5,397) {397};
+\node[val, above] at ([xshift=-6pt]axis cs:m20,256) {256};
+\node[val, above] at ([xshift=6pt]axis cs:m5,400) {400};
+\node[val, above] at ([xshift=6pt]axis cs:m20,400) {400};
+\end{axis}
+\node[anchor=south] at ([yshift=1pt]learned.outer north east) {\ref{poisonlegend}};
+\end{tikzpicture}
+\caption{Poisoning through a simulated analyst who misses 5\% or 20\% of attacks (C3): attack cases' patterns
+learned as routine (left) and labelled attack events alerted (right), without unlearning (hatched) and with
+unlearning on confirmed compromise (solid).}
+\label{fig:c3}
+\end{figure}
+
+The gate does not apply to analysts, so we simulated one who misses attacks (C3, Fig.~\ref{fig:c3}). Missing 5\% let the store learn 8
 attack cases' patterns and left 397 events alerting; missing 20\% taught it 20 patterns and reduced the malicious
 cases raised to 61 and the alerting events to 256. With unlearning on confirmed compromise, both mistake rates
 ended with 0 patterns learned, 72 malicious cases raised and 400 events alerting. The price is review load: 34.1
@@ -354,8 +467,34 @@ NCE and analyst, asym.\ trust & 34.1 & 0/72 & 0 & \\
 \end{table}
 
 \subsection{C4: the LLM on testbed telemetry}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[xbar, bar width=7pt, scale only axis, width=4.2cm, height=3.4cm, xmin=0, xmax=80,
+  symbolic y coords={off,closed,open,ana,asym,asyman}, ytick={off,closed,open,ana,asym,asyman},
+  yticklabels={{NCE off},{NCE, closed world},{NCE, open world},{NCE and analyst},{NCE, asymmetric trust},
+  {NCE and analyst, asym.\ trust}}, y dir=reverse, enlarge y limits=0.1, font=\footnotesize, tick pos=left,
+  yticklabel style={font=\scriptsize}, xlabel={host reviews per day}]
+\addplot[basebar, bar shift=0pt] coordinates {(65.2,off)};
+\addplot[actingbar, bar shift=0pt] coordinates {(54.6,closed) (54.8,open) (33.2,ana)};
+\addplot[trustbar, bar shift=0pt] coordinates {(65.2,asym) (34.1,asyman)};
+\node[val, right] at (axis cs:65.2,off) {65.2};
+\node[val, right] at (axis cs:54.6,closed) {54.6};
+\node[val, right] at (axis cs:54.8,open) {54.8};
+\node[val, right] at (axis cs:33.2,ana) {33.2};
+\node[val, right] at (axis cs:65.2,asym) {65.2};
+\node[val, right] at (axis cs:34.1,asyman) {34.1};
+\end{axis}
+\end{tikzpicture}
+\caption{Host reviews per day with the LLM (C4): NCE off (white), the acting rule (hatched) and asymmetric trust
+(solid; the asymmetric-trust rows of C4). The closed-world run dismissed 2 of 72 malicious cases; the other runs
+dismissed none of them.}
+\label{fig:c4}
+\end{figure}
+
 Adding NCE under the acting rule with a closed-world feasibility check lowered reviews from 65.2 to 54.6 per day,
-but dismissed 2 of 72 malicious cases together with 89 benign ones (C4). Both misses involved a server without
+but dismissed 2 of 72 malicious cases together with 89 benign ones (C4, Fig.~\ref{fig:c4}). Both misses involved a server without
 telemetry in the store, whose absence was read as impossibility. Treating unmonitored hosts as unknown (open world)
 dismissed none of the 72 malicious cases and 89 benign ones, at 54.8 reviews per day; we adopted this rule after
 seeing the misses, on the same data. With an analyst as well, NCE brought reviews to 33.2 per day against 34.1 for
@@ -399,7 +538,7 @@ cannot restore what the injected text hid. The rule removed a different effect. 
 held back an alert's automatic responses, so contamination that triggered a review cancelled a block the trusted
 telemetry supported: in 20 of 178 (11.2\%), 18 of 168 (10.7\%) and 21 of 176 (11.9\%) pairs. ERA's own, correct
 escalation was the trigger in 17, 18 and 17 of these pairs. Under asymmetric trust the block runs and the review is
-added: 0 of 178, 168 and 178. The denominators can grow because a clean alert's block now also runs when its own
+added: 0 of 178, 168 and 178 (Fig.~\ref{fig:text}, right). The denominators can grow because a clean alert's block now also runs when its own
 hypotheses ask for review. Outcome totals on the development pairs stayed at 532 reviews and 336 automatic
 responses. In E1 on DEDALE, 0/72 attack cases were dismissed for every injected text, with and without an analyst;
 no pattern was learned and the same 400 events alerted. Reviews per day were 65.2 without and 34.1 with an analyst
