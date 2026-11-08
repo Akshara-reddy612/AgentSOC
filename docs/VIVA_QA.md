@@ -26,17 +26,21 @@ Because of how the decision is computed, not because the LLM behaves well. For e
 twice: once without the LLM's hypotheses (the *text-free decision*) and once with them. The final outcome is the
 text-free decision, unless the LLM asks for review, in which case it is review. Nothing in between can be lower.
 Only actions of the text-free decision are allowed to run without an analyst; an action only the LLM supports
-becomes a proposal. The learning gate only learns cases that were dismissed, and only the text-free decision can
-dismiss. So whatever the LLM says (right, wrong or hijacked), it can only add review. We still test it: the rule
+becomes a proposal. The learning gate only learns cases that were dismissed, and only 24 hours after they close;
+if another case on the same host was escalated after the case opened, nothing is learned from it. Only the
+text-free decision can dismiss. So whatever the LLM says (right, wrong or hijacked), it can only add review. We still test it: the rule
 held on all 2,000 recorded LLM answers from two models and on 300 random adversarial inputs.
 
 **4. What exactly does "what the attacker can't write" cover?**
 
-The structured fields that sensors record (host name, account, parent process, the program path as recorded,
-IP addresses and ports, event ids), the company's asset inventory and network plan, and the patterns the store has
-learned behind the gate. It does not cover free text: command lines, script text, raw log lines, file and tool
-names. Those the attacker controls, so only the LLM and the text-risk check (ERA) read them, and both can only
-escalate. The LLM is shown the first 512 characters of each field: on DEDALE the command line is almost always
+The structured fields that sensors record (host name, account, IP addresses and ports, event ids), the company's
+asset inventory and network plan, and the patterns the store has learned behind the gate. Sensors also record
+program paths, including the parent program, but the attacker picks the names and locations of their own programs,
+so those values can change which patterns look new to the detectors (the PowerShell detector keeps only a hash of
+the script text). They cannot instruct anything, but they can help the attacker blend in. Free text (command lines,
+script text, raw log lines, file and tool names) the attacker controls completely: the LLM reads it, a check of the
+LLM's command-and-control hypotheses scans it, and on GUIDE the text-risk check (ERA) reads it. Under asymmetric
+trust none of these can do more than add a review. The LLM is shown the first 512 characters of each field: on DEDALE the command line is almost always
 fully visible (1 of 797 is longer), but the raw log line is cut in 718 of 856 cases, so attacker text late in it is
 not seen; under asymmetric trust that can only cost a missed escalation. Tampering with the structured fields at
 the sensor itself is outside our threat model.
@@ -84,4 +88,22 @@ The LLM's answers were recorded once and are replayed, so no model call is neede
 DEDALE replays and `build_results` writes `RESULTS.md`, the source of every number in the paper. For bad input:
 a pipeline error sends the case to an analyst, an event the pipeline fails on is quarantined while the server
 recovers from its last checkpoint, malformed events are refused and counted, and a check that long crafted text
-could slow down now reads only the part the LLM saw.
+could slow down now reads only the part the LLM saw. These protections are covered by unit tests, not evaluated on
+a dataset: in the 43 replays no event was refused. The quarantine and the checkpoint recovery are part of the live
+server; the experiment replays run the loop directly.
+
+**11. What if an attacker makes their program look like a normal one?**
+
+The detectors remember patterns such as "this program started that program on this host". If an attacker names
+and places their program exactly like a routine one, and starts it from the usual parent, the pattern is already
+known and no alert is raised. Asymmetric trust does not help here: it limits what the LLM's output can cause, not
+what the detectors see. Other steps of an attack may still create new patterns (on DEDALE every step reached an
+analyst), but we did not test an attacker who copies normal behaviour on purpose. It is listed as a limitation.
+
+**12. Why does ERA not run on DEDALE?**
+
+ERA was built for GUIDE, where each alert is judged on its own, and it runs as an offline scoring step whose result
+the GUIDE re-scoring reads. The DEDALE loop's triage gate never asks for an ERA score. For network alerts there is
+a reason in the code: their text is the IDS rule's message, which the attacker does not write. For host command
+lines ERA was simply not wired in, so we have no measurement of what it would add or how many false alarms it would
+raise there. On DEDALE, the store's novelty check does the detecting and the LLM can only add review.
