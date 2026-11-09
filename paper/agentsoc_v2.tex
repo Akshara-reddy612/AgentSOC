@@ -184,18 +184,18 @@ dataset recorded on a testbed.
 % ---------------- Perception Layer ----------------
 \draw[layer] (0,0) rectangle (11.5,-2.0);
 \node[ltitle, anchor=north west] at (0,0) {PERCEPTION LAYER};
-\node[comp, text width=30mm, minimum height=14.5mm] (an) at (0.2,-0.42)
+\node[comp, text width=29mm, minimum height=14.5mm] (an) at (0.2,-0.42)
   {\textbf{Alert Normalization}\\splits each event into trusted fields and free text};
-\node[comp, text width=33mm, minimum height=14.5mm] (sc) at (4.0,-0.42)
-  {\textbf{Situational Contextualization}\\detectors compare patterns with the learned store};
-\node[comp, text width=31.5mm, minimum height=14.5mm] (nr) at (8.0,-0.42)
-  {\textbf{Noise Reduction}\\learned patterns raise no alert; alerts sharing a pattern form a case};
-\draw[flow] (3.36,-1.15) -- (4.0,-1.15);
-\draw[flow] (7.46,-1.15) -- (8.0,-1.15);
+\node[comp, text width=32.5mm, minimum height=14.5mm] (sc) at (3.75,-0.42)
+  {\textbf{Situational Contextualization}\\adds context from the store, keyed by trusted fields};
+\node[comp, text width=35mm, minimum height=14.5mm] (nr) at (7.65,-0.42)
+  {\textbf{Noise Reduction}\\detectors alert only on unlearned patterns; alerts sharing a pattern form a case};
+\draw[flow] (3.26,-1.15) -- (3.75,-1.15);
+\draw[flow] (7.16,-1.15) -- (7.65,-1.15);
 % ---------------- Trusted fields | free text ----------------
 \node[comp, trusted, text width=69.5mm, minimum height=7.8mm] (tf) at (0.2,-2.25)
   {\textbf{Trusted fields} (sensors, inventory): host, account, addresses, ports, event ids};
-\node[comp, attacker, text width=31.5mm, minimum height=7.8mm] (ft) at (8.0,-2.25)
+\node[comp, attacker, text width=35mm, minimum height=7.8mm] (ft) at (7.65,-2.25)
   {\textbf{Free text}, written by the attacker};
 \draw[flow, draw=ctrust!70!black] (an.south) -- (an.south |- tf.north);
 \draw[flow, draw=ctext!80!black] (nr.south) -- (nr.south |- ft.north);
@@ -203,7 +203,7 @@ dataset recorded on a testbed.
 \draw[layer] (0,-3.18) rectangle (11.5,-5.76);
 \node[ltitle, anchor=north west] at (0,-3.18) {AGENTIC REASONING LAYER};
 \node[comp, text width=25mm, minimum height=11mm] (rsem) at (0.2,-3.6) {\textbf{RSEM (Rule Based)}\\ranks responses};
-\node[comp, text width=27mm, minimum height=11mm] (sse) at (4.45,-3.6) {\textbf{SSE (Graph Based)}\\feasibility and entity binding};
+\node[comp, text width=27mm, minimum height=11mm] (sse) at (4.45,-3.6) {\textbf{SSE (Graph Based)}\\feasibility in the environment model};
 \node[comp, llm, text width=23.5mm, minimum height=14.5mm] (nce) at (8.84,-3.6)
   {\textbf{NCE (LLM Based)}\\reads the first 512 characters of each free-text field};
 \node[comp, guideonly, text width=36mm, minimum height=4.6mm] (guide) at (3.6,-4.83) {GUIDE only: ERA, destination check};
@@ -222,7 +222,7 @@ dataset recorded on a testbed.
 \node[comp, safety, text width=49mm, minimum height=14.8mm] (guard) at (3.3,-6.31)
   {\textbf{Policy and Safety Guardrails}\\outcome = model-free decision, or review;\\a response only the model proposes waits for an analyst};
 \node[comp, text width=22mm, minimum height=14.8mm] (exec) at (8.85,-6.31)
-  {\textbf{Execution Interface}\\runs model-free responses};
+  {\textbf{Execution Interface}\\simulates model-free responses};
 \draw[flow] (0.7,-4.7) -- (0.7,-6.31);
 \node[lab, anchor=west] at (0.8,-5.3) {Ranked Actions};
 \draw[flow] (guide.south) -- (guide.south |- guard.north);
@@ -231,7 +231,7 @@ dataset recorded on a testbed.
 % ---------------- Integrated Knowledge Store and Real-Time Monitoring ----------------
 \node[comp, text width=15mm, minimum height=65mm, fill=black!7, draw=black!75, line width=0.9pt] (iks) at (13.0,0)
   {\textbf{Integrated Knowledge Store (IKS)}\\[3pt]learned patterns, environment model, enterprise context};
-\draw[both] (11.5,-1.15) -- (13.0,-1.15) node[lab, midway, above] {learned\\patterns};
+\draw[both] (11.5,-1.15) -- (13.0,-1.15) node[lab, midway, above] {learned\\patterns,\\context};
 \draw[both] (11.5,-4.15) -- (13.0,-4.15) node[lab, midway, above] {environment\\model};
 \draw[both] (11.5,-6.3) -- (13.0,-6.3) node[lab, midway, above] {enterprise\\context};
 \node[comp, text width=15mm, minimum height=8.5mm] (rtm) at (13.0,-6.95) {\textbf{Real-Time Monitoring}};
@@ -256,7 +256,7 @@ dataset recorded on a testbed.
 \draw[flow] (guard.south -| ex) |- (inbox.south |- ey) -- (inbox.south);
 \node[lab, anchor=east] at (16.38,-7.25) {review and\\model-only\\proposals};
 \end{tikzpicture}
-\caption{GuardedSOC on the AgentSOC architecture~\cite{agentsoc}: the base design's layers, components and connections, with the security workflow this work adds marked by colour and outline. Program paths, though recorded by sensors, are chosen by the attacker for their own programs (Section~\ref{sec:system}-A). On DEDALE the model-free path sends a case whose pattern the store has not learned to review. The model can raise the outcome to review but cannot lower it; responses of the model-free decision execute even when review is added. Analyst verdicts teach the store directly, and a confirmed compromise triggers unlearning.}
+\caption{GuardedSOC on the AgentSOC architecture~\cite{agentsoc}: the base design's layers, components and connections, with the security workflow this work adds marked by colour and outline. Program paths, though recorded by sensors, are chosen by the attacker for their own programs (Section~\ref{sec:system}-A). Entity binding checks the hosts and accounts in NCE's hypotheses against the trusted fields; SSE then marks each hypothesis feasible or infeasible (Validate Possibility), only feasible ones reach RSEM, and nothing is sent back to the LLM. On DEDALE the model-free path sends a case whose pattern the store has not learned to review. The model can raise the outcome to review but cannot lower it; responses of the model-free decision execute even when review is added. Analyst verdicts teach the store directly, and a confirmed compromise triggers unlearning.}
 \label{fig:system}
 \end{figure*}
 
