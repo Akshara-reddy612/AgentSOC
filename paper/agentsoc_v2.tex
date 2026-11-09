@@ -234,7 +234,7 @@ dataset recorded on a testbed.
 \draw[both] (11.5,-4.15) -- (13.0,-4.15) node[lab, midway, above] {environment\\model};
 \draw[both] (11.5,-6.3) -- (13.0,-6.3) node[lab, midway, above] {enterprise\\context};
 \node[comp, text width=15mm, minimum height=8.5mm] (rtm) at (13.0,-6.95) {\textbf{Real-Time Monitoring}};
-\draw[both] (exec.east |- rtm.west) -- (rtm.west) node[lab, midway, above] {executed\\responses};
+\draw[flow] (exec.east |- rtm.west) -- (rtm.west) node[lab, midway, above] {executed\\responses};
 \draw[flow] (13.3,-6.95) -- (13.3,-6.5);
 \node[lab, anchor=west] at (13.36,-6.72) {outcomes};
 % ---------------- Legend, learning gate and analyst inbox ----------------
