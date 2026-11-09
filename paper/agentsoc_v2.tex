@@ -164,35 +164,67 @@ dataset recorded on a testbed.
 
 \begin{figure}[t]
 \centering
-\begin{tikzpicture}[font=\scriptsize, >={Stealth[length=1.5mm]},
-  b/.style={draw, rounded corners=2pt, align=center, inner sep=2pt, minimum height=7mm, text width=32mm},
-  w/.style={b, text width=69mm},
-  tr/.style={b, fill=ctrust!14}, tx/.style={b, fill=ctext!16}, lm/.style={b, fill=cllm!14}]
-\node[w] (ev) at (0,0) {Sensor event (endpoint or network)};
-\node[tr] (sf) at (-1.8,-1.05) {Structured fields\\(sensors, inventory)};
-\node[tx] (ft) at (1.8,-1.05) {Free text\\(the attacker can write it)};
-\node[tr] (nov) at (-1.8,-2.15) {Novelty against the\\learned store: a case};
-\node[lm] (nce) at (1.8,-2.15) {NCE: LLM hypotheses\\(first 512 characters)};
-\node[tr] (mf) at (-1.8,-3.3) {Model-free decision\\(fields and store;\\on GUIDE also ERA)};
-\node[lm] (ma) at (1.8,-3.3) {Model-assisted decision\\(SSE, entity binding)};
-\node[w] (out) at (0,-4.4) {Outcome: the model-free decision, or review if the model-assisted one asks};
-\node[tr] (run) at (-1.8,-5.45) {Model-free responses run,\\even when review is added};
-\node[lm] (prop) at (1.8,-5.45) {Responses only the model\\proposes wait for a person};
-\node[w] (an) at (0,-6.55) {Analyst inbox: verdicts teach the store; unlearning on confirmed compromise};
-\draw[->] (ev) -- (sf); \draw[->] (ev) -- (ft);
-\draw[->] (sf) -- (nov); \draw[->] (ft) -- (nce);
-\draw[->] (nov) -- (mf); \draw[->] (nce) -- (ma);
-\draw[->, dashed] (ft.south west) -- (mf.north east);
-\draw[->] (mf) -- (mf |- out.north); \draw[->] (ma) -- node[right]{may add review} (ma |- out.north);
-\draw[->] (out.south -| run) -- (run); \draw[->] (out.south -| prop) -- (prop);
-\draw[->] (prop) -- (prop |- an.north);
-\draw[->] (out.west) -- ++(-0.5,0) |- node[pos=0.25, left]{gate} (nov.west);
-\draw[->] (an.west) -- ++(-0.25,0) |- ([yshift=-2mm]nov.west);
+\begin{tikzpicture}[font=\footnotesize, >={Stealth[length=1.6mm, width=1.3mm]},
+  box/.style={rounded corners=1.5pt, align=center, inner sep=2.5pt, anchor=north},
+  lane/.style={box, text width=33mm},
+  trusted/.style={fill=ctrust!14, draw=ctrust!70!black, line width=0.6pt},
+  attacker/.style={fill=ctext!17, draw=ctext!75!black, line width=1.4pt},
+  llm/.style={fill=cllm!14, draw=cllm!75!black, double, double distance=0.9pt, line width=0.4pt},
+  neutral/.style={fill=white, draw=black!70, line width=0.5pt},
+  guideonly/.style={fill=white, draw=black!80, dashed, line width=0.5pt},
+  flow/.style={->, line width=0.5pt, draw=black!80},
+  note/.style={font=\footnotesize, inner sep=1pt},
+  stage/.style={circle, fill=black!80, text=white, font=\footnotesize\bfseries, inner sep=0pt, minimum size=3.8mm}]
+% Two lanes (centres -1.963 and +1.963, 0.45 cm apart); six numbered rows, top to bottom.
+% 1. Sensor event
+\node[box, neutral, text width=72.26mm, minimum height=5.5mm] (s1) at (0,0) {Sensor event (endpoint or network)};
+% 2. Split: trusted fields | free text
+\node[lane, trusted, minimum height=12.5mm] (s2l) at (-1.963,-0.95) {\textbf{Trusted fields}\\host, account, addresses, ports, event ids};
+\node[lane, attacker, minimum height=12.5mm] (s2r) at (1.963,-0.95) {\textbf{Free text}\\command lines, scripts, raw log lines (attacker-written)};
+% 3. Novelty against the store | the LLM reads the text
+\node[lane, trusted, minimum height=12.5mm] (s3l) at (-1.963,-2.60) {\textbf{Detectors}\\a pattern new to the learned store opens a case};
+\node[lane, llm, minimum height=12.5mm] (s3r) at (1.963,-2.60) {\textbf{LLM (NCE)}\\reads the first 512 characters of each text field};
+% 4. Two decisions; the model-free one holds the GUIDE-only check
+\node[lane, trusted, minimum height=22mm] (s4l) at (-1.963,-4.25) {};
+\node[align=center, text width=33mm, anchor=north, inner sep=0pt] at (-1.963,-4.34)
+  {\textbf{Model-free decision}\\fields and store; on DEDALE an unlearned case goes to review};
+\node[box, guideonly, text width=29mm, anchor=south] at (-1.963,-6.35) {GUIDE only: ERA and the destination check};
+\node[lane, llm, minimum height=22mm] (s4r) at (1.963,-4.25) {\textbf{Model-assisted decision}\\adds the LLM's hypotheses, SSE and entity binding};
+% 5. Outcome, as two halves of one box
+\node[box, trusted, text width=35.25mm, minimum height=12.5mm] (s5l) at (-1.851,-6.85) {\textbf{Outcome}: the model-free decision, or review if asked; its responses execute};
+\node[box, llm, text width=35.25mm, minimum height=12.5mm] (s5r) at (1.851,-6.85) {\textbf{The model can only add review}; its own proposals wait for human approval};
+% 6. Store update | analyst
+\node[lane, trusted, minimum height=16mm] (s6l) at (-1.963,-8.50) {\textbf{Learning gate}\\only cases dismissed without escalation are learned};
+\node[lane, neutral, minimum height=16mm] (s6r) at (1.963,-8.50) {\textbf{Analyst inbox}\\verdicts teach the store; a confirmed compromise triggers unlearning};
+% Flows: one arrow down per lane between rows.
+\foreach \a/\b in {s2l/s3l, s2r/s3r, s3l/s4l, s3r/s4r}
+  \draw[flow] (\a.south) -- (\b.north);
+\draw[flow] (-1.963,-6.45) -- (-1.963,-6.85);
+\draw[flow] (s4r.south) -- (s4r.south |- s5r.north);
+\draw[flow] (s5l.south -| s6l) -- (s6l.north);
+\draw[flow] (s5r.south -| s6r) -- (s6r.north);
+\draw[flow] (s1.south -| s2l) -- (s2l.north);
+\draw[flow] (s1.south -| s2r) -- (s2r.north);
+\node[note, anchor=west] at (-1.86,-8.30) {dismissed};
+\node[note, anchor=west] at (2.07,-8.30) {for review};
+\draw[flow] (s6r.west) -- (s6l.east);
+% The learning gate updates the store the detectors read.
+\draw[flow] (s6l.west) -- ++(-0.28,0) |- (s3l.west);
+\node[note, rotate=90] at (-4.17,-5.6) {updates the learned store};
+% Stage numbers.
+\foreach \n/\y in {1/-0.275, 2/-1.575, 3/-3.225, 4/-5.35, 5/-7.475, 6/-9.30}
+  \node[stage] at (4.02,\y) {\n};
+% Legend.
+\begin{scope}[shift={(-3.701,-10.40)}]
+  \foreach \st/\lab/\x in {trusted/trusted fields/0, attacker/attacker text/2.45, llm/depends on the LLM/4.75}
+    { \draw[\st, rounded corners=1pt] (\x,0) rectangle ++(0.42,-0.26);
+      \node[note, anchor=west] at (\x+0.47,-0.13) {\lab}; }
+  \foreach \st/\lab/\x in {neutral/{sensor, analyst}/0, guideonly/GUIDE only/2.45}
+    { \draw[\st, rounded corners=1pt] (\x,-0.42) rectangle ++(0.42,-0.26);
+      \node[note, anchor=west] at (\x+0.47,-0.55) {\lab}; }
+\end{scope}
 \end{tikzpicture}
-\caption{GuardedSOC under asymmetric trust. Green: data and decisions the attacker cannot write directly (the
-detectors' patterns include program paths the attacker chooses, Section~\ref{sec:system}-A); orange: free text;
-blue: what depends on the LLM. The dashed arrow is ERA, which reads free text, can only escalate and runs on GUIDE
-only. The gate passes to the store only cases dismissed without escalation; analyst verdicts reach it directly.}
+\caption{GuardedSOC, top to bottom. (1) A sensor event is (2) split into trusted fields (green), recorded by sensors and the inventory, and free text (orange, thick outline), which the attacker can write; program paths are recorded by sensors but chosen by the attacker for their own programs (Section~\ref{sec:system}-A). (3) Detectors compare each event's pattern with the learned store and open a case when it is new; the LLM (blue, double outline) reads the case's free text. (4) The model-free decision uses the trusted fields and the store; on DEDALE a case whose pattern the store has not learned goes to review. ERA and the destination-telemetry check (dashed) run on GUIDE only. The model-assisted decision adds the LLM's hypotheses, checked by SSE against the environment model and by entity binding against the trusted fields. (5) The outcome is the model-free decision, raised to review if the model-assisted decision asks; the model cannot lower it. Responses of the model-free decision execute even when review is added; a response only the model proposes waits for an analyst. (6) Only cases dismissed without escalation pass the learning gate into the store; analyst verdicts teach the store directly, and a confirmed compromise triggers unlearning.}
 \label{fig:system}
 \end{figure}
 
