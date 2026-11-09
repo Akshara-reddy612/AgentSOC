@@ -203,15 +203,14 @@ dataset recorded on a testbed.
 \draw[layer] (0,-3.18) rectangle (11.5,-5.76);
 \node[ltitle, anchor=north west] at (0,-3.18) {AGENTIC REASONING LAYER};
 \node[comp, text width=25mm, minimum height=11mm] (rsem) at (0.2,-3.6) {\textbf{RSEM (Rule Based)}\\ranks responses};
-\node[comp, text width=27mm, minimum height=11mm] (sse) at (4.45,-3.6) {\textbf{SSE (Graph Based)}\\feasibility in the environment model};
+\node[comp, text width=27mm, minimum height=11mm] (sse) at (4.45,-3.6) {\textbf{SSE (Graph Based)}\\Validate Possibility:\\feasible or infeasible};
 \node[comp, llm, text width=23.5mm, minimum height=14.5mm] (nce) at (8.84,-3.6)
   {\textbf{NCE (LLM Based)}\\reads the first 512 characters of each free-text field};
 \node[comp, guideonly, text width=36mm, minimum height=4.6mm] (guide) at (3.6,-4.83) {GUIDE only: ERA, destination check};
 \draw[flow, draw=ctrust!70!black] (4.9,-3.03) -- (4.9,-3.6);
 \node[lab, anchor=west, text=ctrust!60!black] at (4.98,-3.33) {model-free path};
 \draw[flow, draw=ctext!80!black] (10.1,-3.03) -- (10.1,-3.6);
-\draw[flow, draw=cllm!80!black] (8.84,-3.9) -- (7.31,-3.9) node[lab, midway, above] {Generate\\Hypothesis};
-\draw[flow, draw=cllm!80!black] (7.31,-4.4) -- (8.84,-4.4) node[lab, midway, below] {Validate\\Possibility};
+\draw[flow, draw=cllm!80!black] (8.84,-4.15) -- (7.31,-4.15) node[lab, midway, above] {Generate\\Hypothesis};
 \draw[flow] (4.45,-4.35) -- (2.86,-4.35) node[lab, midway, above] {Published\\Attack Path};
 \node[lab, anchor=north, text=cllm!70!black] at (10.09,-5.12) {model-assisted path};
 % ---------------- Action and Playbook Layer ----------------
@@ -256,7 +255,7 @@ dataset recorded on a testbed.
 \draw[flow] (guard.south -| ex) |- (inbox.south |- ey) -- (inbox.south);
 \node[lab, anchor=east] at (16.38,-7.25) {review and\\model-only\\proposals};
 \end{tikzpicture}
-\caption{GuardedSOC on the AgentSOC architecture~\cite{agentsoc}: the base design's layers, components and connections, with the security workflow this work adds marked by colour and outline. Program paths, though recorded by sensors, are chosen by the attacker for their own programs (Section~\ref{sec:system}-A). Entity binding checks the hosts and accounts in NCE's hypotheses against the trusted fields; SSE then marks each hypothesis feasible or infeasible (Validate Possibility), only feasible ones reach RSEM, and nothing is sent back to the LLM. On DEDALE the model-free path sends a case whose pattern the store has not learned to review. The model can raise the outcome to review but cannot lower it; responses of the model-free decision execute even when review is added. Analyst verdicts teach the store directly, and a confirmed compromise triggers unlearning.}
+\caption{GuardedSOC on the AgentSOC architecture~\cite{agentsoc}: the base design's layers, components and connections, with the security workflow this work adds marked by colour and outline. Program paths, though recorded by sensors, are chosen by the attacker for their own programs (Section~\ref{sec:system}-A). Entity binding checks the hosts and accounts in NCE's hypotheses against the trusted fields; SSE then checks each hypothesis against the environment model, marking it feasible or infeasible, and only feasible ones reach RSEM. Two details differ from the base figure: since no result returns to NCE, its ``Validate Possibility'' arrow from SSE back to NCE is drawn as SSE's own step, and its label ``Published Attach Path'' reads ``Published Attack Path'', the term of the base paper's text. On DEDALE the model-free path sends a case whose pattern the store has not learned to review. The model can raise the outcome to review but cannot lower it; responses of the model-free decision execute even when review is added. Analyst verdicts teach the store directly, and a confirmed compromise triggers unlearning.}
 \label{fig:system}
 \end{figure*}
 
