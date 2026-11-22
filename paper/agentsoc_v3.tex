@@ -12,6 +12,8 @@
 \usepackage{booktabs}
 \usepackage{array}
 \usepackage{url}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage{tikz}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
@@ -213,6 +215,33 @@ eligibility, so the LLM can prevent learning but never authorize it. Analyst ver
 
 We call the earlier behaviour, in which NCE output can also lower an outcome, the \emph{acting rule}. Both rules are
 evaluated on the same recorded LLM answers. Property 1 was also checked against randomized synthetic hypotheses.
+Algorithm~\ref{alg:triage} gives the decision for one case.
+
+\begin{algorithm}[t]
+\caption{Triage decision under asymmetric trust}
+\label{alg:triage}
+\footnotesize
+\begin{algorithmic}[1]
+\Require case $x = (x_s, x_t)$, knowledge store $K$
+\Ensure outcome $o$, actions $A$ that execute now
+\State $\mathit{esc} \gets$ \textbf{false}
+\If{$x_s$ contacts a known-bad destination or a watched entity}
+  \State $\mathit{esc} \gets$ \textbf{true} \Comment{trusted-field rule, checked first}
+\ElsIf{the pattern of $x$ is learned in $K$}
+  \State \Return LOW\_PRIORITY, $\emptyset$ \Comment{no LLM call}
+\EndIf
+\State $b \gets \textsc{Pipeline}(x, \varnothing, K)$ \Comment{model-free decision}
+\If{$b.o = $ NO\_ACTIONABLE \textbf{and} the pattern is unlearned}
+  \State $b.o \gets$ REVIEW \Comment{rule D7}
+\EndIf
+\State $h \gets \textsc{NCE}(x_t)$ \Comment{first 512 characters per field}
+\State $m \gets \textsc{Pipeline}(x, h, K)$ \Comment{binding, SSE, RSEM, guardrails}
+\State $P \gets m.\mathit{auto} \setminus b.\mathit{auto}$ \Comment{actions only NCE supports}
+\State $o \gets$ REVIEW \textbf{if} $\mathit{esc}$ \textbf{or} $m.o =$ REVIEW \textbf{or} $P \ne \emptyset$
+\textbf{else} $b.o$
+\State \Return $o$, $b.\mathit{auto}$ \Comment{$P$ waits for an analyst}
+\end{algorithmic}
+\end{algorithm}
 
 \subsection{Learning Gate and Targeted Unlearning}
 
@@ -520,7 +549,25 @@ a workload reduction nor a detection gain.
 
 Network containment of the attacker's command server followed the analyst delay exactly (60 to 4,320 minutes for 1
 to 72\,h), because containment waited for approval. Host workload rose with delay, from 33.1 reviews per day at
-1\,h to 51.5 at 72\,h, with all 72 attack cases still raised.
+1\,h to 51.5 at 72\,h, with all 72 attack cases still raised (Fig.~\ref{fig:delay}).
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=\columnwidth, height=3.6cm, xmode=log, xmin=0.7, xmax=100, ymin=0, ymax=80,
+  xtick=data, log ticks with fixed point, xlabel={analyst response delay (hours)},
+  ylabel={host reviews per day}, font=\footnotesize, legend cell align=left, legend pos=south east,
+  legend style={font=\scriptsize, draw=none}]
+\addplot[cllm, thick, mark=*, mark size=1.5pt] coordinates {(1,33.1) (4,34.1) (24,38.1) (72,51.5)};
+\addlegendentry{simulated analyst}
+\addplot[ctext, thick, dashed, domain=0.7:100, samples=2] {65.2};
+\addlegendentry{no analyst}
+\end{axis}
+\end{tikzpicture}
+\caption{Host reviews per day against the analyst's response delay (targeted unlearning on). At every delay the 72
+attack cases were raised and the same 400 attack events alerted.}
+\label{fig:delay}
+\end{figure}
 
 \subsection{Enforcement Summary}
 
