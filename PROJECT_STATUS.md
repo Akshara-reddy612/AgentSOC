@@ -11,9 +11,9 @@ AgentSOC 2.0 (the system is called **GuardedSOC** in the newest paper) is a KMIT
 It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.20134). It is evaluated on a contamination corpus built from Microsoft GUIDE and on DEDALE (Inria, labelled testbed telemetry). It also runs as a live demo tool with a React web console. It exists to produce one research paper and a working tool someone outside the team can run (`PROJECT_PLAN.md` §1).
 
 **Status (verified 2026-11-22, `main` at `da17235` plus this audit's documentation commits on `chore/repo-audit-tracking`, not yet merged or pushed):**
-- Pipeline and tool are finished. The GUIDE and DEDALE results were frozen on 2026-10-31. Tests pass (804).
+- Pipeline and tool are finished. The GUIDE and DEDALE results were frozen on 2026-10-31. Tests pass (813 passed, 1 deselected; 2026-11-22, branch `paper-revision-design`).
 - Re-checked on this machine: the three GUIDE acting-rule re-scores are byte-identical to the committed ones. The full offline DEDALE re-freeze (43 replays) reproduced every frozen score file byte-identically (see "Reproduce" below).
-- The paper draft being worked on is the Word file `AgentSOC_IEEE_Revised.docx` (user, 2026-11-22). It was revised from the LaTeX paper `paper/agentsoc_v2.tex` and still has three wrong claims.
+- The paper to submit is `paper/agentsoc_v3.pdf` (built from `paper/agentsoc_v3.tex`; IEEE conference, 7 pages; git-ignored, backup in `D:\agentsoc_data\paper_private\`). The Word file `AgentSOC_IEEE_Revised.docx` is no longer the submission file.
 - Left for the team: fix and finish the draft, choose the venue, record the demo video, write the SDC-II course report (template `Documentation_Template-SDC-II.docx`), and (optional) a third dataset.
 
 ## Terms used in this file
@@ -201,7 +201,8 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 ## Known bugs, limits and gotchas
 
 **Paper:**
-- `AgentSOC_IEEE_Revised.docx` has three claims that do not match the repository:
+- `paper/agentsoc_v3.tex` is packed to exactly 7 pages; adding the A6 / B1 results will need 8 pages (recommended to the user 2026-11-22) or a content cut.
+- `AgentSOC_IEEE_Revised.docx` (superseded) has three claims that do not match the repository:
   - §IV-D says the six planned experiments have "execution harnesses implemented in the repository". None exists in any commit.
   - §VI-A says that on network alerts with 5% analyst false alarms (gated, analyst after 4 h, B5 on) "8 instances of benign destination IP unlearning" raised the workload "from 26.1 to 32.4 reviews/day". The frozen value for that condition is 21.2 reviews/day (`experiments/RESULTS.md:136`); the 8 are approved blocks that would have hit benign traffic (`RESULTS.md:138`), not unlearning; 32.4 appears in no result file.
   - §V-C gives 624 test cases for the host run with 5% analyst false alarms and B5 on; the frozen value is 625.
@@ -244,8 +245,8 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 
 ## Next steps (in order)
 
-0. **Paper revision (decisions P10, P11; 2026-11-22).** Tier 1 (offline) is done and scored. Tier 2: T2.1 (held-out undefended, 123/445 hijacked) and T2.3 (adaptive attacker, 2/300 suppressed under both rules) are done and scored (`experiments/tier2_scores.json`, RESULTS.md section "Paper revision"). T2.2 runs on the first 150 dev pairs (P11 amended) and is limited by the per-project daily Gemini quota. **Paper to submit: `paper/agentsoc_v3.pdf`** (IEEE conference, 7 pages, built from `paper/agentsoc_v3.tex`). The only open text is T2.2, marked in red. After that: the plagiarism pass, the AI-use disclosure and the venue's rules (double-blind?). The docx (`AgentSOC_IEEE_Revised.docx`) is no longer the submission file; it opens only in Word's repair mode.
-1. **Fix the paper draft `AgentSOC_IEEE_Revised.docx`** (the one being worked on; the user edits it, and an agent proposes changes rather than editing the `.docx`). Fix its three wrong claims (`docs/_audit_report.md` §3):
+0. **Paper revision (decisions P10, P11; 2026-11-22).** Tier 1 (offline) is done and scored. Tier 2: T2.1 (held-out undefended, 123/445 hijacked) and T2.3 (adaptive attacker, 2/300 suppressed under both rules) are done and scored (`experiments/tier2_scores.json`, RESULTS.md section "Paper revision"). T2.2 (first 150 dev pairs, P11 amended) is done and scored. **Paper to submit: `paper/agentsoc_v3.pdf`** (IEEE conference, 7 pages, built from `paper/agentsoc_v3.tex`). Plagiarism pass done (the user runs the official checker). Reviewer checklist: 20 of 29 items done (RESEARCH_LOG 2026-11-22). **Next:** after the Gemini quota reset (about 08:00 UTC) run `bash tools/live_queue.sh` (A6 telemetry baseline + B1 temperature repeats, about 1,200 calls, approved), then `python -m experiments.tier2_score`, `python -m experiments.build_results`, and add the results to the paper (likely at 8 pages). Still open: A3, A7 (MemStream), A8, B1 frontier model, D (anonymization, Zenodo, AI disclosure skipped by the user); venue rules later (user). The docx (`AgentSOC_IEEE_Revised.docx`) is no longer the submission file; it opens only in Word's repair mode.
+1. **(Superseded by `paper/agentsoc_v3.tex`, which has none of these errors.)** The old draft `AgentSOC_IEEE_Revised.docx` (the user edits it; the user edits it, and an agent proposes changes rather than editing the `.docx`). Fix its three wrong claims (`docs/_audit_report.md` §3):
    - remove "with execution harnesses implemented in the repository" from §IV-D;
    - in §VI-A replace "8 instances of benign destination IP unlearning, increasing network review workload from 26.1 to 32.4 reviews/day" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";
    - change 624 to 625.

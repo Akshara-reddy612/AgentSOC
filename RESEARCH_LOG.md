@@ -12,6 +12,16 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22 (night): checklist A11, training-window rotation (offline)
+
+- **What:** the DEDALE host replay can now train on one clean week only (`--train-window week1|week2`, `experiments/dedale_host_replay.py`; week 1 = 2024-12-23..12-29, week 2 = 12-30..2025-01-05). Six offline replays (`experiments/rotation_runs.py`, all rc=0), scored by `experiments/rotation_score.py` -> `experiments/dedale_results/rotation_scores.json`, generated into `experiments/RESULTS.md`.
+- **Result** (reviews/day frozen; attack cases; events; attack patterns learned with a 20% analyst miss rate, B5 on / off):
+  - both weeks: 65.2; 72; 400; 0 / 20
+  - week 1 only: 110.9; 72; 400; 0 / 24
+  - week 2 only: 111.4; 72; 400; 0 / 18
+- **Meaning:** a shorter training window roughly doubles the frozen workload (still 98.2% below static) but changes neither detection nor the unlearning result. Paper: a "Training window" paragraph in §V-B; the paper still fits 7 pages after trims (limitation (1), the gate-delay sentence, plot heights).
+- **Checklist:** 20 of 29 done (A11 added). The 7-page version has no spare lines; the A6 / B1 results due tomorrow are recommended for an 8-page version.
+
 ### 2026-11-22 (late): reviewer checklist pass on the v3 paper
 
 - **Fully done now (19 of 29 items):** A1 A2 A5 A9 A10, B2 B3 B4 B5 B6 B7, C1-C8. Results generated into `experiments/RESULTS.md`:
