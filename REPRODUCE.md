@@ -36,8 +36,9 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
      - `python -m experiments.undefended_metrics --set dev`
      - `python -m experiments.tamper_structured --set dev`
      - `python -m experiments.era_offline --report`
-4. **C1 (E1) and C2–C5, DEDALE:** `python -m experiments.freeze_dedale --workers 6` runs all 43 replays (20 host conditions, 12 E1 runs, 11 network conditions; about 1.5–2 h with 6 workers) and scores them into `experiments/dedale_results/final_{host,network}_scores.json` and `e1_scores.json`. The NCE conditions run twice: as the frozen pipeline and under asymmetric trust (`A_` tags). Replays that already have results are skipped (`--rerun` re-runs them).
+4. **C1 (E1) and C2–C5, DEDALE:** `python -m experiments.freeze_dedale --workers 6` runs all 43 replays (20 host conditions, 12 E1 runs, 11 network conditions; about 1.5–2 h with 6 workers; 36 min on 2026-11-22) and scores them into `experiments/dedale_results/final_{host,network}_scores.json` and `e1_scores.json`. The NCE conditions run twice: as the frozen pipeline and under asymmetric trust (`A_` tags). Replays that already have results are skipped (`--rerun` re-runs them).
 5. **The tables:** `python -m experiments.build_results` writes `experiments/RESULTS.md`.
+   - **[Audit 2026-11-22]** It reads the GUIDE re-scores from `logs/` (git-ignored). If the three `--llm-authority escalate` re-scores of step 3 are missing, it silently leaves the asymmetric-trust rows out of the C1 table (`experiments/build_results.py:105-106`); run all six re-scores first.
 6. **The paper's figures:** `python -m experiments.build_figures` writes `paper/fig_*.dat` from the same frozen files; `pdflatex agentsoc_combined.tex` in `paper/` (twice) draws them.
 
 ## 4. Determinism

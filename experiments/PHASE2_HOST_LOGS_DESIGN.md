@@ -1,5 +1,7 @@
 # Phase 2 — host logs (Windows clients) — design (draft 2026-10-11)
 
+> **[Audit 2026-11-22]** Outdated status: Phase 2 was completed on 2026-10-11; results in `experiments/DEDALE_PHASE2_RESULTS.md`. "E1", "E2", "E3" in this file's open decisions are Phase 2 download options, not the experiments E1-E3 of `PROJECT_PLAN.md`.
+
 **Status:** P2-1 running; the rest is a proposal. Builds on the learning Knowledge Store (`experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md`, steps S1-S9, Phase 1 results in `experiments/DEDALE_PHASE1_RESULTS.md`).
 
 **Goal:** evaluate the store-backed pipeline where DEDALE's attack is actually visible: the Windows clients' own logs. Ground truth here is exact, because DEDALE labels individual host events. This also prepares Phase 3, where NCE reasons over real attacker-influenced text (command lines, PowerShell).

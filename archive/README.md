@@ -10,4 +10,5 @@ Superseded material, kept for reference. Nothing here is maintained, imported by
 | `early_demos/` | The Phase 1-2 command-line demos of the perception layer. Run from the repository root: `python -m archive.early_demos.demo` | 2026-10-20 |
 | `scratch/` | One-off checks from the GUIDE phases | 2026-10-20 |
 | `experiments_oneoffs/` | One-off experiment scripts: doc and draft editing helpers, files named `test_*.py` that held no tests, and Phase 1 analyses | 2026-10-20 |
+| `RESEARCH_LOG_HISTORY.md` | The verbatim session log 2026-08-19 .. 2026-11-08 (2,902 lines). `RESEARCH_LOG.md` is now a structured, newest-first log that cites it as `H:<line>` | 2026-11-22 |
 | `PROJECT_STATUS_HISTORY.md` | The full project status as it stood on 2026-10-20, including every earlier phase. `PROJECT_STATUS.md` now holds only the current state | 2026-10-20 |

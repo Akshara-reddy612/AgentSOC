@@ -70,6 +70,8 @@ The Python API the HTTP layer and tests call:
 
 ### 5. HTTP API (`api/`)
 
+> **[Audit 2026-11-22]** Built as `review_api/` (not `api/`): `python -m review_api --case-store <cases.sqlite>`.
+
 - JSON over HTTP with **FastAPI** (decision B1) on uvicorn. FastAPI needs an approved install.
 - **Endpoints:**
   - `GET /queue`;
@@ -124,6 +126,7 @@ The Python API the HTTP layer and tests call:
   6. Evaluations: analyst delay and analyst mistakes (`experiments/REVIEW_LOOP_RESULTS.md`). A missed attack teaches the attacker's pattern; this led to open decision B5 (guard on analyst feedback).
   - **B5 decided (a), implemented:** unlearn on confirmed compromise. With it, missed attacks no longer become routine on DEDALE: 0 attack patterns learned at 20% misses, against 20 without. Costs: +10% reviews with a perfect analyst, +42% with 5% false alarms.
   5. HTTP API: `review_api/` (FastAPI, installed by the user). `python -m review_api --case-store <cases.sqlite>`; tokens from `AGENTSOC_ANALYST_TOKENS`; reference at `/docs`.
+- **[Audit 2026-11-22]** All four items below were done later: withdrawing a verdict (`e0b60c9`, 2026-10-19), restart recovery (live runner checkpoints, M4.2 `a0ec071`, 2026-10-18), user accounts (M4.1 `b9b6696`, 2026-10-18). A second dataset (E3) is still open.
 - **Plan B is complete.** Still open:
   - withdrawing a wrong `malicious` verdict;
   - restart recovery of the loop (it applies commands from memory state);
