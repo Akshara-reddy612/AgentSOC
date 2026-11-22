@@ -603,6 +603,42 @@ def ablation() -> list[str]:
     return out + [""]
 
 
+def flooding() -> list[str]:
+    """Checklist A3 flooding (2026-11-23): experiments/dedale_flood.py, flood_eval.py."""
+    path = RESULTS / "flood_scores.json"
+    if not path.exists():
+        return []
+    fl = _load(path)
+    hs = {r: _host_review(r) for r in (v["run"] for v in fl.values())}
+    out = ["## Escalation flooding (checklist A3, 2026-11-23)", "",
+           "While it controls a host (CLIENT2 from initial access, CLIENT1 from lateral movement, until 2025-01-12), "
+           "the attacker launches harmless never-seen programs at a fixed rate; each opens its own case and goes to "
+           "review. Each day's review queue is ordered by the review service's priority (*v2*, all factors; NCE off) or "
+           "oldest first (*fifo*); a team that reviews K cases a day reviews the top K. Design: "
+           "`experiments/A3_FLOODING_DESIGN.md`. Offline.", "",
+           "| Flood | Reviews / day | Attack cases raised | Order | Attack cases in the day's top 25 / 50 / 100 / 200 "
+           "| Median rank | Best rank per attack step (initial access, lateral movement, collection, exfiltration) |",
+           "|:--|--:|--:|:--|--:|--:|:--|"]
+    for name, r in fl.items():
+        for order in ("v2", "fifo"):
+            o = r[order]
+            top = " / ".join(str(o["attack_cases_in_top_k"][str(k)]) for k in (25, 50, 100, 200))
+            ranks = ", ".join(str(s["best_rank"]) for s in o["steps"].values())
+            h = hs[r["run"]]
+            out.append(f"| {name} | {h[0]} | {h[1]} of {r['attack_cases']} | {order} | {top} (of {r['attack_cases']}) | "
+                       f"{o['median_rank']} | {ranks} |")
+    events = sorted({h[2] for h in hs.values()})
+    return out + ["", f"Labelled attack events alerted in these runs: {', '.join(map(str, events))}. The flood hides "
+                      "nothing from review; it buries the attack in the queue.", ""]
+
+
+def _host_review(run: str) -> tuple:
+    from experiments.dedale_host_novelty import load_host_labels
+    from experiments.tier1_score import _host as t1_host
+    h = t1_host(run, load_host_labels())
+    return h["reviews_per_day"], h["attack_cases_raised"], h["class1_events_alerted"]
+
+
 def low_and_slow() -> list[str]:
     """Checklist A8 (2026-11-22): low-and-slow poisoning (experiments/a8_runs.py, a8_score.py)."""
     path = RESULTS / "a8_scores.json"
@@ -634,7 +670,7 @@ def low_and_slow() -> list[str]:
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *low_and_slow(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",

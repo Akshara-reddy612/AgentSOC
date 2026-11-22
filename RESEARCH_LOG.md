@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: checklist A3 escalation flooding (offline)
+
+- **What:** while it controls a host (CLIENT2 from initial access, CLIENT1 from lateral movement, until 2025-01-12) the attacker launches harmless never-seen programs, 5 or 50 per hour; each opens its own case and goes to review. Each day's queue is ordered by `review_service.priority` (v2, NCE off) or oldest first; a team reviewing K cases a day reviews the top K. Three offline replays with a case store (`experiments/dedale_flood.py`, `--flood` in `dedale_host_replay.py`, `experiments/flood_eval.py` -> `experiments/dedale_results/flood_scores.json`; design `experiments/A3_FLOODING_DESIGN.md`). The no-flood run reproduces F_gated (65.2 reviews/day, 72 cases, 400 events). No pipeline module changed.
+- **Result (v2 order):** detection is unchanged (72 attack cases, 400 events in every run). Attack cases within the day's top 50: 71/72 without a flood, 37 at 5/hour (142.0 reviews/day), 24 at 50/hour (833.1 reviews/day). Lateral movement's best rank: 1 -> 51 -> 501; collection 1 -> 21 -> 201. Initial access and exfiltration stay at rank 1. Oldest-first is worse in every row.
+- **Meaning:** the gate and D7 make flooding unable to hide alerts, but a capacity-limited team loses the attack in the queue; the priority's same-host factor is capped (+25), so the flood lifts junk and attack alike. The flood itself is loud (two hosts produce 13x the normal queue), which suggests host-level aggregation as a mitigation (journal). Reported as a result and a limitation; no pipeline change before submission (user, 2026-11-22).
+- **Tests:** 821 passed (3 new in `tests/test_dedale_flood.py`).
+
 ### 2026-11-22 (night): checklist A8, low-and-slow poisoning (offline) -- a real weakness
 
 - **What:** an attacker that first runs its tools harmlessly so the attack's detector keys are learned ("conditioning"). The host keys carry no command-line text (lineage = parent + child image, file type written, pipe name), so a harmless run has the attack's key; the PowerShell key is a fingerprint of the script text and cannot be planted harmlessly. 46 attack keys, 42 plantable. Seven offline replays, NCE off (`experiments/dedale_plant.py`, `--plant` in `dedale_host_replay.py`, `experiments/a8_runs.py`, `a8_score.py` -> `experiments/dedale_results/a8_scores.json`; design `experiments/A8_LOW_AND_SLOW_DESIGN.md`). Experiment code only; no pipeline module changed.

@@ -1,0 +1,470 @@
+{
+ "none": {
+  "run": "gated_A3_flood0",
+  "review_cases": 913,
+  "attack_cases": 72,
+  "flood_cases": 0,
+  "days": {
+   "2025-01-06": {
+    "cases": 31,
+    "flood": 0,
+    "attack": 16
+   },
+   "2025-01-07": {
+    "cases": 41,
+    "flood": 0,
+    "attack": 4
+   },
+   "2025-01-08": {
+    "cases": 97,
+    "flood": 0,
+    "attack": 22
+   },
+   "2025-01-09": {
+    "cases": 48,
+    "flood": 0,
+    "attack": 4
+   },
+   "2025-01-10": {
+    "cases": 68,
+    "flood": 0,
+    "attack": 11
+   },
+   "2025-01-11": {
+    "cases": 5,
+    "flood": 0,
+    "attack": 4
+   },
+   "2025-01-12": {
+    "cases": 6,
+    "flood": 0,
+    "attack": 4
+   },
+   "2025-01-13": {
+    "cases": 56,
+    "flood": 0,
+    "attack": 7
+   },
+   "2025-01-14": {
+    "cases": 171,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-15": {
+    "cases": 109,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-16": {
+    "cases": 133,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-17": {
+    "cases": 138,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-18": {
+    "cases": 5,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-19": {
+    "cases": 5,
+    "flood": 0,
+    "attack": 0
+   }
+  },
+  "v2": {
+   "attack_cases_in_top_k": {
+    "25": 67,
+    "50": 71,
+    "100": 72,
+    "200": 72
+   },
+   "median_rank": 7,
+   "steps": {
+    "Initial access on client 2 (phishing macro, dropper)": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Lateral movement to client 1 (PrintNightmare)": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Collection: client 1 to the internal server over SSH": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Exfiltration to the attacker": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    }
+   }
+  },
+  "fifo": {
+   "attack_cases_in_top_k": {
+    "25": 33,
+    "50": 44,
+    "100": 72,
+    "200": 72
+   },
+   "median_rank": 27,
+   "steps": {
+    "Initial access on client 2 (phishing macro, dropper)": {
+     "best_rank": 10,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Lateral movement to client 1 (PrintNightmare)": {
+     "best_rank": 28,
+     "top_25": false,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Collection: client 1 to the internal server over SSH": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Exfiltration to the attacker": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    }
+   }
+  }
+ },
+ "5 / hour": {
+  "run": "gated_A3_flood5",
+  "review_cases": 1988,
+  "attack_cases": 72,
+  "flood_cases": 1075,
+  "days": {
+   "2025-01-06": {
+    "cases": 101,
+    "flood": 70,
+    "attack": 16
+   },
+   "2025-01-07": {
+    "cases": 161,
+    "flood": 120,
+    "attack": 4
+   },
+   "2025-01-08": {
+    "cases": 262,
+    "flood": 165,
+    "attack": 22
+   },
+   "2025-01-09": {
+    "cases": 288,
+    "flood": 240,
+    "attack": 4
+   },
+   "2025-01-10": {
+    "cases": 308,
+    "flood": 240,
+    "attack": 11
+   },
+   "2025-01-11": {
+    "cases": 245,
+    "flood": 240,
+    "attack": 4
+   },
+   "2025-01-12": {
+    "cases": 6,
+    "flood": 0,
+    "attack": 4
+   },
+   "2025-01-13": {
+    "cases": 56,
+    "flood": 0,
+    "attack": 7
+   },
+   "2025-01-14": {
+    "cases": 171,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-15": {
+    "cases": 109,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-16": {
+    "cases": 133,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-17": {
+    "cases": 138,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-18": {
+    "cases": 5,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-19": {
+    "cases": 5,
+    "flood": 0,
+    "attack": 0
+   }
+  },
+  "v2": {
+   "attack_cases_in_top_k": {
+    "25": 27,
+    "50": 37,
+    "100": 61,
+    "200": 72
+   },
+   "median_rank": 49,
+   "steps": {
+    "Initial access on client 2 (phishing macro, dropper)": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Lateral movement to client 1 (PrintNightmare)": {
+     "best_rank": 51,
+     "top_25": false,
+     "top_50": false,
+     "top_100": true,
+     "top_200": true
+    },
+    "Collection: client 1 to the internal server over SSH": {
+     "best_rank": 21,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Exfiltration to the attacker": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    }
+   }
+  },
+  "fifo": {
+   "attack_cases_in_top_k": {
+    "25": 19,
+    "50": 24,
+    "100": 43,
+    "200": 72
+   },
+   "median_rank": 85,
+   "steps": {
+    "Initial access on client 2 (phishing macro, dropper)": {
+     "best_rank": 15,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Lateral movement to client 1 (PrintNightmare)": {
+     "best_rank": 112,
+     "top_25": false,
+     "top_50": false,
+     "top_100": false,
+     "top_200": true
+    },
+    "Collection: client 1 to the internal server over SSH": {
+     "best_rank": 85,
+     "top_25": false,
+     "top_50": false,
+     "top_100": true,
+     "top_200": true
+    },
+    "Exfiltration to the attacker": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    }
+   }
+  }
+ },
+ "50 / hour": {
+  "run": "gated_A3_flood50",
+  "review_cases": 11663,
+  "attack_cases": 72,
+  "flood_cases": 10750,
+  "days": {
+   "2025-01-06": {
+    "cases": 731,
+    "flood": 700,
+    "attack": 16
+   },
+   "2025-01-07": {
+    "cases": 1241,
+    "flood": 1200,
+    "attack": 4
+   },
+   "2025-01-08": {
+    "cases": 1747,
+    "flood": 1650,
+    "attack": 22
+   },
+   "2025-01-09": {
+    "cases": 2448,
+    "flood": 2400,
+    "attack": 4
+   },
+   "2025-01-10": {
+    "cases": 2468,
+    "flood": 2400,
+    "attack": 11
+   },
+   "2025-01-11": {
+    "cases": 2405,
+    "flood": 2400,
+    "attack": 4
+   },
+   "2025-01-12": {
+    "cases": 6,
+    "flood": 0,
+    "attack": 4
+   },
+   "2025-01-13": {
+    "cases": 56,
+    "flood": 0,
+    "attack": 7
+   },
+   "2025-01-14": {
+    "cases": 171,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-15": {
+    "cases": 109,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-16": {
+    "cases": 133,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-17": {
+    "cases": 138,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-18": {
+    "cases": 5,
+    "flood": 0,
+    "attack": 0
+   },
+   "2025-01-19": {
+    "cases": 5,
+    "flood": 0,
+    "attack": 0
+   }
+  },
+  "v2": {
+   "attack_cases_in_top_k": {
+    "25": 24,
+    "50": 24,
+    "100": 26,
+    "200": 26
+   },
+   "median_rank": 429,
+   "steps": {
+    "Initial access on client 2 (phishing macro, dropper)": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Lateral movement to client 1 (PrintNightmare)": {
+     "best_rank": 501,
+     "top_25": false,
+     "top_50": false,
+     "top_100": false,
+     "top_200": false
+    },
+    "Collection: client 1 to the internal server over SSH": {
+     "best_rank": 201,
+     "top_25": false,
+     "top_50": false,
+     "top_100": false,
+     "top_200": false
+    },
+    "Exfiltration to the attacker": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    }
+   }
+  },
+  "fifo": {
+   "attack_cases_in_top_k": {
+    "25": 17,
+    "50": 21,
+    "100": 27,
+    "200": 27
+   },
+   "median_rank": 811,
+   "steps": {
+    "Initial access on client 2 (phishing macro, dropper)": {
+     "best_rank": 15,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    },
+    "Lateral movement to client 1 (PrintNightmare)": {
+     "best_rank": 868,
+     "top_25": false,
+     "top_50": false,
+     "top_100": false,
+     "top_200": false
+    },
+    "Collection: client 1 to the internal server over SSH": {
+     "best_rank": 833,
+     "top_25": false,
+     "top_50": false,
+     "top_100": false,
+     "top_200": false
+    },
+    "Exfiltration to the attacker": {
+     "best_rank": 1,
+     "top_25": true,
+     "top_50": true,
+     "top_100": true,
+     "top_200": true
+    }
+   }
+  }
+ }
+}
