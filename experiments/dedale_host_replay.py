@@ -22,7 +22,8 @@ Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agent
 Events of one hour are replayed in time order; an event stamped earlier than
 the previous one (files are per hour, shipping is asynchronous) is processed
 at the previous event's time.  Labels are never read here, except by the
-simulated analyst of the separate --analyst oracle condition.
+simulated analyst of the separate --analyst oracle condition and by the attacker
+simulations (--inject, --plant), which use them only to pick the attacker's events.
 """
 from __future__ import annotations
 
@@ -162,6 +163,11 @@ def main() -> None:
     ap.add_argument("--train-window", default="both", choices=list(TRAIN_WINDOWS),
                     help="checklist A11 (2026-11-22): which clean week(s) the store learns from; the test period "
                          "(from TRAINING_END) is unchanged and events outside the chosen training week are skipped")
+    ap.add_argument("--plant", default=None, choices=["test", "train"],
+                    help="checklist A8 (2026-11-22): low-and-slow attacker that first runs its tools harmlessly so "
+                         "their detector keys are learned (experiments/dedale_plant.py)")
+    ap.add_argument("--plant-detectors", nargs="+", default=None, choices=list(DETECTORS),
+                    help="A8: detectors whose keys the attacker plants (default: lineage exec_file_write pipe)")
     ap.add_argument("--llm-authority", default="full", choices=["full", "escalate"],
                     help="escalate: asymmetric trust, NCE may raise scrutiny but never lower it (decision P9 A)")
     args = ap.parse_args()
@@ -261,6 +267,17 @@ def main() -> None:
         train_freq = _training_frequencies(tuple(args.detectors)) if not thresholded else None
         last = TRAINING_START
         events = iter_events(until)
+        planted = []
+        if args.plant:                     # A8: the attacker's harmless runs, merged into the stream in time order
+            import heapq
+
+            from experiments.dedale_plant import PLANTABLE, plants
+            planted = [p for p in plants(args.plant, tuple(args.plant_detectors or PLANTABLE))
+                       if until is None or p[0] < until]
+            events = heapq.merge(events, planted, key=lambda x: x[0])
+            with open(run_dir / "plants.jsonl", "w", encoding="utf-8") as out:
+                for _, p in planted:
+                    out.write(json.dumps(p) + "\n")
         skip_from, skip_until = TRAIN_WINDOWS[args.train_window]
         while chunk := list(islice(events, CHUNK)):
             with db.batch(), (case_store.batch() if case_store else nullcontext()):   # one transaction per chunk
@@ -304,6 +321,8 @@ def main() -> None:
         **({"min_train_count": args.min_train_count, "training_patterns_retracted": retracted_rare}
            if args.min_train_count > 1 else {}),
         **({"train_window": args.train_window} if args.train_window != "both" else {}),
+        **({"plant": args.plant, "plant_detectors": args.plant_detectors or "lineage exec_file_write pipe",
+            "planted_events": len(planted)} if args.plant else {}),
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,

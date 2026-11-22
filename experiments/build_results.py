@@ -603,10 +603,38 @@ def ablation() -> list[str]:
     return out + [""]
 
 
+def low_and_slow() -> list[str]:
+    """Checklist A8 (2026-11-22): low-and-slow poisoning (experiments/a8_runs.py, a8_score.py)."""
+    path = RESULTS / "a8_scores.json"
+    if not path.exists():
+        return []
+    a = _load(path)
+    out = ["## Low-and-slow poisoning (checklist A8, 2026-11-22)", "",
+           "The attacker first runs the tools its attack will use harmlessly, so that the attack's detector keys are "
+           "seen on harmless activity (process lineage, file type written, pipe; the PowerShell key is a fingerprint "
+           "of the script text and only the *PowerShell keys too* rows plant it). The simulated analyst sees nothing "
+           "malicious in a harmless run. *Test period*: planted from 2025-01-06 00:10 (CLIENT2's attack starts at "
+           "10:01). *Training weeks*: 8 days before each key's first use. Design: "
+           "`experiments/A8_LOW_AND_SLOW_DESIGN.md`. Offline, NCE off.", "",
+           "| Planted | Condition | Attack cases raised | Labelled attack events alerted | Reviews / day | "
+           "Minutes to detect each attack step | Plants alerted (all reviewed) | Baseline: cases; events |",
+           "|:--|:--|--:|--:|--:|:--|--:|--:|"]
+    for label, r in a.items():
+        when, cond = label.split(", ", 1)
+        b = r["baseline"]
+        ttd = " / ".join("missed" if t is None else f"{t:g}" for t in r["time_to_detect_min"])
+        out.append(f"| {when} | {cond} | {r['attack_cases_raised']} | {r['class1_events_alerted']} | "
+                   f"{r['reviews_per_day']} | {ttd} | {r['planted_alerted']} / {r['planted_events']} | "
+                   f"{b['attack_cases_raised']}; {b['class1_events_alerted']} |")
+    return out + ["", "Attack steps: initial access (CLIENT2), lateral movement, collection, exfiltration (CLIENT1). "
+                      "B5 retracts learning only on the host it confirms; CLIENT1 is never confirmed when its keys "
+                      "are planted.", ""]
+
+
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *low_and_slow(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
