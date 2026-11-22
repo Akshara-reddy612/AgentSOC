@@ -242,6 +242,7 @@ CLIENT2 was confirmed in every run: its first attack case carries no attacker te
 | delimited | 150 | 36/128 (28.1%) | 8/136 (5.9%) | 3.0%-11.2% | 2 / 30 | 2.5e-07 |
 | spotlight | 150 | 36/128 (28.1%) | 7/140 (5.0%) | 2.4%-10.0% | 1 / 30 | 3e-08 |
 | hierarchy | 150 | 36/128 (28.1%) | 4/140 (2.9%) | 1.1%-7.1% | 1 / 33 | 4.1e-09 |
+| telemetry | 0 | - | - | - | - | - |
 
 Paired difference over all pairs both conditions answered (per-pair hijack indicator; 95% Wald CI for paired proportions):
 

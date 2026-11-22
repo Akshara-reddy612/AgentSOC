@@ -46,3 +46,47 @@ def test_ground_truth_never_reaches_a_prompt_and_calls_are_picklable():
         assert "fabricated_evidence" not in BUILDERS[d](clean)
         assert pickle.loads(pickle.dumps(r.CALLS[d])) is r.CALLS[d]          # child processes need it
     assert r.results_path("dev", "spotlight").name == "v2_dev_promptdef_spotlight_results.json"
+
+
+def test_telemetry_adds_the_trusted_context_and_keeps_free_text_outside_it():
+    """Checklist A6 (2026-11-22): the trusted block is built from structured fields only."""
+    p = BUILDERS["telemetry"](dict(ALERT, target_host="WKSTN-1", destination_ip="198.51.100.7"))
+    trusted = p.split("Trusted context", 1)[1].split("\n\n", 1)[0]
+    assert "Destination IP:     198.51.100.7" in trusted and "Destination reputation:" in trusted
+    assert "INC-1" not in trusted and "false positive" not in trusted          # attacker text never enters it
+    assert "closed as false positive" in p                                      # but the agent still sees it
+
+
+def test_repeat_runs_get_their_own_results_file():
+    from agent.run_v2_prompt_defences import CALLS, results_path
+    assert results_path("dev", "none", 0.7, 2).name == "v2_dev_promptdef_none_t0.7_r2_results.json"
+    assert results_path("dev", "telemetry").name == "v2_dev_promptdef_telemetry_results.json"
+    assert {"telemetry", "none"} <= set(CALLS)
+    pickle.dumps(CALLS["telemetry"]), pickle.dumps(CALLS["none"])              # the parallel runner pickles them
+
+
+def test_default_call_sends_no_generation_config(monkeypatch):
+    """B1: temperature=None must keep the API default, as in every recorded run."""
+    import sys
+    import types
+    from agent import baseline_agent
+    from agent.key_pool import KeyPool
+    seen = {}
+
+    class Models:
+        def generate_content(self, **kw):
+            seen.update(kw)
+            return types.SimpleNamespace(text='{"verdict": "benign"}')
+
+    fake = types.ModuleType("google.genai")
+    fake.Client = lambda api_key: types.SimpleNamespace(models=Models())
+    fake.types = types.SimpleNamespace(GenerateContentConfig=lambda **kw: ("cfg", kw))
+    monkeypatch.setitem(sys.modules, "google.genai", fake)
+    monkeypatch.setitem(sys.modules, "google.genai.types", fake.types)
+    google = types.ModuleType("google")
+    google.genai = fake
+    monkeypatch.setitem(sys.modules, "google", google)
+    baseline_agent.call_agent_rotating("p", KeyPool(["k1"]))
+    assert "config" not in seen
+    baseline_agent.call_agent_rotating("p", KeyPool(["k1"]), temperature=0.7)
+    assert seen["config"] == ("cfg", {"temperature": 0.7})

@@ -469,7 +469,7 @@ def tier2(T: dict) -> list[str]:
                 "(the same pairs for every defence; the undefended row uses its recorded answers on the same pairs):", "",
                 "| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |",
                 "|:--|--:|--:|--:|:--|:--|--:|"]
-        for d in ("delimited", "spotlight", "hierarchy"):
+        for d in ("delimited", "spotlight", "hierarchy", "telemetry"):
             x = r.get(d, {})
             if not x.get("pairs_answered"):
                 out.append(f"| {d} | 0 | - | - | - | - | - |")
@@ -481,13 +481,19 @@ def tier2(T: dict) -> list[str]:
                        f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} |")
         out += ["", "Paired difference over all pairs both conditions answered (per-pair hijack indicator; "
                 "95% Wald CI for paired proportions):", ""]
-        for d in ("delimited", "spotlight", "hierarchy"):
+        for d in ("delimited", "spotlight", "hierarchy", "telemetry"):
             x = r.get(d + "_paired")
             if x:
                 out.append(f"- {d}: {x['undefended_rate']:.1%} -> {x['defended_rate']:.1%} of {x['pairs']} pairs, "
                            f"reduction {x['reduction'] * 100:.1f} points (95% CI {x['ci95'][0] * 100:.1f}-"
                            f"{x['ci95'][1] * 100:.1f})")
         out.append("")
+    if "B1_repeats" in T:
+        r = T["B1_repeats"]
+        out += [f"*B1, repeated runs* of the undefended prompt at temperature {r['temperature']:g} on the same 150 pairs: "
+                + ", ".join(f"{x['hijacked']}/{x['clean_not_dismissed']}" for x in r["repeats"])
+                + (f" hijacked; mean {r['mean']:.1%}, sd {r['sd']:.1%} (min {r['min']:.1%}, max {r['max']:.1%}) over "
+                   f"{r['complete_repeats']} complete repeats" if "mean" in r else " (incomplete)") + ".", ""]
     if "T2.3" in T:
         r = T["T2.3"]
         out += [f"*T2.3, the adaptive attacker:* {r['pairs']} dev pairs whose payload was rewritten until ERA rated it "

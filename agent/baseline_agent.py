@@ -225,11 +225,15 @@ def call_agent_groq(prompt: str, groq_client, model: str = "openai/gpt-oss-20b")
     }
 
 
-def call_agent_rotating(prompt: str, pool: KeyPool, model: str = "gemini-3.1-flash-lite") -> dict:
+def call_agent_rotating(prompt: str, pool: KeyPool, model: str = "gemini-3.1-flash-lite",
+                        temperature: Optional[float] = None) -> dict:
     """
     Call the Gemini API with key rotation on rate-limit errors.
+    `temperature` (added 2026-11-22, checklist B1 repeat runs): None keeps the API default, as in every recorded run.
     """
     from google import genai
+    from google.genai import types
+    config = types.GenerateContentConfig(temperature=temperature) if temperature is not None else None
     last_exc = None
 
     if not pool.keys:
@@ -253,9 +257,11 @@ def call_agent_rotating(prompt: str, pool: KeyPool, model: str = "gemini-3.1-fla
 
             try:
                 client = genai.Client(api_key=current_key)
+                kwargs = {"config": config} if config is not None else {}
                 response = client.models.generate_content(
                     model=model,
                     contents=prompt,
+                    **kwargs,
                 )
                 raw = response.text if response.text else ""
                 cleaned = _strip_code_fence(raw)
