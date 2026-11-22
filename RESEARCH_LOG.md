@@ -12,6 +12,11 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: paper moved to 8 pages with the offline checklist results
+
+- `paper/agentsoc_v3.tex` (git-ignored; backups in `D:\agentsoc_data\paper_private\`, the 7-page version kept as `agentsoc_v3_7page_20261123.*`): new subsections "Adaptive Attacks on Memory and the Queue" (A8 conditioning, cross-host unlearning, A3 flooding; Table V) and "Ablation" (Table VI, incl. the ERA finding); abstract, contributions, detector-key description, unlearning section, Discussion, Limitations (3), (4), (6), (7), (8) and Conclusion updated. Every number from `experiments/RESULTS.md`.
+- 8 pages exactly, page 8 full. Red placeholders left for A6 (telemetry-aware agent, text and a Table II row) and B1 (temperature repeats, text and limitation (3)), to fill after today's live runs.
+
 ### 2026-11-23: A8 mitigation, cross-host unlearning (option, off by default)
 
 - **What:** `SocLoop(unlearn_scope="all")` / `--unlearn-scope all`: when a host is confirmed compromised, B5 retracts what was learned from closed cases or verdicts in the last 7 days on every host, not only the confirmed one (`KnowledgeUpdater.retract_all_learning`). Default `"host"` keeps the old behaviour; the demo server and every frozen run use the default. Pipeline files touched: `perception/soc_loop.py`, `perception/knowledge_updater.py` (user approved the default-off option, 2026-11-23).
