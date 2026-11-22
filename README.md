@@ -212,7 +212,6 @@ Since 2026-10-31 the pipeline has two rules for what the LLM's hypotheses (NCE) 
 | [PROJECT_PLAN.md](PROJECT_PLAN.md) | Goals, claims C1-C6, milestones, decisions P1-P9; work outside it goes to "Later" |
 | [experiments/RESULTS.md](experiments/RESULTS.md) | Frozen results tables |
 | [experiments/PAPER_CLAIMS_TO_REVISE.md](experiments/PAPER_CLAIMS_TO_REVISE.md) | What may and may not be claimed |
-| [PAPER_OUTLINE.md](PAPER_OUTLINE.md) | Paper structure and who writes what |
 | `experiments/*_DESIGN.md`, `experiments/DEDALE_*` | Design notes and per-phase results |
 | [docs/ADDING_A_DATASET.md](docs/ADDING_A_DATASET.md) | Bringing a third dataset (AIT-LDS) into the experiments and the demo |
 | [docs/_audit_report.md](docs/_audit_report.md) | Repository audit of 2026-11-22: every documented claim checked against the code and runs |

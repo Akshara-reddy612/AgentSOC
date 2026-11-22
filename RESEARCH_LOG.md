@@ -5,8 +5,10 @@ The history of the project and the reasons behind it, newest first. The current 
 - **Sources.** This file was rebuilt on 2026-11-22 from the full session log, the git history and the old handoff notes.
   - The verbatim session log (2026-08-19 .. 2026-11-08, 2,902 lines) is [archive/RESEARCH_LOG_HISTORY.md](archive/RESEARCH_LOG_HISTORY.md). **`H:<line>`** below means a line in that file.
   - The full old status file is [archive/PROJECT_STATUS_HISTORY.md](archive/PROJECT_STATUS_HISTORY.md) (**`S:<line>`**).
+  - Two git-ignored notes on the lead's machine (`CLAUDE_HANDOFF.md`, 2026-10-11; `agentsoc_context_v2.md`, 2026-10-10) were never in git. Every fact taken from them is copied into this file, and both were deleted on 2026-11-22 at the user's request (`docs/_audit_report.md` §5).
   - Commits are cited by hash.
 - **Labels.** Numbers marked VERIFIED 2026-11-22 were re-derived from files or re-run during the audit. Every other number is as the cited entry recorded it.
+- **Reading triples and denominators.** "1 / 3 / 1" = E1 payload families `suppress` / `fake_approval` / `steer`. "20 / 178, 18 / 168, 21 / 176" = GUIDE dev Gemini / held-out Gemini / dev gpt-oss-20b. Suppression and hijack denominators, run names (`F_*`, `A_*`, `d4`, `m20`, ...) and the two "Phase" numberings are defined in `PROJECT_STATUS.md` (Terms).
 
 ## Entries
 
@@ -27,6 +29,8 @@ The history of the project and the reasons behind it, newest first. The current 
   - The team's `AgentSOC_IEEE_Revised.docx` has three claims the repository does not support (planned-experiment "harnesses implemented in the repository"; network 32.4 reviews/day; 624 cases).
   - `build_results` silently drops the asymmetric-trust C1 rows without the escalate re-scores.
 - **Decided:**
+  - The paper draft being worked on is `AgentSOC_IEEE_Revised.docx`; `Documentation_Template-SDC-II.docx` is needed for the course report (user, 2026-11-22).
+  - Root clean-up (user, 2026-11-22): `PAPER_OUTLINE.md` removed (outline of the superseded combined LaTeX paper); the untracked old handoff notes and the v1 LaTeX build log deleted after their facts were copied here.
   - Old log archived verbatim (`540dde3`); this file and `PROJECT_STATUS.md` rewritten.
   - `HANDOVER.md` merged into the status file and removed.
   - Stale design-doc headers annotated with dated notes; nothing historical deleted.
@@ -48,7 +52,7 @@ The history of the project and the reasons behind it, newest first. The current 
   - the gate's 24 h delay and same-host rule are stated;
   - fail-safe is described as unit-tested, not evaluated;
   - triage runs once per case.
-- All four branches were merged (`5476d51`, `8fb0c0c`, `6e70cf2`), although their session headings said "not merged" (H:2801, 2831, 2852, 2872).
+- All three branches were merged (`paper-v2` in `5476d51`, which also carried the two 11-08 `paper-v2` sessions; `paper-v2-tables` in `8fb0c0c`; `paper-v2-accuracy` in `6e70cf2`), although the four session headings said "not merged" (H:2801, 2831, 2852, 2872).
 - Tooling gotcha: poppler `pdftoppm` draws stray hatching for PDF tiling patterns; check renders with `pdftocairo` (H:2817).
 
 ### 2026-11-01: missing prompt-level baseline; a new paper (H:2759-2799)
@@ -65,8 +69,8 @@ The history of the project and the reasons behind it, newest first. The current 
 - **Change 9** (hash-chained audit log): never merged. No code for it exists; the plan's "stays on its branch" refers to a branch that is not in the repository.
 - **Asymmetric trust** (`6fd3fa6`, merged `8253d99`):
   - the outcome is the text-free decision or REVIEW, and only text-free actions execute;
-  - E1 dismissals 1 / 3 / 1 → 0;
-  - GUIDE containments removed by contamination 20 / 178, 18 / 168, 21 / 176 → 0 (17 / 18 / 17 through ERA's own escalation);
+  - E1 attack cases dismissed without an analyst (families suppress / fake_approval / steer) 1 / 3 / 1 → 0;
+  - GUIDE automatic containments removed by contamination (dev Gemini / held-out Gemini / dev gpt-oss-20b) 20 / 178, 18 / 168, 21 / 176 → 0. In 17 / 18 / 17 of those, the removal came from ERA flagging the contaminated twin: its escalation to review held the automatic block back;
   - cost +0.9 reviews/day with an analyst, +10.4 without (H:2643-2652).
 - **Fail-safe processing** (`7cf6d48`):
   - malformed events are refused; a failing event is quarantined with checkpoint recovery;
@@ -74,8 +78,8 @@ The history of the project and the reasons behind it, newest first. The current 
   - the T1071 grounding regex was quadratic: 40,000 characters took 62 s, now 0.02 s over the 512-character view (H:2667-2677).
 - **Re-freeze:** 43 / 43 replays, all three score files byte-identical (H:2709-2717).
   - Where it ran is UNVERIFIED: its `A_*` outputs are not in `D:\agentsoc_data`.
-  - LLM-off rule checks: the gated and `F_d4` conditions under `escalate` equal their frozen runs in all 9 score fields (H:2735, 2749).
-- **Paper and drafts:** paper C6 added (7 pages); drafts of the limitations section and viva answers (`docs/`).
+  - LLM-off rule checks: the gated and `F_d4` conditions under `escalate` equal their frozen runs in all 9 score fields (reviews per day, test cases, attack cases reviewed, events alerted, patterns learned, per-day series, attack steps, ...; H:2735, 2749).
+- **Paper and drafts:** contribution C6 added to `paper/agentsoc_combined.tex` (7 pages; `paper/agentsoc_v2.tex` did not exist yet); drafts of the limitations section and viva answers (`docs/`).
 
 ### 2026-10-27: reviewer pass on the paper (H:2548-2575)
 - Every number in `paper/agentsoc_combined.tex` checked against `RESULTS.md`.
@@ -129,7 +133,7 @@ The history of the project and the reasons behind it, newest first. The current 
   - it misses v2's varied phrasings because partial hits are diluted in score fusion.
 - **Moved the project** from `C:\agentsoc` to `D:\agentsoc`; 162 `file:///` links rewritten (H:1069-1084).
 - **DEDALE: downloaded with approval, inspected, scoped** (H:1086-1151, `experiments/DEDALE_DATA_NOTES.md`):
-  - host labels are positives only, for 3 hosts;
+  - host labels are positives only, for 3 hosts: CLIENT1 and CLIENT2 (Windows), and the internal Linux server, whose auditd logs were never downloaded, so only the 2 Windows clients count in the experiments;
   - 88.5% of 1,465,627 Suricata alerts are the SIEM's own log shipping;
   - 83 of 84 labelled attack flows raised no Suricata alert;
   - `REAL_TELEMETRY_PLAN.md` was wrong that DEDALE ships labelled Sigma alerts.
@@ -169,6 +173,7 @@ The history of the project and the reasons behind it, newest first. The current 
   - the free tier is **500 requests/day per key** for gemini-3.1-flash-lite (an earlier "1,500" was wrong).
 
 ### 2026-09-05 .. 09-29: structural pipeline evaluations on GUIDE v1 (H:3-220, 425-561)
+Phase names of that time: NCE-1 .. NCE-8 were the steps of building and evaluating NCE (NCE-7 = NCE → SSE → RSEM on 10 alerts; NCE-7-SCALE = the same on 90; NCE-8 = 50 clean alerts for false positives).
 - **NCE-7 → NCE-7-SCALE:** 7 / 8 (87.5%) → 64 / 80 (80.0%). All 16 failures are T1071, because the C2 check only needs web egress.
   - Factor split (H:131-134): first recorded as 12 / 4, corrected to 10 REASONABLE + 6 QUESTIONABLE.
 - **NCE-8:** clean false-positive rate 14 / 50, all T1071 (H:78).
@@ -227,15 +232,15 @@ Final results are the frozen files behind `experiments/RESULTS.md` (rebuilt by `
 | Result | Value | Source (file / script) | Config | Date | Status |
 |:--|:--|:--|:--|:--|:--|
 | C1 GUIDE v2 dev suppression | 4 / 428 (0.9%, CI 0.4-2.4%), McNemar p = 1 (ERA-separated) | `agent/v2_results/v2_dev_live_results_rescored.json`; `RESULTS.md:11` | gemini-3.1-flash-lite, acting rule | 2026-10-11 run; frozen 2026-10-31 | VERIFIED 2026-11-22 (re-score byte-identical) |
-| C1 held-out | 3 / 437 (0.7%), p = 0.25 | `..._heldout_live_results_rescored.json`; `RESULTS.md:12` | same | same | VERIFIED 2026-11-22 |
-| C1 gpt-oss-20b dev | 10 / 437 (2.3%), p = 0.3 | `..._groq-openai-gpt-oss-20b_results_rescored.json`; `RESULTS.md:13` | groq:openai/gpt-oss-20b | completed 2026-10-20 | VERIFIED 2026-11-22 |
+| C1 held-out | 3 / 437 (0.7%), p = 0.25 | `agent/v2_results/v2_heldout_live_results_rescored.json`; `RESULTS.md:12` | same | same | VERIFIED 2026-11-22 |
+| C1 gpt-oss-20b dev | 10 / 437 (2.3%), p = 0.3 | `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json`; `RESULTS.md:13` | groq:openai/gpt-oss-20b | completed 2026-10-20 | VERIFIED 2026-11-22 |
 | Undefended agent dev | 130 / 439 hijacked (29.6%, CI 25.5-34.0%) | `agent/v2_results/v2_dev_undefended_results.json`; `experiments/undefended_metrics.py` | gemini-3.1-flash-lite | 2026-10-18 | VERIFIED 2026-11-22 (re-run) |
-| C6 GUIDE containments removed | 20 / 178, 18 / 168, 21 / 176 → 0 | `RESULTS.md:11-16` (escalate re-scores) | acting vs escalate | 2026-10-31 | escalate re-scores re-run 2026-11-22 (rc 0); table rebuild Re-freeze IN PROGRESS 2026-11-22 |
+| C6 GUIDE containments removed | 20 / 178, 18 / 168, 21 / 176 → 0 | `RESULTS.md:11-16` (escalate re-scores) | acting vs escalate | 2026-10-31 | escalate re-scores re-run 2026-11-22 in the audit's separate worktree (rc 0; outputs there, not in this checkout's `logs/`); table rebuild Re-freeze IN PROGRESS 2026-11-22 |
 | E1 dismissals | 1 / 3 / 1 of 72 → 0 under asymmetric trust | `experiments/dedale_results/e1_scores.json`; `RESULTS.md:42-57` | gated + NCE cache, ± analyst | 2026-10-18 / 10-31 | Re-freeze IN PROGRESS 2026-11-22 |
 | C2 host reviews/day | static 6,095.4, frozen = gated 65.2, ungated 27.4 | `final_host_scores.json`; `RESULTS.md:67-70` | NCE off | frozen 2026-10-31 | Re-freeze IN PROGRESS 2026-11-22 |
-| C2 network reviews/day | 552.3 / 26.1 / 26.1 / 20.6 / 7.9 | `final_network_scores.json`; `RESULTS.md:76-80` | NCE off | same | Re-freeze IN PROGRESS 2026-11-22 |
+| C2 network reviews/day | static 552.3, frozen 26.1, gated 26.1, ungated 20.6, gated with D7 off 7.9 | `final_network_scores.json`; `RESULTS.md:76-80` | NCE off | same | Re-freeze IN PROGRESS 2026-11-22 |
 | C3 analyst mistakes | misses 20%: 20 learned, 256 alerted; with B5: 0, 400 | `final_host_scores.json`; `RESULTS.md:92-93` | oracle 4 h | same | Re-freeze IN PROGRESS 2026-11-22 |
-| C4 NCE on DEDALE | 54.6 (closed) / 54.8 (open) / 33.2 (+analyst); asymmetric 65.2 / 34.1 | `RESULTS.md:103-108` | NCE cache `nce_cache_host.jsonl`: 497 recorded answers (416 Phase 3 + 39 NCE+analyst + 42 fill; H:1517, 1568, 1879, 2517) | same | Re-freeze IN PROGRESS 2026-11-22 |
+| C4 NCE on DEDALE | 54.6 (closed) / 54.8 (open) / 33.2 (+analyst); asymmetric 65.2 / 34.1 | `RESULTS.md:103-108` | NCE cache `nce_cache_host.jsonl`: 497 recorded answers (416 Phase 3 + 39 NCE+analyst + 42 cache-fill calls of 2026-10-18; H:1517, 1568, 1879, 2517) | same | Re-freeze IN PROGRESS 2026-11-22 |
 | C5 analyst delay | 33.1 / 34.1 / 38.1 / 51.5 reviews/day | `RESULTS.md:121-124` | 1 / 4 / 24 / 72 h | same | Re-freeze IN PROGRESS 2026-11-22 |
 | What NCE is shown | command line > 512 chars in 1 / 797; raw line in 718 / 856 | `RESULTS.md:110` (`build_results._nce_view`) | `gated_nce_F_nce` case store | 2026-10-31 | Re-freeze IN PROGRESS 2026-11-22 |
 | Soak test | 15,013,901 events, 388 MB peak | H:2249-2253 | full replay | 2026-10-20 | UNVERIFIED (not re-run) |
@@ -269,10 +274,10 @@ Final results are the frozen files behind `experiments/RESULTS.md` (rebuilt by `
 - **Agent reliability:** earlier coding agents (2026-08/09, before Claude Code) produced fabricated diffs, compile results and statistics. Demand raw output, recompute percentages, and write "NOT FOUND IN REPO" instead of guessing (`agentsoc_context_v2.md` §12, git-ignored). A passing suite missed real bugs twice: identical action effects (H:401) and right-score-wrong-path (H:449).
 - **API quotas** (free tiers, as recorded):
   - gemini-3.1-flash-lite: 500 requests/day per key, about 15 requests/minute (≥ 5 s between calls per key);
-  - gemini-3.6-flash: 20/day;
+  - gemini-3.6-flash: 20/day (tried in the v1 era; used for no current result);
   - Groq gpt-oss-20b: 200,000 tokens/day per key (about 70 NCE calls).
   - Runners stop at the daily cap with exit 3 and resume (H:1053; `S:532-535`).
-- **DEDALE downloads** go through the Dataverse API, `https://entrepot.recherche.data.gouv.fr/api/access/datafile/<id>`, with a browser User-Agent; the HTML pages block bots. File ids: labels 717882, Suricata 717879, user behaviour 717880, syslog 717890, winlogbeat 717892, auditbeat 717881 (`CLAUDE_HANDOFF.md`, git-ignored). MD5s verified at download (H:1092, 1284, 1386).
+- **DEDALE downloads** go through the Dataverse API, `https://entrepot.recherche.data.gouv.fr/api/access/datafile/<id>`, with a browser User-Agent; the HTML pages block bots. File ids: labels 717882, Suricata 717879, user behaviour 717880, syslog 717890, winlogbeat 717892, auditbeat 717881; the `zeek_router1.zip` id was not recorded (`CLAUDE_HANDOFF.md`, git-ignored). MD5s verified at download (H:1092, 1284, 1386).
 - **Seeds used:** 42-53 (v1 subsets), 20260915 (benign corpus), 71 (network model), 73 (enterprise inventory), 79 (corpus v2 families). Check for reuse and alert-id collisions before generating a batch (`agentsoc_context_v2.md` §5; H:752, 851, 869).
 - **Local tags** `pre-phase2-checkpoint`, `post-phase2`, `post-phase3` exist only locally (`git tag -l`).
 - **Project facts from the old handoff** (UNVERIFIED, from `agentsoc_context_v2.md` §1):

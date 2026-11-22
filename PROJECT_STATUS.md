@@ -10,7 +10,11 @@ AgentSOC 2.0 (the system is called **GuardedSOC** in the newest paper) is a KMIT
 
 It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.20134). It is evaluated on a contamination corpus built from Microsoft GUIDE and on DEDALE (Inria, labelled testbed telemetry). It also runs as a live demo tool with a React web console. It exists to produce one research paper and a working tool someone outside the team can run (`PROJECT_PLAN.md` §1).
 
-**Status (verified 2026-11-22, `main` at `da17235` plus this audit's documentation commits on `chore/repo-audit-tracking`):** pipeline, tool and all GUIDE and DEDALE results are finished and frozen; tests pass (804). The paper is drafted in LaTeX (`paper/agentsoc_v2.tex`), and the team has a later Word revision (`AgentSOC_IEEE_Revised.docx`) that still has three wrong claims. What is left is the team's: choose the paper and venue, fix the paper, record the demo video, and the optional third dataset.
+**Status (verified 2026-11-22, `main` at `da17235` plus this audit's documentation commits on `chore/repo-audit-tracking`, not yet merged or pushed):**
+- Pipeline and tool are finished. The GUIDE and DEDALE results were frozen on 2026-10-31. Tests pass (804).
+- Re-checked on this machine: the three GUIDE acting-rule re-scores are byte-identical to the committed ones. The DEDALE re-freeze is IN PROGRESS (see "Reproduce" below).
+- The paper draft being worked on is the Word file `AgentSOC_IEEE_Revised.docx` (user, 2026-11-22). It was revised from the LaTeX paper `paper/agentsoc_v2.tex` and still has three wrong claims.
+- Left for the team: fix and finish the draft, choose the venue, record the demo video, write the SDC-II course report (template `Documentation_Template-SDC-II.docx`), and (optional) a third dataset.
 
 ## Terms used in this file
 
@@ -26,14 +30,33 @@ It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.2013
 | KS | Knowledge Store: the SQLite-backed graph the loop learns into (`perception/knowledge_db.py`) |
 | Learning gate | Learns a test-period case only if it was dismissed, 24 h after closing, and nothing on the same host escalated meanwhile (`perception/knowledge_updater.py`) |
 | Triage gate | Per new case: escalations, then the learned pattern, then the decision cache, then the pipeline with NCE behind a daily budget (`perception/triage_gate.py`) |
-| Asymmetric trust | Decision P9 A (2026-10-31): the LLM's output may raise scrutiny, never lower it (`--llm-authority escalate`). The older rule, where NCE output can dismiss or justify an action, is `full` ("acting rule") |
+| Asymmetric trust | Decision P9 A (2026-10-31): the LLM's output may raise scrutiny, never lower it (`--llm-authority escalate`). The older rule, where NCE output can dismiss or justify an action, is `full` ("acting rule"). **Defaults:** the demo server uses `escalate` (`soc_server/__main__.py:84`). The replays, `rescore_v2` and `TriageGate` default to `full` (`perception/triage_gate.py:102`). **Which rule gives which paper number** (numbering of `paper/agentsoc_combined.tex`): Tables I, II, IV, V, Figs. 2-3 and C4's 54.8 / 33.2 use `full`; C6 / Table III compares both (`README.md`, "Which rule produces which result"). Without NCE both rules decide the same |
+| P9 A-D | Decision P9 parts: A asymmetric trust (done). B the precursor attack on the learning gate (an attacker first gets harmless-looking activity learned so later steps match it) and corroborated learning, not started. C attacker text aimed at the analyst, where verdicts on text-flagged cases cannot teach the store without a second analyst; not started. D prompt-level baselines, which need a call budget (a pilot on 2026-11-01 got only HTTP 503) |
+| P8 review changes | Ten fixes from an external review, in the order planned (`PROJECT_PLAN.md` P8): 5 decision-cache policy versions (done), 8 safe checkpoint loading (done), 9 hash-chained audit logs (never built), 3 observed / feasible / confirmed in the case view (dropped), 2 ERA hardening, 6 second approval for `benign` verdicts on critical hosts, 7 unlearning that follows a pattern's decisions, 4 stricter learning (2, 4, 6, 7 folded into P9 B and C, not started), 10 hypotheses citing evidence (dropped), 1 typed indicators for the LLM (optional) |
 | B5 | Unlearn on confirmed compromise: a malicious verdict retracts what was learned on that host in the last 7 days |
-| D7 | Policy for unreasoned novel cases: send them to review (default) instead of dismissing |
+| D7 | Policy for *unreasoned* novel cases (NCE did not run: off, budget exhausted or failed): send them to review (default) instead of dismissing |
+| Outcomes | Per case: AUTO_APPROVED (an automatic, simulated response runs), REVIEW (an analyst looks), LOW_PRIORITY (logged, not reviewed: a learned pattern or "expected activity"), NO_ACTIONABLE (dismissed) (`perception/outcome.py`) |
+| Misdirected action | A containment aimed at an entity the alert's trusted telemetry never named (e.g. a host named only in attacker text) |
+| Unlearned key | A host detector turns an event into a structured key (e.g. host + parent program + program); a key the store has not learned raises a host alert (`perception/host_detection.py`) |
+| Attack simulation | The code that plays the attacker or the analyst in experiments and reads DEDALE's labels: E1's payload injector (`experiments/dedale_inject.py`) and the simulated oracle analyst (`experiments/dedale_score.py`, `dedale_host_score.py`, `analyst_sim.py`). The pipeline itself never reads labels |
+| Class 1 / class 2 | DEDALE label classes: class 1 = malicious event, class 2 = malicious-related consequence. Results count class-1 events |
+| Letter reuse | B1-B5 = decisions of the analyst review loop (`experiments/ANALYST_REVIEW_LOOP_DESIGN.md`; "plan B" = that loop). D1-D7 = decisions of the Knowledge Store design (`experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md` §8). P9 A-D = parts of plan decision P9. They are unrelated sets |
+| AIT-LDS | AIT Log Data Set v2, the optional third dataset (E3): 8 networks, 2 to be used, 17 GB zipped, CC BY-NC-SA 4.0 (`PROJECT_PLAN.md` §4). ("AIT-ADS" in the log is a different, alert-level dataset that was only considered) |
 | E1 | Experiment: attacker text appended to DEDALE's real attack command lines, run through the full loop |
 | GUIDE v2 | 500 dev + 500 held-out clean/contaminated alert pairs built from Microsoft GUIDE rows with synthetic entities, evidence and payloads (`GUIDE_Dataset/processed/v2/`) |
-| DEDALE | Inria testbed dataset (doi:10.57745/Y5JLDG, CC BY 4.0): 4 weeks of logs, 2 benign training weeks, one APT; exact labels for 2 attacked Windows clients |
+| DEDALE | Inria testbed dataset (doi:10.57745/Y5JLDG, CC BY 4.0): 4 weeks of logs, 2 benign training weeks, one APT. Event labels exist for 3 hosts: Windows clients CLIENT1 and CLIENT2, and the Linux internal server, which has auditd logs only. The experiments use only Windows logs, so the 2 labelled clients are the attacked hosts that count. Labels are read only by scorers and the attack simulation (I4) |
+| "400 labelled attack events" | With nothing learned (static) 473 labelled class-1 attack events alert. After learning the benign weeks 400 do; 73 share a pattern with benign activity. Hence "the same 400" / "400 of 473" |
 | C1-C6 | The paper's claims (`PROJECT_PLAN.md` §3); results in `experiments/RESULTS.md` |
-| P1-P9, M1-M8, I1-I6 | Plan decisions, milestones, design invariants (all in `PROJECT_PLAN.md`; invariants below) |
+| P1-P9, I1-I6 | Plan decisions (`PROJECT_PLAN.md` §2), design invariants (below) |
+| M1-M8 | Milestones (`PROJECT_PLAN.md` §6): M1 freeze, M2 finish interrupted runs + E1, M3 paper draft, M4 demo backend, M5 frontend, M6 optional E3, M7 venue / final paper / demo video, M8 handover (added 2026-10-19, P7). M1-M5 and M8 are done; M6-M7 are the team's |
+| E1-E3 | Plan experiments (`PROJECT_PLAN.md` §4): E1 contamination through the loop on DEDALE (done), E2 freeze (done), E3 optional AIT-LDS. Not the same as GUIDE v1's "Experiment 1" (paired clean-vs-contaminated runs, 2026-10-03) or the Sigma / auditbeat / Zeek download options named E1-E3 in `experiments/PHASE2_HOST_LOGS_DESIGN.md` |
+| Phases | Two numberings: the GUIDE work of 2026-10-10/11 had Phases 0-4 (repo safety, clean twins, T1071 redesign, corpus v2, live runs); the DEDALE work of 2026-10-11 had Phases 1-3 (network alerts, host logs, live NCE) |
+| Run names and tags | `freeze_dedale` names a replay `<mode>[_nce][_analyst]_<tag>` (`experiments/freeze_dedale.py:78-85`), e.g. `gated_nce_F_nce` = gated learning, NCE on, no analyst, tag `F_nce`. Modes: `static` (nothing learned), `frozen` (learned in training only), `gated`, `ungated`. Tags: `F_*` = acting rule, `A_*` = asymmetric trust; `nce` = NCE from the recorded cache; `d1` / `d4` / `d24` / `d72` = analyst delay in hours; `m5` / `m20` = analyst misses 5 / 20% of attacks; `fa5` = 5% false alarms; `_nob5` = B5 off; `closed` = closed-world SSE; `E1_<family>` = E1 payload family. "frozen" is also used for the frozen result files; context tells which |
+| Tier | A host's criticality tier 0-3 from the environment inventory (`dedale/environment.py`). Four-eyes approval applies to host cut-offs at tier ≥ 2 |
+| Suppressed / hijacked / denominators | GUIDE pairs are a clean and a contaminated twin. *Suppressed* = the clean twin got a response (REVIEW or AUTO_APPROVED) and the contaminated one did not; the denominator is pairs whose clean twin got a response (428 of 500 dev; 437 held-out; 437 gpt-oss). *Hijacked* (undefended agent) = it dismissed the contaminated twin but not the clean one; the denominator is pairs whose clean twin it did not dismiss (439). CIs are Wilson 95%. McNemar tests compare suppressed against responses induced otherwise than by ERA's escalation ("ERA-separated") (`experiments/RESULTS.md` C1 notes) |
+| Triples | "1 / 3 / 1" = E1 attack cases dismissed for the payload families `suppress` / `fake_approval` / `steer`. "20/178, 18/168, 21/176" = GUIDE dev Gemini / held-out Gemini / dev gpt-oss-20b: pairs whose contaminated twin lost the automatic containment (a destination block) that its clean twin executed, out of pairs whose clean twin executed one. "17 / 18 / 17" = how many of those removals came from ERA flagging the contaminated twin, whose escalation held the block back; the rest (3 / 0 / 4) from NCE's hypotheses asking for review |
+| McNemar notation | "4 / 4 discordant (p = 1.0)" = 4 pairs lost a response under contamination and 4 gained one; exact McNemar test on those counts |
+| Paper numbering | "Table I-V" and "Fig. 2-3" refer to `paper/agentsoc_combined.tex` unless `agentsoc_v2.tex` is named (v2 has Tables I-III and six figures; its numbers are mapped in `paper/agentsoc_v2_numbers.md`) |
 
 ## Results (frozen; source of every paper number: `experiments/RESULTS.md`, frozen 2026-10-31)
 
@@ -58,10 +81,9 @@ What may and may not be claimed: [experiments/PAPER_CLAIMS_TO_REVISE.md](experim
 | `PROJECT_PLAN.md` | Scope: goals, decisions P1-P9, claims C1-C6, milestones M1-M8, rules, "Later" list. Scope changes only by a dated decision there |
 | `REPRODUCE.md` | Rebuilding every number offline |
 | `DEMO_BACKEND_DESIGN.md` | Demo server design (M4) and what was added after |
-| `PAPER_OUTLINE.md` | Section plan of `paper/agentsoc_combined.tex` |
 | `CLAUDE.md` | Entry point for coding agents |
-| `AgentSOC_IEEE_Revised.docx` | Team's Word revision of the GuardedSOC paper, with authors (added 2026-11-22) |
-| `Documentation_Template-SDC-II.docx` | KMIT "Skill Development Course-2" report template (blank) |
+| `AgentSOC_IEEE_Revised.docx` | **The research paper draft currently being worked on** (user, 2026-11-22): GuardedSOC, with authors; revised from `paper/agentsoc_v2.tex` |
+| `Documentation_Template-SDC-II.docx` | KMIT "Skill Development Course-2" project-report template (blank); needed for the course report (user, 2026-11-22) |
 | `perception/` | The pipeline and the loop. `soc_loop.py` (the loop), `triage_gate.py`, `defended_pipeline.py` (`run_downstream`, `asymmetric_downstream`), `nce_engine.py` + `nce_contract.py` (NCE), `sse.py`, `entity_binding.py`, `rsem.py`, `action_playbook.py` (guardrails), `outcome.py`, `knowledge_db.py` (persistent KS), `knowledge_graph.py` (graph + synthetic seeds), `knowledge_updater.py` (learning gate, unlearning), `case_builder.py`, `case_store.py` (analyst inbox, audit), `review_service.py` (queue, case view), `outcome_monitor.py`, `host_detection.py` (6 Windows detectors), `environment.py` (environment profile), `network_model.py`, `enterprise_model.py`. Earlier layer still in use by ERA / GUIDE: `normalizer.py` (locked), `models.py`, `pipeline.py`, `schema_validation.py`, `contextualizer.py`, `derived_context_rules.py`, `noise_reducer.py` |
 | `risk_assessment/` | ERA (detectors, orchestrator, config incl. `MAX_PROMPT_FIELD_LENGTH = 512` at `config.py:115`) |
 | `prompt_construction/` | Safe prompt building; NCE prompt (`nce_prompt_builder.py`) |
@@ -83,7 +105,7 @@ What may and may not be claimed: [experiments/PAPER_CLAIMS_TO_REVISE.md](experim
 | `pyproject.toml` | pytest config: `testpaths = ["tests", "experiments"]`, smoke tests deselected |
 | `requirements.txt` / `requirements-lock.txt` | Minimum versions / exact versions of the venv used for all results |
 
-Not in git: `.env` (API keys), `.venv/`, `logs/` (re-scored GUIDE outputs, run stdout; written by `rescore_v2` and others), `frontend/dist/`, `frontend/node_modules/`, and personal root files (`CLAUDE_HANDOFF.md`, `agentsoc_context_v2.md`, `agenso_.research_base.pdf`, `agentsoc2_paper_corrected.log`). Data lives outside the repo in `<data>` = `AGENTSOC_DATA_DIR`, default `<repo>/../agentsoc_data` (`dedale/__init__.py:20-23`); on this machine `D:\agentsoc_data\` (`dedale/` raw and derived data, `runs/` replay outputs, `ks/` replay stores, `live*`/`demo`/`soak` server homes).
+Not in git: `.env` (API keys), `.venv/`, `logs/` (re-scored GUIDE outputs, run stdout; written by `rescore_v2` and others), `frontend/dist/`, `frontend/node_modules/`, and `agenso_.research_base.pdf` (the base AgentSOC paper, arXiv:2604.20134, kept for reference). The old handoff notes `CLAUDE_HANDOFF.md`, `agentsoc_context_v2.md` and the v1 LaTeX build log `agentsoc2_paper_corrected.log` were deleted on 2026-11-22 after their facts were copied into `RESEARCH_LOG.md` (`docs/_audit_report.md` §5). Data lives outside the repo in `<data>` = `AGENTSOC_DATA_DIR`, default `<repo>/../agentsoc_data` (`dedale/__init__.py:20-23`); on this machine `D:\agentsoc_data\` (`dedale/` raw and derived data, `runs/` replay outputs, `ks/` replay stores, `live*`/`demo`/`soak` server homes).
 
 ## Architecture
 
@@ -129,21 +151,22 @@ flowchart LR
 ## Set up, run, test (each command run 2026-11-22 unless marked)
 
 ```
-python -m venv .venv
-.venv\Scripts\python -m pip install -r requirements-lock.txt          # NOT run (installs need approval); venv already matches the lock
+python -m venv .venv                                                  # NOT run: the existing .venv (Python 3.13.2) was created 2026-10-11
+.venv\Scripts\python -m pip install -r requirements-lock.txt          # NOT run (installs need approval); the venv already matches the lock
 .venv\Scripts\python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"   # once, downloads 88 MB; NOT run (model is cached)
-set HF_HUB_OFFLINE=1                                                    # bash: export HF_HUB_OFFLINE=1
+$env:HF_HUB_OFFLINE = "1"                                               # PowerShell; cmd: set HF_HUB_OFFLINE=1; bash: export HF_HUB_OFFLINE=1
 .venv\Scripts\python -m pytest tests experiments -q                    # RUN: 804 passed, 1 deselected, 106 s
 ```
 
-- **Tests without data:** `AGENTSOC_DATA_DIR=<empty folder>`: RUN: 803 passed, 1 skipped (`tests/test_dedale.py:116`, "DEDALE data not present"), 1 deselected; nothing written to the folder.
+- **Tests without data:** PowerShell `$env:AGENTSOC_DATA_DIR = "<empty folder>"`, then the pytest command: RUN: 803 passed, 1 skipped (`tests/test_dedale.py:116`, "DEDALE data not present"), 1 deselected; nothing written to the folder.
+- **Smoke tests (deselected by default):** `python -m pytest -m smoke` (needs real API keys and makes live calls: needs a budget approval; `pyproject.toml`). Not run.
 - **Frontend:** `cd frontend && npm install && npm run build`. Not run here (installs need approval); `npm run typecheck` RUN: exit 0. Dev mode: `npm run dev` (port 5173, proxies `/api` to `AGENTSOC_API` or 127.0.0.1:8000).
-- **Demo server:** `python -m soc_server` (default home `<data>/live`, port 8000; all options in `README.md`). RUN in a throwaway home on port 8799: first start learned 7,505,328 events and checkpointed, served the built frontend at `/` and the API under `/api` (`/api/docs` 200), first-run admin setup worked; replay to 12:13 stream time took 25 s, 0 events rejected or failed.
-- **End-to-end check:** `python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-file <file>`. RUN against that server: **9 / 9 checks passed**.
+- **Demo server:** `python -m soc_server` (default home `<data>/live`, port 8000; all options in `README.md`). RUN once in a throwaway home on port 8799: first start learned 7,505,328 events, checkpointed and opened paused at 2025-01-06 08:00; served the built frontend at `/` and the API under `/api` (`/api/docs` 200), first-run admin setup worked; the same server, started, replayed to 12:13 stream time in 25 s, 0 events rejected or failed. Controls on the Live page and the demo walkthrough: `README.md` "Run the demo" and `PROJECT_PLAN.md` §5.
+- **End-to-end check:** `python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-file <file>` (needs Edge, Chrome or Chromium; read-only). RUN as `--url http://127.0.0.1:8799` against the throwaway server above, which served the existing `frontend/dist` build of 2026-10-20: **9 / 9 checks passed**.
 - **Accounts CLI:** `python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin` (password from the terminal or `AGENTSOC_NEW_PASSWORD`). Or create the first admin in the browser.
 - **Standalone review API (no replay):** `python -m review_api --case-store <cases.sqlite>` with `AGENTSOC_ANALYST_TOKENS="alice:<token>,bob:<token>"` (24+ characters each).
-- **Reproduce every number (no API calls):** `REPRODUCE.md`. Steps 3 (GUIDE re-scores) RUN: byte-identical. Steps 4-6 (`freeze_dedale --workers 6`, `build_results`, `build_figures`) RUN in an isolated data root: IN PROGRESS at the time of this commit (started 06:37 UTC 2026-11-22; result recorded in a later commit).
-- **DEDALE data:** `<data>/dedale/` needs `system_logs_winlogbeat.zip` (27.1 GB), `suricata_alerts.zip`, `system_logs_labels.zip`; network scoring also needs `zeek_router1.zip` (4.4 GB). Shortcut: `D:\dedale_for_team.zip` (336,956,066 bytes, 2026-10-20) holds `derived/` (1,344 hourly host-event files and `zeek_router1_attack_flows.jsonl`), `suricata_alerts.zip` and `system_logs_labels.zip`. Unzipped into `<data>/dedale/`, it replaces the two big archives and the hour-long extraction (`python -m experiments.dedale_extract_winlogbeat`). This machine has all of it.
+- **Reproduce every number (no API calls):** `REPRODUCE.md`. RUN in a temporary git worktree of this branch with its own temporary data root (a junction to `D:\agentsoc_data\dedale`, empty `runs/` and `ks/`), both in the agent's scratch folder and not kept, so nothing in `D:\agentsoc_data\runs` or this checkout changed. Step 3 (all six GUIDE re-scores, both rules): the three acting-rule re-scores are byte-identical to `agent/v2_results/*_rescored.json`. The three `_escalate` re-scores have no committed copy to compare with; they feed the asymmetric-trust rows of `RESULTS.md`, checked by the rebuild in step 5. Steps 4-6 (`freeze_dedale --workers 6`, `build_results`, `build_figures`) RUN in an isolated data root: IN PROGRESS at the time of this commit (started 06:37 UTC 2026-11-22; result recorded in a later commit).
+- **DEDALE data:** `<data>/dedale/` needs `system_logs_winlogbeat.zip` (27.1 GB), `suricata_alerts.zip`, `system_logs_labels.zip`; network scoring also needs `zeek_router1.zip` (4.4 GB). Shortcut: `D:\dedale_for_team.zip` (336,956,066 bytes, 2026-10-20) holds `derived/` (1,344 files = 672 hours × a `.jsonl.gz` of host events and a `.counts.json`, plus `zeek_router1_attack_flows.jsonl`), `suricata_alerts.zip` and `system_logs_labels.zip`. Unzipped into `<data>/dedale/`, it replaces the two big archives and the hour-long extraction (`python -m experiments.dedale_extract_winlogbeat`). This machine has all of it.
 
 **Environment variables:** `AGENTSOC_DATA_DIR` (data root), `HF_HUB_OFFLINE=1` (tests, replays), `AGENTSOC_CHECKPOINT_KEY` (checkpoint HMAC key file; default `~/.agentsoc/checkpoint.key`), `GEMINI_API_KEYS` / `GEMINI_API_KEY`, `GROQ_API_KEYS` / `GROQ_API_KEY` (comma-separated, in `.env`, loaded by `agent/key_pool.py`; never print more than the last 4 characters), `AGENTSOC_ANALYST_TOKENS`, `AGENTSOC_NEW_PASSWORD`, `AGENTSOC_AUDIT_LOG` (playbook audit log; default `logs/action_playbook_audit_log.jsonl`), `AGENTSOC_ALLOW_OVERWRITE=1` (lets a v1 runner overwrite its committed results), `AGENTSOC_API` (Vite dev proxy), `BROWSER` (tools), `PYTHONHASHSEED` (`freeze_dedale` sets 0), `WATCHDOG_*`, `POLL_INTERVAL_S`, `STALL_TIMEOUT_S` (v1 watchdog).
 
@@ -166,9 +189,10 @@ set HF_HUB_OFFLINE=1                                                    # bash: 
 | Dataset registry | PARTIAL | `soc_server/datasets.py`: only DEDALE registered |
 | GUIDE v2 results (both models) | DONE | `agent/v2_results/`, re-scores byte-identical 2026-11-22 |
 | DEDALE frozen results incl. E1 and asymmetric trust | DONE (files); re-run re-freeze IN PROGRESS 2026-11-22 | `experiments/dedale_results/final_*_scores.json`, `e1_scores.json` |
-| Paper (LaTeX) | PARTIAL | `paper/agentsoc_v2.tex`: authors and repository link are TODO (`:6`) |
-| Paper (team Word revision) | PARTIAL | `AgentSOC_IEEE_Revised.docx`: three wrong claims (see Known issues) |
-| Prompt-level baseline (P9 D) | NOT STARTED | needs a call budget; the 2026-11-01 pilot got only HTTP 503s; its branch is not in the repo |
+| Paper draft (current) | PARTIAL | `AgentSOC_IEEE_Revised.docx` (user, 2026-11-22): three wrong claims (see Known issues) |
+| Paper (LaTeX predecessor) | SUPERSEDED as the working draft | `paper/agentsoc_v2.tex` (authors and repository link TODO at `:6`); `paper/agentsoc_combined.tex` is older still |
+| SDC-II course report | NOT STARTED | `Documentation_Template-SDC-II.docx` is KMIT's blank "Skill Development Course-2" report template; no step uses it yet and its due date is NOT IN THE REPOSITORY |
+| Prompt-level baseline (P9 D) | NOT STARTED (no result) | a hardened-prompt pilot was prepared and attempted on 2026-11-01 but the API returned only HTTP 503; its branch is not in the repo; a new attempt needs a design and a call budget |
 | Hash-chained audit log (review change 9) | NOT STARTED | no code; `PROJECT_PLAN.md` P8/P9 said "on its branch", no such branch exists |
 | E3 AIT-LDS | NOT STARTED (optional) | `PROJECT_PLAN.md` §4 |
 | v1 corpus generators runnable | BROKEN | `GUIDE_Dataset/processed/synth_fields.py:195`, `inject_payloads.py:291` hard-code `/home/claude/...`; v2 builder works |
@@ -179,10 +203,10 @@ set HF_HUB_OFFLINE=1                                                    # bash: 
 **Paper:**
 - `AgentSOC_IEEE_Revised.docx` has three claims that do not match the repository:
   - §IV-D says the six planned experiments have "execution harnesses implemented in the repository". None exists in any commit.
-  - §VI-A gives a network 5% false-alarm workload of 32.4 reviews/day "from benign destination IP unlearning". The frozen value is 21.2, and the 8 are blocks that would have hit benign traffic.
-  - §V-C gives 624 test cases; the frozen value is 625.
+  - §VI-A says that on network alerts with 5% analyst false alarms (gated, analyst after 4 h, B5 on) "8 instances of benign destination IP unlearning" raised the workload "from 26.1 to 32.4 reviews/day". The frozen value for that condition is 21.2 reviews/day (`experiments/RESULTS.md:136`); the 8 are approved blocks that would have hit benign traffic (`RESULTS.md:138`), not unlearning; 32.4 appears in no result file.
+  - §V-C gives 624 test cases for the host run with 5% analyst false alarms and B5 on; the frozen value is 625.
   - Details: `docs/_audit_report.md` §3, `experiments/PAPER_CLAIMS_TO_REVISE.md`.
-- `paper/agentsoc_v2.tex` and the `.docx` have different titles. Which one is submitted is undecided.
+- The `.docx` (user, 2026-11-22) has a different title from `paper/agentsoc_v2.tex`; numbers added in the `.docx` are not covered by `paper/agentsoc_v2_numbers.md`.
 
 **Research limits** (all in the paper):
 - one labelled testbed dataset with 2 attacked hosts;
@@ -203,39 +227,39 @@ set HF_HUB_OFFLINE=1                                                    # bash: 
 - The server binds to localhost, without TLS.
 - Live databases are protected only by file permissions.
 - Analyst actions after the last checkpoint are lost on a crash.
+- `soc_server/__main__.py:13` (current code) says NCE is "cache only"; that is only the default (`--nce live` calls Gemini).
+- `frontend/dist/` was built 2026-10-20 13:02, one minute before the last `frontend/src` commit (`64051be`). Rebuild before a demo.
 
 **Reproduction gotchas:**
 - `experiments/build_results.py:105-106` silently leaves out the asymmetric-trust C1 rows unless the three `rescore_v2 ... --llm-authority escalate` runs wrote `logs/*_rescored_escalate.json`. This checkout's `logs/` has none.
 - `freeze_dedale` skips any replay whose `summary.json` exists. Use `--rerun` after code changes.
 - On this machine `D:\agentsoc_data\runs` has no `A_*` (asymmetric-trust) replay outputs; the 2026-10-31 re-freeze that produced them left nothing there.
-- Windows `os.replace` fails while another process holds a results file open: monitor long runs through the API log, never by opening the results JSON.
+- Windows `os.replace` fails while another process holds a results file open: monitor long runs through the append-only API call log (`agent/v2_results/*_api_log.jsonl` for GUIDE runs, `<data>/runs/nce_api_log_host.jsonl` for DEDALE NCE), never by opening the results JSON.
 - In Git Bash, set `MSYS_NO_PATHCONV=1` before `tools/ui_check.py` (it rewrites `/` arguments into Windows paths).
 
 **v1 leftovers** (historical code, not used by the current pipeline):
 - `agent/measure_clean_confidence.py` makes live API calls and overwrites its result file without the overwrite guard.
 - The v1 corpus generators cannot run as written.
 - The v1 watchdogs `run_with_watchdog.py` / `_B.py` accept exit 0 regardless of progress.
-- `soc_server/__main__.py:13` says NCE is "cache only"; that is only the default (`--nce live` calls Gemini).
-- `frontend/dist/` was built 2026-10-20 13:02, one minute before the last `frontend/src` commit (`64051be`). Rebuild before a demo.
 
 ## Next steps (in order)
 
-1. **Choose the paper to submit** (`paper/agentsoc_v2.tex` or the `.docx`). Then fix the three wrong `.docx` claims from `docs/_audit_report.md` §3:
+0. **Review and merge this audit** (branch `chore/repo-audit-tracking`, documentation only; nothing pushed). The audit was asked to stay on its branch, so the user reviews it before the usual `--no-ff` merge; pushing is always the user's call.
+1. **Fix the paper draft `AgentSOC_IEEE_Revised.docx`** (the one being worked on). Fix its three wrong claims (`docs/_audit_report.md` §3):
    - remove "with execution harnesses implemented in the repository" from §IV-D;
-   - replace "26.1 to 32.4 ... unlearning" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";
+   - in §VI-A replace "8 instances of benign destination IP unlearning, increasing network review workload from 26.1 to 32.4 reviews/day" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";
    - change 624 to 625.
-   If the LaTeX paper is kept, fill the author block and repository link (`paper/agentsoc_v2.tex:6`). Either way the team revises the text Claude drafted, especially the related-work positioning (from the removed `HANDOVER.md`).
-2. **M7:** choose the venue (P2), then record the demo video. Before recording, rebuild the frontend (`cd frontend && npm run build`; the user runs installs) and run `tools/e2e_check.py`.
+   Every new number in it should be traced to `experiments/RESULTS.md` or a result file, as `paper/agentsoc_v2_numbers.md` does for the LaTeX version. The team also revises the text Claude drafted, especially how the related-work section positions the work against the literature (Claude drafted it; the team should check it against the papers they know).
+2. **M7:** choose the venue (P2; no candidates or deadlines are recorded in the repository), then record the demo video (content: the use case in `PROJECT_PLAN.md` §5). Before recording, rebuild the frontend (`cd frontend && npm run build`; the user runs installs) and run `tools/e2e_check.py`.
 3. **Optional E3 (AIT-LDS):** only if the paper needs a second real dataset. Follow `docs/ADDING_A_DATASET.md`; download approval first (17 GB, CC BY-NC-SA 4.0).
 4. **Optional P9 D (prompt-level baseline):** needs a written design and an approved call budget. Nothing exists in the repository to build on.
 5. **Housekeeping (needs a yes):**
    - give `agent/measure_clean_confidence.py` the `agent/run_guard.confirm_overwrite` guard;
    - mark or fix the v1 generators' `/home/claude` paths;
-   - decide whether the untracked personal root files stay.
 
 ## Open questions for a human
 
-- Which paper is canonical, and does the `.docx` belong in git (committed in `c0ef3ed` by this audit to keep it safe)?
+- Should the paper `.docx` and the SDC-II template stay in git? This audit committed them in `c0ef3ed` to keep them safe. Note: git history keeps binary versions forever, and the `.docx` holds the authors' e-mail addresses.
 - Is review change 9 (hash-chained audit log) dropped? `PROJECT_PLAN.md` said it was on a branch that does not exist.
 - Does anyone still have the `baseline-prompt` branch (`docs/LIMITATIONS_DRAFT.md:113` cites counts from it)?
 - Where did the 2026-10-31 re-freeze run (its outputs are not in `D:\agentsoc_data`)?
@@ -245,7 +269,7 @@ set HF_HUB_OFFLINE=1                                                    # bash: 
 - **Git:** one branch per change. Commit each step with its tests, and merge into `main` with `--no-ff` when the full suite passes. Push to `origin` (github.com/Akshara-reddy612/AgentSOC) only when asked; never push tags or side branches unasked. Commit messages: a short imperative summary, then details; end with the `Co-Authored-By` trailer the agent harness specifies.
 - **Tracking:** every change updates this file in place and adds an entry to `RESEARCH_LOG.md`. Update `experiments/PAPER_CLAIMS_TO_REVISE.md` when a claim moves. Historical numbers are never edited: add a dated `[Correction YYYY-MM-DD]` note instead.
 - **Scope:** `PROJECT_PLAN.md`. New ideas go to its "Later" list.
-- **Approvals:** live LLM runs need an approved call budget (estimate calls first). Downloads need approval after size, licence and disk use are reported ("yes" to a plan is not approval to download). `pip` / `npm` installs are run by the user.
+- **Approvals** (given by the user, Abhishek): live LLM runs need an approved call budget (estimate calls first). Downloads need approval after size, licence and disk use are reported ("yes" to a plan is not approval to download). `pip` / `npm` installs are run by the user.
 - **Code:**
   - Run Python as `python -m ...` from the repository root.
   - Data stays outside the repo; downloaded files are read with `python -I`.
