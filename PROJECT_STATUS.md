@@ -244,7 +244,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 
 ## Next steps (in order)
 
-0. **Paper revision, Tier 1 (decision P10, 2026-11-22):** the first design, A10 the persuaded analyst (`experiments/PERSUADED_ANALYST_DESIGN.md`), waits for the user's approval; nothing has run. Branch `paper-revision-design`. The audit itself was merged and pushed on 2026-11-22 (`d43bdc6`).
+0. **Paper revision (decisions P10, P11; 2026-11-22), branch `paper-revision-design`, not pushed.** Tier 1 (offline) is done and scored: A10 persuaded analyst, A7 rarity baseline, gate delay, A11 seeds, lookback, detection metrics; tables in `experiments/RESULTS.md` section "Paper revision". Tier 2 (live, about 4,300 Gemini calls, 13 keys since 2026-11-22) is running: T2.1 held-out undefended, then T2.3 adaptive attacker, then T2.2 delimited / spotlight / hierarchy. Paper: 8-page IEEE budget approved, `paper/PAGE_BUDGET.md`; agents draft text, the user edits the docx. The draft docx does not open in normal Word (it marks `w14`/`wp14` ignorable without declaring them); Word's repair mode opens it. The audit itself was merged and pushed on 2026-11-22 (`d43bdc6`).
 1. **Fix the paper draft `AgentSOC_IEEE_Revised.docx`** (the one being worked on; the user edits it, and an agent proposes changes rather than editing the `.docx`). Fix its three wrong claims (`docs/_audit_report.md` §3):
    - remove "with execution harnesses implemented in the repository" from §IV-D;
    - in §VI-A replace "8 instances of benign destination IP unlearning, increasing network review workload from 26.1 to 32.4 reviews/day" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";

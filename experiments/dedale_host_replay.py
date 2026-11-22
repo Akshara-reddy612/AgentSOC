@@ -89,14 +89,31 @@ def case_record(case: Case, decision: Decision | None) -> dict:
     return rec
 
 
-def _retract_rare(db: KnowledgeDB, k: int) -> int:
-    """Tier 1 baseline (P10): retract training-learned detector patterns seen fewer than `k` times."""
+def _training_frequencies(detectors: tuple[str, ...]) -> Counter:
+    """How often each detector key occurs in the training weeks.  The loop learns a key the first time it is
+    seen and records nothing after, so its edge `count` stays 1 (found 2026-11-22: the first A7 run used that
+    count and retracted every training pattern); the frequency must be counted from the events."""
+    freq: Counter = Counter()
+    for at, event in iter_events(TRAINING_END):
+        for name in detectors:
+            k = DETECTORS[name].key(event)
+            if k is not None:
+                e = DETECTORS[name].edge(k)
+                freq[(e.src, e.dst, json.dumps(e.key))] += 1
+    return freq
+
+
+def _retract_rare(db: KnowledgeDB, k: int, freq: Counter) -> int:
+    """Tier 1 baseline (P10): retract training-learned detector patterns that occurred fewer than `k` times."""
     n = 0
     for src, dst, key, _, _ in db.learned_edges({"training"}):
         attrs = db.edge_attrs(src, dst, key)
-        if attrs is not None and "count" in attrs and attrs["count"] < k:
+        if attrs is None or "detector" not in attrs:            # only detector patterns (not HAS_PRIOR_ACCESS)
+            continue
+        seen = freq.get((src, dst, json.dumps(key)), 0)
+        if seen < k:
             db.retract_edge(src, dst, key, writer="experiment:min_train_count", at=TRAINING_END,
-                            reason=f"baseline: seen {attrs['count']} < {k} times in training")
+                            reason=f"baseline: seen {seen} < {k} times in training")
             n += 1
     return n
 
@@ -232,6 +249,7 @@ def main() -> None:
                        case_store=case_store, unlearn_on_confirm=not args.no_unlearn,
                        gate_delay=timedelta(hours=args.gate_delay))
         thresholded = args.min_train_count <= 1
+        train_freq = _training_frequencies(tuple(args.detectors)) if not thresholded else None
         last = TRAINING_START
         events = iter_events(until)
         while chunk := list(islice(events, CHUNK)):
@@ -239,7 +257,7 @@ def main() -> None:
                 for at, event in chunk:
                     if not thresholded and at >= TRAINING_END:     # baseline: forget rare training patterns
                         loop.tick(TRAINING_END)
-                        retracted_rare = _retract_rare(db, args.min_train_count)
+                        retracted_rare = _retract_rare(db, args.min_train_count, train_freq)
                         thresholded = True
                     if injector is not None:
                         event = injector(event)
