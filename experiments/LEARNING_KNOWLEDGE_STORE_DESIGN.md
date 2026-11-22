@@ -2,6 +2,8 @@
 
 **Status:** proposal for team review. Nothing below is implemented yet. Decisions marked **[OPEN]** need an answer before the step that depends on them.
 
+> **[Audit 2026-11-22]** This status line is outdated: steps S1-S9 were implemented on 2026-10-11 (section 7 below) and D1-D7 were decided (section 8). The design text is kept as written.
+
 **Goal:** build the two parts of the base paper (AgentSOC, ICAIC 2026, arXiv 2604.20134) that the project does not have yet. The first is the Internal Knowledge Store's *dynamic behavioural knowledge*. The second is the *Real-Time Monitoring* feedback loop (§III-D; workflow steps 7-8 in §III-E). We then evaluate them on real telemetry (DEDALE) replayed in time order. The same store becomes the persistent store for the analyst review loop (plan item B).
 
 ## 1. Paper vs. today vs. this design

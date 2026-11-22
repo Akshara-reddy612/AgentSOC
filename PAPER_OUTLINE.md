@@ -1,5 +1,7 @@
 # Paper outline (M3, 2026-10-18)
 
+> **[Audit 2026-11-22]** This outline is for `paper/agentsoc_combined.tex`. The newer paper is `paper/agentsoc_v2.tex` (GuardedSOC, written fresh 2026-11-01, 7 pages; numbers traced in `paper/agentsoc_v2_numbers.md`). The team's Word revision `AgentSOC_IEEE_Revised.docx` (2026-11-22) has its own structure. Which paper is submitted is open (`PROJECT_STATUS.md`).
+
 - **Thesis** (`PROJECT_PLAN.md` P1): an LLM-driven SOC has two attack surfaces, the LLM reading log text an attacker can write and the memory that learns from what it sees, and the full pipeline defends both while keeping the workload benefit of automation.
 - **Format:** IEEE conference, about 8 pages (the venue is chosen after the draft, P2).
 - **Source of every number:** `experiments/RESULTS.md`.
