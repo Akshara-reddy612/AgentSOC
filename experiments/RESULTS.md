@@ -330,6 +330,17 @@ The attacker first runs the tools its attack will use harmlessly, so that the at
 
 Attack steps: initial access (CLIENT2), lateral movement, collection, exfiltration (CLIENT1). B5 retracts learning only on the host it confirms; CLIENT1 is never confirmed when its keys are planted.
 
+**Mitigation: cross-host unlearning** (an option, off by default: when a host is confirmed compromised, B5 retracts what was learned in the last 7 days on every host, not only that one). With the option off, the replay is byte-identical to the frozen F_d4 run: yes.
+
+| Condition | Attack cases raised (B5 host only -> all hosts) | Attack events alerted | Reviews / day | Minutes to detect each step, all hosts |
+|:--|--:|--:|--:|:--|
+| test-period plants, analyst 4 h | 21 -> 58 | 212 -> 377 | 31.2 -> 46.8 | 2.4 / 28.5 / 30 / 1265 |
+| test-period plants incl. PowerShell keys | 0 -> 0 | 0 -> 0 | 28.4 -> 28.4 | missed / missed / missed / missed |
+| training-week plants, analyst 4 h | 2 -> 2 | 34 -> 34 | 26.7 -> 26.9 | 2.4 / missed / missed / missed |
+| no attacker, analyst always right | 72 -> 72 | 400 -> 400 | 34.1 -> 45.2 | 1.2 / 28.5 / 30 / 1265 |
+| no attacker, analyst misses 20% | 72 -> 72 | 400 -> 400 | 34.1 -> 45.2 | 1.2 / 28.5 / 30 / 1265 |
+| no attacker, 5% false alarms | 72 -> 72 | 400 -> 400 | 44.6 -> 62.9 | 1.2 / 28.5 / 30 / 1265 |
+
 ## Limits
 
 - **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few malicious verdicts.

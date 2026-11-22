@@ -73,6 +73,7 @@ ANALYST_DELAY = timedelta(hours=4)
 SIMULATED_ANALYST = "oracle"
 SIMULATED_APPROVERS = ("oracle", "oracle-2")          # the simulated team (four-eyes needs two)
 UNLEARN_LOOKBACK = timedelta(days=7)                    # decision B5 (a)
+UNLEARN_SCOPES = ("host", "all")
 Analyst = Callable[[Case, Decision, datetime], "str | None"]
 
 
@@ -86,9 +87,15 @@ class SocLoop:
                  analyst_delay: timedelta = ANALYST_DELAY,
                  detectors: tuple[str, ...] = tuple(DETECTORS),
                  on_alert: Callable[[Case, dict], None] | None = None,
-                 case_store: CaseStore | None = None, unlearn_on_confirm: bool = True) -> None:
+                 case_store: CaseStore | None = None, unlearn_on_confirm: bool = True,
+                 unlearn_scope: str = "host") -> None:
         if mode not in LEARNING_MODES:
             raise ValueError(f"mode must be one of {LEARNING_MODES}")
+        if unlearn_scope not in UNLEARN_SCOPES:
+            raise ValueError(f"unlearn_scope must be one of {UNLEARN_SCOPES}")
+        # B5 retracts on the confirmed host only ("host", default), or on every host ("all": cross-host
+        # unlearning, 2026-11-23, checklist A8 mitigation; an attacker may already have moved on).
+        self.unlearn_scope = unlearn_scope
         self.analyst = analyst
         self.analyst_delay = analyst_delay
         self.case_store = case_store                # test-window cases, decisions, alerts (review loop)
@@ -329,8 +336,9 @@ class SocLoop:
         if done["flagged_host"]:
             done["flag_watch"] = self.monitor.flag_host(done["flagged_host"], case.case_id, at).watch_id
             if self.unlearn_on_confirm and self.updater is not None:
-                done["retracted"] = self.updater.retract_host_learning(
-                    done["flagged_host"], at - UNLEARN_LOOKBACK, at, writer)
+                retract = (self.updater.retract_all_learning if self.unlearn_scope == "all"
+                           else self.updater.retract_host_learning)
+                done["retracted"] = retract(done["flagged_host"], at - UNLEARN_LOOKBACK, at, writer)
         return done
 
     def _end_training(self) -> None:

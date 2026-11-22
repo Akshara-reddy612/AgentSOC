@@ -168,6 +168,9 @@ def main() -> None:
                          "their detector keys are learned (experiments/dedale_plant.py)")
     ap.add_argument("--plant-detectors", nargs="+", default=None, choices=list(DETECTORS),
                     help="A8: detectors whose keys the attacker plants (default: lineage exec_file_write pipe)")
+    ap.add_argument("--unlearn-scope", default="host", choices=["host", "all"],
+                    help="A8 mitigation (2026-11-23): B5 retracts on the confirmed host only (default) or on every "
+                         "host (cross-host unlearning)")
     ap.add_argument("--flood", type=float, default=None,
                     help="checklist A3 (2026-11-23): escalation flooding, harmless novel programs per hour on the "
                          "hosts the attacker controls (experiments/dedale_flood.py)")
@@ -264,7 +267,7 @@ def main() -> None:
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
-                       case_store=case_store, unlearn_on_confirm=not args.no_unlearn,
+                       case_store=case_store, unlearn_on_confirm=not args.no_unlearn, unlearn_scope=args.unlearn_scope,
                        gate_delay=timedelta(hours=args.gate_delay))
         thresholded = args.min_train_count <= 1
         train_freq = _training_frequencies(tuple(args.detectors)) if not thresholded else None
@@ -333,6 +336,7 @@ def main() -> None:
         **({"train_window": args.train_window} if args.train_window != "both" else {}),
         **({"plant": args.plant, "plant_detectors": args.plant_detectors or "lineage exec_file_write pipe",
             "planted_events": len(planted)} if args.plant else {}),
+        **({"unlearn_scope": args.unlearn_scope} if args.unlearn_scope != "host" else {}),
         **({"flood_per_hour": args.flood, "flood_events": len(flooded)} if args.flood else {}),
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),

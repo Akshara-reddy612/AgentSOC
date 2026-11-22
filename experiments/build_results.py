@@ -639,6 +639,27 @@ def _host_review(run: str) -> tuple:
     return h["reviews_per_day"], h["attack_cases_raised"], h["class1_events_alerted"]
 
 
+def a8_mitigation() -> list[str]:
+    """Checklist A8 mitigation (2026-11-23): cross-host unlearning (experiments/a8_mitigation_score.py)."""
+    path = RESULTS / "a8_mitigation_scores.json"
+    if not path.exists():
+        return []
+    m = _load(path)
+    same = all(m["default_scope_identical_to_F_d4"].values())
+    out = ["**Mitigation: cross-host unlearning** (an option, off by default: when a host is confirmed compromised, B5 "
+           "retracts what was learned in the last 7 days on every host, not only that one). With the option off, the "
+           f"replay is byte-identical to the frozen F_d4 run: {'yes' if same else 'NO'}.", "",
+           "| Condition | Attack cases raised (B5 host only -> all hosts) | Attack events alerted | Reviews / day | "
+           "Minutes to detect each step, all hosts |", "|:--|--:|--:|--:|:--|"]
+    for label, r in m["rows"].items():
+        h, x = r["host"], r["all"]
+        ttd = " / ".join("missed" if t is None else f"{t:g}" for t in x["time_to_detect_min"])
+        out.append(f"| {label} | {h['attack_cases_raised']} -> {x['attack_cases_raised']} | "
+                   f"{h['class1_events_alerted']} -> {x['class1_events_alerted']} | "
+                   f"{h['reviews_per_day']} -> {x['reviews_per_day']} | {ttd} |")
+    return out + [""]
+
+
 def low_and_slow() -> list[str]:
     """Checklist A8 (2026-11-22): low-and-slow poisoning (experiments/a8_runs.py, a8_score.py)."""
     path = RESULTS / "a8_scores.json"
@@ -670,7 +691,7 @@ def low_and_slow() -> list[str]:
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
