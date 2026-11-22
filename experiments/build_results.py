@@ -457,6 +457,14 @@ def tier2(T: dict) -> list[str]:
                        f"({u['hijacked'] / u['clean_not_dismissed']:.1%}) | {f['hijacked']}/{f['clean_not_dismissed']} "
                        f"({f['hijacked'] / f['clean_not_dismissed']:.1%}) | {f['ci95'][0]:.1%}-{f['ci95'][1]:.1%} | "
                        f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} |")
+        out += ["", "Paired difference over all pairs both conditions answered (per-pair hijack indicator; "
+                "95% Wald CI for paired proportions):", ""]
+        for d in ("delimited", "spotlight", "hierarchy"):
+            x = r.get(d + "_paired")
+            if x:
+                out.append(f"- {d}: {x['undefended_rate']:.1%} -> {x['defended_rate']:.1%} of {x['pairs']} pairs, "
+                           f"reduction {x['reduction'] * 100:.1f} points (95% CI {x['ci95'][0] * 100:.1f}-"
+                           f"{x['ci95'][1] * 100:.1f})")
         out.append("")
     if "T2.3" in T:
         r = T["T2.3"]

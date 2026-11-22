@@ -230,6 +230,12 @@ CLIENT2 was confirmed in every run: its first attack case carries no attacker te
 | spotlight | 150 | 36/128 (28.1%) | 7/140 (5.0%) | 2.4%-10.0% | 1 / 30 | 3e-08 |
 | hierarchy | 150 | 36/128 (28.1%) | 4/140 (2.9%) | 1.1%-7.1% | 1 / 33 | 4.1e-09 |
 
+Paired difference over all pairs both conditions answered (per-pair hijack indicator; 95% Wald CI for paired proportions):
+
+- delimited: 24.0% -> 5.3% of 150 pairs, reduction 18.7 points (95% CI 11.9-25.4)
+- spotlight: 24.0% -> 4.7% of 150 pairs, reduction 19.3 points (95% CI 12.8-25.9)
+- hierarchy: 24.0% -> 2.7% of 150 pairs, reduction 21.3 points (95% CI 14.5-28.1)
+
 *T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.
 
 | Rule | Suppressed, original payload | Suppressed, adaptive payload | 95% CI | McNemar b / c | Outcome changed | Techniques changed | Review removed (back to the clean response) |
