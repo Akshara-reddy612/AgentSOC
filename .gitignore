@@ -50,3 +50,15 @@ Thumbs.db
 /CLAUDE_HANDOFF.md
 /agentsoc_context_v2.md
 /agenso_.research_base.pdf
+
+# Paper text kept out of the public repo until acceptance (plagiarism checkers index it; 2026-11-22).
+# Backup: D:gentsoc_data\paper_private\npaper/agentsoc_v3.tex
+paper/agentsoc_v3.pdf
+paper/REVISION_DRAFT.md
+paper/agentsoc_v2.tex
+paper/agentsoc_v2.pdf
+paper/agentsoc_combined.tex
+paper/agentsoc_combined.pdf
+paper/*.aux
+paper/*.log
+paper/*.out
