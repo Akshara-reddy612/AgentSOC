@@ -352,6 +352,15 @@ def revision() -> list[str]:
            "**Detection metrics** (from `final_host_scores.json`; a case holding a labelled class-1 event is an attack "
            "case; time to detect = minutes from each attack step's start to its first reviewed case):", "",
            *detection_table(), ""]
+    hs = _load(RESULTS / "final_host_scores.json")["runs"]
+    st, fz = hs["static_F_static"], hs["frozen_F_frozen"]
+    s_rev, f_rev = st["reviews_per_day"]["mean"], fz["reviews_per_day"]["mean"]
+    s_ev, f_ev = st["labelled_events_alerted"]["class_1"], fz["labelled_events_alerted"]["class_1"]
+    out += [f"*Derived (paper text):* learning the clean weeks cuts host reviews from {s_rev} to {f_rev} per day, "
+            f"{1 - f_rev / s_rev:.1%} fewer; {f_ev} of the {s_ev} labelled attack events the static detectors alert on "
+            f"still alert ({f_ev / s_ev:.1%}); the other {s_ev - f_ev} match routine activity learned in the clean weeks.",
+            f"E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI "
+            f"{wilson(0, 72)[0]:.1%}-{wilson(0, 72)[1]:.1%}.", ""]
     t1 = RESULTS / "tier1_scores.json"
     if t1.exists():
         T = _load(t1)

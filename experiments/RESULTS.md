@@ -156,6 +156,9 @@ Offline replays of DEDALE host logs (recorded LLM answers only), added after the
 | gated + NCE (asymmetric trust) | 7.9% | 72/72 | 60.1 | 0/841 | 1.2 / 28.5 / 30 / 1265 |
 | gated + NCE + analyst (asymmetric trust) | 15.1% | 72/72 | 28.9 | 0/405 | 1.2 / 28.5 / 30 / 1265 |
 
+*Derived (paper text):* learning the clean weeks cuts host reviews from 6095.4 to 65.2 per day, 98.9% fewer; 400 of the 473 labelled attack events the static detectors alert on still alert (84.6%); the other 73 match routine activity learned in the clean weeks.
+E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI 0.0%-5.1%.
+
 **A simple memory baseline:** a pattern from the two clean weeks counts as normal only if it occurred at least K times (K = 1 is the clean-weeks allowlist, i.e. the frozen store). NCE off, no analyst.
 
 | K | Reviews / day | Attack cases raised | Labelled attack events alerted | Attack cases learned | Precision | Training patterns forgotten |
