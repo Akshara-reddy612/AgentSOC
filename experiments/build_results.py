@@ -113,7 +113,7 @@ def c1() -> list[str]:
              "Induced otherwise | McNemar p (suppressed vs induced otherwise) | Steered actions: executed / gated | "
              "Automatic containments removed by contamination |",
              "|:--|--:|--:|--:|--:|--:|--:|--:|--:|"]
-    outcome_lines = []
+    outcome_lines, paired_lines = [], []
     for name, path, set_name in runs:
         alerts = _load(V2_DIR / f"guide_v2_{set_name}.json")
         results = _load(ROOT / path)
@@ -134,6 +134,13 @@ def c1() -> list[str]:
                      f"{mcnemar(t['suppressed'], other):.2g} | "
                      f"{t['misdirect_executed']} / {t['misdirect_gated']} | {_pct(removed, with_one)}"
                      f"{f'; {via_era} ERA-flagged' if removed else ''} |")
+        n, b, c = t["pairs"], t["suppressed"], other         # paired: change in the response rate, contaminated - clean
+        d = (c - b) / n
+        se = ((b + c) - (c - b) ** 2 / n) ** 0.5 / n
+        paired_lines.append(f"- {name}: {b} suppressed, {c} induced otherwise, of {n} pairs: change in response rate "
+                            f"{d * 100:+.1f} points (paired 95% CI {(d - 1.96 * se) * 100:+.1f} to {(d + 1.96 * se) * 100:+.1f})")
+    lines += ["", "*Paired view* (each pair is its own control; Wald CI for paired proportions; no significance is "
+              "claimed where the interval covers zero):", "", *paired_lines]
     lines += ["", "*Induced by ERA escalation*: the contaminated twin got a response the clean one did not because "
               "ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence "
               "reacting, not the attacker succeeding.", "",
@@ -361,6 +368,12 @@ def revision() -> list[str]:
             f"still alert ({f_ev / s_ev:.1%}); the other {s_ev - f_ev} match routine activity learned in the clean weeks.",
             f"E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI "
             f"{wilson(0, 72)[0]:.1%}-{wilson(0, 72)[1]:.1%}.", ""]
+    fpr = RESULTS / "event_fpr.json"
+    if fpr.exists():
+        e = _load(fpr)
+        out += [f"*Event-level false-positive rate* ({e['run']}, `experiments/event_fpr.py`): {e['false_positive_events']} "
+                f"of {e['negatives']:,} test-period host events without a class-1 label raised an alert "
+                f"({e['fpr'] * 100:.3f}%); {e['alerted_class1']} of the {e['alerted_events']} alerted events are class-1.", ""]
     t1 = RESULTS / "tier1_scores.json"
     if t1.exists():
         T = _load(t1)
