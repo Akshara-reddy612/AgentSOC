@@ -87,6 +87,8 @@ def main() -> None:
     ap.add_argument("--case-store", action="store_true", help="also record cases in a case store (review loop)")
     ap.add_argument("--no-unlearn", action="store_true", help="switch off decision B5 (unlearn on confirmation)")
     ap.add_argument("--overwrite", action="store_true", help="replace this run's store and records")
+    ap.add_argument("--gate-delay", type=float, default=24.0,
+                    help="Tier 1 (P10): hours a dismissed case waits before the gate learns it (default 24 = GATE_DELAY)")
     args = ap.parse_args()
 
     run = (args.mode + ("_noact" if args.unreasoned == "no_actionable" else "")
@@ -132,7 +134,8 @@ def main() -> None:
 
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case,
                        gate_options={"unreasoned": args.unreasoned}, analyst=analyst, case_store=case_store,
-                       analyst_delay=timedelta(hours=args.analyst_delay), unlearn_on_confirm=not args.no_unlearn)
+                       analyst_delay=timedelta(hours=args.analyst_delay), unlearn_on_confirm=not args.no_unlearn,
+                       gate_delay=timedelta(hours=args.gate_delay))
         alerts = iter_alerts(end=until)
         last = TRAINING_START
         while chunk := list(islice(alerts, CHUNK)):
@@ -159,6 +162,7 @@ def main() -> None:
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)), "until": args.until,
         "training_end": _iso(TRAINING_END), "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "nce_backlog": loop.gate.backlog, "unlearn_on_confirm": not args.no_unlearn,
+        **({"gate_delay_h": args.gate_delay} if args.gate_delay != 24.0 else {}),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,
         "gate_dropped": loop.updater.dropped if loop.updater else None,
         "edges_by_type_and_provenance": {f"{t}|{lf}": n for (t, lf), n in sorted(db.edge_counts().items())},
