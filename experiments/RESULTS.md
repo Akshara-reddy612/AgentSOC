@@ -226,9 +226,9 @@ CLIENT2 was confirmed in every run: its first attack case carries no attacker te
 
 | Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |
 |:--|--:|--:|--:|:--|:--|--:|
-| delimited | 0 | - | - | - | - | - |
-| spotlight | 8 | 2/7 | 0/7 | 0.0%-35.4% | 0 / 2 | 0.5 |
-| hierarchy | 0 | - | - | - | - | - |
+| delimited | 150 | 36/128 (28.1%) | 8/136 (5.9%) | 3.0%-11.2% | 2 / 30 | 2.5e-07 |
+| spotlight | 150 | 36/128 (28.1%) | 7/140 (5.0%) | 2.4%-10.0% | 1 / 30 | 3e-08 |
+| hierarchy | 150 | 36/128 (28.1%) | 4/140 (2.9%) | 1.1%-7.1% | 1 / 33 | 4.1e-09 |
 
 *T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.
 
