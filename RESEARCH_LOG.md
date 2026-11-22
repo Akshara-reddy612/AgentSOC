@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: A8 mitigation, cross-host unlearning (option, off by default)
+
+- **What:** `SocLoop(unlearn_scope="all")` / `--unlearn-scope all`: when a host is confirmed compromised, B5 retracts what was learned from closed cases or verdicts in the last 7 days on every host, not only the confirmed one (`KnowledgeUpdater.retract_all_learning`). Default `"host"` keeps the old behaviour; the demo server and every frozen run use the default. Pipeline files touched: `perception/soc_loop.py`, `perception/knowledge_updater.py` (user approved the default-off option, 2026-11-23).
+- **Check:** with the default scope, the analyst-4 h replay is byte-identical to the frozen F_d4 run (cases.jsonl and alerts), with and without a case store. So the A8 and A11 runs without a case store compare fairly with the frozen runs.
+- **Result** (`experiments/a8_mitigation_runs.py`, `a8_mitigation_score.py` -> `experiments/dedale_results/a8_mitigation_scores.json`): test-period plants, analyst 4 h: attack cases 21 -> 58 of 72, events 212 -> 377 of 400, all four steps detected at the baseline times (28.5 / 30 / 1265 min after their start). Cost without an attacker: 34.1 -> 45.2 reviews/day (analyst always right or missing 20%), 44.6 -> 62.9 with 5% false alarms. No help against training-week plants (2 -> 2) or when every key incl. PowerShell is planted (nothing is ever confirmed).
+- **Tests:** 823 passed (2 new in `tests/test_unlearning.py`).
+
 ### 2026-11-23: checklist A3 escalation flooding (offline)
 
 - **What:** while it controls a host (CLIENT2 from initial access, CLIENT1 from lateral movement, until 2025-01-12) the attacker launches harmless never-seen programs, 5 or 50 per hour; each opens its own case and goes to review. Each day's queue is ordered by `review_service.priority` (v2, NCE off) or oldest first; a team reviewing K cases a day reviews the top K. Three offline replays with a case store (`experiments/dedale_flood.py`, `--flood` in `dedale_host_replay.py`, `experiments/flood_eval.py` -> `experiments/dedale_results/flood_scores.json`; design `experiments/A3_FLOODING_DESIGN.md`). The no-flood run reproduces F_gated (65.2 reviews/day, 72 cases, 400 events). No pipeline module changed.

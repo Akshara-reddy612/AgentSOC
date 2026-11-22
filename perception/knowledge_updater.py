@@ -133,6 +133,24 @@ class KnowledgeUpdater:
             out.append({"src": src, "dst": dst, "key": key})
         return out
 
+    def retract_all_learning(self, host: str, since: datetime, at: datetime, writer: str) -> list[dict]:
+        """
+        Cross-host unlearning (option, 2026-11-23; checklist A8 mitigation, off by default): `host` is confirmed
+        compromised, so every pattern learned on any host since `since` from closed cases or verdicts may be the
+        attacker's (it may already have moved on). Same retraction and return value as retract_host_learning.
+        """
+        out = []
+        for src, dst, key, _, learned_at in self.db.learned_edges(RETRACTABLE):
+            if learned_at < since:
+                continue
+            if not self.db.graph.graph.has_edge(src, dst, key):
+                continue
+            self.db.retract_edge(src, dst, key, writer=writer, at=at,
+                                 reason=f"host {host} confirmed compromised (cross-host); learned since "
+                                        f"{since.isoformat()}")
+            out.append({"src": src, "dst": dst, "key": key})
+        return out
+
     @property
     def pending(self) -> int:
         return len(self._pending)

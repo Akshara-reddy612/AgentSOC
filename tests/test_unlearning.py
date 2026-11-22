@@ -145,3 +145,26 @@ def test_withdrawing_a_wrong_malicious_verdict_undoes_its_effects(db, cs):
     assert db.edge_learned_from(*_edge("C:\\x\\admin_tool.exe")) == "analyst"
     with pytest.raises(ReviewError, match="no 'malicious' verdict"):
         cs.withdraw_verdict(tool, "lena", T + timedelta(hours=8), "again")
+
+
+def test_retract_all_learning_reaches_other_hosts(db):
+    """Cross-host unlearning (A8 mitigation, 2026-11-23): the same window, but on every host."""
+    up = KnowledgeUpdater(db)
+    for image, prov, at, host in (("C:\\x\\old.exe", "training", T - timedelta(days=3), "CLIENT1"),
+                                  ("C:\\x\\early.exe", "analyst", T - timedelta(days=9), "CLIENT1"),
+                                  ("C:\\x\\a.exe", "analyst", T, "CLIENT2"),
+                                  ("C:\\x\\c.exe", "analyst", T, "CLIENT1")):
+        learn_key(db, "lineage", DETECTORS["lineage"].key(_proc(at, image, host)), provenance=prov, at=at,
+                  writer="test")
+    gone = up.retract_all_learning("CLIENT2", T - timedelta(days=7), T + timedelta(hours=2), "analyst:bob")
+    assert len(gone) == 2
+    g = db.graph.graph
+    assert not g.has_edge(*_edge("C:\\x\\a.exe")) and not g.has_edge(*_edge("C:\\x\\c.exe", "CLIENT1"))
+    assert g.has_edge(*_edge("C:\\x\\old.exe", "CLIENT1"))            # training: kept
+    assert g.has_edge(*_edge("C:\\x\\early.exe", "CLIENT1"))          # before the window: kept
+
+
+def test_unlearn_scope_default_and_validation(db):
+    assert SocLoop(db, mode="gated", training_end=TRAIN_END).unlearn_scope == "host"
+    with pytest.raises(ValueError, match="unlearn_scope"):
+        SocLoop(db, mode="gated", training_end=TRAIN_END, unlearn_scope="network")

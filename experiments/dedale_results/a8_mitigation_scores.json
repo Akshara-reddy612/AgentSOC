@@ -1,0 +1,248 @@
+{
+ "default_scope_identical_to_F_d4": {
+  "gated_analyst_A8x_check_d4": true,
+  "gated_analyst_A8x_check_d4_nocs": true
+ },
+ "rows": {
+  "test-period plants, analyst 4 h": {
+   "host": {
+    "run": "gated_analyst_A8_test_d4",
+    "reviews_per_day": 31.2,
+    "test_cases": 437,
+    "attack_cases_raised": 21,
+    "attack_cases_reviewed": 21,
+    "precision": 0.0481,
+    "class1_events_alerted": 212,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     2.4,
+     null,
+     null,
+     null
+    ]
+   },
+   "all": {
+    "run": "gated_analyst_A8x_test_d4",
+    "reviews_per_day": 46.8,
+    "test_cases": 655,
+    "attack_cases_raised": 58,
+    "attack_cases_reviewed": 58,
+    "precision": 0.0885,
+    "class1_events_alerted": 377,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     2.4,
+     28.5,
+     30.0,
+     1265.0
+    ]
+   }
+  },
+  "test-period plants incl. PowerShell keys": {
+   "host": {
+    "run": "gated_analyst_A8_test_all_d4",
+    "reviews_per_day": 28.4,
+    "test_cases": 398,
+    "attack_cases_raised": 0,
+    "attack_cases_reviewed": 0,
+    "precision": 0.0,
+    "class1_events_alerted": 0,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     null,
+     null,
+     null,
+     null
+    ]
+   },
+   "all": {
+    "run": "gated_analyst_A8x_test_all_d4",
+    "reviews_per_day": 28.4,
+    "test_cases": 398,
+    "attack_cases_raised": 0,
+    "attack_cases_reviewed": 0,
+    "precision": 0.0,
+    "class1_events_alerted": 0,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     null,
+     null,
+     null,
+     null
+    ]
+   }
+  },
+  "training-week plants, analyst 4 h": {
+   "host": {
+    "run": "gated_analyst_A8_train_d4",
+    "reviews_per_day": 26.7,
+    "test_cases": 374,
+    "attack_cases_raised": 2,
+    "attack_cases_reviewed": 2,
+    "precision": 0.0053,
+    "class1_events_alerted": 34,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     2.4,
+     null,
+     null,
+     null
+    ]
+   },
+   "all": {
+    "run": "gated_analyst_A8x_train_d4",
+    "reviews_per_day": 26.9,
+    "test_cases": 376,
+    "attack_cases_raised": 2,
+    "attack_cases_reviewed": 2,
+    "precision": 0.0053,
+    "class1_events_alerted": 34,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     2.4,
+     null,
+     null,
+     null
+    ]
+   }
+  },
+  "no attacker, analyst always right": {
+   "host": {
+    "run": "gated_analyst_F_d4",
+    "reviews_per_day": 34.1,
+    "test_cases": 477,
+    "attack_cases_raised": 72,
+    "attack_cases_reviewed": 72,
+    "precision": 0.1509,
+    "class1_events_alerted": 400,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     1.2,
+     28.5,
+     30.0,
+     1265.0
+    ]
+   },
+   "all": {
+    "run": "gated_analyst_A8x_d4",
+    "reviews_per_day": 45.2,
+    "test_cases": 633,
+    "attack_cases_raised": 72,
+    "attack_cases_reviewed": 72,
+    "precision": 0.1137,
+    "class1_events_alerted": 400,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     1.2,
+     28.5,
+     30.0,
+     1265.0
+    ]
+   }
+  },
+  "no attacker, analyst misses 20%": {
+   "host": {
+    "run": "gated_analyst_F_m20",
+    "reviews_per_day": 34.1,
+    "test_cases": 477,
+    "attack_cases_raised": 72,
+    "attack_cases_reviewed": 72,
+    "precision": 0.1509,
+    "class1_events_alerted": 400,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     1.2,
+     28.5,
+     30.0,
+     1265.0
+    ]
+   },
+   "all": {
+    "run": "gated_analyst_A8x_m20",
+    "reviews_per_day": 45.2,
+    "test_cases": 633,
+    "attack_cases_raised": 72,
+    "attack_cases_reviewed": 72,
+    "precision": 0.1137,
+    "class1_events_alerted": 400,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     1.2,
+     28.5,
+     30.0,
+     1265.0
+    ]
+   }
+  },
+  "no attacker, 5% false alarms": {
+   "host": {
+    "run": "gated_analyst_F_fa5",
+    "reviews_per_day": 44.6,
+    "test_cases": 625,
+    "attack_cases_raised": 72,
+    "attack_cases_reviewed": 72,
+    "precision": 0.1152,
+    "class1_events_alerted": 400,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     1.2,
+     28.5,
+     30.0,
+     1265.0
+    ]
+   },
+   "all": {
+    "run": "gated_analyst_A8x_fa5",
+    "reviews_per_day": 62.9,
+    "test_cases": 881,
+    "attack_cases_raised": 72,
+    "attack_cases_reviewed": 72,
+    "precision": 0.0817,
+    "class1_events_alerted": 400,
+    "attack_cases_learned": 0,
+    "gate_learned_closed_benign": 0,
+    "gate_dropped": 0,
+    "training_patterns_retracted": null,
+    "time_to_detect_min": [
+     1.2,
+     28.5,
+     30.0,
+     1265.0
+    ]
+   }
+  }
+ }
+}
