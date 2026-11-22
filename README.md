@@ -206,12 +206,13 @@ Since 2026-10-31 the pipeline has two rules for what the LLM's hypotheses (NCE) 
 
 | File | What it holds |
 |:--|:--|
-| [HANDOVER.md](HANDOVER.md) | Start here if you are taking the project over |
-| [PROJECT_PLAN.md](PROJECT_PLAN.md) | Goals, claims C1-C5, milestones; work outside it goes to "Later" |
-| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Current state, updated in place |
-| [RESEARCH_LOG.md](RESEARCH_LOG.md) | Dated log of every session: what was tried and found |
+| [PROJECT_STATUS.md](PROJECT_STATUS.md) | **Start here** (also if you are taking the project over): current state, repo map, how to run, next steps |
+| [RESEARCH_LOG.md](RESEARCH_LOG.md) | History, newest first: what was tried and found, results with sources, dead ends, decisions. The verbatim session log is `archive/RESEARCH_LOG_HISTORY.md` |
+| [CLAUDE.md](CLAUDE.md) | Entry point for coding agents |
+| [PROJECT_PLAN.md](PROJECT_PLAN.md) | Goals, claims C1-C6, milestones, decisions P1-P9; work outside it goes to "Later" |
 | [experiments/RESULTS.md](experiments/RESULTS.md) | Frozen results tables |
 | [experiments/PAPER_CLAIMS_TO_REVISE.md](experiments/PAPER_CLAIMS_TO_REVISE.md) | What may and may not be claimed |
 | [PAPER_OUTLINE.md](PAPER_OUTLINE.md) | Paper structure and who writes what |
 | `experiments/*_DESIGN.md`, `experiments/DEDALE_*` | Design notes and per-phase results |
 | [docs/ADDING_A_DATASET.md](docs/ADDING_A_DATASET.md) | Bringing a third dataset (AIT-LDS) into the experiments and the demo |
+| [docs/_audit_report.md](docs/_audit_report.md) | Repository audit of 2026-11-22: every documented claim checked against the code and runs |

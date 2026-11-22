@@ -224,7 +224,7 @@ set HF_HUB_OFFLINE=1                                                    # bash: 
    - remove "with execution harnesses implemented in the repository" from §IV-D;
    - replace "26.1 to 32.4 ... unlearning" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";
    - change 624 to 625.
-   If the LaTeX paper is kept, fill the author block and repository link (`paper/agentsoc_v2.tex:6`).
+   If the LaTeX paper is kept, fill the author block and repository link (`paper/agentsoc_v2.tex:6`). Either way the team revises the text Claude drafted, especially the related-work positioning (from the removed `HANDOVER.md`).
 2. **M7:** choose the venue (P2), then record the demo video. Before recording, rebuild the frontend (`cd frontend && npm run build`; the user runs installs) and run `tools/e2e_check.py`.
 3. **Optional E3 (AIT-LDS):** only if the paper needs a second real dataset. Follow `docs/ADDING_A_DATASET.md`; download approval first (17 GB, CC BY-NC-SA 4.0).
 4. **Optional P9 D (prompt-level baseline):** needs a written design and an approved call budget. Nothing exists in the repository to build on.
