@@ -50,10 +50,9 @@ def grid() -> list[tuple[str, list[str]]]:
     for model in ("host", "case"):                                # 2. stress: q = 1.0 + 20% base miss
         for b5 in (True, False):
             jobs += [_job("fake_approval", model, 1.0, 0.2, b5, s) for s in SEEDS]
-    for q in (0.5, 0.2):                                          # 3. the q sweep with seeds
-        for model in ("host", "case"):
-            for b5 in (True, False):
-                jobs += [_job("fake_approval", model, q, 0.0, b5, s) for s in SEEDS]
+    for model in ("host", "case"):                                # 3. q = 0.5, 5 seeds (trimmed 2026-11-22, user:
+        for b5 in (True, False):                                  #    q = 0.2 and seeds 5-9 dropped; outcome ~ q)
+            jobs += [_job("fake_approval", model, 0.5, 0.0, b5, s) for s in range(5)]
     return jobs
 
 

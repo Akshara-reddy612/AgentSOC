@@ -54,6 +54,8 @@ Optional stress (also on): a base random miss *m* = 0.2 on the remaining cases, 
 - The q = 0 check: 2 replays.
 - Total about 134 replays. At about 8 min each with 6 workers that is **about 3 h of compute**.
 
+> **[Trimmed 2026-11-22, user: "if we can estimate it and it is not really needed and cuts on our waiting time then yes go ahead"]** The q sweep keeps q = 0.5 with 5 seeds and drops q = 0.2 (in the host model the outcome is decided by whether a host's first text case is persuaded, probability about q, so the sweep would mostly re-measure q). Kept in full: every q = 1.0 run and the 20%-miss stress runs. 72 replays instead of 132.
+
 ## Measures (scorer side; labels never enter the pipeline)
 
 1. **Attack patterns taught:**

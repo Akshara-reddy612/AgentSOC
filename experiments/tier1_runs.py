@@ -40,11 +40,11 @@ def jobs() -> list[tuple[str, str, list[str]]]:
     for name, extra in (("m5", ["--analyst-miss", "0.05"]), ("m20", ["--analyst-miss", "0.2"]),
                         ("fa5", ["--analyst-false-alarm", "0.05"])):        # A11
         for b5 in (True, False):
-            for s in range(1, 10):
+            for s in range(1, 6):          # 5 extra seeds (trimmed from 9, user 2026-11-22)
                 out.append(("host", f"T1_{name}{'' if b5 else '_nob5'}_s{s}",
                             ["--mode", "gated", *ORACLE, *extra, "--analyst-seed", str(s), *([] if b5 else ["--no-unlearn"])]))
     for d in (1, 3, 14):                                                    # A8 lookback
-        for s in range(10):
+        for s in range(5):                 # 5 seeds (trimmed from 10, user 2026-11-22)
             out.append(("host", f"T1_lb{d}_s{s}", ["--mode", "gated", *ORACLE, "--analyst-miss", "0.2",
                                                     "--analyst-seed", str(s), "--unlearn-lookback", str(d)]))
     return [(kind, tag, [*args, "--tag", tag]) for kind, tag, args in out]

@@ -44,6 +44,8 @@ A9 (detection metrics) needs no replay. It is built from the frozen `final_host_
 - **What:** the C3 conditions repeated over 10 seeds: misses 5% and 20%, false alarms 5%, each with B5 on and off. The replay already has `--analyst-seed`; seed 0 is the frozen run. That is 6 conditions × 9 new seeds = 54 replays.
 - **Report:** mean ± sd and min / max for attack patterns learned, labelled events alerted and reviews per day, next to the frozen seed-0 values.
 
+> **[Trimmed 2026-11-22, user: "if we can estimate it and it is not really needed and cuts on our waiting time then yes go ahead"]** A11 runs 5 extra seeds per condition instead of 9 (30 replays), and the lookback sweep 5 seeds instead of 10 (15 replays). 59 replays in total instead of 98.
+
 ## Size and order
 
 - **Total:** about 96 replays. At 6 workers (memory is the limit, about 450 MB per replay) that is **about 2 h of compute**, after the A10 grid.
