@@ -19,8 +19,8 @@ The history of the project and the reasons behind it, newest first. The current 
   - B7, paired CIs for the GUIDE suppressions and T2.2;
   - A5, E1 payloads fully in NCE's view, 114 of 114 (`experiments/e1_view.py`);
   - B5, latency, token estimate, NCE calls per day, review-queue growth (`experiments/operational_cost.py`).
-- **References (B3): 24 -> 49.** Each new one was checked on a source page (arXiv, USENIX, NDSS, IJCAI, PMLR, ACL Anthology or an author's publication list). A venue that could not be confirmed is cited as the arXiv preprint. DeepLog, He et al. (ISSRE 2016) and Kokulu et al. (CCS 2019) could not be confirmed from any reachable page and are not cited.
-- **Space for the 7-page limit:** Table I (AgentSOC vs this work) and the analyst-delay figure were removed, because their content is in the text. The Discussion, Limitations, Fail-Safes and Conclusion were compressed.
+- **References (B3): 24 -> 49, then 40 (user: 40 is enough; 9 duplicating references dropped so that Table I and the analyst-delay figure fit back in).** Each new one was checked on a source page (arXiv, USENIX, NDSS, IJCAI, PMLR, ACL Anthology or an author's publication list). A venue that could not be confirmed is cited as the arXiv preprint. DeepLog, He et al. (ISSRE 2016) and Kokulu et al. (CCS 2019) could not be confirmed from any reachable page and are not cited.
+- **Space for the 7-page limit:** Table I and the analyst-delay figure were removed for the 49-reference version and restored with 40 references. The Discussion, Limitations, Fail-Safes and Conclusion were compressed.
 - **Ready but not run:** A6 (telemetry-aware undefended agent) and B1 (temperature 0.7 repeats); about 1,200 calls, approved by the user; `bash tools/live_queue.sh` after the quota reset.
 - **Still open:** A3 (StruQ, flooding, ablation), A7 (MemStream), A8 (low-and-slow), A11 (window rotation), B1 (frontier model), D (anonymization, Zenodo DOI, AI disclosure).
 
