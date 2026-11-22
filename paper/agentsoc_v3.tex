@@ -59,9 +59,9 @@ alert triage. Both are attack surfaces: the LLM reads attacker-written log text,
 activity. We build GuardedSOC on the AgentSOC architecture and bound both. Under asymmetric trust, LLM hypotheses
 may escalate a case to human review but cannot dismiss it, trigger containment or authorize a memory update.
 Autonomous updates pass a 24-hour quarantined learning gate, and a confirmed compromise retracts the host's recent
-patterns. On 500 GUIDE v2 clean/contaminated alert pairs, an undefended agent was hijacked into dismissals on
-130/439 pairs (29.6\%) \todo{T2.1: held-out}; within GuardedSOC, contamination suppressed a response on 4/428
-(0.9\%). On 14 test days of DEDALE telemetry, 0/72 attack cases were dismissed under injected text, and targeted
+patterns. On GUIDE v2 clean/contaminated alert pairs, an undefended agent was hijacked into dismissals on
+130/439 development and 123/445 held-out pairs (29.6\% and 27.6\%); within GuardedSOC, contamination suppressed a
+response on 4/428 (0.9\%). On 14 test days of DEDALE telemetry, 0/72 attack cases were dismissed under injected text, and targeted
 unlearning removed every pattern learned from a 20\% analyst miss rate in all 6 seeds. A persuaded analyst who
 clears a host's first attack case defeats unlearning, and the LLM gave no workload reduction over the model-free
 baseline.
@@ -275,7 +275,7 @@ and returns a verdict. It is \emph{hijacked} on a pair when the contaminated twi
 is not. We test three prompt-level defences on it, with identical structured fields: delimited untrusted text,
 spotlighting~\cite{spotlighting}, and an instruction-hierarchy system prompt~\cite{hierarchy}. An \emph{adaptive
 attacker} rewrites each suppression payload until ERA rates it low risk, and moves raw-log payloads into NCE's
-512-character view. This uses 300 pairs, with ERA flags falling from \todo{T2.3: 53} to \todo{T2.3: 0}.
+512-character view. This uses 300 pairs, with ERA flags falling from 53 to 0.
 
 \subsection{DEDALE Testbed Telemetry}
 
@@ -313,12 +313,15 @@ The rule does change containment. Under the acting rule, review requests cancell
 CI 0--2.1\%; 0/168; 0/178).
 
 The undefended agent was hijacked into dismissals on 130/439 development pairs (29.6\%, CI 25.5--34.0\%;
-$b{=}130$, $c{=}28$, $p{=}6.5\times10^{-17}$) and on \todo{T2.1: x/y held-out pairs}. With delimited text,
+$b{=}130$, $c{=}28$, $p{=}6.5\times10^{-17}$) and on 123/445 held-out pairs (27.6\%, CI 23.7--32.0\%;
+$b{=}123$, $c{=}21$, $p{=}9.6\times10^{-19}$). With delimited text,
 spotlighting and the instruction hierarchy it was hijacked on \todo{T2.2: a}, \todo{T2.2: b} and \todo{T2.2: c} of
 439 pairs. Prompt-level defences thus \todo{T2.2: direction and size of the change}. Unlike asymmetric trust, a
 prompt-level defence bounds the attack only as far as the model obeys it. Against payloads rewritten to evade ERA
-and placed inside NCE's view, suppression was \todo{T2.3: n}/300 under the acting rule and \todo{T2.3: m}/300 under
-asymmetric trust, against \todo{T2.3: k}/300 for the original payloads.
+and placed inside NCE's view, suppression was 2/300 under both rules (CI 0.2--2.4\%): the same 2 pairs as with the
+original payloads (McNemar $b{=}0$, $c{=}0$). The rewrites changed NCE's techniques in 80 pairs, and in 17 they
+removed the review the original payload had triggered, but each of these only returned to the clean twin's own
+response. Evading the text filter gained the attacker nothing, because the structured pipeline still decides.
 
 On DEDALE (E1), without an analyst and under the acting rule, the maintenance, fake-approval and steer payloads
 dismissed 1, 3 and 1 of the 72 attack cases (Fig.~\ref{fig:text}). The steer made NCE name the domain controller in
@@ -380,14 +383,14 @@ GUIDE held-out, Gemini & suppressed & 3/437 & 3/437 \\
  & containment removed & 18/168 & 0/168 \\
 GUIDE dev, gpt-oss-20b & suppressed & 10/437 & 10/437 \\
  & containment removed & 21/176 & 0/178 \\
-GUIDE dev, adaptive & suppressed & \todo{T2.3}/300 & \todo{T2.3}/300 \\
+GUIDE dev, adaptive & suppressed & 2/300 & 2/300 \\
 \midrule
 E1 DEDALE, & dismissed (maint./appr./steer) & 1/3/1 of 72 & 0/0/0 of 72 \\
 no analyst & clean reviews per day & 54.8 & 65.2 \\
 E1 DEDALE, & dismissed (all) & 0/72 & 0/72 \\
 analyst & clean reviews per day & 33.2 & 34.1 \\
 \midrule
-Undefended & hijacked, dev / held-out & 130/439 / \todo{T2.1} & n/a \\
+Undefended & hijacked, dev / held-out & 130/439 / 123/445 & n/a \\
 agent & delimited / spotl. / hierarchy & \todo{T2.2} of 439 & n/a \\
 \bottomrule
 \end{tabular}
