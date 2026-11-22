@@ -12,6 +12,11 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22: paper revision decided (P10); design of A10, the persuaded analyst
+- **Context:** a review of the paper draft listed blockers. Assessed: the offline items (Tier 1) are worth doing; four of the review's premises are contradicted by the repository (E1's payloads sit in command lines, of which 1 of 797 exceeds 512 characters; the undefended agent's prompt includes structured fields, `agent/baseline_agent.py:74-77`; the frozen condition already is a clean-weeks allowlist; the gate did learn under the acting rule and with D7 off).
+- **Decided (P10, user):** Tier 1 in scope, offline, no pipeline change, a design approved before each run. A10's safeguard is future work.
+- **A10 design written** (`experiments/PERSUADED_ANALYST_DESIGN.md`), from facts checked read-only on `dedale_host_gated_nce_analyst_E1_fake_approval`: attacker text reaches 38 of 72 attack cases (CLIENT2 17 / 35, CLIENT1 21 / 37); CLIENT2's first attack case is text-free, CLIENT1's first carries text. Predictions written before any run: per-case persuasion is undone by B5; host-wide persuasion can leave CLIENT1 unconfirmed, so its attack patterns stay learned.
+
 ### 2026-11-22: repository audit and tracking-file rebuild
 - **Done:** full audit of every document against the code, the result files and real runs, on branch `chore/repo-audit-tracking`. Report: [docs/_audit_report.md](docs/_audit_report.md).
 - **Runs** (all offline, no API call):

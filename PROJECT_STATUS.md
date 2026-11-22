@@ -244,7 +244,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 
 ## Next steps (in order)
 
-0. **Review and merge this audit** (branch `chore/repo-audit-tracking`, documentation only; nothing pushed). The audit was asked to stay on its branch, so the user reviews it before the usual `--no-ff` merge; pushing is always the user's call.
+0. **Paper revision, Tier 1 (decision P10, 2026-11-22):** the first design, A10 the persuaded analyst (`experiments/PERSUADED_ANALYST_DESIGN.md`), waits for the user's approval; nothing has run. Branch `paper-revision-design`. The audit itself was merged and pushed on 2026-11-22 (`d43bdc6`).
 1. **Fix the paper draft `AgentSOC_IEEE_Revised.docx`** (the one being worked on; the user edits it, and an agent proposes changes rather than editing the `.docx`). Fix its three wrong claims (`docs/_audit_report.md` §3):
    - remove "with execution harnesses implemented in the repository" from §IV-D;
    - in §VI-A replace "8 instances of benign destination IP unlearning, increasing network review workload from 26.1 to 32.4 reviews/day" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";
