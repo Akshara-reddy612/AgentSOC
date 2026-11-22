@@ -12,6 +12,18 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22 (late): reviewer checklist pass on the v3 paper
+
+- **Fully done now (19 of 29 items):** A1 A2 A5 A9 A10, B2 B3 B4 B5 B6 B7, C1-C8. Results generated into `experiments/RESULTS.md`:
+  - A9, event-level false-positive rate (0.021%; `experiments/event_fpr.py`);
+  - B7, paired CIs for the GUIDE suppressions and T2.2;
+  - A5, E1 payloads fully in NCE's view, 114 of 114 (`experiments/e1_view.py`);
+  - B5, latency, token estimate, NCE calls per day, review-queue growth (`experiments/operational_cost.py`).
+- **References (B3): 24 -> 49.** Each new one was checked on a source page (arXiv, USENIX, NDSS, IJCAI, PMLR, ACL Anthology or an author's publication list). A venue that could not be confirmed is cited as the arXiv preprint. DeepLog, He et al. (ISSRE 2016) and Kokulu et al. (CCS 2019) could not be confirmed from any reachable page and are not cited.
+- **Space for the 7-page limit:** Table I (AgentSOC vs this work) and the analyst-delay figure were removed, because their content is in the text. The Discussion, Limitations, Fail-Safes and Conclusion were compressed.
+- **Ready but not run:** A6 (telemetry-aware undefended agent) and B1 (temperature 0.7 repeats); about 1,200 calls, approved by the user; `bash tools/live_queue.sh` after the quota reset.
+- **Still open:** A3 (StruQ, flooding, ablation), A7 (MemStream), A8 (low-and-slow), A11 (window rotation), B1 (frontier model), D (anonymization, Zenodo DOI, AI disclosure).
+
 ### 2026-11-22: Tier 2 runs: duplicate queue, key quota, T2.2 cut to 150 pairs
 
 - **Duplicate queue.** Stopping a background bash task on Windows did not stop the queue script, so two copies ran from about 13:15 to 14:03 UTC. They duplicated calls and both wrote the T2.3 results file. The file loads cleanly and the runners resume, but calls were wasted. Both copies were killed with `taskkill /T`, and only one queue runs at a time now.
