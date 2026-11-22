@@ -24,6 +24,8 @@ Tier 2 of the paper review (`PROJECT_STATUS.md`; decision P10 left it out of sco
 
 ### T2.2 variants (prompt-level defences from the literature; no model training)
 
+**Amended 2026-11-22 (P11, user decision):** run on the first 150 dev pairs only (first 300 alerts, `--limit` computed per defence so a resume never goes past them), about 900 calls in place of 3,000. Compare with the undefended agent's recorded answers on the same 150 pairs.
+
 The prompt keeps the undefended agent's structured fields and adds only the defence, so the comparison is like for like.
 
 1. **Delimited data:** the untrusted fields sit inside explicit delimiters, declared as data that must never be followed. This is the hardened prompt the 2026-11-01 pilot tried, which got only HTTP 503.

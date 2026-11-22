@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22: Tier 2 runs: duplicate queue, key quota, T2.2 cut to 150 pairs
+
+- **Duplicate queue.** Stopping a background bash task on Windows did not stop the queue script, so two copies ran from about 13:15 to 14:03 UTC. They duplicated calls and both wrote the T2.3 results file. The file loads cleanly and the runners resume, but calls were wasted. Both copies were killed with `taskkill /T`, and only one queue runs at a time now.
+- **Key quota.** A one-call probe per key at 14:05 UTC: 10 of 18 Gemini keys returned 429 RESOURCE_EXHAUSTED, which the runner had reported only as 60 s timeouts. Keys stopped after about 60-150 successful calls each, not the 500 per day assumed in P11. The 8 working keys run alone via an exported `GEMINI_API_KEYS`.
+- **State at 14:10 UTC.** T2.1 held-out: 1,000 records, 991 answered. T2.3: 158 of 300 stored. 1,904 attempts used in all.
+- **Decision (user).** T2.2 runs on the first 150 dev pairs (P11 amended), about 900 calls; the rest of Tier 2 stays within the 4,300 budget.
+
 ### 2026-11-22: Tier 1 scored, A7 fixed, a broken run recreated, 8-page budget
 
 - **A7 rarity baseline, first run invalid.** It retracted all 6,484 training patterns at every K: the loop learns a key once, so its edge count is always 1. `experiments/dedale_host_replay.py` now counts each key's frequency over the training events (`_training_frequencies`). Re-run; results in `experiments/dedale_results/tier1_scores.json` and `experiments/RESULTS.md` (Paper revision section).
