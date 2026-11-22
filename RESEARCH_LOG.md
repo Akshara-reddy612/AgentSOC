@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22 (night): checklist A3 ablation, from existing runs (offline)
+
+- **What:** one table in `experiments/RESULTS.md` ("Ablation") that removes each defence or component in turn, built from the frozen runs. The only new computation is ERA switched off on GUIDE: the recorded answers re-scored without an ERA level (`experiments/ablation_era.py` -> `experiments/dedale_results/ablation_era.json`). Its ERA-on rows reproduce the C1 table exactly. No API call, no replay.
+- **Result:** learning 65.2 vs 6095.4 reviews/day; gate 0 vs 38 attack patterns learned; B5 (20% misses) 0 vs 20; D7 0/7 vs 6/7 network attack cases hidden; asymmetric trust 0/0/0 vs 1/3/1 E1 dismissals and 0 vs 20/178 GUIDE containments removed.
+- **ERA (new finding):** switching it off changes no suppression count (4/428, 3/437; gpt-oss 10 -> 11). It adds about 29 REVIEW outcomes per 1,000 alerts. Under the acting rule it causes most of the containments removed by contamination (20 -> 3, 18 -> 0, 21 -> 4 with ERA off), because its escalation holds back the auto-response. Under asymmetric trust 0 are removed either way. So ERA is a warning signal, not the safety mechanism; asymmetric trust is.
+- **Not yet in the paper:** goes into the 8-page version with the A6 / B1 results (user, 2026-11-22). Checklist: A3 ablation done; StruQ and flooding open.
+
 ### 2026-11-22 (night): checklist A11, training-window rotation (offline)
 
 - **What:** the DEDALE host replay can now train on one clean week only (`--train-window week1|week2`, `experiments/dedale_host_replay.py`; week 1 = 2024-12-23..12-29, week 2 = 12-30..2025-01-05). Six offline replays (`experiments/rotation_runs.py`, all rc=0), scored by `experiments/rotation_score.py` -> `experiments/dedale_results/rotation_scores.json`, generated into `experiments/RESULTS.md`.
