@@ -52,7 +52,8 @@ Thumbs.db
 /agenso_.research_base.pdf
 
 # Paper text kept out of the public repo until acceptance (plagiarism checkers index it; 2026-11-22).
-# Backup: D:gentsoc_data\paper_private\npaper/agentsoc_v3.tex
+# Backup: D:\agentsoc_data\paper_private
+paper/agentsoc_v3.tex
 paper/agentsoc_v3.pdf
 paper/REVISION_DRAFT.md
 paper/agentsoc_v2.tex
