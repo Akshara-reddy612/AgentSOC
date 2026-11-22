@@ -21,7 +21,7 @@ The history of the project and the reasons behind it, newest first. The current 
   - GUIDE re-scores byte-identical to `agent/v2_results/*_rescored.json`;
   - demo server first start: 7,505,328 events;
   - `tools/e2e_check.py`: 9 / 9;
-  - DEDALE re-freeze (43 replays in an isolated data root): IN PROGRESS at the time of this commit (result recorded in a later commit).
+  - DEDALE re-freeze (43 replays in an isolated data root): all 43 replays exit 0 (06:37-07:13 UTC, about 36 min with 6 workers; 0 events refused); `final_host_scores.json`, `final_network_scores.json`, `e1_scores.json` and both `paper/fig_*.dat` byte-identical to the committed files (after normalising line endings: the Windows checkout writes CRLF, git stores LF); the rebuilt `RESULTS.md` differs only in its date line.
 - **Found:**
   - `PROJECT_STATUS.md` was dated 2026-10-27 and said `paper-v2-accuracy` was not merged; it was merged (`6e70cf2`).
   - Nothing recorded the 2026-11-09 Fig. 1 work.
@@ -77,7 +77,7 @@ The history of the project and the reasons behind it, newest first. The current 
   - each analyst command runs in a savepoint;
   - the T1071 grounding regex was quadratic: 40,000 characters took 62 s, now 0.02 s over the 512-character view (H:2667-2677).
 - **Re-freeze:** 43 / 43 replays, all three score files byte-identical (H:2709-2717).
-  - Where it ran is UNVERIFIED: its `A_*` outputs are not in `D:\agentsoc_data`.
+  - Where it ran is UNVERIFIED (its `A_*` outputs are not in `D:\agentsoc_data`), but the 2026-11-22 re-freeze reproduced its three score files byte-identically.
   - LLM-off rule checks: the gated and `F_d4` conditions under `escalate` equal their frozen runs in all 9 score fields (reviews per day, test cases, attack cases reviewed, events alerted, patterns learned, per-day series, attack steps, ...; H:2735, 2749).
 - **Paper and drafts:** contribution C6 added to `paper/agentsoc_combined.tex` (7 pages; `paper/agentsoc_v2.tex` did not exist yet); drafts of the limitations section and viva answers (`docs/`).
 
@@ -235,14 +235,14 @@ Final results are the frozen files behind `experiments/RESULTS.md` (rebuilt by `
 | C1 held-out | 3 / 437 (0.7%), p = 0.25 | `agent/v2_results/v2_heldout_live_results_rescored.json`; `RESULTS.md:12` | same | same | VERIFIED 2026-11-22 |
 | C1 gpt-oss-20b dev | 10 / 437 (2.3%), p = 0.3 | `agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json`; `RESULTS.md:13` | groq:openai/gpt-oss-20b | completed 2026-10-20 | VERIFIED 2026-11-22 |
 | Undefended agent dev | 130 / 439 hijacked (29.6%, CI 25.5-34.0%) | `agent/v2_results/v2_dev_undefended_results.json`; `experiments/undefended_metrics.py` | gemini-3.1-flash-lite | 2026-10-18 | VERIFIED 2026-11-22 (re-run) |
-| C6 GUIDE containments removed | 20 / 178, 18 / 168, 21 / 176 → 0 | `RESULTS.md:11-16` (escalate re-scores) | acting vs escalate | 2026-10-31 | escalate re-scores re-run 2026-11-22 in the audit's separate worktree (rc 0; outputs there, not in this checkout's `logs/`); table rebuild Re-freeze IN PROGRESS 2026-11-22 |
-| E1 dismissals | 1 / 3 / 1 of 72 → 0 under asymmetric trust | `experiments/dedale_results/e1_scores.json`; `RESULTS.md:42-57` | gated + NCE cache, ± analyst | 2026-10-18 / 10-31 | Re-freeze IN PROGRESS 2026-11-22 |
-| C2 host reviews/day | static 6,095.4, frozen = gated 65.2, ungated 27.4 | `final_host_scores.json`; `RESULTS.md:67-70` | NCE off | frozen 2026-10-31 | Re-freeze IN PROGRESS 2026-11-22 |
-| C2 network reviews/day | static 552.3, frozen 26.1, gated 26.1, ungated 20.6, gated with D7 off 7.9 | `final_network_scores.json`; `RESULTS.md:76-80` | NCE off | same | Re-freeze IN PROGRESS 2026-11-22 |
-| C3 analyst mistakes | misses 20%: 20 learned, 256 alerted; with B5: 0, 400 | `final_host_scores.json`; `RESULTS.md:92-93` | oracle 4 h | same | Re-freeze IN PROGRESS 2026-11-22 |
-| C4 NCE on DEDALE | 54.6 (closed) / 54.8 (open) / 33.2 (+analyst); asymmetric 65.2 / 34.1 | `RESULTS.md:103-108` | NCE cache `nce_cache_host.jsonl`: 497 recorded answers (416 Phase 3 + 39 NCE+analyst + 42 cache-fill calls of 2026-10-18; H:1517, 1568, 1879, 2517) | same | Re-freeze IN PROGRESS 2026-11-22 |
-| C5 analyst delay | 33.1 / 34.1 / 38.1 / 51.5 reviews/day | `RESULTS.md:121-124` | 1 / 4 / 24 / 72 h | same | Re-freeze IN PROGRESS 2026-11-22 |
-| What NCE is shown | command line > 512 chars in 1 / 797; raw line in 718 / 856 | `RESULTS.md:110` (`build_results._nce_view`) | `gated_nce_F_nce` case store | 2026-10-31 | Re-freeze IN PROGRESS 2026-11-22 |
+| C6 GUIDE containments removed | 20 / 178, 18 / 168, 21 / 176 → 0 | `RESULTS.md:11-16` (escalate re-scores) | acting vs escalate | 2026-10-31 | escalate re-scores re-run 2026-11-22 in the audit's separate worktree (rc 0; outputs there, not in this checkout's `logs/`); `RESULTS.md` rebuild identical apart from its date line |
+| E1 dismissals | 1 / 3 / 1 of 72 → 0 under asymmetric trust | `experiments/dedale_results/e1_scores.json`; `RESULTS.md:42-57` | gated + NCE cache, ± analyst | 2026-10-18 / 10-31 | VERIFIED 2026-11-22 (re-freeze byte-identical) |
+| C2 host reviews/day | static 6,095.4, frozen = gated 65.2, ungated 27.4 | `final_host_scores.json`; `RESULTS.md:67-70` | NCE off | frozen 2026-10-31 | VERIFIED 2026-11-22 (re-freeze byte-identical) |
+| C2 network reviews/day | static 552.3, frozen 26.1, gated 26.1, ungated 20.6, gated with D7 off 7.9 | `final_network_scores.json`; `RESULTS.md:76-80` | NCE off | same | VERIFIED 2026-11-22 (re-freeze byte-identical) |
+| C3 analyst mistakes | misses 20%: 20 learned, 256 alerted; with B5: 0, 400 | `final_host_scores.json`; `RESULTS.md:92-93` | oracle 4 h | same | VERIFIED 2026-11-22 (re-freeze byte-identical) |
+| C4 NCE on DEDALE | 54.6 (closed) / 54.8 (open) / 33.2 (+analyst); asymmetric 65.2 / 34.1 | `RESULTS.md:103-108` | NCE cache `nce_cache_host.jsonl`: 497 recorded answers (416 Phase 3 + 39 NCE+analyst + 42 cache-fill calls of 2026-10-18; H:1517, 1568, 1879, 2517) | same | VERIFIED 2026-11-22 (re-freeze byte-identical) |
+| C5 analyst delay | 33.1 / 34.1 / 38.1 / 51.5 reviews/day | `RESULTS.md:121-124` | 1 / 4 / 24 / 72 h | same | VERIFIED 2026-11-22 (re-freeze byte-identical) |
+| What NCE is shown | command line > 512 chars in 1 / 797; raw line in 718 / 856 | `RESULTS.md:110` (`build_results._nce_view`) | `gated_nce_F_nce` case store | 2026-10-31 | VERIFIED 2026-11-22 (re-freeze byte-identical) |
 | Soak test | 15,013,901 events, 388 MB peak | H:2249-2253 | full replay | 2026-10-20 | UNVERIFIED (not re-run) |
 | Demo first start | 7,505,328 events learned, then paused at 2025-01-06 08:00 | `python -m soc_server` (audit run) | host + network, NCE cache | 2026-11-22 | VERIFIED |
 | GUIDE v1 Experiment 1 (valid pairs) | no-actionable clean 178 / 179, contaminated 177 / 176 of 206; p ≥ 0.25 | `experiments/analyze_paired_valid.py` | v1 corpus | 2026-10-10 | Historical; "no detectable effect" only |

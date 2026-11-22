@@ -12,7 +12,7 @@ It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.2013
 
 **Status (verified 2026-11-22, `main` at `da17235` plus this audit's documentation commits on `chore/repo-audit-tracking`, not yet merged or pushed):**
 - Pipeline and tool are finished. The GUIDE and DEDALE results were frozen on 2026-10-31. Tests pass (804).
-- Re-checked on this machine: the three GUIDE acting-rule re-scores are byte-identical to the committed ones. The DEDALE re-freeze is IN PROGRESS (see "Reproduce" below).
+- Re-checked on this machine: the three GUIDE acting-rule re-scores are byte-identical to the committed ones. The full offline DEDALE re-freeze (43 replays) reproduced every frozen score file byte-identically (see "Reproduce" below).
 - The paper draft being worked on is the Word file `AgentSOC_IEEE_Revised.docx` (user, 2026-11-22). It was revised from the LaTeX paper `paper/agentsoc_v2.tex` and still has three wrong claims.
 - Left for the team: fix and finish the draft, choose the venue, record the demo video, write the SDC-II course report (template `Documentation_Template-SDC-II.docx`), and (optional) a third dataset.
 
@@ -63,7 +63,7 @@ It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.2013
 | Claim | Result | Source |
 |:--|:--|:--|
 | C1 attacker text does not steer actions (GUIDE) | Undefended agent hijacked 130/439 (29.6%). Defended pipeline suppressed 4/428 dev (0.9%), 3/437 held-out, 10/437 with gpt-oss-20b. 0 misdirected actions executed | `RESULTS.md:11-16,35-36`; re-scores re-run 2026-11-22, byte-identical |
-| C1 through the full loop (E1, DEDALE) | Attack cases dismissed without an analyst 1 / 3 / 1 of 72 (acting rule), 0 under asymmetric trust; 0 attack patterns learned; the same 400 labelled attack events alerted | `RESULTS.md:42-57`; re-freeze IN PROGRESS 2026-11-22 |
+| C1 through the full loop (E1, DEDALE) | Attack cases dismissed without an analyst 1 / 3 / 1 of 72 (acting rule), 0 under asymmetric trust; 0 attack patterns learned; the same 400 labelled attack events alerted | `RESULTS.md:42-57`; re-freeze reproduced byte-identically 2026-11-22 |
 | C2 gated learning cuts load | Host reviews per day 6,095.4 (static) → 65.2 (gated); 72/72 attack cases reviewed. Network 552.3 → 26.1 | `RESULTS.md:67-79` |
 | C3 poisoning | Ungated: 38 attack patterns learned. Analyst missing 20%: 20 learned, 256/400 events alerted; with B5: 0, 400/400 | `RESULTS.md:70,88-95` |
 | C4 the LLM on real telemetry | NCE −16% reviews (65.2 → 54.8), all of it dismissals; closed-world SSE dismissed 2 attack cases, open world 0; under asymmetric trust NCE dismisses nothing (65.2) | `RESULTS.md:103-110` |
@@ -165,7 +165,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 - **End-to-end check:** `python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-file <file>` (needs Edge, Chrome or Chromium; read-only). RUN as `--url http://127.0.0.1:8799` against the throwaway server above, which served the existing `frontend/dist` build of 2026-10-20: **9 / 9 checks passed**.
 - **Accounts CLI:** `python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin` (password from the terminal or `AGENTSOC_NEW_PASSWORD`). Or create the first admin in the browser.
 - **Standalone review API (no replay):** `python -m review_api --case-store <cases.sqlite>` with `AGENTSOC_ANALYST_TOKENS="alice:<token>,bob:<token>"` (24+ characters each).
-- **Reproduce every number (no API calls):** `REPRODUCE.md`. RUN in a temporary git worktree of this branch with its own temporary data root (a junction to `D:\agentsoc_data\dedale`, empty `runs/` and `ks/`), both in the agent's scratch folder and not kept, so nothing in `D:\agentsoc_data\runs` or this checkout changed. Step 3 (all six GUIDE re-scores, both rules): the three acting-rule re-scores are byte-identical to `agent/v2_results/*_rescored.json`. The three `_escalate` re-scores have no committed copy to compare with; they feed the asymmetric-trust rows of `RESULTS.md`, checked by the rebuild in step 5. Steps 4-6 (`freeze_dedale --workers 6`, `build_results`, `build_figures`) RUN in an isolated data root: IN PROGRESS at the time of this commit (started 06:37 UTC 2026-11-22; result recorded in a later commit).
+- **Reproduce every number (no API calls):** `REPRODUCE.md`. RUN in a temporary git worktree of this branch with its own temporary data root (a junction to `D:\agentsoc_data\dedale`, empty `runs/` and `ks/`), both in the agent's scratch folder and not kept, so nothing in `D:\agentsoc_data\runs` or this checkout changed. Step 3 (all six GUIDE re-scores, both rules): the three acting-rule re-scores are byte-identical to `agent/v2_results/*_rescored.json`. The three `_escalate` re-scores have no committed copy to compare with; they feed the asymmetric-trust rows of `RESULTS.md`, checked by the rebuild in step 5. Steps 4-6 (`freeze_dedale --workers 6`, `build_results`, `build_figures`) RUN in that data root: all 43 replays exit 0 (06:37-07:13 UTC, about 36 min with 6 workers; 0 events refused); `final_host_scores.json`, `final_network_scores.json`, `e1_scores.json` and both `paper/fig_*.dat` byte-identical to the committed files (after normalising line endings: the Windows checkout writes CRLF, git stores LF); the rebuilt `RESULTS.md` differs only in its date line.
 - **DEDALE data:** `<data>/dedale/` needs `system_logs_winlogbeat.zip` (27.1 GB), `suricata_alerts.zip`, `system_logs_labels.zip`; network scoring also needs `zeek_router1.zip` (4.4 GB). Shortcut: `D:\dedale_for_team.zip` (336,956,066 bytes, 2026-10-20) holds `derived/` (1,344 files = 672 hours × a `.jsonl.gz` of host events and a `.counts.json`, plus `zeek_router1_attack_flows.jsonl`), `suricata_alerts.zip` and `system_logs_labels.zip`. Unzipped into `<data>/dedale/`, it replaces the two big archives and the hour-long extraction (`python -m experiments.dedale_extract_winlogbeat`). This machine has all of it.
 
 **Environment variables:** `AGENTSOC_DATA_DIR` (data root), `HF_HUB_OFFLINE=1` (tests, replays), `AGENTSOC_CHECKPOINT_KEY` (checkpoint HMAC key file; default `~/.agentsoc/checkpoint.key`), `GEMINI_API_KEYS` / `GEMINI_API_KEY`, `GROQ_API_KEYS` / `GROQ_API_KEY` (comma-separated, in `.env`, loaded by `agent/key_pool.py`; never print more than the last 4 characters), `AGENTSOC_ANALYST_TOKENS`, `AGENTSOC_NEW_PASSWORD`, `AGENTSOC_AUDIT_LOG` (playbook audit log; default `logs/action_playbook_audit_log.jsonl`), `AGENTSOC_ALLOW_OVERWRITE=1` (lets a v1 runner overwrite its committed results), `AGENTSOC_API` (Vite dev proxy), `BROWSER` (tools), `PYTHONHASHSEED` (`freeze_dedale` sets 0), `WATCHDOG_*`, `POLL_INTERVAL_S`, `STALL_TIMEOUT_S` (v1 watchdog).
@@ -188,7 +188,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 | Web console (Live, Case, Host, Knowledge, Metrics, Lab, accounts) | DONE | `frontend/src/pages/`; typecheck passes; e2e check 9 / 9 on 2026-11-22 |
 | Dataset registry | PARTIAL | `soc_server/datasets.py`: only DEDALE registered |
 | GUIDE v2 results (both models) | DONE | `agent/v2_results/`, re-scores byte-identical 2026-11-22 |
-| DEDALE frozen results incl. E1 and asymmetric trust | DONE (files); re-run re-freeze IN PROGRESS 2026-11-22 | `experiments/dedale_results/final_*_scores.json`, `e1_scores.json` |
+| DEDALE frozen results incl. E1 and asymmetric trust | DONE; re-freeze reproduced byte-identically 2026-11-22 | `experiments/dedale_results/final_*_scores.json`, `e1_scores.json` |
 | Paper draft (current) | PARTIAL | `AgentSOC_IEEE_Revised.docx` (user, 2026-11-22): three wrong claims (see Known issues) |
 | Paper (LaTeX predecessor) | SUPERSEDED as the working draft | `paper/agentsoc_v2.tex` (authors and repository link TODO at `:6`); `paper/agentsoc_combined.tex` is older still |
 | SDC-II course report | NOT STARTED | `Documentation_Template-SDC-II.docx` is KMIT's blank "Skill Development Course-2" report template; no step uses it yet and its due date is NOT IN THE REPOSITORY |
@@ -233,7 +233,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 **Reproduction gotchas:**
 - `experiments/build_results.py:105-106` silently leaves out the asymmetric-trust C1 rows unless the three `rescore_v2 ... --llm-authority escalate` runs wrote `logs/*_rescored_escalate.json`. This checkout's `logs/` has none.
 - `freeze_dedale` skips any replay whose `summary.json` exists. Use `--rerun` after code changes.
-- On this machine `D:\agentsoc_data\runs` has no `A_*` (asymmetric-trust) replay outputs; the 2026-10-31 re-freeze that produced them left nothing there.
+- On this machine `D:\agentsoc_data\runs` has no `A_*` (asymmetric-trust) replay outputs; the 2026-10-31 re-freeze that produced them left nothing there. The 2026-11-22 audit regenerated all 43 replays in a temporary data root and got byte-identical score files, so the frozen results stand; run `freeze_dedale` (about 36 min) to recreate the replay outputs in `D:\agentsoc_data\runs` if they are needed.
 - Windows `os.replace` fails while another process holds a results file open: monitor long runs through the append-only API call log (`agent/v2_results/*_api_log.jsonl` for GUIDE runs, `<data>/runs/nce_api_log_host.jsonl` for DEDALE NCE), never by opening the results JSON.
 - In Git Bash, set `MSYS_NO_PATHCONV=1` before `tools/ui_check.py` (it rewrites `/` arguments into Windows paths).
 
@@ -262,7 +262,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 - Should the paper `.docx` and the SDC-II template stay in git? This audit committed them in `c0ef3ed` to keep them safe. Note: git history keeps binary versions forever, and the `.docx` holds the authors' e-mail addresses.
 - Is review change 9 (hash-chained audit log) dropped? `PROJECT_PLAN.md` said it was on a branch that does not exist.
 - Does anyone still have the `baseline-prompt` branch (`docs/LIMITATIONS_DRAFT.md:113` cites counts from it)?
-- Where did the 2026-10-31 re-freeze run (its outputs are not in `D:\agentsoc_data`)?
+- Where did the 2026-10-31 re-freeze run (its outputs are not in `D:\agentsoc_data`)? Low stakes: the 2026-11-22 re-freeze reproduced its score files byte-identically.
 
 ## Conventions
 

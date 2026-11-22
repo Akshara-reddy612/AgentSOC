@@ -158,7 +158,7 @@ python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-fi
 Follow [REPRODUCE.md](REPRODUCE.md). In short:
 
 ```
-python -m experiments.freeze_dedale --workers 6      # the 43 DEDALE replays (about 2 h with 6 workers)
+python -m experiments.freeze_dedale --workers 6      # the 43 DEDALE replays (36 min with 6 workers on 2026-11-22; up to 2 h)
 python -m experiments.build_results                  # writes experiments/RESULTS.md
 ```
 
