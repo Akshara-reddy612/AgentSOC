@@ -245,15 +245,17 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 ## Next steps (in order)
 
 0. **Review and merge this audit** (branch `chore/repo-audit-tracking`, documentation only; nothing pushed). The audit was asked to stay on its branch, so the user reviews it before the usual `--no-ff` merge; pushing is always the user's call.
-1. **Fix the paper draft `AgentSOC_IEEE_Revised.docx`** (the one being worked on). Fix its three wrong claims (`docs/_audit_report.md` §3):
+1. **Fix the paper draft `AgentSOC_IEEE_Revised.docx`** (the one being worked on; the user edits it, and an agent proposes changes rather than editing the `.docx`). Fix its three wrong claims (`docs/_audit_report.md` §3):
    - remove "with execution harnesses implemented in the repository" from §IV-D;
    - in §VI-A replace "8 instances of benign destination IP unlearning, increasing network review workload from 26.1 to 32.4 reviews/day" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";
    - change 624 to 625.
    Every new number in it should be traced to `experiments/RESULTS.md` or a result file, as `paper/agentsoc_v2_numbers.md` does for the LaTeX version. The team also revises the text Claude drafted, especially how the related-work section positions the work against the literature (Claude drafted it; the team should check it against the papers they know).
 2. **M7:** choose the venue (P2; no candidates or deadlines are recorded in the repository), then record the demo video (content: the use case in `PROJECT_PLAN.md` §5). Before recording, rebuild the frontend (`cd frontend && npm run build`; the user runs installs) and run `tools/e2e_check.py`.
 3. **Optional E3 (AIT-LDS):** only if the paper needs a second real dataset. Follow `docs/ADDING_A_DATASET.md`; download approval first (17 GB, CC BY-NC-SA 4.0).
-4. **Optional P9 D (prompt-level baseline):** needs a written design and an approved call budget. Nothing exists in the repository to build on.
-5. **Housekeeping (needs a yes):**
+4. **SDC-II course report:** write it from `Documentation_Template-SDC-II.docx` (the user knows the due date; it is not recorded here).
+5. **Optional P9 B / C (corroborated learning, analyst-aimed text):** in scope by decision P9 but not started and with no design; the user decides whether they happen before submission.
+6. **Optional P9 D (prompt-level baseline):** needs a written design and an approved call budget. Nothing exists in the repository to build on.
+7. **Housekeeping (needs a yes):**
    - give `agent/measure_clean_confidence.py` the `agent/run_guard.confirm_overwrite` guard;
    - mark or fix the v1 generators' `/home/claude` paths;
 

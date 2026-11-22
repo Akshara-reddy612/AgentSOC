@@ -31,10 +31,9 @@ The history of the project and the reasons behind it, newest first. The current 
 - **Decided:**
   - The paper draft being worked on is `AgentSOC_IEEE_Revised.docx`; `Documentation_Template-SDC-II.docx` is needed for the course report (user, 2026-11-22).
   - Root clean-up (user, 2026-11-22): `PAPER_OUTLINE.md` removed (outline of the superseded combined LaTeX paper); the untracked old handoff notes and the v1 LaTeX build log deleted after their facts were copied here.
-  - Old log archived verbatim (`540dde3`); this file and `PROJECT_STATUS.md` rewritten.
+  - The two `.docx` files committed first so they were safe (`c0ef3ed`); old log archived verbatim (`540dde3`); this file and `PROJECT_STATUS.md` rewritten.
   - `HANDOVER.md` merged into the status file and removed.
   - Stale design-doc headers annotated with dated notes; nothing historical deleted.
-  - The two git-ignored handoff files were left in place (untracked, so a removal could not be recovered from git).
 
 ### 2026-11-09: paper v2 Fig. 1 redrawn (reconstructed from commits; no session entry was written)
 - Redrawn twice:
@@ -271,16 +270,16 @@ Final results are the frozen files behind `experiments/RESULTS.md` (rebuilt by `
 
 ## Lessons, facts and gotchas that are not in the code
 
-- **Agent reliability:** earlier coding agents (2026-08/09, before Claude Code) produced fabricated diffs, compile results and statistics. Demand raw output, recompute percentages, and write "NOT FOUND IN REPO" instead of guessing (`agentsoc_context_v2.md` §12, git-ignored). A passing suite missed real bugs twice: identical action effects (H:401) and right-score-wrong-path (H:449).
+- **Agent reliability:** earlier coding agents (2026-08/09, before Claude Code) produced fabricated diffs, compile results and statistics. Demand raw output, recompute percentages, and write "NOT FOUND IN REPO" instead of guessing (the deleted note `agentsoc_context_v2.md` §12; its content is summarised here). A passing suite missed real bugs twice: identical action effects (H:401) and right-score-wrong-path (H:449).
 - **API quotas** (free tiers, as recorded):
   - gemini-3.1-flash-lite: 500 requests/day per key, about 15 requests/minute (≥ 5 s between calls per key);
   - gemini-3.6-flash: 20/day (tried in the v1 era; used for no current result);
   - Groq gpt-oss-20b: 200,000 tokens/day per key (about 70 NCE calls).
   - Runners stop at the daily cap with exit 3 and resume (H:1053; `S:532-535`).
-- **DEDALE downloads** go through the Dataverse API, `https://entrepot.recherche.data.gouv.fr/api/access/datafile/<id>`, with a browser User-Agent; the HTML pages block bots. File ids: labels 717882, Suricata 717879, user behaviour 717880, syslog 717890, winlogbeat 717892, auditbeat 717881; the `zeek_router1.zip` id was not recorded (`CLAUDE_HANDOFF.md`, git-ignored). MD5s verified at download (H:1092, 1284, 1386).
-- **Seeds used:** 42-53 (v1 subsets), 20260915 (benign corpus), 71 (network model), 73 (enterprise inventory), 79 (corpus v2 families). Check for reuse and alert-id collisions before generating a batch (`agentsoc_context_v2.md` §5; H:752, 851, 869).
+- **DEDALE downloads** go through the Dataverse API, `https://entrepot.recherche.data.gouv.fr/api/access/datafile/<id>`, with a browser User-Agent; the HTML pages block bots. File ids: labels 717882, Suricata 717879, user behaviour 717880, syslog 717890, winlogbeat 717892, auditbeat 717881; the `zeek_router1.zip` id was not recorded (from the deleted note `CLAUDE_HANDOFF.md`; recorded here). MD5s verified at download (H:1092, 1284, 1386).
+- **Seeds used:** 42-53 (v1 subsets), 20260915 (benign corpus), 71 (network model), 73 (enterprise inventory), 79 (corpus v2 families). Check for reuse and alert-id collisions before generating a batch (deleted note `agentsoc_context_v2.md` §5; H:752, 851, 869).
 - **Local tags** `pre-phase2-checkpoint`, `post-phase2`, `post-phase3` exist only locally (`git tag -l`).
-- **Project facts from the old handoff** (UNVERIFIED, from `agentsoc_context_v2.md` §1):
+- **Project facts from the old handoff** (UNVERIFIED, from the deleted note `agentsoc_context_v2.md` §1):
   - group number G-524 (an early review deck said G-1415);
   - a review deck `AgentSOC_Project_Review.pptx` exists outside the repository;
   - a collaborator kept a separate baseline reproduction repository (`agentsoc-baseline`).
