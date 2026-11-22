@@ -9,13 +9,19 @@ that runner is never affected by edits here.  API CALLS: needs an approved budge
 
     python -m agent.run_v2_prompt_defences --defence delimited|spotlight|hierarchy [--set dev] [--workers 8] [--limit N]
 
-Output: agent/v2_results/v2_<set>_promptdef_<defence>_results.json (+ _api_log.jsonl); resumes; failures
+Added 2026-11-22 (paper checklist):
+  --defence telemetry   A6: the undefended agent given the pipeline's trusted context (agent/prompt_defences.py)
+  --defence none        the plain undefended prompt (agent/baseline_agent.build_undefended_prompt)
+  --temperature T --repeat K   B1: repeated runs at temperature T; each repeat is its own results file
+
+Output: agent/v2_results/v2_<set>_promptdef_<defence>[_t<T>_r<K>]_results.json (+ _api_log.jsonl); resumes; failures
 stored unscored and retried; stops on daily quota (exit 3).
 """
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -30,11 +36,13 @@ V2_DIR = PROJECT_ROOT / "GUIDE_Dataset" / "processed" / "v2"
 
 def _call(defence: str, alert: dict, model: str):
     """Runs in the worker's child process.  Returns (parsed|None, error, raw, n_calls)."""
-    from agent.baseline_agent import call_agent_rotating
+    from agent.baseline_agent import build_undefended_prompt, call_agent_rotating
     from agent.key_pool import load_gemini_pool
     from agent.llm_utils import DAILY_QUOTA_MARKER, is_daily_quota_error
-    prompt = BUILDERS[defence]({k: v for k, v in alert.items() if not k.startswith("_")})
-    res = call_agent_rotating(prompt, load_gemini_pool(), model=model)
+    build = build_undefended_prompt if defence == "none" else BUILDERS[defence]
+    prompt = build({k: v for k, v in alert.items() if not k.startswith("_")})
+    t = os.environ.get("PROMPTDEF_TEMPERATURE")          # set by main() for --temperature; inherited by the child
+    res = call_agent_rotating(prompt, load_gemini_pool(), model=model, temperature=float(t) if t else None)
     parsed, err = res.get("parsed"), res.get("parse_error")
     if err:
         if is_daily_quota_error(err):
@@ -58,24 +66,42 @@ def call_hierarchy(alert, model=MODEL, groq_keys=None):
     return _call("hierarchy", alert, model)
 
 
-CALLS = {"delimited": call_delimited, "spotlight": call_spotlight, "hierarchy": call_hierarchy}
+def call_telemetry(alert, model=MODEL, groq_keys=None):
+    return _call("telemetry", alert, model)
 
 
-def results_path(set_name: str, defence: str) -> Path:
-    return PROJECT_ROOT / "agent" / "v2_results" / f"v2_{set_name}_promptdef_{defence}_results.json"
+def call_none(alert, model=MODEL, groq_keys=None):
+    return _call("none", alert, model)
+
+
+CALLS = {"delimited": call_delimited, "spotlight": call_spotlight, "hierarchy": call_hierarchy,
+         "telemetry": call_telemetry, "none": call_none}
+
+
+def results_path(set_name: str, defence: str, temperature: float | None = None, repeat: int | None = None) -> Path:
+    tag = f"_t{temperature:g}_r{repeat}" if temperature is not None else ""
+    return PROJECT_ROOT / "agent" / "v2_results" / f"v2_{set_name}_promptdef_{defence}{tag}_results.json"
 
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--defence", required=True, choices=DEFENCES)
+    ap.add_argument("--defence", required=True, choices=[*DEFENCES, "none"])
     ap.add_argument("--set", default="dev", choices=["dev", "heldout"])
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--limit", type=int, default=None)
+    ap.add_argument("--temperature", type=float, default=None)
+    ap.add_argument("--repeat", type=int, default=None)
     args = ap.parse_args()
     if not MODEL.startswith("gemini"):
         sys.exit("T2.2 runs on the Gemini model of the undefended baseline")
+    if (args.temperature is None) != (args.repeat is None):
+        sys.exit("--temperature and --repeat go together")
+    if args.defence == "none" and args.temperature is None:
+        sys.exit("--defence none is for repeat runs; the default-sampling undefended run is agent/run_v2_undefended.py")
+    if args.temperature is not None:
+        os.environ["PROMPTDEF_TEMPERATURE"] = str(args.temperature)
 
-    out = results_path(args.set, args.defence)
+    out = results_path(args.set, args.defence, args.temperature, args.repeat)
     out.parent.mkdir(parents=True, exist_ok=True)
     alerts = json.loads((V2_DIR / f"guide_v2_{args.set}.json").read_text(encoding="utf-8"))
     done = {r["alert_id"]: r for r in json.loads(out.read_text(encoding="utf-8"))} if out.exists() else {}
@@ -89,7 +115,8 @@ def main() -> None:
         parsed, err, raw, n = res
         a = by_id[aid]
         rec = {"alert_id": aid, "pair_id": a["_pair_id"], "variant": a["_variant"], "model": MODEL,
-               "defence": args.defence, "raw_response": raw, "api_calls": n}
+               "defence": args.defence, "temperature": args.temperature, "repeat": args.repeat,
+               "raw_response": raw, "api_calls": n}
         if parsed is None:
             rec["error"] = err
         else:

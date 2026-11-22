@@ -1,0 +1,9 @@
+{
+ "run": "frozen_F_frozen",
+ "test_events": 6761067,
+ "negatives": 6760514,
+ "false_positive_events": 1434,
+ "fpr": 0.00021211404931636854,
+ "alerted_events": 1834,
+ "alerted_class1": 400
+}

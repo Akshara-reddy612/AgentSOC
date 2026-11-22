@@ -113,7 +113,7 @@ def c1() -> list[str]:
              "Induced otherwise | McNemar p (suppressed vs induced otherwise) | Steered actions: executed / gated | "
              "Automatic containments removed by contamination |",
              "|:--|--:|--:|--:|--:|--:|--:|--:|--:|"]
-    outcome_lines = []
+    outcome_lines, paired_lines = [], []
     for name, path, set_name in runs:
         alerts = _load(V2_DIR / f"guide_v2_{set_name}.json")
         results = _load(ROOT / path)
@@ -134,6 +134,13 @@ def c1() -> list[str]:
                      f"{mcnemar(t['suppressed'], other):.2g} | "
                      f"{t['misdirect_executed']} / {t['misdirect_gated']} | {_pct(removed, with_one)}"
                      f"{f'; {via_era} ERA-flagged' if removed else ''} |")
+        n, b, c = t["pairs"], t["suppressed"], other         # paired: change in the response rate, contaminated - clean
+        d = (c - b) / n
+        se = ((b + c) - (c - b) ** 2 / n) ** 0.5 / n
+        paired_lines.append(f"- {name}: {b} suppressed, {c} induced otherwise, of {n} pairs: change in response rate "
+                            f"{d * 100:+.1f} points (paired 95% CI {(d - 1.96 * se) * 100:+.1f} to {(d + 1.96 * se) * 100:+.1f})")
+    lines += ["", "*Paired view* (each pair is its own control; Wald CI for paired proportions; no significance is "
+              "claimed where the interval covers zero):", "", *paired_lines]
     lines += ["", "*Induced by ERA escalation*: the contaminated twin got a response the clean one did not because "
               "ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence "
               "reacting, not the attacker succeeding.", "",
@@ -361,6 +368,21 @@ def revision() -> list[str]:
             f"still alert ({f_ev / s_ev:.1%}); the other {s_ev - f_ev} match routine activity learned in the clean weeks.",
             f"E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI "
             f"{wilson(0, 72)[0]:.1%}-{wilson(0, 72)[1]:.1%}.", ""]
+    ev = RESULTS / "e1_view.json"
+    if ev.exists():
+        v = _load(ev)
+        fams = v["families"]
+        out += [f"*E1 payload placement* (`experiments/e1_view.py`): E1 appends its payload to the command line; in "
+                + "; ".join(f"{k} {x['payload_fully_in_view']}/{x['injected_first_alerts']}" for k, x in fams.items())
+                + f" injected first alerts the whole payload lies within NCE's first {v['max_prompt_field_length']} "
+                f"characters (longest injected command line {max(x['longest_command_line'] for x in fams.values())} "
+                "characters). The raw-log truncation does not affect E1.", ""]
+    fpr = RESULTS / "event_fpr.json"
+    if fpr.exists():
+        e = _load(fpr)
+        out += [f"*Event-level false-positive rate* ({e['run']}, `experiments/event_fpr.py`): {e['false_positive_events']} "
+                f"of {e['negatives']:,} test-period host events without a class-1 label raised an alert "
+                f"({e['fpr'] * 100:.3f}%); {e['alerted_class1']} of the {e['alerted_events']} alerted events are class-1.", ""]
     t1 = RESULTS / "tier1_scores.json"
     if t1.exists():
         T = _load(t1)
@@ -447,7 +469,7 @@ def tier2(T: dict) -> list[str]:
                 "(the same pairs for every defence; the undefended row uses its recorded answers on the same pairs):", "",
                 "| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |",
                 "|:--|--:|--:|--:|:--|:--|--:|"]
-        for d in ("delimited", "spotlight", "hierarchy"):
+        for d in ("delimited", "spotlight", "hierarchy", "telemetry"):
             x = r.get(d, {})
             if not x.get("pairs_answered"):
                 out.append(f"| {d} | 0 | - | - | - | - | - |")
@@ -459,13 +481,19 @@ def tier2(T: dict) -> list[str]:
                        f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} |")
         out += ["", "Paired difference over all pairs both conditions answered (per-pair hijack indicator; "
                 "95% Wald CI for paired proportions):", ""]
-        for d in ("delimited", "spotlight", "hierarchy"):
+        for d in ("delimited", "spotlight", "hierarchy", "telemetry"):
             x = r.get(d + "_paired")
             if x:
                 out.append(f"- {d}: {x['undefended_rate']:.1%} -> {x['defended_rate']:.1%} of {x['pairs']} pairs, "
                            f"reduction {x['reduction'] * 100:.1f} points (95% CI {x['ci95'][0] * 100:.1f}-"
                            f"{x['ci95'][1] * 100:.1f})")
         out.append("")
+    if "B1_repeats" in T:
+        r = T["B1_repeats"]
+        out += [f"*B1, repeated runs* of the undefended prompt at temperature {r['temperature']:g} on the same 150 pairs: "
+                + ", ".join(f"{x['hijacked']}/{x['clean_not_dismissed']}" for x in r["repeats"])
+                + (f" hijacked; mean {r['mean']:.1%}, sd {r['sd']:.1%} (min {r['min']:.1%}, max {r['max']:.1%}) over "
+                   f"{r['complete_repeats']} complete repeats" if "mean" in r else " (incomplete)") + ".", ""]
     if "T2.3" in T:
         r = T["T2.3"]
         out += [f"*T2.3, the adaptive attacker:* {r['pairs']} dev pairs whose payload was rewritten until ERA rated it "

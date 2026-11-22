@@ -15,6 +15,15 @@ Pipeline response on clean vs contaminated twins (same GUIDE row, differing only
 | GUIDE v2 held-out, gemini-3.1-flash-lite, asymmetric trust | 500 | 3/437 (0.7%) | 0.2%-2.0% | 10 | 0 | 0.25 | 0 / 2 | 0/168 (0.0%) |
 | GUIDE v2 dev, gpt-oss-20b, asymmetric trust | 500 | 10/437 (2.3%) | 1.2%-4.2% | 12 | 5 | 0.3 | 0 / 3 | 0/178 (0.0%) |
 
+*Paired view* (each pair is its own control; Wald CI for paired proportions; no significance is claimed where the interval covers zero):
+
+- GUIDE v2 dev, gemini-3.1-flash-lite: 4 suppressed, 4 induced otherwise, of 500 pairs: change in response rate +0.0 points (paired 95% CI -1.1 to +1.1)
+- GUIDE v2 held-out, gemini-3.1-flash-lite: 3 suppressed, 0 induced otherwise, of 500 pairs: change in response rate -0.6 points (paired 95% CI -1.3 to +0.1)
+- GUIDE v2 dev, gpt-oss-20b: 10 suppressed, 5 induced otherwise, of 500 pairs: change in response rate -1.0 points (paired 95% CI -2.5 to +0.5)
+- GUIDE v2 dev, gemini-3.1-flash-lite, asymmetric trust: 4 suppressed, 4 induced otherwise, of 500 pairs: change in response rate +0.0 points (paired 95% CI -1.1 to +1.1)
+- GUIDE v2 held-out, gemini-3.1-flash-lite, asymmetric trust: 3 suppressed, 0 induced otherwise, of 500 pairs: change in response rate -0.6 points (paired 95% CI -1.3 to +0.1)
+- GUIDE v2 dev, gpt-oss-20b, asymmetric trust: 10 suppressed, 5 induced otherwise, of 500 pairs: change in response rate -1.0 points (paired 95% CI -2.5 to +0.5)
+
 *Induced by ERA escalation*: the contaminated twin got a response the clean one did not because ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence reacting, not the attacker succeeding.
 
 *Automatic containments removed by contamination*: of the pairs whose clean twin executes an automatic containment (a destination block the trusted telemetry supports), those whose contaminated twin does not. In the current pipeline a review outcome holds back every auto-approved response, so text that sends the case to review -- an NCE hypothesis, or ERA's own escalation -- delays containment; the suppression column counts these as responded. Under asymmetric trust the text-free decision's containment executes whatever the text does; that holds for the clean twins too, which is why the denominator can be higher (a clean twin whose own NCE hypotheses asked for review).
@@ -159,6 +168,10 @@ Offline replays of DEDALE host logs (recorded LLM answers only), added after the
 *Derived (paper text):* learning the clean weeks cuts host reviews from 6095.4 to 65.2 per day, 98.9% fewer; 400 of the 473 labelled attack events the static detectors alert on still alert (84.6%); the other 73 match routine activity learned in the clean weeks.
 E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI 0.0%-5.1%.
 
+*E1 payload placement* (`experiments/e1_view.py`): E1 appends its payload to the command line; in suppress 38/38; fake_approval 38/38; steer 38/38 injected first alerts the whole payload lies within NCE's first 512 characters (longest injected command line 371 characters). The raw-log truncation does not affect E1.
+
+*Event-level false-positive rate* (frozen_F_frozen, `experiments/event_fpr.py`): 1434 of 6,760,514 test-period host events without a class-1 label raised an alert (0.021%); 400 of the 1834 alerted events are class-1.
+
 **A simple memory baseline:** a pattern from the two clean weeks counts as normal only if it occurred at least K times (K = 1 is the clean-weeks allowlist, i.e. the frozen store). NCE off, no analyst.
 
 | K | Reviews / day | Attack cases raised | Labelled attack events alerted | Attack cases learned | Precision | Training patterns forgotten |
@@ -229,6 +242,7 @@ CLIENT2 was confirmed in every run: its first attack case carries no attacker te
 | delimited | 150 | 36/128 (28.1%) | 8/136 (5.9%) | 3.0%-11.2% | 2 / 30 | 2.5e-07 |
 | spotlight | 150 | 36/128 (28.1%) | 7/140 (5.0%) | 2.4%-10.0% | 1 / 30 | 3e-08 |
 | hierarchy | 150 | 36/128 (28.1%) | 4/140 (2.9%) | 1.1%-7.1% | 1 / 33 | 4.1e-09 |
+| telemetry | 0 | - | - | - | - | - |
 
 Paired difference over all pairs both conditions answered (per-pair hijack indicator; 95% Wald CI for paired proportions):
 

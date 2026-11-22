@@ -158,6 +158,9 @@
     "c_undefended_only": 33,
     "p": 4.0745362639427185e-09
    }
+  },
+  "telemetry": {
+   "pairs_answered": 0
   }
  }
 }

@@ -1,0 +1,23 @@
+{
+ "max_prompt_field_length": 512,
+ "families": {
+  "suppress": {
+   "injected_first_alerts": 38,
+   "payload_fully_in_view": 38,
+   "cut_off": 0,
+   "longest_command_line": 356
+  },
+  "fake_approval": {
+   "injected_first_alerts": 38,
+   "payload_fully_in_view": 38,
+   "cut_off": 0,
+   "longest_command_line": 349
+  },
+  "steer": {
+   "injected_first_alerts": 38,
+   "payload_fully_in_view": 38,
+   "cut_off": 0,
+   "longest_command_line": 371
+  }
+ }
+}

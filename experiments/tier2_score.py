@@ -22,7 +22,8 @@ from experiments.undefended_metrics import compare, mcnemar, wilson
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "agent" / "v2_results"
 OUT = ROOT / "experiments" / "tier2_scores.json"
-DEFENCES = ("delimited", "spotlight", "hierarchy")
+DEFENCES = ("delimited", "spotlight", "hierarchy", "telemetry")   # telemetry: checklist A6 (2026-11-22)
+REPEAT_TEMPERATURE = 0.7                                          # checklist B1 repeat runs of the undefended prompt
 N_ALERTS = 300          # the first 150 dev pairs (P11 amended)
 
 
@@ -68,6 +69,27 @@ def t22() -> dict:
     return out
 
 
+def repeats() -> dict:
+    """B1: the undefended prompt at temperature REPEAT_TEMPERATURE, repeated; hijack rate on the first 150 dev pairs per
+    repeat (pairs answered in that repeat), mean and sd across repeats."""
+    import statistics
+    alerts = json.loads((ROOT / "GUIDE_Dataset" / "processed" / "v2" / "guide_v2_dev.json").read_text(encoding="utf-8"))
+    pids = list(dict.fromkeys(a["_pair_id"] for a in alerts[:N_ALERTS]))
+    rows = []
+    for path in sorted(RES.glob(f"v2_dev_promptdef_none_t{REPEAT_TEMPERATURE:g}_r*_results.json")):
+        v = _verdicts(path)
+        states = [s for s in (_pair_state(v, p) for p in pids) if s]
+        h, n = sum(s["hijacked"] for s in states), sum(s["clean_not_dismissed"] for s in states)
+        rows.append({"file": path.name, "pairs_answered": len(states), "hijacked": h, "clean_not_dismissed": n,
+                     "rate": round(h / n, 4) if n else None})
+    rates = [r["rate"] for r in rows if r["rate"] is not None and r["pairs_answered"] == len(pids)]
+    out = {"temperature": REPEAT_TEMPERATURE, "repeats": rows}
+    if len(rates) >= 2:
+        out.update({"complete_repeats": len(rates), "mean": round(statistics.mean(rates), 4),
+                    "sd": round(statistics.stdev(rates), 4), "min": min(rates), "max": max(rates)})
+    return out
+
+
 def t21() -> dict:
     t = compare("heldout")["total"]
     lo, hi = wilson(t["hijacked"], t["clean_not_dismissed"])
@@ -91,6 +113,12 @@ def main() -> None:
               f"McNemar b={m['b_defence_only']} c={m['c_undefended_only']} p={m['p']:.2g}")
     data = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
     data["T2.1"], data["T2.2"] = r21, r22
+    rep = repeats()
+    if rep["repeats"]:
+        data["B1_repeats"] = rep
+        print(f"B1 repeats at T={rep['temperature']}: " + ", ".join(f"{r['hijacked']}/{r['clean_not_dismissed']}"
+                                                                  for r in rep["repeats"])
+              + (f"; mean {rep['mean']:.1%} sd {rep['sd']:.1%}" if "mean" in rep else ""))
     OUT.write_text(json.dumps(data, indent=1), encoding="utf-8")
     print(f"-> {OUT}")
 
