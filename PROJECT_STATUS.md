@@ -201,7 +201,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 ## Known bugs, limits and gotchas
 
 **Paper:**
-- `paper/agentsoc_v3.tex` is packed to exactly 7 pages; adding the A6 / B1 results will need 8 pages (recommended to the user 2026-11-22) or a content cut.
+- `paper/agentsoc_v3.tex` is packed to exactly 7 pages; the user chose 8 pages for the version with the A6 / B1 results (2026-11-22); the 7-page PDF stays in the backup folder.
 - `AgentSOC_IEEE_Revised.docx` (superseded) has three claims that do not match the repository:
   - §IV-D says the six planned experiments have "execution harnesses implemented in the repository". None exists in any commit.
   - §VI-A says that on network alerts with 5% analyst false alarms (gated, analyst after 4 h, B5 on) "8 instances of benign destination IP unlearning" raised the workload "from 26.1 to 32.4 reviews/day". The frozen value for that condition is 21.2 reviews/day (`experiments/RESULTS.md:136`); the 8 are approved blocks that would have hit benign traffic (`RESULTS.md:138`), not unlearning; 32.4 appears in no result file.
