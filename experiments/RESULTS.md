@@ -267,6 +267,38 @@ Paired difference over all pairs both conditions answered (per-pair hijack indic
 | acting rule | 2/300 | 2/300 | 0.2%-2.4% | 0 / 0 | 17 | 80 | 17 |
 | asymmetric trust | 2/300 | 2/300 | 0.2%-2.4% | 0 / 0 | 17 | 80 | 17 |
 
+## Ablation (checklist A3, 2026-11-22)
+
+Each defence or component removed in turn, from the frozen runs above; the ERA rows re-score the recorded GUIDE answers with no ERA level (`experiments/ablation_era.py`, offline). *Removed* names what the defence is replaced by.
+
+| Component removed (replaced by) | Data | Measure | With it | Without it |
+|:--|:--|:--|--:|--:|
+| Knowledge Store learning (static) | DEDALE host | reviews / day | 65.2 | 6095.4 |
+| Learning gate (ungated) | DEDALE host | attack patterns learned; attack events alerted | 0; 400 | 38; 99 |
+| B5 unlearning (analyst misses 20%) | DEDALE host | attack patterns learned; attack events alerted | 0; 400 | 20; 256 |
+| D7 (unreasoned cases dismissed) | DEDALE network | attack-related cases hidden | 0 / 7 | 6 / 7 |
+| Asymmetric trust (acting rule) | DEDALE E1, no analyst | attack cases dismissed (suppress / fake / steer) | 0 / 0 / 0 | 1 / 3 / 1 |
+| Asymmetric trust (acting rule) | GUIDE dev | automatic containments removed by contamination | 0/178 (0.0%) | 20/178 (11.2%) |
+| ERA, acting rule | GUIDE dev | responses suppressed; REVIEW outcomes; containments removed | 4/428; 532; 20 | 4/428; 503; 3 |
+| ERA, asymmetric trust | GUIDE dev | responses suppressed; REVIEW outcomes; containments removed | 4/428; 532; 0 | 4/428; 503; 0 |
+| NCE (LLM off), acting rule | DEDALE host | reviews / day; benign / attack cases dismissed | 54.8; 89 / 0 | 65.2; 0 / 0 |
+| NCE (LLM off), asymmetric trust | DEDALE host | reviews / day; benign / attack cases dismissed | 65.2; 0 / 0 | 65.2; 0 / 0 |
+
+ERA off, all sets (suppressed of clean responded; induced by ERA; containments removed):
+
+- dev, gemini-3.1-flash-lite | acting | ERA on: 4/428; 12; 20/178
+- dev, gemini-3.1-flash-lite | acting | ERA off: 4/428; 0; 3/178
+- dev, gemini-3.1-flash-lite | asymmetric | ERA on: 4/428; 12; 0/178
+- dev, gemini-3.1-flash-lite | asymmetric | ERA off: 4/428; 0; 0/178
+- held-out, gemini-3.1-flash-lite | acting | ERA on: 3/437; 10; 18/168
+- held-out, gemini-3.1-flash-lite | acting | ERA off: 3/437; 0; 0/168
+- held-out, gemini-3.1-flash-lite | asymmetric | ERA on: 3/437; 10; 0/168
+- held-out, gemini-3.1-flash-lite | asymmetric | ERA off: 3/437; 0; 0/168
+- dev, gpt-oss-20b | acting | ERA on: 10/437; 12; 21/176
+- dev, gpt-oss-20b | acting | ERA off: 11/437; 0; 4/176
+- dev, gpt-oss-20b | asymmetric | ERA on: 10/437; 12; 0/178
+- dev, gpt-oss-20b | asymmetric | ERA off: 11/437; 0; 0/178
+
 ## Limits
 
 - **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few malicious verdicts.

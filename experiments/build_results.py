@@ -543,10 +543,70 @@ def tier2(T: dict) -> list[str]:
     return out
 
 
+def ablation() -> list[str]:
+    """Checklist A3 (2026-11-22): each defence removed in turn, gathered from the frozen runs above plus the GUIDE
+    re-score with ERA off (experiments/ablation_era.py). No new replay."""
+    era_path = RESULTS / "ablation_era.json"
+    if not era_path.exists():
+        return []
+    era = _load(era_path)
+    hs, ns, e = (_load(RESULTS / f) for f in ("final_host_scores.json", "final_network_scores.json", "e1_scores.json"))
+    H = {k: _host(hs, r) for k, r in {"static": _h("F_static", "static"), "frozen": _h("F_frozen", "frozen"),
+                                      "gated": _h("F_gated"), "ungated": _h("F_ungated", "ungated"),
+                                      "m20": _h("F_m20", analyst=True), "m20_nob5": _h("F_m20_nob5", analyst=True),
+                                      "nce": _h("F_nce", nce=True), "A_nce": _h("A_nce", nce=True)}.items()}
+    N = {k: _net(ns, r) for k, r in {"gated": "gated_F_gated", "noact": "gated_noact_F_noact"}.items()}
+
+    def e1_dismissed(prefix: str) -> str:
+        return " / ".join(str(e[f"{prefix}{f}/no_analyst"]["malicious_cases"].get("NO_ACTIONABLE", 0))
+                          for f in ("suppress", "fake_approval", "steer"))
+
+    g = "dev, gemini-3.1-flash-lite | {} | ERA {}"
+    a_on, a_off = era[g.format("acting", "on")], era[g.format("acting", "off")]
+    s_on, s_off = era[g.format("asymmetric", "on")], era[g.format("asymmetric", "off")]
+    rows = [
+        ("Knowledge Store learning (static)", "DEDALE host", "reviews / day",
+         H["frozen"]["reviews"], H["static"]["reviews"]),
+        ("Learning gate (ungated)", "DEDALE host", "attack patterns learned; attack events alerted",
+         f"{H['gated']['learned']}; {H['gated']['events']}", f"{H['ungated']['learned']}; {H['ungated']['events']}"),
+        ("B5 unlearning (analyst misses 20%)", "DEDALE host", "attack patterns learned; attack events alerted",
+         f"{H['m20']['learned']}; {H['m20']['events']}", f"{H['m20_nob5']['learned']}; {H['m20_nob5']['events']}"),
+        ("D7 (unreasoned cases dismissed)", "DEDALE network", "attack-related cases hidden",
+         f"{N['gated']['hidden']} / {N['gated']['related']}", f"{N['noact']['hidden']} / {N['noact']['related']}"),
+        ("Asymmetric trust (acting rule)", "DEDALE E1, no analyst", "attack cases dismissed (suppress / fake / steer)",
+         e1_dismissed("hardened:"), e1_dismissed("")),
+        ("Asymmetric trust (acting rule)", "GUIDE dev", "automatic containments removed by contamination",
+         _pct(s_on["containments_removed"], s_on["clean_with_containment"]),
+         _pct(a_on["containments_removed"], a_on["clean_with_containment"])),
+        ("ERA, acting rule", "GUIDE dev", "responses suppressed; REVIEW outcomes; containments removed",
+         f"{a_on['suppressed']}/{a_on['clean_responded']}; {a_on['outcomes']['REVIEW']}; {a_on['containments_removed']}",
+         f"{a_off['suppressed']}/{a_off['clean_responded']}; {a_off['outcomes']['REVIEW']}; {a_off['containments_removed']}"),
+        ("ERA, asymmetric trust", "GUIDE dev", "responses suppressed; REVIEW outcomes; containments removed",
+         f"{s_on['suppressed']}/{s_on['clean_responded']}; {s_on['outcomes']['REVIEW']}; {s_on['containments_removed']}",
+         f"{s_off['suppressed']}/{s_off['clean_responded']}; {s_off['outcomes']['REVIEW']}; {s_off['containments_removed']}"),
+        ("NCE (LLM off), acting rule", "DEDALE host", "reviews / day; benign / attack cases dismissed",
+         f"{H['nce']['reviews']}; {H['nce']['ben_dismissed']} / {H['nce']['mal_dismissed']}",
+         f"{H['gated']['reviews']}; {H['gated']['ben_dismissed']} / {H['gated']['mal_dismissed']}"),
+        ("NCE (LLM off), asymmetric trust", "DEDALE host", "reviews / day; benign / attack cases dismissed",
+         f"{H['A_nce']['reviews']}; {H['A_nce']['ben_dismissed']} / {H['A_nce']['mal_dismissed']}",
+         f"{H['gated']['reviews']}; {H['gated']['ben_dismissed']} / {H['gated']['mal_dismissed']}"),
+    ]
+    out = ["## Ablation (checklist A3, 2026-11-22)", "",
+           "Each defence or component removed in turn, from the frozen runs above; the ERA rows re-score the recorded GUIDE answers "
+           "with no ERA level (`experiments/ablation_era.py`, offline). *Removed* names what the defence is replaced "
+           "by.", "",
+           "| Component removed (replaced by) | Data | Measure | With it | Without it |", "|:--|:--|:--|--:|--:|"]
+    out += [f"| {a} | {b} | {c} | {d} | {f} |" for a, b, c, d, f in rows]
+    out += ["", "ERA off, all sets (suppressed of clean responded; induced by ERA; containments removed):", ""]
+    out += [f"- {k}: {v['suppressed']}/{v['clean_responded']}; {v['induced_by_era']}; "
+            f"{v['containments_removed']}/{v['clean_with_containment']}" for k, v in era.items()]
+    return out + [""]
+
+
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
