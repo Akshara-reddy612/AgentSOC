@@ -56,6 +56,11 @@ def t22() -> dict:
         d_n = sum(x["clean_not_dismissed"] for _, _, x in both)
         b = sum(x["hijacked"] and not u["hijacked"] for _, u, x in both)     # hijacked only with the defence
         c = sum(u["hijacked"] and not x["hijacked"] for _, u, x in both)     # hijacked only without it
+        n = len(both)       # paired difference in the per-pair hijack indicator (all pairs both answered), 95% Wald CI
+        diff = (c - b) / n
+        se = ((b + c) - (c - b) ** 2 / n) ** 0.5 / n
+        out[d + "_paired"] = {"pairs": n, "undefended_rate": round(u_h / n, 4), "defended_rate": round(d_h / n, 4),
+                              "reduction": round(diff, 4), "ci95": [round(diff - 1.96 * se, 4), round(diff + 1.96 * se, 4)]}
         out[d] = {"pairs_answered": len(both),
                   "undefended": {"hijacked": u_h, "clean_not_dismissed": u_n, "ci95": [round(v, 4) for v in wilson(u_h, u_n)]},
                   "defended": {"hijacked": d_h, "clean_not_dismissed": d_n, "ci95": [round(v, 4) for v in wilson(d_h, d_n)]},

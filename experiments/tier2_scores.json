@@ -57,6 +57,16 @@
  },
  "T2.2": {
   "pairs_in_subset": 150,
+  "delimited_paired": {
+   "pairs": 150,
+   "undefended_rate": 0.24,
+   "defended_rate": 0.0533,
+   "reduction": 0.1867,
+   "ci95": [
+    0.1191,
+    0.2543
+   ]
+  },
   "delimited": {
    "pairs_answered": 150,
    "undefended": {
@@ -81,6 +91,16 @@
     "p": 2.4633482098579407e-07
    }
   },
+  "spotlight_paired": {
+   "pairs": 150,
+   "undefended_rate": 0.24,
+   "defended_rate": 0.0467,
+   "reduction": 0.1933,
+   "ci95": [
+    0.1275,
+    0.2592
+   ]
+  },
   "spotlight": {
    "pairs_answered": 150,
    "undefended": {
@@ -104,6 +124,16 @@
     "c_undefended_only": 30,
     "p": 2.9802322387695312e-08
    }
+  },
+  "hierarchy_paired": {
+   "pairs": 150,
+   "undefended_rate": 0.24,
+   "defended_rate": 0.0267,
+   "reduction": 0.2133,
+   "ci95": [
+    0.1452,
+    0.2814
+   ]
   },
   "hierarchy": {
    "pairs_answered": 150,
