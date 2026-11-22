@@ -14,7 +14,7 @@ Approved by the user on 2026-11-22, with 8 pages instead of the 7 first proposed
 |:--|:--|:--|--:|
 | Title, authors, keywords | as is | as is | 0.25 |
 | Abstract | 243 words | 160 words | (in text) |
-| Fig. 1 architecture | full page width | redraw to one column | 0.25 |
+| Fig. 1 architecture | full page width | keep as is, full width (user, 2026-11-22); checked against the code, see REVISION_DRAFT.md | 0.45 |
 | Fig. 2 injection, two rules | 1 column | keep | 0.2 |
 | Fig. 3 reviews per day, log scale | 1 column | keep | 0.2 |
 | Fig. 4 analyst misses 5%/20% | 1 column | keep (poisoning is the paper's second claim) | 0.2 |
@@ -27,9 +27,9 @@ Approved by the user on 2026-11-22, with 8 pages instead of the 7 first proposed
 | Appendices A–D | about 2/3 page | cut; to the repo (cited in Data & Code) | 0 |
 | References | 21 entries | keep about 20 (8 pt) | 0.7 |
 | Headings and spacing | | | 0.25 |
-| **Total** | | | **about 3.3** |
+| **Total** | | | **about 3.5** |
 
-That leaves **about 4.7 pages, about 4,700 words of body text**: 45% of today's 10,510.
+That leaves **about 4.5 pages, about 4,500 words of body text**: 43% of today's 10,510. The draft uses about 3,600, so Tier 2 text still fits.
 
 ## Words per section
 

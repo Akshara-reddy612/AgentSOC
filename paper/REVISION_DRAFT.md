@@ -78,7 +78,9 @@ CaMeL [11] instead enforces security outside the model, so the model need not re
 - an analyst who issues a wrong benign verdict after reading manipulated evidence (we measure this channel in Section V-C);
 - poisoning of the two training weeks, which are assumed clean.
 
-*Fig. 1 (one column):* GuardedSOC within AgentSOC [1]: layers, trust boundaries and the additions (highlighted).
+*Fig. 1 (full width, figure unchanged):* GuardedSOC within the AgentSOC architecture [1]: layers, components and trust boundaries; additions highlighted. Trusted fields feed the model-free path; attacker text reaches only NCE. Guardrails keep the model-free outcome or raise it to review, and a response only NCE supports waits for an analyst. ERA is evaluated on GUIDE only.
+
+*Editor notes: Fig. 1 checked against the code on 2026-11-22. Every box and arrow matches. The caption is cut from 106 to about 60 words; the E1 sentence moves to §V-A. Optional small fixes in the TikZ source (`paper/agentsoc_v2.tex`) are listed in the chat reply of 2026-11-22.*
 
 Events are normalized and enriched from the knowledge store. Detectors raise an alert when a structured pattern is not yet learned as normal, and alerts with the same pattern are grouped into a case. NCE sees the first 512 characters of each text field. Entity binding checks that the hosts and accounts named in a hypothesis exist in trusted fields, and SSE keeps only feasible hypotheses for RSEM. On GUIDE, the Evidence Risk Assessment (ERA) also escalates alerts whose text looks like an injection. ERA is off on DEDALE, so there raw attacker text reaches NCE uninspected.
 
