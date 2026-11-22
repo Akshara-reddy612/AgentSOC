@@ -368,6 +368,15 @@ def revision() -> list[str]:
             f"still alert ({f_ev / s_ev:.1%}); the other {s_ev - f_ev} match routine activity learned in the clean weeks.",
             f"E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI "
             f"{wilson(0, 72)[0]:.1%}-{wilson(0, 72)[1]:.1%}.", ""]
+    ev = RESULTS / "e1_view.json"
+    if ev.exists():
+        v = _load(ev)
+        fams = v["families"]
+        out += [f"*E1 payload placement* (`experiments/e1_view.py`): E1 appends its payload to the command line; in "
+                + "; ".join(f"{k} {x['payload_fully_in_view']}/{x['injected_first_alerts']}" for k, x in fams.items())
+                + f" injected first alerts the whole payload lies within NCE's first {v['max_prompt_field_length']} "
+                f"characters (longest injected command line {max(x['longest_command_line'] for x in fams.values())} "
+                "characters). The raw-log truncation does not affect E1.", ""]
     fpr = RESULTS / "event_fpr.json"
     if fpr.exists():
         e = _load(fpr)
