@@ -1,0 +1,126 @@
+{
+ "latency": {
+  "v2_dev_adaptive_live_2026-11-22": {
+   "calls": 352,
+   "median_s": 15.79,
+   "p90_s": 43.71,
+   "p99_s": 57.21
+  },
+  "v2_dev_live": {
+   "calls": 900,
+   "median_s": 4.96,
+   "p90_s": 7.34,
+   "p99_s": 10.56
+  },
+  "v2_dev_live_groq-openai-gpt-oss-20b": {
+   "calls": 1000,
+   "median_s": 18.02,
+   "p90_s": 41.74,
+   "p99_s": 56.88
+  },
+  "v2_dev_promptdef_delimited_2026-11-22": {
+   "calls": 304,
+   "median_s": 14.94,
+   "p90_s": 40.97,
+   "p99_s": 143.91
+  },
+  "v2_dev_promptdef_hierarchy_2026-11-22": {
+   "calls": 300,
+   "median_s": 12.5,
+   "p90_s": 39.02,
+   "p99_s": 115.53
+  },
+  "v2_dev_promptdef_spotlight_2026-11-22": {
+   "calls": 300,
+   "median_s": 15.63,
+   "p90_s": 54.97,
+   "p99_s": 88.94
+  },
+  "v2_dev_undefended": {
+   "calls": 1000,
+   "median_s": 5.31,
+   "p90_s": 9.5,
+   "p99_s": 32.72
+  },
+  "v2_heldout_live": {
+   "calls": 1001,
+   "median_s": 5.57,
+   "p90_s": 8.76,
+   "p99_s": 907.6
+  },
+  "v2_heldout_undefended_2026-11-22": {
+   "calls": 1000,
+   "median_s": 14.1,
+   "p90_s": 44.47,
+   "p99_s": 333.65
+  }
+ },
+ "tokens": {
+  "estimate": "4 characters per token",
+  "instructions_chars": 2089,
+  "prompt_tokens_mean": 636,
+  "prompt_tokens_max": 697,
+  "response_tokens_mean": 193,
+  "responses": 1000,
+  "tokens_per_call_mean": 829
+ },
+ "nce_calls_per_day": {
+  "gated_nce_A_nce": {
+   "nce_calls": 383,
+   "per_day": 27.4,
+   "test_cases": 913
+  },
+  "gated_nce_analyst_A_nce_d4": {
+   "nce_calls": 463,
+   "per_day": 33.1,
+   "test_cases": 477
+  },
+  "gated_nce_F_nce": {
+   "nce_calls": 416,
+   "per_day": 29.7,
+   "test_cases": 856
+  },
+  "gated_nce_analyst_F_nce_d4": {
+   "nce_calls": 467,
+   "per_day": 33.4,
+   "test_cases": 495
+  }
+ },
+ "queue": {
+  "gated_analyst_F_d1": {
+   "reviews": 463,
+   "answered": 463,
+   "peak_open_reviews": 127,
+   "open_at_end": 0,
+   "median_wait_h": 1.0
+  },
+  "gated_analyst_F_d4": {
+   "reviews": 477,
+   "answered": 477,
+   "peak_open_reviews": 128,
+   "open_at_end": 0,
+   "median_wait_h": 4.0
+  },
+  "gated_analyst_F_d24": {
+   "reviews": 533,
+   "answered": 528,
+   "peak_open_reviews": 135,
+   "open_at_end": 5,
+   "median_wait_h": 24.0
+  },
+  "gated_analyst_F_d72": {
+   "reviews": 721,
+   "answered": 605,
+   "peak_open_reviews": 303,
+   "open_at_end": 116,
+   "median_wait_h": 72.0
+  },
+  "frozen_F_frozen": {
+   "reviews": 913,
+   "answered": 0,
+   "peak_open_reviews": 913,
+   "open_at_end": 913,
+   "median_wait_h": null
+  }
+ }
+}

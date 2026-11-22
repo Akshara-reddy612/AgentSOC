@@ -170,6 +170,8 @@ E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wi
 
 *E1 payload placement* (`experiments/e1_view.py`): E1 appends its payload to the command line; in suppress 38/38; fake_approval 38/38; steer 38/38 injected first alerts the whole payload lies within NCE's first 512 characters (longest injected command line 371 characters). The raw-log truncation does not affect E1.
 
+*Operational cost* (`experiments/operational_cost.py`): NCE call latency on GUIDE dev (900 calls, normal load) median 4.96 s, p90 7.34 s, p99 10.56 s; tokens per NCE call (estimate, 4 characters per token) about 636 in + 193 out; NCE calls per day on DEDALE 27.4-33.4; peak open reviews with an analyst after 1 h 127, 4 h 128, 24 h 135, 72 h 303 (116 still open at the end at 72 h); without an analyst all 913 reviews stay open.
+
 *Event-level false-positive rate* (frozen_F_frozen, `experiments/event_fpr.py`): 1434 of 6,760,514 test-period host events without a class-1 label raised an alert (0.021%); 400 of the 1834 alerted events are class-1.
 
 **A simple memory baseline:** a pattern from the two clean weeks counts as normal only if it occurred at least K times (K = 1 is the clean-weeks allowlist, i.e. the frozen store). NCE off, no analyst.
