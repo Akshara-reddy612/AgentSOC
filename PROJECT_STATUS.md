@@ -105,7 +105,7 @@ What may and may not be claimed: [experiments/PAPER_CLAIMS_TO_REVISE.md](experim
 | `pyproject.toml` | pytest config: `testpaths = ["tests", "experiments"]`, smoke tests deselected |
 | `requirements.txt` / `requirements-lock.txt` | Minimum versions / exact versions of the venv used for all results |
 
-Not in git: `.env` (API keys), `.venv/`, `logs/` (re-scored GUIDE outputs, run stdout; written by `rescore_v2` and others), `frontend/dist/`, `frontend/node_modules/`, and `agenso_.research_base.pdf` (the base AgentSOC paper, arXiv:2604.20134, kept for reference). The old handoff notes `CLAUDE_HANDOFF.md`, `agentsoc_context_v2.md` and the v1 LaTeX build log `agentsoc2_paper_corrected.log` were deleted on 2026-11-22 after their facts were copied into `RESEARCH_LOG.md` (`docs/_audit_report.md` §5). Data lives outside the repo in `<data>` = `AGENTSOC_DATA_DIR`, default `<repo>/../agentsoc_data` (`dedale/__init__.py:20-23`); on this machine `D:\agentsoc_data\` (`dedale/` raw and derived data, `runs/` replay outputs, `ks/` replay stores, `live*`/`demo`/`soak` server homes).
+Not in git: `AgentSOC_IEEE_Revised.docx` and `Documentation_Template-SDC-II.docx` (kept untracked on purpose, user 2026-11-22), `.env` (API keys), `.venv/`, `logs/` (re-scored GUIDE outputs, run stdout; written by `rescore_v2` and others), `frontend/dist/`, `frontend/node_modules/`, and `agenso_.research_base.pdf` (the base AgentSOC paper, arXiv:2604.20134, kept for reference). The old handoff notes `CLAUDE_HANDOFF.md`, `agentsoc_context_v2.md` and the v1 LaTeX build log `agentsoc2_paper_corrected.log` were deleted on 2026-11-22 after their facts were copied into `RESEARCH_LOG.md` (`docs/_audit_report.md` §5). Data lives outside the repo in `<data>` = `AGENTSOC_DATA_DIR`, default `<repo>/../agentsoc_data` (`dedale/__init__.py:20-23`); on this machine `D:\agentsoc_data\` (`dedale/` raw and derived data, `runs/` replay outputs, `ks/` replay stores, `live*`/`demo`/`soak` server homes).
 
 ## Architecture
 
@@ -261,7 +261,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 
 ## Open questions for a human
 
-- Should the paper `.docx` and the SDC-II template stay in git? This audit committed them in `c0ef3ed` to keep them safe. Note: git history keeps binary versions forever, and the `.docx` holds the authors' e-mail addresses.
+- When should the paper `.docx` go into git? Both `.docx` files are untracked on purpose (user, 2026-11-22: the paper is still being written; the template is only a template). Note: git history keeps every binary version, and the `.docx` holds the authors' e-mail addresses.
 - Is review change 9 (hash-chained audit log) dropped? `PROJECT_PLAN.md` said it was on a branch that does not exist.
 - Does anyone still have the `baseline-prompt` branch (`docs/LIMITATIONS_DRAFT.md:113` cites counts from it)?
 - Where did the 2026-10-31 re-freeze run (its outputs are not in `D:\agentsoc_data`)? Low stakes: the 2026-11-22 re-freeze reproduced its score files byte-identically.

@@ -112,7 +112,7 @@ Not run, on purpose: anything that calls an LLM API (needs a budget approval), `
 | Entries in chronological order | whole file | WRONG (order) | top runs 09-13, 09-13, 09-12/13, 09-12, 09-06, 09-05, 08-19, 08-20 ... | New log is newest first |
 | 65 file references to moved paths (`scratch/`, `experiments/test_*.py`, `monitoring/dashboard.py`, ...) | various | OUTDATED | moved to `archive/` on 2026-10-20 (`de33bd0`) | Kept verbatim in the archived log; new log uses current paths |
 
-### The team's revised paper `AgentSOC_IEEE_Revised.docx` (added to the working tree 2026-11-22, committed `c0ef3ed`)
+### The team's revised paper `AgentSOC_IEEE_Revised.docx` (added to the working tree 2026-11-22; untracked on purpose (user, 2026-11-22: the paper is still being written; the template is only a template))
 
 | Claim | Source | Status | Evidence | Fix applied |
 |:--|:--|:--|:--|:--|
@@ -144,9 +144,9 @@ Not run, on purpose: anything that calls an LLM API (needs a budget approval), `
 |:--|:--|:--|:--|
 | `PROJECT_STATUS.md` | yes | (a) current, but stale | Rewritten in place |
 | `RESEARCH_LOG.md` | yes | (d) unique history | Verbatim copy moved with `git mv` to `archive/RESEARCH_LOG_HISTORY.md` (same precedent as `archive/PROJECT_STATUS_HISTORY.md`, 2026-10-20); a new structured, newest-first `RESEARCH_LOG.md` written |
-| `HANDOVER.md` | yes | (b) superseded + (c) stale | Unique content (data package contents, first-hour setup, invariants I1-I6, working rules) merged into `PROJECT_STATUS.md`; **removed with `git rm`** in commit `e0ee690`. Restore: `git show e0ee690^:HANDOVER.md` |
+| `HANDOVER.md` | yes | (b) superseded + (c) stale | Unique content (data package contents, first-hour setup, invariants I1-I6, working rules) merged into `PROJECT_STATUS.md`; **removed with `git rm`** in commit `4b327ec`. Restore: `git show 4b327ec^:HANDOVER.md` |
 | `PROJECT_PLAN.md`, `REPRODUCE.md`, `DEMO_BACKEND_DESIGN.md` | yes | (a) | Kept; dated audit notes where stale |
-| `PAPER_OUTLINE.md` (2026-10-18) | yes | (b) superseded | Section and writer plan of `paper/agentsoc_combined.tex`, superseded by `paper/agentsoc_v2.tex` and by the `.docx` the user is now working on (user, 2026-11-22). Nothing in it is needed for the current draft; the per-section claim mapping it held is in `PROJECT_PLAN.md` §3. **Removed with `git rm`** in commit 16f8105. Restore: `git show 16f8105^:PAPER_OUTLINE.md` |
+| `PAPER_OUTLINE.md` (2026-10-18) | yes | (b) superseded | Section and writer plan of `paper/agentsoc_combined.tex`, superseded by `paper/agentsoc_v2.tex` and by the `.docx` the user is now working on (user, 2026-11-22). Nothing in it is needed for the current draft; the per-section claim mapping it held is in `PROJECT_PLAN.md` §3. **Removed with `git rm`** in commit ddd0fb2. Restore: `git show ddd0fb2^:PAPER_OUTLINE.md` |
 | `docs/LIMITATIONS_DRAFT.md`, `docs/VIVA_QA.md`, `docs/ADDING_A_DATASET.md` | yes | (a) | Kept; one dated note in the limitations draft |
 | `experiments/*_DESIGN.md`, `experiments/DEDALE_*.md`, `REVIEW_LOOP_RESULTS.md`, `RESULTS.md`, `PAPER_CLAIMS_TO_REVISE.md` | yes | (a) | Kept; dated notes; new docx section in the claims file |
 | `archive/PROJECT_STATUS_HISTORY.md`, `archive/notes/*` | yes | (d) | Kept unchanged |
@@ -155,7 +155,7 @@ Not run, on purpose: anything that calls an LLM API (needs a budget approval), `
 | `agentsoc2_paper_corrected.log` (2026-10-10, 40,388 bytes) | no (`*.log` ignored) | useless | pdfTeX build log of the archived v1 paper. **Deleted 2026-11-22** |
 | `agenso_.research_base.pdf` | no (git-ignored) | reference | The base AgentSOC paper (Roy and Singh, arXiv:2604.20134). Kept: cited by the paper and the log |
 | `.env`, `.gitignore`, `pyproject.toml`, `requirements.txt`, `requirements-lock.txt` | `.env` no; others yes | tooling | Kept (API keys; git, pytest and install configuration) |
-| `AgentSOC_IEEE_Revised.docx`, `Documentation_Template-SDC-II.docx` | committed `c0ef3ed` | report / template | Kept: the paper draft being worked on and the template needed for the SDC-II course report (user, 2026-11-22) |
+| `AgentSOC_IEEE_Revised.docx`, `Documentation_Template-SDC-II.docx` | no (left untracked at the user's request; never in `main`'s history) | report / template | Kept: the paper draft being worked on and the template needed for the SDC-II course report (user, 2026-11-22) |
 
 ## 6. Still UNVERIFIED and needs a person
 

@@ -31,7 +31,7 @@ The history of the project and the reasons behind it, newest first. The current 
 - **Decided:**
   - The paper draft being worked on is `AgentSOC_IEEE_Revised.docx`; `Documentation_Template-SDC-II.docx` is needed for the course report (user, 2026-11-22).
   - Root clean-up (user, 2026-11-22): `PAPER_OUTLINE.md` removed (outline of the superseded combined LaTeX paper); the untracked old handoff notes and the v1 LaTeX build log deleted after their facts were copied here.
-  - The two `.docx` files committed first so they were safe (`c0ef3ed`); old log archived verbatim (`540dde3`); this file and `PROJECT_STATUS.md` rewritten.
+  - The two `.docx` files are untracked on purpose (user, 2026-11-22: the paper is still being written; the template is only a template); old log archived verbatim (`c52b6f9`); this file and `PROJECT_STATUS.md` rewritten.
   - `HANDOVER.md` merged into the status file and removed.
   - Stale design-doc headers annotated with dated notes; nothing historical deleted.
 
