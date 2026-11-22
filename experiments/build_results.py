@@ -377,6 +377,19 @@ def revision() -> list[str]:
                 + f" injected first alerts the whole payload lies within NCE's first {v['max_prompt_field_length']} "
                 f"characters (longest injected command line {max(x['longest_command_line'] for x in fams.values())} "
                 "characters). The raw-log truncation does not affect E1.", ""]
+    oc = RESULTS / "operational_cost.json"
+    if oc.exists():
+        o = _load(oc)
+        lat, tok, q = o["latency"]["v2_dev_live"], o["tokens"], o["queue"]
+        per_day = [x["per_day"] for x in o["nce_calls_per_day"].values()]
+        out += [f"*Operational cost* (`experiments/operational_cost.py`): NCE call latency on GUIDE dev "
+                f"({lat['calls']} calls, normal load) median {lat['median_s']} s, p90 {lat['p90_s']} s, p99 {lat['p99_s']} s; "
+                f"tokens per NCE call (estimate, {tok['estimate']}) about {tok['prompt_tokens_mean']} in + "
+                f"{tok['response_tokens_mean']} out; NCE calls per day on DEDALE {min(per_day)}-{max(per_day)}; "
+                "peak open reviews with an analyst after "
+                + ", ".join(f"{k.rsplit('_d', 1)[1]} h {v['peak_open_reviews']}" for k, v in q.items() if '_d' in k)
+                + (f" ({q['gated_analyst_F_d72']['open_at_end']} still open at the end at 72 h)" if "gated_analyst_F_d72" in q else "")
+                + (f"; without an analyst all {q['frozen_F_frozen']['reviews']} reviews stay open." if "frozen_F_frozen" in q else "."), ""]
     fpr = RESULTS / "event_fpr.json"
     if fpr.exists():
         e = _load(fpr)
