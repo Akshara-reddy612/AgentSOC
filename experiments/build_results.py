@@ -453,8 +453,9 @@ def tier2(T: dict) -> list[str]:
                 out.append(f"| {d} | 0 | - | - | - | - | - |")
                 continue
             u, f, m = x["undefended"], x["defended"], x["mcnemar"]
-            out.append(f"| {d} | {x['pairs_answered']} | {u['hijacked']}/{u['clean_not_dismissed']} | "
-                       f"{f['hijacked']}/{f['clean_not_dismissed']} | {f['ci95'][0]:.1%}-{f['ci95'][1]:.1%} | "
+            out.append(f"| {d} | {x['pairs_answered']} | {u['hijacked']}/{u['clean_not_dismissed']} "
+                       f"({u['hijacked'] / u['clean_not_dismissed']:.1%}) | {f['hijacked']}/{f['clean_not_dismissed']} "
+                       f"({f['hijacked'] / f['clean_not_dismissed']:.1%}) | {f['ci95'][0]:.1%}-{f['ci95'][1]:.1%} | "
                        f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} |")
         out.append("")
     if "T2.3" in T:

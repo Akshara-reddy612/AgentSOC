@@ -2,7 +2,7 @@
 % Text from paper/REVISION_DRAFT.md, which follows AgentSOC_IEEE_Revised.docx (the user's working copy).
 % Every number comes from experiments/RESULTS.md ("Paper revision" section for the new results); the one exception,
 % attack patterns learned under the frequency threshold, comes from experiments/dedale_results/tier1_scores.json.
-% \todo{T2.x} marks a Tier 2 number still running. Build: pdflatex agentsoc_v3 (twice).
+% Tier 2 numbers: experiments/tier2_scores.json (T2.2 on the first 150 dev pairs, P11 amended). Build: pdflatex agentsoc_v3 (twice).
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
 \usepackage{cite}
@@ -60,8 +60,9 @@ activity. We build GuardedSOC on the AgentSOC architecture and bound both. Under
 may escalate a case to human review but cannot dismiss it, trigger containment or authorize a memory update.
 Autonomous updates pass a 24-hour quarantined learning gate, and a confirmed compromise retracts the host's recent
 patterns. On GUIDE v2 clean/contaminated alert pairs, an undefended agent was hijacked into dismissals on
-130/439 development and 123/445 held-out pairs (29.6\% and 27.6\%); within GuardedSOC, contamination suppressed a
-response on 4/428 (0.9\%). On 14 test days of DEDALE telemetry, 0/72 attack cases were dismissed under injected text, and targeted
+130/439 development and 123/445 held-out pairs (29.6\% and 27.6\%); prompt-level defences lowered this to
+2.9--5.9\% but not to zero. Within GuardedSOC, contamination suppressed a response on 4/428 (0.9\%), and an
+adaptive attacker that evades the text filter gained nothing. On 14 test days of DEDALE telemetry, 0/72 attack cases were dismissed under injected text, and targeted
 unlearning removed every pattern learned from a 20\% analyst miss rate in all 6 seeds. A persuaded analyst who
 clears a host's first attack case defeats unlearning, and the LLM gave no workload reduction over the model-free
 baseline.
@@ -272,7 +273,9 @@ Wilson intervals and exact McNemar tests on the discordant pairs.
 
 An \emph{undefended agent} gets the same alert text, without the pipeline's telemetry, inventory or novelty store,
 and returns a verdict. It is \emph{hijacked} on a pair when the contaminated twin is dismissed but the clean twin
-is not. We test three prompt-level defences on it, with identical structured fields: delimited untrusted text,
+is not. We test three prompt-level defences on it, on the first 150 development pairs (the same pairs for each
+defence, compared with the undefended agent's answers on those pairs) and with identical structured fields: delimited
+untrusted text,
 spotlighting~\cite{spotlighting}, and an instruction-hierarchy system prompt~\cite{hierarchy}. An \emph{adaptive
 attacker} rewrites each suppression payload until ERA rates it low risk, and moves raw-log payloads into NCE's
 512-character view. This uses 300 pairs, with ERA flags falling from 53 to 0.
@@ -314,10 +317,11 @@ CI 0--2.1\%; 0/168; 0/178).
 
 The undefended agent was hijacked into dismissals on 130/439 development pairs (29.6\%, CI 25.5--34.0\%;
 $b{=}130$, $c{=}28$, $p{=}6.5\times10^{-17}$) and on 123/445 held-out pairs (27.6\%, CI 23.7--32.0\%;
-$b{=}123$, $c{=}21$, $p{=}9.6\times10^{-19}$). With delimited text,
-spotlighting and the instruction hierarchy it was hijacked on \todo{T2.2: a}, \todo{T2.2: b} and \todo{T2.2: c} of
-439 pairs. Prompt-level defences thus \todo{T2.2: direction and size of the change}. Unlike asymmetric trust, a
-prompt-level defence bounds the attack only as far as the model obeys it. Against payloads rewritten to evade ERA
+$b{=}123$, $c{=}21$, $p{=}9.6\times10^{-19}$). On the first 150 development pairs, where it was hijacked on
+36/128, delimited text cut this to 8/136 (CI 3.0--11.2\%; McNemar $b{=}2$, $c{=}30$, $p{=}2.5\times10^{-7}$),
+spotlighting to 7/140 (CI 2.4--10.0\%; $p{=}3\times10^{-8}$) and the instruction hierarchy to 4/140 (CI
+1.1--7.1\%; $p{=}4.1\times10^{-9}$). Prompt-level defences thus remove most hijacks but not all, and they bound the
+attack only as far as the model obeys them; asymmetric trust bounds what the model's output may do. Against payloads rewritten to evade ERA
 and placed inside NCE's view, suppression was 2/300 under both rules (CI 0.2--2.4\%): the same 2 pairs as with the
 original payloads (McNemar $b{=}0$, $c{=}0$). The rewrites changed NCE's techniques in 80 pairs, and in 17 they
 removed the review the original payload had triggered, but each of these only returned to the clean twin's own
@@ -391,7 +395,8 @@ E1 DEDALE, & dismissed (all) & 0/72 & 0/72 \\
 analyst & clean reviews per day & 33.2 & 34.1 \\
 \midrule
 Undefended & hijacked, dev/held-out & 130/439, 123/445 & n/a \\
-agent & delimited / spotl. / hierarchy & \todo{T2.2} of 439 & n/a \\
+agent & 150 pairs: none / delim. & 36/128, 8/136 & n/a \\
+ & spotlighting / hierarchy & 7/140, 4/140 & n/a \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -582,7 +587,8 @@ cancelled a block under the acting rule.
 
 \section{Discussion and Limitations}\label{sec:disc}
 
-Injected text does steer the model. It hijacked the undefended agent on 29.6\% of pairs, and the steer payload made
+Injected text does steer the model. It hijacked the undefended agent on 29.6\% of pairs, prompt-level defences
+left 4 to 8 of 150 pairs hijacked, and the steer payload made
 NCE name the attacker's chosen host in 30 of 38 cases. What the text achieves depends on the authority the output
 carries. With asymmetric trust, the same answers dismissed no attack and cancelled no containment, without the
 model having to recognize the attack, as in CaMeL~\cite{camel}. The price is that the LLM, on this data, adds no
