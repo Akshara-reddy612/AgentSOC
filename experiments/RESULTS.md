@@ -299,6 +299,22 @@ ERA off, all sets (suppressed of clean responded; induced by ERA; containments r
 - dev, gpt-oss-20b | asymmetric | ERA on: 10/437; 12; 0/178
 - dev, gpt-oss-20b | asymmetric | ERA off: 11/437; 0; 0/178
 
+## Low-and-slow poisoning (checklist A8, 2026-11-22)
+
+The attacker first runs the tools its attack will use harmlessly, so that the attack's detector keys are seen on harmless activity (process lineage, file type written, pipe; the PowerShell key is a fingerprint of the script text and only the *PowerShell keys too* rows plant it). The simulated analyst sees nothing malicious in a harmless run. *Test period*: planted from 2025-01-06 00:10 (CLIENT2's attack starts at 10:01). *Training weeks*: 8 days before each key's first use. Design: `experiments/A8_LOW_AND_SLOW_DESIGN.md`. Offline, NCE off.
+
+| Planted | Condition | Attack cases raised | Labelled attack events alerted | Reviews / day | Minutes to detect each attack step | Plants alerted (all reviewed) | Baseline: cases; events |
+|:--|:--|--:|--:|--:|:--|--:|--:|
+| test period | no analyst | 72 | 400 | 67.8 | 1.2 / 28.5 / 30 / 1265 | 36 / 42 | 72; 400 |
+| test period | analyst 4 h, B5 on | 21 | 212 | 31.2 | 2.4 / missed / missed / missed | 36 / 42 | 72; 400 |
+| test period | analyst 4 h, B5 off | 2 | 34 | 28.4 | 2.4 / missed / missed / missed | 36 / 42 | 72; 400 |
+| test period | analyst, B5 on, PowerShell keys too | 0 | 0 | 28.4 | missed / missed / missed / missed | 38 / 46 | 72; 400 |
+| training weeks | no analyst (frozen) | 2 | 34 | 60.2 | 2.4 / missed / missed / missed | 0 / 42 | 72; 400 |
+| training weeks | analyst 4 h, B5 on | 2 | 34 | 26.7 | 2.4 / missed / missed / missed | 0 / 42 | 72; 400 |
+| training weeks | analyst, B5 on, PowerShell keys too | 0 | 0 | 25.7 | missed / missed / missed / missed | 0 / 46 | 72; 400 |
+
+Attack steps: initial access (CLIENT2), lateral movement, collection, exfiltration (CLIENT1). B5 retracts learning only on the host it confirms; CLIENT1 is never confirmed when its keys are planted.
+
 ## Limits
 
 - **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few malicious verdicts.

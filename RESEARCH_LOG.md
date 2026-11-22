@@ -12,6 +12,18 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22 (night): checklist A8, low-and-slow poisoning (offline) -- a real weakness
+
+- **What:** an attacker that first runs its tools harmlessly so the attack's detector keys are learned ("conditioning"). The host keys carry no command-line text (lineage = parent + child image, file type written, pipe name), so a harmless run has the attack's key; the PowerShell key is a fingerprint of the script text and cannot be planted harmlessly. 46 attack keys, 42 plantable. Seven offline replays, NCE off (`experiments/dedale_plant.py`, `--plant` in `dedale_host_replay.py`, `experiments/a8_runs.py`, `a8_score.py` -> `experiments/dedale_results/a8_scores.json`; design `experiments/A8_LOW_AND_SLOW_DESIGN.md`). Experiment code only; no pipeline module changed.
+- **Result** (attack cases raised of 72 in the baseline; attack events of 400):
+  - test-period plants, no analyst: 72; 400. Nothing is learned in the test period without a verdict, so the plants only add 36 reviews (67.8 vs 65.2 reviews/day).
+  - test-period plants, analyst 4 h, B5 on: 21; 212. B5 off: 2; 34. Lateral movement, collection and exfiltration on CLIENT1 are missed.
+  - training-week plants (8 days before use, past B5's lookback), with or without the analyst: 2; 34 (only the PowerShell detector).
+  - upper bound, PowerShell keys planted too: 0; 0.
+- **Why:** the analyst's benign verdict on a harmless run is the learning path; B5 retracts only on the host it confirms, and CLIENT1 is never confirmed once its keys are planted. Training-week learning is trusted and never retracted.
+- **Meaning:** the learning gate stops the system from learning the attack by itself, but not an attacker who teaches it through truthful benign verdicts. The PowerShell fingerprint is the only mimicry-resistant key. Reported as a result and a limitation; the pipeline is not changed before submission (user, 2026-11-22). Candidate mitigations for the journal: content-bearing keys (command-line shape, at higher workload), a lifetime or second verdict for analyst-taught keys, B5 across hosts reached from a confirmed host.
+- **Tests:** 818 passed (5 new in `tests/test_dedale_plant.py`).
+
 ### 2026-11-22 (night): checklist A3 ablation, from existing runs (offline)
 
 - **What:** one table in `experiments/RESULTS.md` ("Ablation") that removes each defence or component in turn, built from the frozen runs. The only new computation is ERA switched off on GUIDE: the recorded answers re-scored without an ERA level (`experiments/ablation_era.py` -> `experiments/dedale_results/ablation_era.json`). Its ERA-on rows reproduce the C1 table exactly. No API call, no replay.
