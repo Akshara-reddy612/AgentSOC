@@ -12,6 +12,12 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: pre-submission checks (no API calls)
+
+- **Live queue pre-check:** `tools/live_queue.sh` syntax valid; the four result paths are new files (nothing frozen is overwritten); 28 Gemini keys configured (count only); `--limit` picks exactly the missing alerts among the first 300; `tier2_score` runs with the A6 / B1 files absent and leaves `tier2_scores.json` unchanged; `build_results` already renders the telemetry row and the B1 repeats once the files exist.
+- **Plagiarism pass on the 8-page text:** word 6-gram overlap 0.1% with the base AgentSOC paper (unchanged); 1.3-2.9% with the team's own unpublished drafts (captions, title, author block). The new paragraphs report our own results and cite no new source. The official checker is run by the user or the college.
+- **Double-blind build:** `pdflatex "\def\anonymous{}\input{agentsoc_v3}"` (jobname `agentsoc_v3_anon`) hides authors, affiliation, emails and the repository link; checked in the PDF text and metadata. `paper/agentsoc_v3_anon.pdf` added to `.gitignore`.
+
 ### 2026-11-23: paper moved to 8 pages with the offline checklist results
 
 - `paper/agentsoc_v3.tex` (git-ignored; backups in `D:\agentsoc_data\paper_private\`, the 7-page version kept as `agentsoc_v3_7page_20261123.*`): new subsections "Adaptive Attacks on Memory and the Queue" (A8 conditioning, cross-host unlearning, A3 flooding; Table V) and "Ablation" (Table VI, incl. the ERA finding); abstract, contributions, detector-key description, unlearning section, Discussion, Limitations (3), (4), (6), (7), (8) and Conclusion updated. Every number from `experiments/RESULTS.md`.
