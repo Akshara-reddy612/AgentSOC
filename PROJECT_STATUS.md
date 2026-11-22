@@ -1,99 +1,265 @@
 # Project status
 
-The current state of AgentSOC 2.0, updated in place. Scope and decisions: [PROJECT_PLAN.md](PROJECT_PLAN.md). Dated history: [RESEARCH_LOG.md](RESEARCH_LOG.md). The full status as it stood before this file was shortened, with every earlier phase, is in [archive/PROJECT_STATUS_HISTORY.md](archive/PROJECT_STATUS_HISTORY.md).
+**Read this first.** The current state of the project, rewritten in place. For history and the reasons behind decisions, see [RESEARCH_LOG.md](RESEARCH_LOG.md). Both files were rebuilt by a full audit on 2026-11-22 ([docs/_audit_report.md](docs/_audit_report.md)). Statements carry their evidence (path, commit or command); anything without evidence is marked UNVERIFIED.
 
-## Where things stand (2026-10-27)
+## Summary
 
-The goal now is the handover (decision P7). Before the project goes to the team, everything for GUIDE and DEDALE is finished and stable. The team's remaining work is the optional third dataset (AIT-LDS, E3) and the M7 items: venue, authors, demo video.
+AgentSOC 2.0 (the system is called **GuardedSOC** in the newest paper) is a KMIT (Hyderabad) student research project: 5 students and a mentor, with engineering led by Abhishek. It is a research prototype of an LLM-driven Security Operations Centre (SOC) that defends its own two attack surfaces:
+- the LLM reads log text an attacker can write (indirect prompt injection, "log contamination");
+- the memory (a Knowledge Store that learns what is normal) can be taught the attacker ("memory poisoning").
 
-| Milestone | State |
+It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.20134). It is evaluated on a contamination corpus built from Microsoft GUIDE and on DEDALE (Inria, labelled testbed telemetry). It also runs as a live demo tool with a React web console. It exists to produce one research paper and a working tool someone outside the team can run (`PROJECT_PLAN.md` §1).
+
+**Status (verified 2026-11-22, `main` at `da17235` plus this audit's documentation commits on `chore/repo-audit-tracking`):** pipeline, tool and all GUIDE and DEDALE results are finished and frozen; tests pass (804). The paper is drafted in LaTeX (`paper/agentsoc_v2.tex`), and the team has a later Word revision (`AgentSOC_IEEE_Revised.docx`) that still has three wrong claims. What is left is the team's: choose the paper and venue, fix the paper, record the demo video, and the optional third dataset.
+
+## Terms used in this file
+
+| Term | Meaning |
 |:--|:--|
-| M1 Freeze, `RESULTS.md`, `REPRODUCE.md` | Done 2026-10-18 |
-| M2 Interrupted runs, E1 | Done 2026-10-20 (gpt-oss-20b complete: all 500 dev pairs) |
-| M3 Paper draft | Full draft 2026-10-19 (`paper/agentsoc_combined.tex`, 15 checked references). Figs. 2 and 3 drawn 2026-10-20. Reviewer pass 2026-10-27: wording fixed where a reviewer could object (`RESEARCH_LOG.md`). 2026-10-31: contribution C6 (asymmetric trust: System paragraph, Results subsection and Table III, Discussion) and the fail-safe findings added; 7 pages. 2026-11-01: a Limitations item that no prompt-level defence was evaluated as a baseline (hardened-prompt comparison prepared, not completed: API overload errors); merged 2026-11-01; `docs/LIMITATIONS_DRAFT.md` matches it. 2026-11-01: a new paper, `paper/agentsoc_v2.tex`, written fresh from `RESULTS.md` against the base paper (merged into main and pushed that day). 2026-11-08: the system is named GuardedSOC ("AgentSOC" now means only the base paper) and four result figures were added (attacker text, C2, C3, C4); merged into main and pushed without Tables II and III (6 pages). Tables II and III then restored next to all six figures (merged and pushed). On `paper-v2-accuracy` (not merged): accuracy fixes from a code walkthrough (program paths attacker-chosen; ERA and the destination check GUIDE-only; the gate's 24-hour delay and same-host rule; what a rebuild needs; fail-safe scope; two new limitations), 7 pages; every number traced in `paper/agentsoc_v2_numbers.md`. The team revises it; authors and the repository link are TODO |
-| M4 Demo backend | Done 2026-10-18; extended 2026-10-19 (network alerts, live logs, contamination scenario, accounts in the browser) |
-| M5 Frontend | Done 2026-10-20 (design pass, Contamination Lab, host timeline in M8) |
-| M6 E3 (AIT-LDS) | Optional; for the team (P7) |
-| M7 Venue, final paper, demo video | Team |
-| M8 Handover | Done 2026-10-21, see below |
+| SOC | Security Operations Centre: analysts triaging security alerts |
+| NCE | Narrative Counterfactual Engine: the LLM step. It proposes MITRE ATT&CK hypotheses (technique, account, source and target host) from an alert's evidence text (`perception/nce_engine.py`) |
+| SSE | Structural Simulation Engine: checks each hypothesis against the environment graph (FEASIBLE / CONDITIONALLY_FEASIBLE / INFEASIBLE) (`perception/sse.py`) |
+| Entity binding | Flags hypothesis entities that the alert's trusted fields do not contain ("unbound": possible steering) (`perception/entity_binding.py`) |
+| RSEM | Risk Scoring and Evaluation Module: ranks responses by α·containment − β·business impact (`perception/rsem.py`) |
+| Guardrails | Hard floors on actions and playbook status (auto-approved / pending analyst review) (`perception/action_playbook.py`) |
+| ERA | Evidence Risk Assessment: regex, embedding-similarity, approval-claim and split-field detectors that score text for injection. It only escalates, and runs on GUIDE only (`risk_assessment/`) |
+| KS | Knowledge Store: the SQLite-backed graph the loop learns into (`perception/knowledge_db.py`) |
+| Learning gate | Learns a test-period case only if it was dismissed, 24 h after closing, and nothing on the same host escalated meanwhile (`perception/knowledge_updater.py`) |
+| Triage gate | Per new case: escalations, then the learned pattern, then the decision cache, then the pipeline with NCE behind a daily budget (`perception/triage_gate.py`) |
+| Asymmetric trust | Decision P9 A (2026-10-31): the LLM's output may raise scrutiny, never lower it (`--llm-authority escalate`). The older rule, where NCE output can dismiss or justify an action, is `full` ("acting rule") |
+| B5 | Unlearn on confirmed compromise: a malicious verdict retracts what was learned on that host in the last 7 days |
+| D7 | Policy for unreasoned novel cases: send them to review (default) instead of dismissing |
+| E1 | Experiment: attacker text appended to DEDALE's real attack command lines, run through the full loop |
+| GUIDE v2 | 500 dev + 500 held-out clean/contaminated alert pairs built from Microsoft GUIDE rows with synthetic entities, evidence and payloads (`GUIDE_Dataset/processed/v2/`) |
+| DEDALE | Inria testbed dataset (doi:10.57745/Y5JLDG, CC BY 4.0): 4 weeks of logs, 2 benign training weeks, one APT; exact labels for 2 attacked Windows clients |
+| C1-C6 | The paper's claims (`PROJECT_PLAN.md` §3); results in `experiments/RESULTS.md` |
+| P1-P9, M1-M8, I1-I6 | Plan decisions, milestones, design invariants (all in `PROJECT_PLAN.md`; invariants below) |
 
-**M8 handover checklist:**
+## Results (frozen; source of every paper number: `experiments/RESULTS.md`, frozen 2026-10-31)
 
-| Item | State |
+| Claim | Result | Source |
+|:--|:--|:--|
+| C1 attacker text does not steer actions (GUIDE) | Undefended agent hijacked 130/439 (29.6%). Defended pipeline suppressed 4/428 dev (0.9%), 3/437 held-out, 10/437 with gpt-oss-20b. 0 misdirected actions executed | `RESULTS.md:11-16,35-36`; re-scores re-run 2026-11-22, byte-identical |
+| C1 through the full loop (E1, DEDALE) | Attack cases dismissed without an analyst 1 / 3 / 1 of 72 (acting rule), 0 under asymmetric trust; 0 attack patterns learned; the same 400 labelled attack events alerted | `RESULTS.md:42-57`; re-freeze IN PROGRESS 2026-11-22 |
+| C2 gated learning cuts load | Host reviews per day 6,095.4 (static) → 65.2 (gated); 72/72 attack cases reviewed. Network 552.3 → 26.1 | `RESULTS.md:67-79` |
+| C3 poisoning | Ungated: 38 attack patterns learned. Analyst missing 20%: 20 learned, 256/400 events alerted; with B5: 0, 400/400 | `RESULTS.md:70,88-95` |
+| C4 the LLM on real telemetry | NCE −16% reviews (65.2 → 54.8), all of it dismissals; closed-world SSE dismissed 2 attack cases, open world 0; under asymmetric trust NCE dismisses nothing (65.2) | `RESULTS.md:103-110` |
+| C5 analyst loop | 33.1 / 34.1 / 38.1 / 51.5 reviews per day at 1 / 4 / 24 / 72 h delay; network containment time = delay | `RESULTS.md:118-140` |
+| C6 asymmetric trust | E1 dismissals 1/3/1 → 0; GUIDE automatic containments removed by contamination 20/178, 18/168, 21/176 → 0; cost +0.9 reviews/day with an analyst | `RESULTS.md:11-16,50-57,107-108` |
+
+What may and may not be claimed: [experiments/PAPER_CLAIMS_TO_REVISE.md](experiments/PAPER_CLAIMS_TO_REVISE.md).
+
+## Repository map
+
+| Path | Purpose |
 |:--|:--|
-| gpt-oss-20b run, final tables | Done 2026-10-20 |
-| Full-replay soak test | Done 2026-10-20 (below) |
-| Repository cleanup | Done 2026-10-20 (`archive/README.md`) |
-| Frontend design pass | Done 2026-10-20: graphite console theme with a muted red accent (user-approved); every page restyled; host timeline added |
-| Contamination Lab page (GUIDE) | Done 2026-10-20 (totals asserted equal to Table I) |
-| Paper Figs. 2 and 3 | Done 2026-10-20 (`experiments/build_figures.py`) |
-| Fresh-clone check; one-command end-to-end browser check | Done 2026-10-20: E2E check 9 / 9; a fresh clone passes all tests and reproduces every result byte-identically (below) |
-| `HANDOVER.md`, adding-a-dataset guide, `--dataset` switch in the server | Done 2026-10-20 (`HANDOVER.md`, `docs/ADDING_A_DATASET.md`, `soc_server/datasets.py`) |
+| `README.md` | What the system is, quick start, demo options, which rule produces which result |
+| `PROJECT_STATUS.md` / `RESEARCH_LOG.md` | This file / history, results with sources, dead ends, decisions |
+| `PROJECT_PLAN.md` | Scope: goals, decisions P1-P9, claims C1-C6, milestones M1-M8, rules, "Later" list. Scope changes only by a dated decision there |
+| `REPRODUCE.md` | Rebuilding every number offline |
+| `DEMO_BACKEND_DESIGN.md` | Demo server design (M4) and what was added after |
+| `PAPER_OUTLINE.md` | Section plan of `paper/agentsoc_combined.tex` |
+| `CLAUDE.md` | Entry point for coding agents |
+| `AgentSOC_IEEE_Revised.docx` | Team's Word revision of the GuardedSOC paper, with authors (added 2026-11-22) |
+| `Documentation_Template-SDC-II.docx` | KMIT "Skill Development Course-2" report template (blank) |
+| `perception/` | The pipeline and the loop. `soc_loop.py` (the loop), `triage_gate.py`, `defended_pipeline.py` (`run_downstream`, `asymmetric_downstream`), `nce_engine.py` + `nce_contract.py` (NCE), `sse.py`, `entity_binding.py`, `rsem.py`, `action_playbook.py` (guardrails), `outcome.py`, `knowledge_db.py` (persistent KS), `knowledge_graph.py` (graph + synthetic seeds), `knowledge_updater.py` (learning gate, unlearning), `case_builder.py`, `case_store.py` (analyst inbox, audit), `review_service.py` (queue, case view), `outcome_monitor.py`, `host_detection.py` (6 Windows detectors), `environment.py` (environment profile), `network_model.py`, `enterprise_model.py`. Earlier layer still in use by ERA / GUIDE: `normalizer.py` (locked), `models.py`, `pipeline.py`, `schema_validation.py`, `contextualizer.py`, `derived_context_rules.py`, `noise_reducer.py` |
+| `risk_assessment/` | ERA (detectors, orchestrator, config incl. `MAX_PROMPT_FIELD_LENGTH = 512` at `config.py:115`) |
+| `prompt_construction/` | Safe prompt building; NCE prompt (`nce_prompt_builder.py`) |
+| `dedale/` | DEDALE readers (`suricata.py`, `winlogbeat.py`), environment model and 37-host inventory (`environment.py`), `data_dir()` |
+| `corpus/` | GUIDE v2 builder (`python -m corpus.build_v2`) |
+| `GUIDE_Dataset/` | Raw GUIDE samples, v1 corpora and generators (historical), `processed/v2/` (the v2 corpus) |
+| `agent/` | GUIDE runners. Current: `run_v2_eval.py` (defended, live / mock), `run_v2_undefended.py`, `key_pool.py`, `llm_utils.py`, `run_guard.py`. Recorded live outputs: `agent/v2_results/`. Everything else is the v1 era (2026-08/09), historical, mostly live-API scripts |
+| `experiments/` | DEDALE replays (`dedale_host_replay.py`, `dedale_replay.py`), scorers, `freeze_dedale.py`, `build_results.py`, `build_figures.py`, `rescore_v2.py`, E1 (`dedale_inject.py`, `e1_score.py`), design/results notes (`*_DESIGN.md`, `DEDALE_*.md`), frozen results (`dedale_results/`, `final_results/`), `RESULTS.md`, the claims file. Also v1 Experiment-1 tooling and 5 test files collected by pytest |
+| `soc_server/` | Demo server: `__main__.py` (CLI), `runner.py` (live runner, signed checkpoints, quarantine), `app.py` (read APIs), `sources.py`, `follow.py` (live log files), `lab.py` (Contamination Lab), `datasets.py` (dataset registry) |
+| `review_api/` | FastAPI review API (`app.py`), accounts (`accounts.py`, also a CLI) |
+| `frontend/` | React + TypeScript (Vite) console; `npm run build` writes `frontend/dist/` (git-ignored), which the server serves |
+| `tools/` | `e2e_check.py` (read-only end-to-end check of a running console), `ui_check.py` (screenshots), `browser.py` (headless Edge/Chrome driver) |
+| `monitoring/` | Legacy real-time monitoring layer (2026-09). Used only by `tests/test_monitoring.py` and the archived Streamlit app, not by the demo |
+| `paper/` | `agentsoc_v2.tex` / `.pdf` (GuardedSOC, newest LaTeX), `agentsoc_v2_numbers.md` (source of every number in it), `agentsoc_combined.tex` / `.pdf` (previous combined paper), `fig_*.dat` (from `build_figures`) |
+| `tests/` | 62 test files plus `conftest.py` (signs checkpoints with a temporary key) |
+| `docs/` | `ADDING_A_DATASET.md` (E3 recipe), `LIMITATIONS_DRAFT.md`, `VIVA_QA.md`, `_audit_report.md` |
+| `archive/` | Superseded material, not maintained (`archive/README.md`): Streamlit demo, paper v1, notes, scratch scripts, `PROJECT_STATUS_HISTORY.md` (full status to 2026-10-20), `RESEARCH_LOG_HISTORY.md` (verbatim log 2026-08-19 .. 2026-11-08) |
+| `sample_data/` | Small sample alerts used by tests |
+| `pyproject.toml` | pytest config: `testpaths = ["tests", "experiments"]`, smoke tests deselected |
+| `requirements.txt` / `requirements-lock.txt` | Minimum versions / exact versions of the venv used for all results |
 
-## Results
+Not in git: `.env` (API keys), `.venv/`, `logs/` (re-scored GUIDE outputs, run stdout; written by `rescore_v2` and others), `frontend/dist/`, `frontend/node_modules/`, and personal root files (`CLAUDE_HANDOFF.md`, `agentsoc_context_v2.md`, `agenso_.research_base.pdf`, `agentsoc2_paper_corrected.log`). Data lives outside the repo in `<data>` = `AGENTSOC_DATA_DIR`, default `<repo>/../agentsoc_data` (`dedale/__init__.py:20-23`); on this machine `D:\agentsoc_data\` (`dedale/` raw and derived data, `runs/` replay outputs, `ks/` replay stores, `live*`/`demo`/`soak` server homes).
 
-All final for GUIDE and DEDALE: [experiments/RESULTS.md](experiments/RESULTS.md), built only from frozen result files.
+## Architecture
 
-- **C1, attacker text does not steer actions:**
-  - GUIDE v2, 500 dev and 500 held-out pairs, Gemini as the LLM: the pipeline's response was suppressed on 4 / 428 and 3 / 437 pairs (p = 1.0 and 0.25).
-  - The undefended agent on the same dev pairs was hijacked on 130 / 439 (29.6%).
-  - With gpt-oss-20b on the dev pairs: 10 / 437 (2.3%, p = 0.3).
-  - 0 misdirected actions executed in every run.
-  - E1 on DEDALE through the full loop: 1-3 of 72 attack cases dismissed without an analyst (0 with one), 0 attack patterns learned, the same 400 labelled attack events as the clean run still alerted.
-  - **Asymmetric trust (2026-10-31, decision P9 A; `--llm-authority escalate`):** NCE's hypotheses may raise scrutiny, never lower it. E1: 0 of 72 attack cases dismissed in every family and condition (was 1 / 3 / 1), 0 learned, 400 alerted; the attacker's text changes no workload (65.2 / 34.1 reviews per day, as clean). GUIDE: suppression unchanged (4 / 428, 3 / 437, 10 / 437: those responses depended on the LLM reading the text), and automatic containments removed by contamination 20 / 178, 18 / 168, 21 / 176 (11%, mostly ERA's own escalation holding back the block) -> 0. Cost on DEDALE: +0.9 reviews per day with an analyst (34.1 vs 33.2), +10.4 without (65.2 vs 54.8); on GUIDE, none.
-- **C2, gated learning:** learning the benign weeks cut host reviews from 6,095 to 65 per day, and every attack step still reached review (72 attack cases; 400 of the 473 labelled attack events that alert with nothing learned). Without NCE or an analyst, gated = frozen: the gate learns only dismissed cases. Correct analyst verdicts take it to 31-34. Network: 552 to 26 per day.
-- **C3, poisoning:**
-  - Ungated learning learned 38 attack patterns.
-  - An analyst who misses 20% of the attacks: 20 patterns learned and 256 / 400 attack events still alerted. With unlearning on confirmed compromise: 0 learned, 400 / 400 alerted.
-- **C4, the LLM on real telemetry:** -16% reviews. The closed-world feasibility check dismissed 2 attack cases; the open-world check dismisses 0. That reduction is NCE dismissing cases (89 without an analyst, 30 with one), the same path E1's attacker uses; under asymmetric trust NCE dismisses nothing (65.2 / 34.1 reviews per day, as with NCE off).
-- **C5, the analyst loop:** 33 to 52 reviews per day as the analyst's delay grows from 1 h to 72 h. Network containment time equals the delay.
+```mermaid
+flowchart LR
+  subgraph Sources
+    H[DEDALE winlogbeat host events] --> HD[host detectors: unlearned key = alert]
+    N[Suricata alerts] --> NA[network alert + entities from KS]
+    F[--follow live log files] --> HD & NA
+  end
+  HD & NA --> CB[case builder: idle 1 h / max 24 h]
+  CB -->|new case| TG[triage gate]
+  TG -->|escalation / watch| P
+  TG -->|learned pattern| LP[LOW_PRIORITY]
+  TG -->|cache hit| C[same decision]
+  TG -->|otherwise| P[pipeline]
+  subgraph P[defended pipeline]
+    NCE[NCE: LLM hypotheses from untrusted text] --> EB[grounding + entity binding] --> SSE --> RSEM --> GR[guardrails] --> OUT[outcome]
+  end
+  OUT -->|asymmetric trust: text-free decision or REVIEW| D{decision}
+  D -->|REVIEW| CS[case store inbox] --> UI[web console / review API]
+  UI -->|verdicts, approvals as commands| L[SocLoop applies commands]
+  D -->|closed / dismissed| KU[learning gate] --> KS[(Knowledge Store)]
+  L --> KS
+  L -->|malicious: B5 retract 7 days| KS
+  D -->|auto-approved, simulated| OM[outcome monitor: 7-day watches] --> TG
+```
 
-**What may and may not be claimed:** [experiments/PAPER_CLAIMS_TO_REVISE.md](experiments/PAPER_CLAIMS_TO_REVISE.md).
+- **Trust split:** the store learns structured fields only (I1). Free text (command lines, script text, raw lines) reaches only NCE, ERA (GUIDE) and the analyst, inside `<untrusted_evidence>`, escaped, 512 characters per field.
+- **GUIDE path:** each alert runs alone through `perception/defended_pipeline.run_downstream`, from recorded NCE answers (`experiments/rescore_v2.py`), with ERA and a synthetic inventory graph; no loop.
+- **DEDALE path:** the full `SocLoop` (`experiments/dedale_host_replay.py`, `dedale_replay.py`), with the store learned from the benign weeks; no ERA.
+- **Server:** one process (`python -m soc_server`) holds a runner thread and the FastAPI app. It checkpoints the stores and the pickled loop, signed with HMAC, and restores after a restart.
 
-## The tool
+**Invariants every change must keep** (`experiments/LEARNING_KNOWLEDGE_STORE_DESIGN.md` §2): I1 the store learns structured fields only, never text. I2 no look-ahead. I3 after training, learning only through the gate. I4 labels never enter the pipeline (only scorers and the attack simulation read them). I5 actions are simulated. I6 single writer with an append-only audit log; analysts never write the store, their decisions become commands the loop applies.
 
-- **Server:** `python -m soc_server`. It runs the DEDALE replay (host and network), follows live log files (`--follow`), or runs the contamination scenario (`--inject`). NCE replays recorded answers by default; `--nce live` takes a daily budget. Asymmetric trust is on by default (`--llm-authority escalate`; `full` runs the earlier pipeline).
-- **Frontend:**
-  - Live (SOC overview), Case (8-stage pipeline flow with possible-steering marks and an entity graph), host timeline, Knowledge Store, Metrics, Contamination Lab (GUIDE);
-  - My account; Accounts (admin);
-  - first-run admin setup in the browser.
-- **Datasets:** `soc_server/datasets.py` holds everything dataset-specific; DEDALE is registered (`--dataset dedale`).
-- **Checks:** `tools/e2e_check.py` opens every page of a running console (9 / 9 pass).
-- **Data for teammates:** `dedale_for_team.zip` (321 MB, processed DEDALE files) replaces the 31.5 GB raw download; see `HANDOVER.md`. The recorded LLM answers ship in the repository.
-- **Checkpoints (2026-10-31, review change 8):** loading resolves only the classes a checkpoint holds; each checkpoint is signed (HMAC, per-user key outside the home) and a changed one is refused before any live file is touched; a crash between the checkpoint's two renames restores `checkpoint.old`. Older unsigned checkpoints still load and the next one is signed.
-- **Decision cache (2026-10-31, review change 5):** a cached decision is reused only under the same decision policy (triage-rule version, unreasoned policy, NCE version), so a restart with another `--nce` does not reuse old decisions. Re-freeze: frozen scores byte-identical.
-- **Fail-safe processing (2026-10-31):** malformed events are refused and counted; an event the pipeline fails on is quarantined and the runner recovers from its latest checkpoint (it used to die silently); analyst commands that fail are recorded as failed; a pipeline error in triage sends the case to review; the T1071 grounding check reads only what NCE was shown (crafted 40,000-character text: 62 s before, 0.02 s now). `<home>/quarantine.jsonl`, `/live/status` counters.
-- **Tests:** `HF_HUB_OFFLINE=1 python -m pytest -q`: 804 passed, 1 deselected, with the DEDALE package in the data folder (2026-10-31; 780 before changes 5 and 8, asymmetric trust and fail-safe processing). No dataset is needed: with an empty data folder the one data-dependent test skips.
-- **Reproduction:** `freeze_dedale` now also runs E1 and the asymmetric-trust conditions (43 replays: 20 host, 12 E1, 11 network); on this machine the 8 current-pipeline E1 rows reproduce the committed `e1_scores.json` exactly (before, E1 could not be rebuilt from `REPRODUCE.md`). A full re-freeze after the fail-safe merge (2026-10-31) reproduced all three score files byte-identically.
-- **Soak test (2026-10-19/20):**
-  - the server fast-forwarded through the whole dataset, 15,013,901 events: two training weeks and 14 test days, 8,588 test cases;
-  - no crash, peak memory 388 MB;
-  - every read API answered in at most 0.12 s at that scale;
-  - a hard stop and restart restored an identical state in about 10 s.
-- **Reproduction from a fresh clone (2026-10-20):** a clean `git clone`, with only `AGENTSOC_DATA_DIR` set and an isolated data root (the original runs untouched).
-  - All 778 tests pass.
-  - The three GUIDE re-scorings, `RESULTS.md` (apart from its date line) and the figure data are identical.
-  - The full DEDALE freeze (29 replays, all exit 0) gives byte-identical `final_host_scores.json` and `final_network_scores.json`.
+## Tech stack (exact; `requirements-lock.txt` = installed venv, checked 2026-11-22)
 
-## Known limits and open issues
+- **Python 3.13.2** (venv at `.venv`). Key packages: fastapi 0.143.0, uvicorn 0.52.4, starlette 1.6.0, pydantic 2.13.4, networkx 3.6.1, sentence-transformers 5.6.1 (model `all-MiniLM-L6-v2`, 88 MB), torch 2.13.0 (CPU), transformers 5.14.1, google-genai 2.18.1, openai 3.3.1 (Groq client), confusables 1.2.0, pandas 3.0.5, numpy 2.5.1, scipy 1.18.0, statsmodels 0.15.0, pytest 9.1.1, streamlit 1.63.0 (archive only).
+- **Frontend:** Node v22.18.0, npm 10.9.3, TypeScript 7.0.2, Vite 8.3.4, React 19.3.1, Mantine 9.7.3, ECharts 6.1.0, Cytoscape 3.34.4, TanStack Query 5.104.4, React Router 7.18.4 (`frontend/package.json`).
+- **LLMs (recorded):** `gemini-3.1-flash-lite` (all DEDALE NCE, GUIDE dev and held-out, undefended agent), `groq:openai/gpt-oss-20b` (GUIDE dev only). Answers are in `agent/v2_results/` and `experiments/dedale_results/nce_cache/`.
+- **Paper:** LaTeX (IEEEtran), built with MiKTeX `pdflatex`.
 
-**Research limits** (all in the paper's Limitations; the first six also in `RESULTS.md`):
-- one labelled testbed dataset, with 2 labelled attacked hosts;
-- a simulated analyst;
+## Set up, run, test (each command run 2026-11-22 unless marked)
+
+```
+python -m venv .venv
+.venv\Scripts\python -m pip install -r requirements-lock.txt          # NOT run (installs need approval); venv already matches the lock
+.venv\Scripts\python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"   # once, downloads 88 MB; NOT run (model is cached)
+set HF_HUB_OFFLINE=1                                                    # bash: export HF_HUB_OFFLINE=1
+.venv\Scripts\python -m pytest tests experiments -q                    # RUN: 804 passed, 1 deselected, 106 s
+```
+
+- **Tests without data:** `AGENTSOC_DATA_DIR=<empty folder>`: RUN: 803 passed, 1 skipped (`tests/test_dedale.py:116`, "DEDALE data not present"), 1 deselected; nothing written to the folder.
+- **Frontend:** `cd frontend && npm install && npm run build`. Not run here (installs need approval); `npm run typecheck` RUN: exit 0. Dev mode: `npm run dev` (port 5173, proxies `/api` to `AGENTSOC_API` or 127.0.0.1:8000).
+- **Demo server:** `python -m soc_server` (default home `<data>/live`, port 8000; all options in `README.md`). RUN in a throwaway home on port 8799: first start learned 7,505,328 events and checkpointed, served the built frontend at `/` and the API under `/api` (`/api/docs` 200), first-run admin setup worked; replay to 12:13 stream time took 25 s, 0 events rejected or failed.
+- **End-to-end check:** `python tools/e2e_check.py --url http://127.0.0.1:8000 --user <you> --password-file <file>`. RUN against that server: **9 / 9 checks passed**.
+- **Accounts CLI:** `python -m review_api.accounts --db <home>/auth.sqlite create-user <name> --role admin` (password from the terminal or `AGENTSOC_NEW_PASSWORD`). Or create the first admin in the browser.
+- **Standalone review API (no replay):** `python -m review_api --case-store <cases.sqlite>` with `AGENTSOC_ANALYST_TOKENS="alice:<token>,bob:<token>"` (24+ characters each).
+- **Reproduce every number (no API calls):** `REPRODUCE.md`. Steps 3 (GUIDE re-scores) RUN: byte-identical. Steps 4-6 (`freeze_dedale --workers 6`, `build_results`, `build_figures`) RUN in an isolated data root: IN PROGRESS at the time of this commit (started 06:37 UTC 2026-11-22; result recorded in a later commit).
+- **DEDALE data:** `<data>/dedale/` needs `system_logs_winlogbeat.zip` (27.1 GB), `suricata_alerts.zip`, `system_logs_labels.zip`; network scoring also needs `zeek_router1.zip` (4.4 GB). Shortcut: `D:\dedale_for_team.zip` (336,956,066 bytes, 2026-10-20) holds `derived/` (1,344 hourly host-event files and `zeek_router1_attack_flows.jsonl`), `suricata_alerts.zip` and `system_logs_labels.zip`. Unzipped into `<data>/dedale/`, it replaces the two big archives and the hour-long extraction (`python -m experiments.dedale_extract_winlogbeat`). This machine has all of it.
+
+**Environment variables:** `AGENTSOC_DATA_DIR` (data root), `HF_HUB_OFFLINE=1` (tests, replays), `AGENTSOC_CHECKPOINT_KEY` (checkpoint HMAC key file; default `~/.agentsoc/checkpoint.key`), `GEMINI_API_KEYS` / `GEMINI_API_KEY`, `GROQ_API_KEYS` / `GROQ_API_KEY` (comma-separated, in `.env`, loaded by `agent/key_pool.py`; never print more than the last 4 characters), `AGENTSOC_ANALYST_TOKENS`, `AGENTSOC_NEW_PASSWORD`, `AGENTSOC_AUDIT_LOG` (playbook audit log; default `logs/action_playbook_audit_log.jsonl`), `AGENTSOC_ALLOW_OVERWRITE=1` (lets a v1 runner overwrite its committed results), `AGENTSOC_API` (Vite dev proxy), `BROWSER` (tools), `PYTHONHASHSEED` (`freeze_dedale` sets 0), `WATCHDOG_*`, `POLL_INTERVAL_S`, `STALL_TIMEOUT_S` (v1 watchdog).
+
+## Feature checklist
+
+| Feature | State | Evidence |
+|:--|:--|:--|
+| Perception split trusted / untrusted; ERA | DONE | `perception/normalizer.py`, `risk_assessment/`; ERA wired into GUIDE re-scoring only (`experiments/rescore_v2.py:62-66`) |
+| NCE (Gemini, Groq), recorded-answer replay, daily-quota stop | DONE | `perception/nce_engine.py`, `experiments/dedale_nce.py`, `agent/llm_utils.py` |
+| SSE (open world), entity binding, RSEM, guardrails, outcome | DONE | `perception/sse.py`, `entity_binding.py`, `rsem.py`, `action_playbook.py`, `outcome.py` |
+| Asymmetric trust | DONE | `perception/defended_pipeline.py:95-146`, `tests/test_asymmetric_trust.py` |
+| Learning KS, gate, unlearning (B5), withdrawal | DONE | `perception/knowledge_db.py`, `knowledge_updater.py`, `soc_loop.py:208-265` |
+| Triage gate with decision cache (policy-versioned) and NCE budget | DONE | `perception/triage_gate.py` |
+| Analyst loop: case store, queue, four-eyes, rollback | DONE | `perception/case_store.py`, `review_service.py`; four-eyes tier ≥ 2 on DEDALE (`dedale/environment.py:64`) |
+| Host detectors (6, Windows only) | DONE | `perception/host_detection.py:153-160` |
+| Linux host detectors | NOT STARTED | needed only for E3 (`docs/ADDING_A_DATASET.md` §3) |
+| Demo server: replay, follow, inject, live NCE, checkpoints, quarantine | DONE | `soc_server/`; server first start and replay checked 2026-11-22 |
+| Accounts, login throttling, first-run setup | DONE | `review_api/accounts.py`, `review_api/app.py:175-291` |
+| Web console (Live, Case, Host, Knowledge, Metrics, Lab, accounts) | DONE | `frontend/src/pages/`; typecheck passes; e2e check 9 / 9 on 2026-11-22 |
+| Dataset registry | PARTIAL | `soc_server/datasets.py`: only DEDALE registered |
+| GUIDE v2 results (both models) | DONE | `agent/v2_results/`, re-scores byte-identical 2026-11-22 |
+| DEDALE frozen results incl. E1 and asymmetric trust | DONE (files); re-run re-freeze IN PROGRESS 2026-11-22 | `experiments/dedale_results/final_*_scores.json`, `e1_scores.json` |
+| Paper (LaTeX) | PARTIAL | `paper/agentsoc_v2.tex`: authors and repository link are TODO (`:6`) |
+| Paper (team Word revision) | PARTIAL | `AgentSOC_IEEE_Revised.docx`: three wrong claims (see Known issues) |
+| Prompt-level baseline (P9 D) | NOT STARTED | needs a call budget; the 2026-11-01 pilot got only HTTP 503s; its branch is not in the repo |
+| Hash-chained audit log (review change 9) | NOT STARTED | no code; `PROJECT_PLAN.md` P8/P9 said "on its branch", no such branch exists |
+| E3 AIT-LDS | NOT STARTED (optional) | `PROJECT_PLAN.md` §4 |
+| v1 corpus generators runnable | BROKEN | `GUIDE_Dataset/processed/synth_fields.py:195`, `inject_payloads.py:291` hard-code `/home/claude/...`; v2 builder works |
+| Streamlit demo | ARCHIVED | `archive/streamlit/`: 4 of 7 scenario checks pass (pre-existing) |
+
+## Known bugs, limits and gotchas
+
+**Paper:**
+- `AgentSOC_IEEE_Revised.docx` has three claims that do not match the repository:
+  - §IV-D says the six planned experiments have "execution harnesses implemented in the repository". None exists in any commit.
+  - §VI-A gives a network 5% false-alarm workload of 32.4 reviews/day "from benign destination IP unlearning". The frozen value is 21.2, and the 8 are blocks that would have hit benign traffic.
+  - §V-C gives 624 test cases; the frozen value is 625.
+  - Details: `docs/_audit_report.md` §3, `experiments/PAPER_CLAIMS_TO_REVISE.md`.
+- `paper/agentsoc_v2.tex` and the `.docx` have different titles. Which one is submitted is undecided.
+
+**Research limits** (all in the paper):
+- one labelled testbed dataset with 2 attacked hosts;
+- a simulated (oracle) analyst;
 - one LLM on DEDALE;
-- GUIDE's entities and payloads are synthetic;
-- E1 injects text into command lines only;
+- synthetic GUIDE entities and payloads;
+- E1 injects into command lines only;
 - containment is simulated;
-- the host detectors (chosen from a test-week measurement that included the labelled attack events) and the open-world rule (adopted after the closed-world misses) were chosen on DEDALE itself;
-- Suricata alerted on 1 of the 84 labelled attack flows, so the network results rest on very few attack cases;
-- each LLM condition was run once.
+- detectors and the open-world rule were chosen on DEDALE itself;
+- Suricata alerted on 1 of the 84 labelled attack flows;
+- each LLM condition was run once;
+- NCE sees 512 characters per field (raw log line cut in 718 of 856 cases).
 
 **Tool:**
-- The review-queue order is tuned on DEDALE host data. Benign STUN cases on the VPN server rank level with the attack cases ("Later": count host peers by distinct pattern; drop placeholder targets such as "unknown").
-- Followed logs must come from DEDALE's hosts: the environment model is DEDALE's until the `--dataset` switch exists.
-- The steering marks cover names the LLM took from attacker text (entity binding). Suppression payloads, which name no entity, are not marked.
-- The server binds to localhost and has no TLS.
+- The review queue ranks benign STUN cases on the VPN server level with the attack (`PROJECT_PLAN.md` "Later").
+- Followed logs must come from DEDALE's hosts: only DEDALE is registered.
+- Steering marks cover entity names only, not suppression text.
+- The server binds to localhost, without TLS.
+- Live databases are protected only by file permissions.
+- Analyst actions after the last checkpoint are lost on a crash.
 
-## Tracking rule
+**Reproduction gotchas:**
+- `experiments/build_results.py:105-106` silently leaves out the asymmetric-trust C1 rows unless the three `rescore_v2 ... --llm-authority escalate` runs wrote `logs/*_rescored_escalate.json`. This checkout's `logs/` has none.
+- `freeze_dedale` skips any replay whose `summary.json` exists. Use `--rerun` after code changes.
+- On this machine `D:\agentsoc_data\runs` has no `A_*` (asymmetric-trust) replay outputs; the 2026-10-31 re-freeze that produced them left nothing there.
+- Windows `os.replace` fails while another process holds a results file open: monitor long runs through the API log, never by opening the results JSON.
+- In Git Bash, set `MSYS_NO_PATHCONV=1` before `tools/ui_check.py` (it rewrites `/` arguments into Windows paths).
 
-Every change updates this file (in place), appends to `RESEARCH_LOG.md`, and updates `experiments/PAPER_CLAIMS_TO_REVISE.md` when a claim changes.
+**v1 leftovers** (historical code, not used by the current pipeline):
+- `agent/measure_clean_confidence.py` makes live API calls and overwrites its result file without the overwrite guard.
+- The v1 corpus generators cannot run as written.
+- The v1 watchdogs `run_with_watchdog.py` / `_B.py` accept exit 0 regardless of progress.
+- `soc_server/__main__.py:13` says NCE is "cache only"; that is only the default (`--nce live` calls Gemini).
+- `frontend/dist/` was built 2026-10-20 13:02, one minute before the last `frontend/src` commit (`64051be`). Rebuild before a demo.
+
+## Next steps (in order)
+
+1. **Choose the paper to submit** (`paper/agentsoc_v2.tex` or the `.docx`). Then fix the three wrong `.docx` claims from `docs/_audit_report.md` §3:
+   - remove "with execution harnesses implemented in the repository" from §IV-D;
+   - replace "26.1 to 32.4 ... unlearning" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";
+   - change 624 to 625.
+   If the LaTeX paper is kept, fill the author block and repository link (`paper/agentsoc_v2.tex:6`).
+2. **M7:** choose the venue (P2), then record the demo video. Before recording, rebuild the frontend (`cd frontend && npm run build`; the user runs installs) and run `tools/e2e_check.py`.
+3. **Optional E3 (AIT-LDS):** only if the paper needs a second real dataset. Follow `docs/ADDING_A_DATASET.md`; download approval first (17 GB, CC BY-NC-SA 4.0).
+4. **Optional P9 D (prompt-level baseline):** needs a written design and an approved call budget. Nothing exists in the repository to build on.
+5. **Housekeeping (needs a yes):**
+   - give `agent/measure_clean_confidence.py` the `agent/run_guard.confirm_overwrite` guard;
+   - mark or fix the v1 generators' `/home/claude` paths;
+   - decide whether the untracked personal root files stay.
+
+## Open questions for a human
+
+- Which paper is canonical, and does the `.docx` belong in git (committed in `c0ef3ed` by this audit to keep it safe)?
+- Is review change 9 (hash-chained audit log) dropped? `PROJECT_PLAN.md` said it was on a branch that does not exist.
+- Does anyone still have the `baseline-prompt` branch (`docs/LIMITATIONS_DRAFT.md:113` cites counts from it)?
+- Where did the 2026-10-31 re-freeze run (its outputs are not in `D:\agentsoc_data`)?
+
+## Conventions
+
+- **Git:** one branch per change. Commit each step with its tests, and merge into `main` with `--no-ff` when the full suite passes. Push to `origin` (github.com/Akshara-reddy612/AgentSOC) only when asked; never push tags or side branches unasked. Commit messages: a short imperative summary, then details; end with the `Co-Authored-By` trailer the agent harness specifies.
+- **Tracking:** every change updates this file in place and adds an entry to `RESEARCH_LOG.md`. Update `experiments/PAPER_CLAIMS_TO_REVISE.md` when a claim moves. Historical numbers are never edited: add a dated `[Correction YYYY-MM-DD]` note instead.
+- **Scope:** `PROJECT_PLAN.md`. New ideas go to its "Later" list.
+- **Approvals:** live LLM runs need an approved call budget (estimate calls first). Downloads need approval after size, licence and disk use are reported ("yes" to a plan is not approval to download). `pip` / `npm` installs are run by the user.
+- **Code:**
+  - Run Python as `python -m ...` from the repository root.
+  - Data stays outside the repo; downloaded files are read with `python -I`.
+  - `perception/normalizer.py` is locked (change only with a recorded decision).
+  - Bump `perception/triage_gate.py` `POLICY_VERSION` when a triage or guardrail rule changes.
+  - No number in the paper is typed by hand: it comes from `RESULTS.md` (`build_results`) or `paper/agentsoc_v2_numbers.md`.
+- **Outputs:**
+  - Replays write to `<data>/runs/<run>/` (`summary.json`, `cases.jsonl`, case store) and `<data>/ks/<run>.sqlite`.
+  - GUIDE re-scores write to `logs/` (git-ignored).
+  - Frozen scores go to `experiments/dedale_results/`, recorded LLM output to `agent/v2_results/`, and figure data to `paper/fig_*.dat`.
+
+## How to maintain this file
+
+- Update it in place whenever code, data, results or plans change, in the same commit as the change.
+- Every status claim must be re-verified (run the command, read the file, check `git log`) before it is written. Never copy a claim forward from an older version or another document.
+- Put dates and evidence next to claims; mark anything you could not check as UNVERIFIED.
+- History belongs in `RESEARCH_LOG.md`, not here.
