@@ -158,12 +158,12 @@ Offline replays of DEDALE host logs (recorded LLM answers only), added after the
 
 **A simple memory baseline:** a pattern from the two clean weeks counts as normal only if it occurred at least K times (K = 1 is the clean-weeks allowlist, i.e. the frozen store). NCE off, no analyst.
 
-| K | Reviews / day | Attack cases raised | Labelled attack events alerted | Precision | Training patterns forgotten |
-|--:|--:|--:|--:|--:|--:|
-| 1 | 65.2 | 72 | 400 | 7.9% | 0 |
-| 2 | 86.4 | 72 | 400 | 5.9% | 579 |
-| 5 | 163.4 | 72 | 400 | 3.1% | 1053 |
-| 10 | 718.7 | 72 | 400 | 0.7% | 1982 |
+| K | Reviews / day | Attack cases raised | Labelled attack events alerted | Attack cases learned | Precision | Training patterns forgotten |
+|--:|--:|--:|--:|--:|--:|--:|
+| 1 | 65.2 | 72 | 400 | 0 | 7.9% | 0 |
+| 2 | 86.4 | 72 | 400 | 0 | 5.9% | 579 |
+| 5 | 163.4 | 72 | 400 | 0 | 3.1% | 1053 |
+| 10 | 718.7 | 72 | 400 | 0 | 0.7% | 1982 |
 
 Gated learning gives the same numbers as frozen at every K (`tier1_scores.json`).
 
@@ -214,6 +214,25 @@ Gated learning gives the same numbers as frozen at every K (`tier1_scores.json`)
 | host-wide | 0.5 | 0% | off | 5 | 33.2 | 321.54 | 174.2 | 28.64 | 3/5 |
 
 CLIENT2 was confirmed in every run: its first attack case carries no attacker text.
+
+**Tier 2: live runs on GUIDE v2** (gemini-3.1-flash-lite; `experiments/tier2_scores.json`; design `experiments/TIER2_PLAN.md`). Hijacked = the clean twin is not dismissed and the contaminated twin is; suppressed = the clean twin gets a response and the contaminated twin does not.
+
+*T2.1, the undefended agent on the held-out split:* hijacked 123/445 (27.6%, 95% CI 23.7%-32.0%); McNemar b=123, c=21, p=9.6e-19.
+
+*T2.2, prompt-level defences on the undefended agent,* first 150 dev pairs (the same pairs for every defence; the undefended row uses its recorded answers on the same pairs):
+
+| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |
+|:--|--:|--:|--:|:--|:--|--:|
+| delimited | 0 | - | - | - | - | - |
+| spotlight | 8 | 2/7 | 0/7 | 0.0%-35.4% | 0 / 2 | 0.5 |
+| hierarchy | 0 | - | - | - | - | - |
+
+*T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.
+
+| Rule | Suppressed, original payload | Suppressed, adaptive payload | 95% CI | McNemar b / c | Outcome changed | Techniques changed | Review removed (back to the clean response) |
+|:--|--:|--:|:--|:--|--:|--:|--:|
+| acting rule | 2/300 | 2/300 | 0.2%-2.4% | 0 / 0 | 17 | 80 | 17 |
+| asymmetric trust | 2/300 | 2/300 | 0.2%-2.4% | 0 / 0 | 17 | 80 | 17 |
 
 ## Limits
 

@@ -357,12 +357,13 @@ def revision() -> list[str]:
         T = _load(t1)
         out += ["**A simple memory baseline:** a pattern from the two clean weeks counts as normal only if it occurred "
                 "at least K times (K = 1 is the clean-weeks allowlist, i.e. the frozen store). NCE off, no analyst.", "",
-                "| K | Reviews / day | Attack cases raised | Labelled attack events alerted | Precision | Training patterns forgotten |",
-                "|--:|--:|--:|--:|--:|--:|"]
+                "| K | Reviews / day | Attack cases raised | Labelled attack events alerted | Attack cases learned | "
+                "Precision | Training patterns forgotten |",
+                "|--:|--:|--:|--:|--:|--:|--:|"]
         for k in (1, 2, 5, 10):
             r = T["A7_min_train_count"][f"frozen_k{k}"]
             out.append(f"| {k} | {r['reviews_per_day']} | {r['attack_cases_raised']} | {r['class1_events_alerted']} | "
-                       f"{r['precision']:.1%} | {r['training_patterns_retracted'] or 0} |")
+                       f"{r['attack_cases_learned']} | {r['precision']:.1%} | {r['training_patterns_retracted'] or 0} |")
         out += ["", "Gated learning gives the same numbers as frozen at every K (`tier1_scores.json`).", "",
                 "**Learning-gate delay**, where the gate learns: host logs with NCE under the acting rule, and network "
                 "alerts with unreasoned cases dismissed (D7 off). 24 h is the frozen value.", "",
@@ -414,6 +415,55 @@ def revision() -> list[str]:
                        f"{c['exposure_hours_max']['mean']:g} | {c['class1_events_alerted']['mean']:g} | "
                        f"{c['reviews_per_day']['mean']:g} | {c['CLIENT1_never_confirmed']} |")
         out += ["", "CLIENT2 was confirmed in every run: its first attack case carries no attacker text.", ""]
+    t2 = Path(__file__).resolve().parent / "tier2_scores.json"
+    if t2.exists():
+        out += tier2(_load(t2))
+    return out
+
+
+def tier2(T: dict) -> list[str]:
+    """Tier 2 (decision P11, amended 2026-11-22): live gemini-3.1-flash-lite runs on GUIDE v2, scored by
+    experiments/tier2_score.py (T2.1, T2.2) and experiments/adaptive_score.py (T2.3)."""
+    out = ["**Tier 2: live runs on GUIDE v2** (gemini-3.1-flash-lite; `experiments/tier2_scores.json`; "
+           "design `experiments/TIER2_PLAN.md`). Hijacked = the clean twin is not dismissed and the contaminated twin is; "
+           "suppressed = the clean twin gets a response and the contaminated twin does not.", ""]
+    if "T2.1" in T:
+        r = T["T2.1"]
+        out += [f"*T2.1, the undefended agent on the held-out split:* hijacked {r['hijacked']}/{r['clean_not_dismissed']} "
+                f"({r['hijacked'] / r['clean_not_dismissed']:.1%}, 95% CI {r['ci95'][0]:.1%}-{r['ci95'][1]:.1%}); "
+                f"McNemar b={r['hijacked']}, c={r['induced']}, p={r['mcnemar_p']:.2g}.", ""]
+    if "T2.2" in T:
+        r = T["T2.2"]
+        out += [f"*T2.2, prompt-level defences on the undefended agent,* first {r['pairs_in_subset']} dev pairs "
+                "(the same pairs for every defence; the undefended row uses its recorded answers on the same pairs):", "",
+                "| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |",
+                "|:--|--:|--:|--:|:--|:--|--:|"]
+        for d in ("delimited", "spotlight", "hierarchy"):
+            x = r.get(d, {})
+            if not x.get("pairs_answered"):
+                out.append(f"| {d} | 0 | - | - | - | - | - |")
+                continue
+            u, f, m = x["undefended"], x["defended"], x["mcnemar"]
+            out.append(f"| {d} | {x['pairs_answered']} | {u['hijacked']}/{u['clean_not_dismissed']} | "
+                       f"{f['hijacked']}/{f['clean_not_dismissed']} | {f['ci95'][0]:.1%}-{f['ci95'][1]:.1%} | "
+                       f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} |")
+        out.append("")
+    if "T2.3" in T:
+        r = T["T2.3"]
+        out += [f"*T2.3, the adaptive attacker:* {r['pairs']} dev pairs whose payload was rewritten until ERA rated it "
+                f"LOW (ERA-flagged {r['era_flagged_before']} -> {r['era_flagged_after']}) and placed in NCE's 512-character "
+                f"view ({r['in_view']}/{r['pairs']}); NCE errors {r['nce_errors']}.", "",
+                "| Rule | Suppressed, original payload | Suppressed, adaptive payload | 95% CI | McNemar b / c | "
+                "Outcome changed | Techniques changed | Review removed (back to the clean response) |",
+                "|:--|--:|--:|:--|:--|--:|--:|--:|"]
+        for rule, label in (("acting", "acting rule"), ("asymmetric", "asymmetric trust")):
+            x = r[rule]
+            m, ch = x["mcnemar_original_vs_adaptive"], x["changed_vs_original"]
+            out.append(f"| {label} | {x['suppressed_original']}/{x['pairs_clean_responded']} | "
+                       f"{x['suppressed_adaptive']}/{x['pairs_clean_responded']} | "
+                       f"{x['adaptive_ci95'][0]:.1%}-{x['adaptive_ci95'][1]:.1%} | {m['b_adaptive_only']} / "
+                       f"{m['c_original_only']} | {ch['outcome']} | {ch['techniques']} | {ch['review_to_response']} |")
+        out.append("")
     return out
 
 
