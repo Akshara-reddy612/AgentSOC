@@ -48,6 +48,12 @@ from perception.triage_gate import Decision
 
 TRAINING_START = datetime(2024, 12, 23, tzinfo=timezone.utc)
 TRAINING_END = datetime(2025, 1, 6, tzinfo=timezone.utc)
+# Checklist A11 (2026-11-22): which clean week(s) train the store, as the span of training events to SKIP. The attack
+# starts on 2025-01-06, so the training window cannot move later; the test period is always from TRAINING_END.
+_MID_TRAINING = datetime(2024, 12, 30, tzinfo=timezone.utc)
+TRAIN_WINDOWS = {"both": (None, None),                         # 2024-12-23 .. 2025-01-05 (the frozen runs)
+                 "week1": (_MID_TRAINING, TRAINING_END),        # 2024-12-23 .. 12-29, then a week's gap before testing
+                 "week2": (TRAINING_START, _MID_TRAINING)}      # 2024-12-30 .. 2025-01-05 only
 EVENTS = data_dir() / "derived" / "winlogbeat"
 CHUNK = 50_000
 
@@ -153,6 +159,9 @@ def main() -> None:
     ap.add_argument("--min-train-count", type=int, default=1,
                     help="Tier 1 (P10) baseline: a training pattern counts as normal only if seen at least K times "
                          "(rarer ones are retracted when training ends; default 1 = all)")
+    ap.add_argument("--train-window", default="both", choices=list(TRAIN_WINDOWS),
+                    help="checklist A11 (2026-11-22): which clean week(s) the store learns from; the test period "
+                         "(from TRAINING_END) is unchanged and events outside the chosen training week are skipped")
     ap.add_argument("--llm-authority", default="full", choices=["full", "escalate"],
                     help="escalate: asymmetric trust, NCE may raise scrutiny but never lower it (decision P9 A)")
     args = ap.parse_args()
@@ -252,9 +261,12 @@ def main() -> None:
         train_freq = _training_frequencies(tuple(args.detectors)) if not thresholded else None
         last = TRAINING_START
         events = iter_events(until)
+        skip_from, skip_until = TRAIN_WINDOWS[args.train_window]
         while chunk := list(islice(events, CHUNK)):
             with db.batch(), (case_store.batch() if case_store else nullcontext()):   # one transaction per chunk
                 for at, event in chunk:
+                    if skip_from is not None and skip_from <= at < skip_until:      # A11: outside the training week
+                        continue
                     if not thresholded and at >= TRAINING_END:     # baseline: forget rare training patterns
                         loop.tick(TRAINING_END)
                         retracted_rare = _retract_rare(db, args.min_train_count, train_freq)
@@ -291,6 +303,7 @@ def main() -> None:
         **({"unlearn_lookback_days": args.unlearn_lookback} if args.unlearn_lookback != 7.0 else {}),
         **({"min_train_count": args.min_train_count, "training_patterns_retracted": retracted_rare}
            if args.min_train_count > 1 else {}),
+        **({"train_window": args.train_window} if args.train_window != "both" else {}),
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,

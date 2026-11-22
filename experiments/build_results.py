@@ -377,6 +377,23 @@ def revision() -> list[str]:
                 + f" injected first alerts the whole payload lies within NCE's first {v['max_prompt_field_length']} "
                 f"characters (longest injected command line {max(x['longest_command_line'] for x in fams.values())} "
                 "characters). The raw-log truncation does not affect E1.", ""]
+    rot = RESULTS / "rotation_scores.json"
+    if rot.exists():
+        R = _load(rot)
+        static = _load(RESULTS / "final_host_scores.json")["runs"]["static_F_static"]["reviews_per_day"]["mean"]
+        out += ["**Training-window rotation** (checklist A11; `experiments/rotation_runs.py`): the store learns from both "
+                "clean weeks (2024-12-23..2025-01-05, the frozen runs), the first week only (then a week's gap) or the "
+                "second week only; the test period is unchanged. 'm20' = analyst misses 20% of attacks.", "",
+                "| Training window | Frozen: reviews / day (vs nothing learned) | Attack cases | Events alerted | "
+                "m20, B5 on: patterns learned / events alerted | m20, B5 off: patterns learned / events alerted |",
+                "|:--|--:|--:|--:|--:|--:|"]
+        for w, label in (("both", "both weeks"), ("week1", "week 1 only"), ("week2", "week 2 only")):
+            f, on, off = R[w]["frozen"], R[w]["m20"], R[w]["m20_nob5"]
+            out.append(f"| {label} | {f['reviews_per_day']} ({1 - f['reviews_per_day'] / static:.1%} fewer) | "
+                       f"{f['attack_cases_raised']} | {f['class1_events_alerted']} | "
+                       f"{on['attack_cases_learned']} / {on['class1_events_alerted']} | "
+                       f"{off['attack_cases_learned']} / {off['class1_events_alerted']} |")
+        out.append("")
     oc = RESULTS / "operational_cost.json"
     if oc.exists():
         o = _load(oc)

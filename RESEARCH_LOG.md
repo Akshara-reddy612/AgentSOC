@@ -12,6 +12,16 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22 (night): checklist A11, training-window rotation (offline)
+
+- **What:** the DEDALE host replay can now train on one clean week only (`--train-window week1|week2`, `experiments/dedale_host_replay.py`; week 1 = 2024-12-23..12-29, week 2 = 12-30..2025-01-05). Six offline replays (`experiments/rotation_runs.py`, all rc=0), scored by `experiments/rotation_score.py` -> `experiments/dedale_results/rotation_scores.json`, generated into `experiments/RESULTS.md`.
+- **Result** (reviews/day frozen; attack cases; events; attack patterns learned with a 20% analyst miss rate, B5 on / off):
+  - both weeks: 65.2; 72; 400; 0 / 20
+  - week 1 only: 110.9; 72; 400; 0 / 24
+  - week 2 only: 111.4; 72; 400; 0 / 18
+- **Meaning:** a shorter training window roughly doubles the frozen workload (still 98.2% below static) but changes neither detection nor the unlearning result. Paper: a "Training window" paragraph in §V-B; the paper still fits 7 pages after trims (limitation (1), the gate-delay sentence, plot heights).
+- **Checklist:** 20 of 29 done (A11 added). The 7-page version has no spare lines; the A6 / B1 results due tomorrow are recommended for an 8-page version.
+
 ### 2026-11-22 (late): reviewer checklist pass on the v3 paper
 
 - **Fully done now (19 of 29 items):** A1 A2 A5 A9 A10, B2 B3 B4 B5 B6 B7, C1-C8. Results generated into `experiments/RESULTS.md`:
@@ -19,8 +29,8 @@ The history of the project and the reasons behind it, newest first. The current 
   - B7, paired CIs for the GUIDE suppressions and T2.2;
   - A5, E1 payloads fully in NCE's view, 114 of 114 (`experiments/e1_view.py`);
   - B5, latency, token estimate, NCE calls per day, review-queue growth (`experiments/operational_cost.py`).
-- **References (B3): 24 -> 49.** Each new one was checked on a source page (arXiv, USENIX, NDSS, IJCAI, PMLR, ACL Anthology or an author's publication list). A venue that could not be confirmed is cited as the arXiv preprint. DeepLog, He et al. (ISSRE 2016) and Kokulu et al. (CCS 2019) could not be confirmed from any reachable page and are not cited.
-- **Space for the 7-page limit:** Table I (AgentSOC vs this work) and the analyst-delay figure were removed, because their content is in the text. The Discussion, Limitations, Fail-Safes and Conclusion were compressed.
+- **References (B3): 24 -> 49, then 40 (user: 40 is enough; 9 duplicating references dropped so that Table I and the analyst-delay figure fit back in).** Each new one was checked on a source page (arXiv, USENIX, NDSS, IJCAI, PMLR, ACL Anthology or an author's publication list). A venue that could not be confirmed is cited as the arXiv preprint. DeepLog, He et al. (ISSRE 2016) and Kokulu et al. (CCS 2019) could not be confirmed from any reachable page and are not cited.
+- **Space for the 7-page limit:** Table I and the analyst-delay figure were removed for the 49-reference version and restored with 40 references. The Discussion, Limitations, Fail-Safes and Conclusion were compressed.
 - **Ready but not run:** A6 (telemetry-aware undefended agent) and B1 (temperature 0.7 repeats); about 1,200 calls, approved by the user; `bash tools/live_queue.sh` after the quota reset.
 - **Still open:** A3 (StruQ, flooding, ablation), A7 (MemStream), A8 (low-and-slow), A11 (window rotation), B1 (frontier model), D (anonymization, Zenodo DOI, AI disclosure).
 

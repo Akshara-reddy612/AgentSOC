@@ -83,6 +83,7 @@ The following sentences in the project documentation and paper require revision 
   - An adaptive attacker that evades ERA gains nothing: 2/300 suppressed under both rules, the same pairs as the original payloads (T2.3).
   - Targeted unlearning bounds independent analyst mistakes (0 attack patterns in every seed), but host-wide persuasion defeats it whenever CLIENT1's first attack case is cleared (A10). State this as a limit, not a guarantee.
   - The frequency-threshold baseline (A7) only adds workload; the gate delay and the lookback sweep do not change the poisoning result.
+  - The result does not depend on the training window (A11): training on one clean week gives 110.9 / 111.4 reviews/day (98.2% below static), the same 72 attack cases and 400 events, and 0 attack patterns under unlearning (`rotation_scores.json`).
 
 ## Supported replacement claims
 - The pipeline outcome under contamination shows no detectable effect relative to the clean twins (on the 206 genuinely clean, unique pairs: verdict changes 1 to 3 across conditions vs 3 between two runs of the same condition; no exact McNemar p below 0.25; the original n=320 comparison, which included 116 contaminated or mismatched "twins", gave 2 to 6 vs 3 and 6, p ≥ 0.21). State as "no detectable effect", never "statistically indistinguishable".
