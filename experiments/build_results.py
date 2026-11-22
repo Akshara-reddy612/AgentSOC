@@ -341,10 +341,145 @@ def dedale() -> list[str]:
     return out
 
 
+def revision() -> list[str]:
+    """Paper revision (decisions P10, P11; 2026-11-22): detection metrics, memory baseline, gate and unlearning
+    sweeps, analyst mistakes over seeds (experiments/tier1_score.py) and the persuaded analyst
+    (experiments/persuaded_score.py).  Each table appears only once its score file exists."""
+    from experiments.detection_metrics import table as detection_table
+    out = ["## Paper revision (decisions P10, P11; 2026-11-22)", "",
+           "Offline replays of DEDALE host logs (recorded LLM answers only), added after the frozen results above; "
+           "designs in `experiments/TIER1_EXPERIMENTS_DESIGN.md` and `experiments/PERSUADED_ANALYST_DESIGN.md`.", "",
+           "**Detection metrics** (from `final_host_scores.json`; a case holding a labelled class-1 event is an attack "
+           "case; time to detect = minutes from each attack step's start to its first reviewed case):", "",
+           *detection_table(), ""]
+    hs = _load(RESULTS / "final_host_scores.json")["runs"]
+    st, fz = hs["static_F_static"], hs["frozen_F_frozen"]
+    s_rev, f_rev = st["reviews_per_day"]["mean"], fz["reviews_per_day"]["mean"]
+    s_ev, f_ev = st["labelled_events_alerted"]["class_1"], fz["labelled_events_alerted"]["class_1"]
+    out += [f"*Derived (paper text):* learning the clean weeks cuts host reviews from {s_rev} to {f_rev} per day, "
+            f"{1 - f_rev / s_rev:.1%} fewer; {f_ev} of the {s_ev} labelled attack events the static detectors alert on "
+            f"still alert ({f_ev / s_ev:.1%}); the other {s_ev - f_ev} match routine activity learned in the clean weeks.",
+            f"E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI "
+            f"{wilson(0, 72)[0]:.1%}-{wilson(0, 72)[1]:.1%}.", ""]
+    t1 = RESULTS / "tier1_scores.json"
+    if t1.exists():
+        T = _load(t1)
+        out += ["**A simple memory baseline:** a pattern from the two clean weeks counts as normal only if it occurred "
+                "at least K times (K = 1 is the clean-weeks allowlist, i.e. the frozen store). NCE off, no analyst.", "",
+                "| K | Reviews / day | Attack cases raised | Labelled attack events alerted | Attack cases learned | "
+                "Precision | Training patterns forgotten |",
+                "|--:|--:|--:|--:|--:|--:|--:|"]
+        for k in (1, 2, 5, 10):
+            r = T["A7_min_train_count"][f"frozen_k{k}"]
+            out.append(f"| {k} | {r['reviews_per_day']} | {r['attack_cases_raised']} | {r['class1_events_alerted']} | "
+                       f"{r['attack_cases_learned']} | {r['precision']:.1%} | {r['training_patterns_retracted'] or 0} |")
+        out += ["", "Gated learning gives the same numbers as frozen at every K (`tier1_scores.json`).", "",
+                "**Learning-gate delay**, where the gate learns: host logs with NCE under the acting rule, and network "
+                "alerts with unreasoned cases dismissed (D7 off). 24 h is the frozen value.", "",
+                "| Delay | Host: reviews / day | Host: patterns learned through the gate | Host: attack cases learned | "
+                "Network: reviews / day | Network: edges learned through the gate | Network: attack patterns learned |",
+                "|:--|--:|--:|--:|--:|--:|--:|"]
+        for h in ("1h", "24h", "72h", "168h"):
+            a, b = T["A8_gate_delay_host_nce"][h], T["A8_gate_delay_network_noact"][h]
+            out.append(f"| {h} | {a['reviews_per_day']} | {a['gate_learned_closed_benign']} | {a['attack_cases_learned']} | "
+                       f"{b['reviews_per_day']} | {sum(b['gate_learned_closed_benign'].values())} | "
+                       f"{len(b['attack_patterns_learned'] or [])} |")
+
+        def ms(x: dict) -> str:
+            return f"{x['mean']:g} ± {x['sd']:g} ({x['min']:g}-{x['max']:g})"
+        out += ["", "**Analyst mistakes over seeds** (seed 0 = the frozen run above, plus seeds 1-5; analyst after 4 h; "
+                "mean ± sd (min-max)):", "",
+                "| Condition | Seeds | Attack cases' patterns learned | Labelled attack events alerted | Reviews / day |",
+                "|:--|--:|--:|--:|--:|"]
+        names = {"m5": "misses 5%", "m20": "misses 20%", "fa5": "5% false alarms"}
+        for key, label in names.items():
+            for suffix, b5 in (("", "B5 on"), ("_nob5", "B5 off")):
+                r = T["A11_analyst_seeds"][key + suffix]
+                out.append(f"| {label}, {b5} | {r['seeds']} | {ms(r['attack_cases_learned'])} | "
+                           f"{ms(r['class1_events_alerted'])} | {ms(r['reviews_per_day'])} |")
+        out += ["", "**Unlearning lookback** (how far back B5 retracts; analyst misses 20%, B5 on; 7 days = frozen):", "",
+                "| Lookback | Seeds | Attack cases' patterns learned | Labelled attack events alerted | Reviews / day |",
+                "|:--|--:|--:|--:|--:|"]
+        for d in ("1d", "3d", "7d", "14d"):
+            r = T["A8_unlearn_lookback_m20"][d]
+            out.append(f"| {d} | {r['seeds']} | {ms(r['attack_cases_learned'])} | {ms(r['class1_events_alerted'])} | "
+                       f"{ms(r['reviews_per_day'])} |")
+        out.append("")
+    pa = RESULTS / "persuaded_analyst_scores.json"
+    if pa.exists():
+        P = _load(pa)
+        out += ["**The persuaded analyst (A10):** the attacker's command-line text (E1's `fake_approval` payload) talks "
+                "the simulated analyst out of a `malicious` verdict with probability q. *Per case*: only cases that show "
+                "the text; *host-wide*: once persuaded on a host, every later case there. Asymmetric trust, NCE from E1's "
+                "recorded answers, analyst after 4 h; 'miss' = extra random misses. The text reaches 38 of the 72 attack "
+                "cases; `suppress` and `steer` give the same numbers at q = 1.0 (`persuaded_analyst_scores.json`).", "",
+                "| Persuasion | q | Extra miss | B5 | Seeds | Attack cases' patterns learned (end) | Longest learned (h) | "
+                "Labelled attack events alerted | Reviews / day | CLIENT1 never confirmed |",
+                "|:--|--:|--:|:--|--:|--:|--:|--:|--:|--:|"]
+        for c in P["conditions"]:
+            if c["family"] != "fake_approval":
+                continue
+            out.append(f"| {'per case' if c['model'] == 'case' else 'host-wide'} | {c['q']:g} | {c['miss']:.0%} | "
+                       f"{'on' if c['b5'] else 'off'} | {c['seeds']} | {c['attack_patterns_learned_at_end']['mean']:g} | "
+                       f"{c['exposure_hours_max']['mean']:g} | {c['class1_events_alerted']['mean']:g} | "
+                       f"{c['reviews_per_day']['mean']:g} | {c['CLIENT1_never_confirmed']} |")
+        out += ["", "CLIENT2 was confirmed in every run: its first attack case carries no attacker text.", ""]
+    t2 = Path(__file__).resolve().parent / "tier2_scores.json"
+    if t2.exists():
+        out += tier2(_load(t2))
+    return out
+
+
+def tier2(T: dict) -> list[str]:
+    """Tier 2 (decision P11, amended 2026-11-22): live gemini-3.1-flash-lite runs on GUIDE v2, scored by
+    experiments/tier2_score.py (T2.1, T2.2) and experiments/adaptive_score.py (T2.3)."""
+    out = ["**Tier 2: live runs on GUIDE v2** (gemini-3.1-flash-lite; `experiments/tier2_scores.json`; "
+           "design `experiments/TIER2_PLAN.md`). Hijacked = the clean twin is not dismissed and the contaminated twin is; "
+           "suppressed = the clean twin gets a response and the contaminated twin does not.", ""]
+    if "T2.1" in T:
+        r = T["T2.1"]
+        out += [f"*T2.1, the undefended agent on the held-out split:* hijacked {r['hijacked']}/{r['clean_not_dismissed']} "
+                f"({r['hijacked'] / r['clean_not_dismissed']:.1%}, 95% CI {r['ci95'][0]:.1%}-{r['ci95'][1]:.1%}); "
+                f"McNemar b={r['hijacked']}, c={r['induced']}, p={r['mcnemar_p']:.2g}.", ""]
+    if "T2.2" in T:
+        r = T["T2.2"]
+        out += [f"*T2.2, prompt-level defences on the undefended agent,* first {r['pairs_in_subset']} dev pairs "
+                "(the same pairs for every defence; the undefended row uses its recorded answers on the same pairs):", "",
+                "| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |",
+                "|:--|--:|--:|--:|:--|:--|--:|"]
+        for d in ("delimited", "spotlight", "hierarchy"):
+            x = r.get(d, {})
+            if not x.get("pairs_answered"):
+                out.append(f"| {d} | 0 | - | - | - | - | - |")
+                continue
+            u, f, m = x["undefended"], x["defended"], x["mcnemar"]
+            out.append(f"| {d} | {x['pairs_answered']} | {u['hijacked']}/{u['clean_not_dismissed']} | "
+                       f"{f['hijacked']}/{f['clean_not_dismissed']} | {f['ci95'][0]:.1%}-{f['ci95'][1]:.1%} | "
+                       f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} |")
+        out.append("")
+    if "T2.3" in T:
+        r = T["T2.3"]
+        out += [f"*T2.3, the adaptive attacker:* {r['pairs']} dev pairs whose payload was rewritten until ERA rated it "
+                f"LOW (ERA-flagged {r['era_flagged_before']} -> {r['era_flagged_after']}) and placed in NCE's 512-character "
+                f"view ({r['in_view']}/{r['pairs']}); NCE errors {r['nce_errors']}.", "",
+                "| Rule | Suppressed, original payload | Suppressed, adaptive payload | 95% CI | McNemar b / c | "
+                "Outcome changed | Techniques changed | Review removed (back to the clean response) |",
+                "|:--|--:|--:|:--|:--|--:|--:|--:|"]
+        for rule, label in (("acting", "acting rule"), ("asymmetric", "asymmetric trust")):
+            x = r[rule]
+            m, ch = x["mcnemar_original_vs_adaptive"], x["changed_vs_original"]
+            out.append(f"| {label} | {x['suppressed_original']}/{x['pairs_clean_responded']} | "
+                       f"{x['suppressed_adaptive']}/{x['pairs_clean_responded']} | "
+                       f"{x['adaptive_ci95'][0]:.1%}-{x['adaptive_ci95'][1]:.1%} | {m['b_adaptive_only']} / "
+                       f"{m['c_original_only']} | {ch['outcome']} | {ch['techniques']} | {ch['review_to_response']} |")
+        out.append("")
+    return out
+
+
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",

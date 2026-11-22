@@ -244,7 +244,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 
 ## Next steps (in order)
 
-0. **Review and merge this audit** (branch `chore/repo-audit-tracking`, documentation only; nothing pushed). The audit was asked to stay on its branch, so the user reviews it before the usual `--no-ff` merge; pushing is always the user's call.
+0. **Paper revision (decisions P10, P11; 2026-11-22).** Tier 1 (offline) is done and scored. Tier 2: T2.1 (held-out undefended, 123/445 hijacked) and T2.3 (adaptive attacker, 2/300 suppressed under both rules) are done and scored (`experiments/tier2_scores.json`, RESULTS.md section "Paper revision"). T2.2 runs on the first 150 dev pairs (P11 amended) and is limited by the per-project daily Gemini quota. **Paper to submit: `paper/agentsoc_v3.pdf`** (IEEE conference, 7 pages, built from `paper/agentsoc_v3.tex`). The only open text is T2.2, marked in red. After that: the plagiarism pass, the AI-use disclosure and the venue's rules (double-blind?). The docx (`AgentSOC_IEEE_Revised.docx`) is no longer the submission file; it opens only in Word's repair mode.
 1. **Fix the paper draft `AgentSOC_IEEE_Revised.docx`** (the one being worked on; the user edits it, and an agent proposes changes rather than editing the `.docx`). Fix its three wrong claims (`docs/_audit_report.md` §3):
    - remove "with execution harnesses implemented in the repository" from §IV-D;
    - in §VI-A replace "8 instances of benign destination IP unlearning, increasing network review workload from 26.1 to 32.4 reviews/day" with the frozen 21.2 reviews/day and "approved blocks would have hit benign traffic 8 times";

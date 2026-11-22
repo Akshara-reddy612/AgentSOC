@@ -12,6 +12,26 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-22: Tier 2 runs: duplicate queue, key quota, T2.2 cut to 150 pairs
+
+- **Duplicate queue.** Stopping a background bash task on Windows did not stop the queue script, so two copies ran from about 13:15 to 14:03 UTC. They duplicated calls and both wrote the T2.3 results file. The file loads cleanly and the runners resume, but calls were wasted. Both copies were killed with `taskkill /T`, and only one queue runs at a time now.
+- **Key quota.** A one-call probe per key at 14:05 UTC: 10 of 18 Gemini keys returned 429 RESOURCE_EXHAUSTED, which the runner had reported only as 60 s timeouts. Keys stopped after about 60-150 successful calls each, not the 500 per day assumed in P11. The 8 working keys run alone via an exported `GEMINI_API_KEYS`.
+- **State at 14:10 UTC.** T2.1 held-out: 1,000 records, 991 answered. T2.3: 158 of 300 stored. 1,904 attempts used in all.
+- **Decision (user).** T2.2 runs on the first 150 dev pairs (P11 amended), about 900 calls; the rest of Tier 2 stays within the 4,300 budget.
+
+### 2026-11-22: Tier 1 scored, A7 fixed, a broken run recreated, 8-page budget
+
+- **A7 rarity baseline, first run invalid.** It retracted all 6,484 training patterns at every K: the loop learns a key once, so its edge count is always 1. `experiments/dedale_host_replay.py` now counts each key's frequency over the training events (`_training_frequencies`). Re-run; results in `experiments/dedale_results/tier1_scores.json` and `experiments/RESULTS.md` (Paper revision section).
+- **A broken run on disk.** `D:\agentsoc_data\runs\dedale_host_gated_nce_F_nce\cases.sqlite` (dated 2026-10-18 15:42) held 0 cases although `cases.jsonl` held 856. Re-scoring with it blanked the clean row's injected-case counts in `e1_scores.json` and the "What NCE is shown" line of RESULTS.md. The old directory was kept as `_broken_20261122_dedale_host_gated_nce_F_nce`; the replay was recreated offline. Its summary equals the old one except runtime and three keys added later with default values, and `e1_scores.json` re-scores identical to the committed file.
+- **RESULTS.md rebuilt** after the 8 missing hardened (`A_`) replays were recreated. Only the date line was removed; the Paper revision section was added. Suite: 810 passed, 1 deselected.
+- **Tier 2 keys.** The user added 5 Gemini keys (13 in all). T2.1 was stopped after 562 stored records and restarted with 13 workers; the 27 timeouts in the first 2 minutes came from 13 child processes starting at once.
+- **Paper length.** The draft is 9 pages in Word at 8.5 pt with 0.35 in margins, about 14 pages in IEEE format. The user set 8 pages; the budget is in `paper/PAGE_BUDGET.md` (about 4,750 words of body text, appendices to the repo, Figs. 5 and 6 cut). First rewrite draft: `paper/REVISION_DRAFT.md`, about 3,600 words of body text, all numbers from RESULTS.md (the K-row attack-pattern count from `tier1_scores.json`).
+
+### 2026-11-22: paper revision decided (P10); design of A10, the persuaded analyst
+- **Context:** a review of the paper draft listed blockers. Assessed: the offline items (Tier 1) are worth doing; four of the review's premises are contradicted by the repository (E1's payloads sit in command lines, of which 1 of 797 exceeds 512 characters; the undefended agent's prompt includes structured fields, `agent/baseline_agent.py:74-77`; the frozen condition already is a clean-weeks allowlist; the gate did learn under the acting rule and with D7 off).
+- **Decided (P10, user):** Tier 1 in scope, offline, no pipeline change, a design approved before each run. A10's safeguard is future work.
+- **A10 design written** (`experiments/PERSUADED_ANALYST_DESIGN.md`), from facts checked read-only on `dedale_host_gated_nce_analyst_E1_fake_approval`: attacker text reaches 38 of 72 attack cases (CLIENT2 17 / 35, CLIENT1 21 / 37); CLIENT2's first attack case is text-free, CLIENT1's first carries text. Predictions written before any run: per-case persuasion is undone by B5; host-wide persuasion can leave CLIENT1 unconfirmed, so its attack patterns stay learned.
+
 ### 2026-11-22: repository audit and tracking-file rebuild
 - **Done:** full audit of every document against the code, the result files and real runs, on branch `chore/repo-audit-tracking`. Report: [docs/_audit_report.md](docs/_audit_report.md).
 - **Runs** (all offline, no API call):

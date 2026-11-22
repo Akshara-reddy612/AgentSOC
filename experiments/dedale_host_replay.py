@@ -11,6 +11,7 @@ becomes a host alert -> cases -> triage gate -> gated learning.
             [--nce live|cache --max-calls N] [--detectors lineage logon lsass_access] [--until 2025-01-08]
             [--no-unlearn] [--closed-world] [--inject suppress|fake_approval|steer]
             [--tag NAME] [--case-store] --overwrite
+            [--analyst-persuaded Q --persuasion case|host]   (A10, with --inject and --analyst oracle)
 
 Writes outside the repo (data root = $AGENTSOC_DATA_DIR, default <repo>/../agentsoc_data):
     ks/dedale_host_<run>.sqlite                the run's Knowledge Store
@@ -88,6 +89,35 @@ def case_record(case: Case, decision: Decision | None) -> dict:
     return rec
 
 
+def _training_frequencies(detectors: tuple[str, ...]) -> Counter:
+    """How often each detector key occurs in the training weeks.  The loop learns a key the first time it is
+    seen and records nothing after, so its edge `count` stays 1 (found 2026-11-22: the first A7 run used that
+    count and retracted every training pattern); the frequency must be counted from the events."""
+    freq: Counter = Counter()
+    for at, event in iter_events(TRAINING_END):
+        for name in detectors:
+            k = DETECTORS[name].key(event)
+            if k is not None:
+                e = DETECTORS[name].edge(k)
+                freq[(e.src, e.dst, json.dumps(e.key))] += 1
+    return freq
+
+
+def _retract_rare(db: KnowledgeDB, k: int, freq: Counter) -> int:
+    """Tier 1 baseline (P10): retract training-learned detector patterns that occurred fewer than `k` times."""
+    n = 0
+    for src, dst, key, _, _ in db.learned_edges({"training"}):
+        attrs = db.edge_attrs(src, dst, key)
+        if attrs is None or "detector" not in attrs:            # only detector patterns (not HAS_PRIOR_ACCESS)
+            continue
+        seen = freq.get((src, dst, json.dumps(key)), 0)
+        if seen < k:
+            db.retract_edge(src, dst, key, writer="experiment:min_train_count", at=TRAINING_END,
+                            reason=f"baseline: seen {seen} < {k} times in training")
+            n += 1
+    return n
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--mode", required=True, choices=LEARNING_MODES)
@@ -97,6 +127,11 @@ def main() -> None:
     ap.add_argument("--analyst-false-alarm", type=float, default=0.0,
                     help="share of benign verdicts given as malicious")
     ap.add_argument("--analyst-seed", type=int, default=0, help="seed of the analyst's mistakes (reproducible)")
+    ap.add_argument("--analyst-persuaded", type=float, default=0.0,
+                    help="A10: probability that the attacker's injected text talks the analyst out of a malicious "
+                         "verdict (needs --inject and --analyst oracle; 0 = off)")
+    ap.add_argument("--persuasion", default="case", choices=["case", "host"],
+                    help="A10 model: per case, or host-wide once persuaded (experiments/analyst_sim.Persuaded)")
     ap.add_argument("--nce", default="off", choices=["off", "live", "cache"],
                     help="live: Gemini NCE on cases reaching the pipeline (API calls; cached; needs budget approval); "
                          "cache: cached NCE results only, never an API call")
@@ -111,9 +146,18 @@ def main() -> None:
     ap.add_argument("--tag", default=None, help="suffix for the run name (keeps earlier runs of the same condition)")
     ap.add_argument("--case-store", action="store_true", help="also record cases in a case store (review loop)")
     ap.add_argument("--overwrite", action="store_true")
+    ap.add_argument("--gate-delay", type=float, default=24.0,
+                    help="Tier 1 (P10): hours a dismissed case waits before the gate learns it (default 24 = GATE_DELAY)")
+    ap.add_argument("--unlearn-lookback", type=float, default=7.0,
+                    help="Tier 1 (P10): days of learning B5 retracts on confirmation (default 7 = UNLEARN_LOOKBACK)")
+    ap.add_argument("--min-train-count", type=int, default=1,
+                    help="Tier 1 (P10) baseline: a training pattern counts as normal only if seen at least K times "
+                         "(rarer ones are retracted when training ends; default 1 = all)")
     ap.add_argument("--llm-authority", default="full", choices=["full", "escalate"],
                     help="escalate: asymmetric trust, NCE may raise scrutiny but never lower it (decision P9 A)")
     args = ap.parse_args()
+    if args.analyst_persuaded and not (args.inject and args.analyst == "oracle"):
+        raise SystemExit("--analyst-persuaded needs --inject (the attacker's text) and --analyst oracle")
 
     run = args.mode + ("_nce" if args.nce != "off" else "") + ("_analyst" if args.analyst == "oracle" else "")
     run += f"_{args.tag}" if args.tag else ""
@@ -134,13 +178,20 @@ def main() -> None:
         from experiments.dedale_inject import Injector
         injector = Injector(args.inject, load_host_labels())
 
-    analyst = oracle = None
+    analyst = oracle = persuader = None
     if args.analyst == "oracle":       # the only place the replay touches ground truth (separate condition)
         from experiments.analyst_sim import noisy
         from experiments.dedale_host_score import host_oracle
         oracle = host_oracle()
-        analyst = (noisy(oracle, miss=args.analyst_miss, false_alarm=args.analyst_false_alarm, seed=args.analyst_seed)
-                   if args.analyst_miss or args.analyst_false_alarm else oracle)
+        base = oracle
+        if args.analyst_persuaded:     # A10: persuasion acts on the true verdict; random mistakes after it
+            from experiments.analyst_sim import Persuaded
+            from experiments.dedale_inject import FAMILIES
+            persuader = Persuaded(oracle, templates=FAMILIES[args.inject], q=args.analyst_persuaded,
+                                  model=args.persuasion, seed=args.analyst_seed)
+            base = persuader
+        analyst = (noisy(base, miss=args.analyst_miss, false_alarm=args.analyst_false_alarm, seed=args.analyst_seed)
+                   if args.analyst_miss or args.analyst_false_alarm else base)
 
     case_store = None
     if args.case_store:
@@ -165,6 +216,8 @@ def main() -> None:
             alerts_out.write(json.dumps([case.case_id, *alert["event_ref"]]) + "\n")
             if oracle is not None:
                 oracle.observe_alert(case, alert)
+            if persuader is not None:
+                persuader.observe_alert(case, alert)
 
         gate_options, nce = {}, None
         from experiments.dedale_nce import CACHE as nce_cache
@@ -187,15 +240,25 @@ def main() -> None:
             gate_options = {"nce": nce}
         if args.llm_authority != "full":
             gate_options["llm_authority"] = args.llm_authority
+        if args.unlearn_lookback != 7.0:       # experiment setting for this run only; the module constant is not edited
+            import perception.soc_loop as soc_loop_module
+            soc_loop_module.UNLEARN_LOOKBACK = timedelta(days=args.unlearn_lookback)
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
-                       case_store=case_store, unlearn_on_confirm=not args.no_unlearn)
+                       case_store=case_store, unlearn_on_confirm=not args.no_unlearn,
+                       gate_delay=timedelta(hours=args.gate_delay))
+        thresholded = args.min_train_count <= 1
+        train_freq = _training_frequencies(tuple(args.detectors)) if not thresholded else None
         last = TRAINING_START
         events = iter_events(until)
         while chunk := list(islice(events, CHUNK)):
             with db.batch(), (case_store.batch() if case_store else nullcontext()):   # one transaction per chunk
                 for at, event in chunk:
+                    if not thresholded and at >= TRAINING_END:     # baseline: forget rare training patterns
+                        loop.tick(TRAINING_END)
+                        retracted_rare = _retract_rare(db, args.min_train_count, train_freq)
+                        thresholded = True
                     if injector is not None:
                         event = injector(event)
                     last = max(at, last)
@@ -216,10 +279,18 @@ def main() -> None:
         **({"analyst_delay_h": args.analyst_delay, "analyst_miss": args.analyst_miss,
             "analyst_false_alarm": args.analyst_false_alarm, "analyst_seed": args.analyst_seed}
            if args.analyst == "oracle" else {}),
+        **({"analyst_persuaded": args.analyst_persuaded, "persuasion": args.persuasion,
+            "persuaded_verdicts": dict(Counter(why for *_, why in persuader.persuaded)),
+            "persuaded_hosts": {h: _iso(at) for h, at in persuader.persuaded_hosts.items()}}
+           if persuader is not None else {}),
         "nce": args.nce, "nce_live_calls": nce.live_calls if nce else 0, "nce_cache_hits": nce.cache_hits if nce else 0,
         "nce_cache_misses": nce.cache_misses if nce else 0, "unlearn_on_confirm": not args.no_unlearn,
         "closed_world": args.closed_world, "inject": args.inject, "llm_authority": args.llm_authority,
         "injected_events": injector.injected if injector else 0,
+        **({"gate_delay_h": args.gate_delay} if args.gate_delay != 24.0 else {}),
+        **({"unlearn_lookback_days": args.unlearn_lookback} if args.unlearn_lookback != 7.0 else {}),
+        **({"min_train_count": args.min_train_count, "training_patterns_retracted": retracted_rare}
+           if args.min_train_count > 1 else {}),
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,

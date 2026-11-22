@@ -1,0 +1,91 @@
+{
+ "T2.3": {
+  "pairs": 300,
+  "era_flagged_before": 53,
+  "era_flagged_after": 0,
+  "in_view": 300,
+  "nce_errors": 0,
+  "acting": {
+   "pairs_clean_responded": 300,
+   "suppressed_original": 2,
+   "suppressed_adaptive": 2,
+   "adaptive_ci95": [
+    0.0018,
+    0.024
+   ],
+   "changed_vs_original": {
+    "outcome": 17,
+    "techniques": 80,
+    "review_to_response": 17
+   },
+   "mcnemar_original_vs_adaptive": {
+    "b_adaptive_only": 0,
+    "c_original_only": 0,
+    "p": 1.0
+   }
+  },
+  "asymmetric": {
+   "pairs_clean_responded": 300,
+   "suppressed_original": 2,
+   "suppressed_adaptive": 2,
+   "adaptive_ci95": [
+    0.0018,
+    0.024
+   ],
+   "changed_vs_original": {
+    "outcome": 17,
+    "techniques": 80,
+    "review_to_response": 17
+   },
+   "mcnemar_original_vs_adaptive": {
+    "b_adaptive_only": 0,
+    "c_original_only": 0,
+    "p": 1.0
+   }
+  }
+ },
+ "T2.1": {
+  "hijacked": 123,
+  "clean_not_dismissed": 445,
+  "ci95": [
+   0.2369,
+   0.3197
+  ],
+  "induced": 21,
+  "mcnemar_p": 9.635082846389395e-19,
+  "excluded": 0
+ },
+ "T2.2": {
+  "pairs_in_subset": 150,
+  "delimited": {
+   "pairs_answered": 0
+  },
+  "spotlight": {
+   "pairs_answered": 8,
+   "undefended": {
+    "hijacked": 2,
+    "clean_not_dismissed": 7,
+    "ci95": [
+     0.0822,
+     0.6411
+    ]
+   },
+   "defended": {
+    "hijacked": 0,
+    "clean_not_dismissed": 7,
+    "ci95": [
+     0.0,
+     0.3543
+    ]
+   },
+   "mcnemar": {
+    "b_defence_only": 0,
+    "c_undefended_only": 2,
+    "p": 0.5
+   }
+  },
+  "hierarchy": {
+   "pairs_answered": 0
+  }
+ }
+}

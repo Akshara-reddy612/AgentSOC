@@ -1,4 +1,4 @@
-# Results (frozen 2026-10-31)
+# Results (frozen 2026-11-22)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
@@ -138,6 +138,104 @@ Simulated analyst (oracle) through the case-store inbox, B5 on, different respon
 With 5% false alarms on the network, approved blocks would have hit benign traffic 8 times (perfect analyst: 0).
 
 **Attack steps (host, gated + analyst 4 h, B5 on):** Initial access on client 2 (phishing macro, dropper): 20 cases, first after 1.2 min; Lateral movement to client 1 (PrintNightmare): 11 cases, first after 28.5 min; Collection: client 1 to the internal server over SSH: 11 cases, first after 30.0 min; Exfiltration to the attacker: 4 cases, first after 1265.0 min
+
+## Paper revision (decisions P10, P11; 2026-11-22)
+
+Offline replays of DEDALE host logs (recorded LLM answers only), added after the frozen results above; designs in `experiments/TIER1_EXPERIMENTS_DESIGN.md` and `experiments/PERSUADED_ANALYST_DESIGN.md`.
+
+**Detection metrics** (from `final_host_scores.json`; a case holding a labelled class-1 event is an attack case; time to detect = minutes from each attack step's start to its first reviewed case):
+
+| Condition | Precision (cases) | Attack cases reviewed / raised (ungated raises only 38: it learned the rest) | Benign reviews / day | Benign cases dismissed unreviewed | Time to detect per attack step (min) |
+|:--|--:|--:|--:|--:|:--|
+| static (nothing learned) | 0.1% | 80/80 | 6089.7 | 0/85256 | 1.2 / 28.5 / 30 / 1265 |
+| frozen | 7.9% | 72/72 | 60.1 | 0/841 | 1.2 / 28.5 / 30 / 1265 |
+| gated | 7.9% | 72/72 | 60.1 | 0/841 | 1.2 / 28.5 / 30 / 1265 |
+| ungated | 9.9% | 38/38 | 24.6 | 1/346 | 1.2 / 28.5 / 30 / - |
+| gated + analyst 4 h | 15.1% | 72/72 | 28.9 | 0/405 | 1.2 / 28.5 / 30 / 1265 |
+| gated + NCE (acting rule) | 9.4% | 72/72 | 49.6 | 89/784 | 1.2 / 28.5 / 30 / 1265 |
+| gated + NCE (asymmetric trust) | 7.9% | 72/72 | 60.1 | 0/841 | 1.2 / 28.5 / 30 / 1265 |
+| gated + NCE + analyst (asymmetric trust) | 15.1% | 72/72 | 28.9 | 0/405 | 1.2 / 28.5 / 30 / 1265 |
+
+*Derived (paper text):* learning the clean weeks cuts host reviews from 6095.4 to 65.2 per day, 98.9% fewer; 400 of the 473 labelled attack events the static detectors alert on still alert (84.6%); the other 73 match routine activity learned in the clean weeks.
+E1 under asymmetric trust: 0/72 attack cases dismissed for every payload, 95% Wilson CI 0.0%-5.1%.
+
+**A simple memory baseline:** a pattern from the two clean weeks counts as normal only if it occurred at least K times (K = 1 is the clean-weeks allowlist, i.e. the frozen store). NCE off, no analyst.
+
+| K | Reviews / day | Attack cases raised | Labelled attack events alerted | Attack cases learned | Precision | Training patterns forgotten |
+|--:|--:|--:|--:|--:|--:|--:|
+| 1 | 65.2 | 72 | 400 | 0 | 7.9% | 0 |
+| 2 | 86.4 | 72 | 400 | 0 | 5.9% | 579 |
+| 5 | 163.4 | 72 | 400 | 0 | 3.1% | 1053 |
+| 10 | 718.7 | 72 | 400 | 0 | 0.7% | 1982 |
+
+Gated learning gives the same numbers as frozen at every K (`tier1_scores.json`).
+
+**Learning-gate delay**, where the gate learns: host logs with NCE under the acting rule, and network alerts with unreasoned cases dismissed (D7 off). 24 h is the frozen value.
+
+| Delay | Host: reviews / day | Host: patterns learned through the gate | Host: attack cases learned | Network: reviews / day | Network: edges learned through the gate | Network: attack patterns learned |
+|:--|--:|--:|--:|--:|--:|--:|
+| 1h | 55.0 | 16 | 0 | 7.9 | 671 | 0 |
+| 24h | 54.8 | 13 | 0 | 7.9 | 616 | 0 |
+| 72h | 59.2 | 4 | 0 | 7.9 | 512 | 0 |
+| 168h | 58.9 | 0 | 0 | 7.9 | 256 | 0 |
+
+**Analyst mistakes over seeds** (seed 0 = the frozen run above, plus seeds 1-5; analyst after 4 h; mean ± sd (min-max)):
+
+| Condition | Seeds | Attack cases' patterns learned | Labelled attack events alerted | Reviews / day |
+|:--|--:|--:|--:|--:|
+| misses 5%, B5 on | 6 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 34.1 ± 0 (34.1-34.1) |
+| misses 5%, B5 off | 6 | 7.33 ± 2.42 (5-11) | 386.5 ± 18.48 (349-397) | 30.62 ± 0.13 (30.4-30.8) |
+| misses 20%, B5 on | 6 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 34.1 ± 0 (34.1-34.1) |
+| misses 20%, B5 off | 6 | 18.5 ± 2.81 (15-23) | 333.33 ± 61.14 (253-377) | 29.95 ± 0.44 (29.1-30.4) |
+| 5% false alarms, B5 on | 6 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 41.83 ± 2.25 (38.7-44.6) |
+| 5% false alarms, B5 off | 6 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 31.38 ± 0.23 (31-31.7) |
+
+**Unlearning lookback** (how far back B5 retracts; analyst misses 20%, B5 on; 7 days = frozen):
+
+| Lookback | Seeds | Attack cases' patterns learned | Labelled attack events alerted | Reviews / day |
+|:--|--:|--:|--:|--:|
+| 1d | 5 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 33.3 ± 0 (33.3-33.3) |
+| 3d | 5 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 34.1 ± 0 (34.1-34.1) |
+| 7d | 6 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 34.1 ± 0 (34.1-34.1) |
+| 14d | 5 | 0 ± 0 (0-0) | 400 ± 0 (400-400) | 34.1 ± 0 (34.1-34.1) |
+
+**The persuaded analyst (A10):** the attacker's command-line text (E1's `fake_approval` payload) talks the simulated analyst out of a `malicious` verdict with probability q. *Per case*: only cases that show the text; *host-wide*: once persuaded on a host, every later case there. Asymmetric trust, NCE from E1's recorded answers, analyst after 4 h; 'miss' = extra random misses. The text reaches 38 of the 72 attack cases; `suppress` and `steer` give the same numbers at q = 1.0 (`persuaded_analyst_scores.json`).
+
+| Persuasion | q | Extra miss | B5 | Seeds | Attack cases' patterns learned (end) | Longest learned (h) | Labelled attack events alerted | Reviews / day | CLIENT1 never confirmed |
+|:--|--:|--:|:--|--:|--:|--:|--:|--:|--:|
+| per case | 1 | 0% | on | 1 | 0 | 0 | 400 | 34.1 | 0/1 |
+| per case | 1 | 0% | off | 1 | 21 | 321.9 | 351 | 29.6 | 0/1 |
+| per case | 1 | 20% | on | 10 | 0 | 0 | 400 | 34.08 | 0/10 |
+| per case | 1 | 20% | off | 10 | 31 | 321.95 | 271.6 | 29.11 | 1/10 |
+| per case | 0.5 | 0% | on | 5 | 0 | 0 | 400 | 34.1 | 0/5 |
+| per case | 0.5 | 0% | off | 5 | 17.8 | 321.54 | 365.8 | 30.02 | 0/5 |
+| host-wide | 1 | 0% | on | 1 | 13 | 268.5 | 262 | 30 | 1/1 |
+| host-wide | 1 | 0% | off | 1 | 32 | 321.9 | 99 | 28.4 | 1/1 |
+| host-wide | 1 | 20% | on | 10 | 13 | 268.5 | 262 | 30 | 10/10 |
+| host-wide | 1 | 20% | off | 10 | 32.9 | 321.95 | 99 | 28.4 | 10/10 |
+| host-wide | 0.5 | 0% | on | 5 | 5.2 | 107.4 | 344.8 | 31.74 | 2/5 |
+| host-wide | 0.5 | 0% | off | 5 | 33.2 | 321.54 | 174.2 | 28.64 | 3/5 |
+
+CLIENT2 was confirmed in every run: its first attack case carries no attacker text.
+
+**Tier 2: live runs on GUIDE v2** (gemini-3.1-flash-lite; `experiments/tier2_scores.json`; design `experiments/TIER2_PLAN.md`). Hijacked = the clean twin is not dismissed and the contaminated twin is; suppressed = the clean twin gets a response and the contaminated twin does not.
+
+*T2.1, the undefended agent on the held-out split:* hijacked 123/445 (27.6%, 95% CI 23.7%-32.0%); McNemar b=123, c=21, p=9.6e-19.
+
+*T2.2, prompt-level defences on the undefended agent,* first 150 dev pairs (the same pairs for every defence; the undefended row uses its recorded answers on the same pairs):
+
+| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |
+|:--|--:|--:|--:|:--|:--|--:|
+| delimited | 0 | - | - | - | - | - |
+| spotlight | 8 | 2/7 | 0/7 | 0.0%-35.4% | 0 / 2 | 0.5 |
+| hierarchy | 0 | - | - | - | - | - |
+
+*T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.
+
+| Rule | Suppressed, original payload | Suppressed, adaptive payload | 95% CI | McNemar b / c | Outcome changed | Techniques changed | Review removed (back to the clean response) |
+|:--|--:|--:|:--|:--|--:|--:|--:|
+| acting rule | 2/300 | 2/300 | 0.2%-2.4% | 0 / 0 | 17 | 80 | 17 |
+| asymmetric trust | 2/300 | 2/300 | 0.2%-2.4% | 0 / 0 | 17 | 80 | 17 |
 
 ## Limits
 

@@ -1,0 +1,4100 @@
+{
+ "conditions": [
+  {
+   "family": "fake_approval",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 34.1,
+    "sd": 0.0,
+    "min": 34.1,
+    "max": 34.1
+   },
+   "class1_events_alerted": {
+    "mean": 400.0,
+    "sd": 0.0,
+    "min": 400,
+    "max": 400
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0,
+    "max": 0
+   },
+   "patterns_ever_learned": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "min": 1,
+    "max": 1
+   },
+   "peak_learned_at_once": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "min": 1,
+    "max": 1
+   },
+   "exposure_hours_total": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "exposure_hours_max": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "CLIENT1_never_confirmed": "0/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 38.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 29.6,
+    "sd": 0.0,
+    "min": 29.6,
+    "max": 29.6
+   },
+   "class1_events_alerted": {
+    "mean": 351.0,
+    "sd": 0.0,
+    "min": 351,
+    "max": 351
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "patterns_ever_learned": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "peak_learned_at_once": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "exposure_hours_total": {
+    "mean": 5743.4,
+    "sd": 0.0,
+    "min": 5743.4,
+    "max": 5743.4
+   },
+   "exposure_hours_max": {
+    "mean": 321.9,
+    "sd": 0.0,
+    "min": 321.9,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "0/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 21.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.2,
+   "b5": true,
+   "seeds": 10,
+   "reviews_per_day": {
+    "mean": 34.08,
+    "sd": 0.06,
+    "min": 33.9,
+    "max": 34.1
+   },
+   "class1_events_alerted": {
+    "mean": 400.0,
+    "sd": 0.0,
+    "min": 400,
+    "max": 400
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0,
+    "max": 0
+   },
+   "patterns_ever_learned": {
+    "mean": 1.1,
+    "sd": 0.32,
+    "min": 1,
+    "max": 2
+   },
+   "peak_learned_at_once": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "min": 1,
+    "max": 1
+   },
+   "exposure_hours_total": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "exposure_hours_max": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "CLIENT1_never_confirmed": "0/10",
+   "CLIENT2_never_confirmed": "0/10",
+   "persuaded_text": 38.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.2,
+   "b5": false,
+   "seeds": 10,
+   "reviews_per_day": {
+    "mean": 29.11,
+    "sd": 0.3,
+    "min": 28.6,
+    "max": 29.6
+   },
+   "class1_events_alerted": {
+    "mean": 271.6,
+    "sd": 69.16,
+    "min": 134,
+    "max": 346
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 31.0,
+    "sd": 4.37,
+    "min": 25,
+    "max": 38
+   },
+   "patterns_ever_learned": {
+    "mean": 26.5,
+    "sd": 1.18,
+    "min": 25,
+    "max": 29
+   },
+   "peak_learned_at_once": {
+    "mean": 26.5,
+    "sd": 1.18,
+    "min": 25,
+    "max": 29
+   },
+   "exposure_hours_total": {
+    "mean": 7233.58,
+    "sd": 254.68,
+    "min": 6854.0,
+    "max": 7713.2
+   },
+   "exposure_hours_max": {
+    "mean": 321.95,
+    "sd": 0.05,
+    "min": 321.9,
+    "max": 322.0
+   },
+   "CLIENT1_never_confirmed": "1/10",
+   "CLIENT2_never_confirmed": "0/10",
+   "persuaded_text": 21.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "case",
+   "q": 0.5,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 5,
+   "reviews_per_day": {
+    "mean": 34.1,
+    "sd": 0.0,
+    "min": 34.1,
+    "max": 34.1
+   },
+   "class1_events_alerted": {
+    "mean": 400.0,
+    "sd": 0.0,
+    "min": 400,
+    "max": 400
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0,
+    "max": 0
+   },
+   "patterns_ever_learned": {
+    "mean": 0.4,
+    "sd": 0.55,
+    "min": 0,
+    "max": 1
+   },
+   "peak_learned_at_once": {
+    "mean": 0.4,
+    "sd": 0.55,
+    "min": 0,
+    "max": 1
+   },
+   "exposure_hours_total": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "exposure_hours_max": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "CLIENT1_never_confirmed": "0/5",
+   "CLIENT2_never_confirmed": "0/5",
+   "persuaded_text": 19.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "case",
+   "q": 0.5,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 5,
+   "reviews_per_day": {
+    "mean": 30.02,
+    "sd": 0.26,
+    "min": 29.7,
+    "max": 30.4
+   },
+   "class1_events_alerted": {
+    "mean": 365.8,
+    "sd": 15.83,
+    "min": 352,
+    "max": 385
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 17.8,
+    "sd": 2.39,
+    "min": 14,
+    "max": 20
+   },
+   "patterns_ever_learned": {
+    "mean": 13.4,
+    "sd": 2.07,
+    "min": 10,
+    "max": 15
+   },
+   "peak_learned_at_once": {
+    "mean": 13.4,
+    "sd": 2.07,
+    "min": 10,
+    "max": 15
+   },
+   "exposure_hours_total": {
+    "mean": 3574.02,
+    "sd": 594.7,
+    "min": 2550.9,
+    "max": 4026.8
+   },
+   "exposure_hours_max": {
+    "mean": 321.54,
+    "sd": 0.49,
+    "min": 321.0,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "0/5",
+   "CLIENT2_never_confirmed": "0/5",
+   "persuaded_text": 13.4,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 30.0,
+    "sd": 0.0,
+    "min": 30.0,
+    "max": 30.0
+   },
+   "class1_events_alerted": {
+    "mean": 262.0,
+    "sd": 0.0,
+    "min": 262,
+    "max": 262
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "patterns_ever_learned": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "peak_learned_at_once": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "exposure_hours_total": {
+    "mean": 3252.8,
+    "sd": 0.0,
+    "min": 3252.8,
+    "max": 3252.8
+   },
+   "exposure_hours_max": {
+    "mean": 268.5,
+    "sd": 0.0,
+    "min": 268.5,
+    "max": 268.5
+   },
+   "CLIENT1_never_confirmed": "1/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 40.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 28.4,
+    "sd": 0.0,
+    "min": 28.4,
+    "max": 28.4
+   },
+   "class1_events_alerted": {
+    "mean": 99.0,
+    "sd": 0.0,
+    "min": 99,
+    "max": 99
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "patterns_ever_learned": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "peak_learned_at_once": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "exposure_hours_total": {
+    "mean": 8919.7,
+    "sd": 0.0,
+    "min": 8919.7,
+    "max": 8919.7
+   },
+   "exposure_hours_max": {
+    "mean": 321.9,
+    "sd": 0.0,
+    "min": 321.9,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "1/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 30.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.2,
+   "b5": true,
+   "seeds": 10,
+   "reviews_per_day": {
+    "mean": 30.0,
+    "sd": 0.0,
+    "min": 30.0,
+    "max": 30.0
+   },
+   "class1_events_alerted": {
+    "mean": 262.0,
+    "sd": 0.0,
+    "min": 262,
+    "max": 262
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "patterns_ever_learned": {
+    "mean": 13.1,
+    "sd": 0.32,
+    "min": 13,
+    "max": 14
+   },
+   "peak_learned_at_once": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "exposure_hours_total": {
+    "mean": 3252.81,
+    "sd": 0.03,
+    "min": 3252.8,
+    "max": 3252.9
+   },
+   "exposure_hours_max": {
+    "mean": 268.5,
+    "sd": 0.0,
+    "min": 268.5,
+    "max": 268.5
+   },
+   "CLIENT1_never_confirmed": "10/10",
+   "CLIENT2_never_confirmed": "0/10",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 40.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.2,
+   "b5": false,
+   "seeds": 10,
+   "reviews_per_day": {
+    "mean": 28.4,
+    "sd": 0.0,
+    "min": 28.4,
+    "max": 28.4
+   },
+   "class1_events_alerted": {
+    "mean": 99.0,
+    "sd": 0.0,
+    "min": 99,
+    "max": 99
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 32.9,
+    "sd": 0.74,
+    "min": 32,
+    "max": 34
+   },
+   "patterns_ever_learned": {
+    "mean": 32.9,
+    "sd": 0.74,
+    "min": 32,
+    "max": 34
+   },
+   "peak_learned_at_once": {
+    "mean": 32.9,
+    "sd": 0.74,
+    "min": 32,
+    "max": 34
+   },
+   "exposure_hours_total": {
+    "mean": 9209.48,
+    "sd": 237.56,
+    "min": 8919.7,
+    "max": 9563.6
+   },
+   "exposure_hours_max": {
+    "mean": 321.95,
+    "sd": 0.05,
+    "min": 321.9,
+    "max": 322.0
+   },
+   "CLIENT1_never_confirmed": "10/10",
+   "CLIENT2_never_confirmed": "0/10",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 30.0
+  },
+  {
+   "family": "fake_approval",
+   "model": "host",
+   "q": 0.5,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 5,
+   "reviews_per_day": {
+    "mean": 31.74,
+    "sd": 1.59,
+    "min": 30.0,
+    "max": 32.9
+   },
+   "class1_events_alerted": {
+    "mean": 344.8,
+    "sd": 75.59,
+    "min": 262,
+    "max": 400
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 5.2,
+    "sd": 7.12,
+    "min": 0,
+    "max": 13
+   },
+   "patterns_ever_learned": {
+    "mean": 5.2,
+    "sd": 7.12,
+    "min": 0,
+    "max": 13
+   },
+   "peak_learned_at_once": {
+    "mean": 5.2,
+    "sd": 7.12,
+    "min": 0,
+    "max": 13
+   },
+   "exposure_hours_total": {
+    "mean": 1301.12,
+    "sd": 1781.63,
+    "min": 0,
+    "max": 3252.8
+   },
+   "exposure_hours_max": {
+    "mean": 107.4,
+    "sd": 147.06,
+    "min": 0.0,
+    "max": 268.5
+   },
+   "CLIENT1_never_confirmed": "2/5",
+   "CLIENT2_never_confirmed": "0/5",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 48.6
+  },
+  {
+   "family": "fake_approval",
+   "model": "host",
+   "q": 0.5,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 5,
+   "reviews_per_day": {
+    "mean": 28.64,
+    "sd": 0.13,
+    "min": 28.4,
+    "max": 28.7
+   },
+   "class1_events_alerted": {
+    "mean": 174.2,
+    "sd": 57.34,
+    "min": 99,
+    "max": 232
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 33.2,
+    "sd": 1.64,
+    "min": 32,
+    "max": 35
+   },
+   "patterns_ever_learned": {
+    "mean": 30.0,
+    "sd": 1.87,
+    "min": 28,
+    "max": 32
+   },
+   "peak_learned_at_once": {
+    "mean": 30.0,
+    "sd": 1.87,
+    "min": 28,
+    "max": 32
+   },
+   "exposure_hours_total": {
+    "mean": 8211.74,
+    "sd": 654.79,
+    "min": 7513.1,
+    "max": 8919.7
+   },
+   "exposure_hours_max": {
+    "mean": 321.54,
+    "sd": 0.49,
+    "min": 321.0,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "3/5",
+   "CLIENT2_never_confirmed": "0/5",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 28.0
+  },
+  {
+   "family": "steer",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 34.1,
+    "sd": 0.0,
+    "min": 34.1,
+    "max": 34.1
+   },
+   "class1_events_alerted": {
+    "mean": 400.0,
+    "sd": 0.0,
+    "min": 400,
+    "max": 400
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0,
+    "max": 0
+   },
+   "patterns_ever_learned": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "min": 1,
+    "max": 1
+   },
+   "peak_learned_at_once": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "min": 1,
+    "max": 1
+   },
+   "exposure_hours_total": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "exposure_hours_max": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "CLIENT1_never_confirmed": "0/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 38.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "steer",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 29.6,
+    "sd": 0.0,
+    "min": 29.6,
+    "max": 29.6
+   },
+   "class1_events_alerted": {
+    "mean": 351.0,
+    "sd": 0.0,
+    "min": 351,
+    "max": 351
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "patterns_ever_learned": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "peak_learned_at_once": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "exposure_hours_total": {
+    "mean": 5743.4,
+    "sd": 0.0,
+    "min": 5743.4,
+    "max": 5743.4
+   },
+   "exposure_hours_max": {
+    "mean": 321.9,
+    "sd": 0.0,
+    "min": 321.9,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "0/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 21.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "steer",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 30.0,
+    "sd": 0.0,
+    "min": 30.0,
+    "max": 30.0
+   },
+   "class1_events_alerted": {
+    "mean": 262.0,
+    "sd": 0.0,
+    "min": 262,
+    "max": 262
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "patterns_ever_learned": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "peak_learned_at_once": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "exposure_hours_total": {
+    "mean": 3252.8,
+    "sd": 0.0,
+    "min": 3252.8,
+    "max": 3252.8
+   },
+   "exposure_hours_max": {
+    "mean": 268.5,
+    "sd": 0.0,
+    "min": 268.5,
+    "max": 268.5
+   },
+   "CLIENT1_never_confirmed": "1/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 40.0
+  },
+  {
+   "family": "steer",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 28.4,
+    "sd": 0.0,
+    "min": 28.4,
+    "max": 28.4
+   },
+   "class1_events_alerted": {
+    "mean": 99.0,
+    "sd": 0.0,
+    "min": 99,
+    "max": 99
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "patterns_ever_learned": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "peak_learned_at_once": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "exposure_hours_total": {
+    "mean": 8919.7,
+    "sd": 0.0,
+    "min": 8919.7,
+    "max": 8919.7
+   },
+   "exposure_hours_max": {
+    "mean": 321.9,
+    "sd": 0.0,
+    "min": 321.9,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "1/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 30.0
+  },
+  {
+   "family": "suppress",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 34.1,
+    "sd": 0.0,
+    "min": 34.1,
+    "max": 34.1
+   },
+   "class1_events_alerted": {
+    "mean": 400.0,
+    "sd": 0.0,
+    "min": 400,
+    "max": 400
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0,
+    "max": 0
+   },
+   "patterns_ever_learned": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "min": 1,
+    "max": 1
+   },
+   "peak_learned_at_once": {
+    "mean": 1.0,
+    "sd": 0.0,
+    "min": 1,
+    "max": 1
+   },
+   "exposure_hours_total": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "exposure_hours_max": {
+    "mean": 0.0,
+    "sd": 0.0,
+    "min": 0.0,
+    "max": 0.0
+   },
+   "CLIENT1_never_confirmed": "0/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 38.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "suppress",
+   "model": "case",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 29.6,
+    "sd": 0.0,
+    "min": 29.6,
+    "max": 29.6
+   },
+   "class1_events_alerted": {
+    "mean": 351.0,
+    "sd": 0.0,
+    "min": 351,
+    "max": 351
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "patterns_ever_learned": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "peak_learned_at_once": {
+    "mean": 21.0,
+    "sd": 0.0,
+    "min": 21,
+    "max": 21
+   },
+   "exposure_hours_total": {
+    "mean": 5743.4,
+    "sd": 0.0,
+    "min": 5743.4,
+    "max": 5743.4
+   },
+   "exposure_hours_max": {
+    "mean": 321.9,
+    "sd": 0.0,
+    "min": 321.9,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "0/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 21.0,
+   "persuaded_host_wide": 0.0
+  },
+  {
+   "family": "suppress",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": true,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 30.0,
+    "sd": 0.0,
+    "min": 30.0,
+    "max": 30.0
+   },
+   "class1_events_alerted": {
+    "mean": 262.0,
+    "sd": 0.0,
+    "min": 262,
+    "max": 262
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "patterns_ever_learned": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "peak_learned_at_once": {
+    "mean": 13.0,
+    "sd": 0.0,
+    "min": 13,
+    "max": 13
+   },
+   "exposure_hours_total": {
+    "mean": 3252.8,
+    "sd": 0.0,
+    "min": 3252.8,
+    "max": 3252.8
+   },
+   "exposure_hours_max": {
+    "mean": 268.5,
+    "sd": 0.0,
+    "min": 268.5,
+    "max": 268.5
+   },
+   "CLIENT1_never_confirmed": "1/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 40.0
+  },
+  {
+   "family": "suppress",
+   "model": "host",
+   "q": 1.0,
+   "miss": 0.0,
+   "b5": false,
+   "seeds": 1,
+   "reviews_per_day": {
+    "mean": 28.4,
+    "sd": 0.0,
+    "min": 28.4,
+    "max": 28.4
+   },
+   "class1_events_alerted": {
+    "mean": 99.0,
+    "sd": 0.0,
+    "min": 99,
+    "max": 99
+   },
+   "attack_patterns_learned_at_end": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "patterns_ever_learned": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "peak_learned_at_once": {
+    "mean": 32.0,
+    "sd": 0.0,
+    "min": 32,
+    "max": 32
+   },
+   "exposure_hours_total": {
+    "mean": 8919.7,
+    "sd": 0.0,
+    "min": 8919.7,
+    "max": 8919.7
+   },
+   "exposure_hours_max": {
+    "mean": 321.9,
+    "sd": 0.0,
+    "min": 321.9,
+    "max": 321.9
+   },
+   "CLIENT1_never_confirmed": "1/1",
+   "CLIENT2_never_confirmed": "0/1",
+   "persuaded_text": 2.0,
+   "persuaded_host_wide": 30.0
+  }
+ ],
+ "runs": [
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_nob5_s0_fake_approval",
+   "reviews_per_day": 29.7,
+   "test_cases": 416,
+   "attack_cases": {
+    "REVIEW": 56
+   },
+   "class1_events_alerted": 352,
+   "attack_patterns_learned_at_end": 14,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3650.3,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 7,
+    "CLIENT1": 6
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 13
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 373,
+    "malicious": 43
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_nob5_s1_fake_approval",
+   "reviews_per_day": 30.1,
+   "test_cases": 422,
+   "attack_cases": {
+    "REVIEW": 62
+   },
+   "class1_events_alerted": 385,
+   "attack_patterns_learned_at_end": 20,
+   "patterns_ever_learned": 15,
+   "peak_learned_at_once": 15,
+   "still_learned_at_end": 15,
+   "exposure_hours_total": 4026.8,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 9,
+    "CLIENT1": 6
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 15
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 375,
+    "malicious": 47
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_nob5_s2_fake_approval",
+   "reviews_per_day": 29.9,
+   "test_cases": 419,
+   "attack_cases": {
+    "REVIEW": 59
+   },
+   "class1_events_alerted": 355,
+   "attack_patterns_learned_at_end": 19,
+   "patterns_ever_learned": 15,
+   "peak_learned_at_once": 15,
+   "still_learned_at_end": 15,
+   "exposure_hours_total": 3953.4,
+   "exposure_hours_max": 321.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 7,
+    "CLIENT1": 8
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 15
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 375,
+    "malicious": 44
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_nob5_s3_fake_approval",
+   "reviews_per_day": 30.4,
+   "test_cases": 425,
+   "attack_cases": {
+    "REVIEW": 65
+   },
+   "class1_events_alerted": 381,
+   "attack_patterns_learned_at_end": 17,
+   "patterns_ever_learned": 10,
+   "peak_learned_at_once": 10,
+   "still_learned_at_end": 10,
+   "exposure_hours_total": 2550.9,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 5,
+    "CLIENT1": 5
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 10
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:29:30.989000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 370,
+    "malicious": 55
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_nob5_s4_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 60
+   },
+   "class1_events_alerted": 356,
+   "attack_patterns_learned_at_end": 19,
+   "patterns_ever_learned": 14,
+   "peak_learned_at_once": 14,
+   "still_learned_at_end": 14,
+   "exposure_hours_total": 3688.7,
+   "exposure_hours_max": 321.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 7,
+    "CLIENT1": 7
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 14
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:29:30.989000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 374,
+    "malicious": 46
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_s0_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 23
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 428,
+    "malicious": 49
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_s1_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 426,
+    "malicious": 51
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_s2_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 0,
+   "peak_learned_at_once": 0,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {},
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 18
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:28:29.901000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 423,
+    "malicious": 54
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_s3_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 0,
+   "peak_learned_at_once": 0,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {},
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 15
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-09T12:23:52.159000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 420,
+    "malicious": 57
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q050_m00_s4_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 0,
+   "peak_learned_at_once": 0,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {},
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 18
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:28:29.901000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 423,
+    "malicious": 54
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m00_nob5_s0_fake_approval",
+   "reviews_per_day": 29.6,
+   "test_cases": 415,
+   "attack_cases": {
+    "REVIEW": 55
+   },
+   "class1_events_alerted": 351,
+   "attack_patterns_learned_at_end": 21,
+   "patterns_ever_learned": 21,
+   "peak_learned_at_once": 21,
+   "still_learned_at_end": 21,
+   "exposure_hours_total": 5743.4,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 12,
+    "CLIENT1": 9
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 381,
+    "malicious": 34
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m00_nob5_s0_steer",
+   "reviews_per_day": 29.6,
+   "test_cases": 415,
+   "attack_cases": {
+    "REVIEW": 55
+   },
+   "class1_events_alerted": 351,
+   "attack_patterns_learned_at_end": 21,
+   "patterns_ever_learned": 21,
+   "peak_learned_at_once": 21,
+   "still_learned_at_end": 21,
+   "exposure_hours_total": 5743.4,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 12,
+    "CLIENT1": 9
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 381,
+    "malicious": 34
+   },
+   "condition": {
+    "family": "steer",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m00_nob5_s0_suppress",
+   "reviews_per_day": 29.6,
+   "test_cases": 415,
+   "attack_cases": {
+    "REVIEW": 55
+   },
+   "class1_events_alerted": 351,
+   "attack_patterns_learned_at_end": 21,
+   "patterns_ever_learned": 21,
+   "peak_learned_at_once": 21,
+   "still_learned_at_end": 21,
+   "exposure_hours_total": 5743.4,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 12,
+    "CLIENT1": 9
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 381,
+    "malicious": 34
+   },
+   "condition": {
+    "family": "suppress",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m00_s0_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 443,
+    "malicious": 34
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m00_s0_steer",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 443,
+    "malicious": 34
+   },
+   "condition": {
+    "family": "steer",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m00_s0_suppress",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 443,
+    "malicious": 34
+   },
+   "condition": {
+    "family": "suppress",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s0_fake_approval",
+   "reviews_per_day": 29.4,
+   "test_cases": 411,
+   "attack_cases": {
+    "REVIEW": 51
+   },
+   "class1_events_alerted": 210,
+   "attack_patterns_learned_at_end": 35,
+   "patterns_ever_learned": 26,
+   "peak_learned_at_once": 26,
+   "still_learned_at_end": 26,
+   "exposure_hours_total": 7045.6,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 15,
+    "CLIENT1": 11
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 386,
+    "malicious": 25
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s1_fake_approval",
+   "reviews_per_day": 28.9,
+   "test_cases": 404,
+   "attack_cases": {
+    "REVIEW": 44
+   },
+   "class1_events_alerted": 316,
+   "attack_patterns_learned_at_end": 28,
+   "patterns_ever_learned": 26,
+   "peak_learned_at_once": 26,
+   "still_learned_at_end": 26,
+   "exposure_hours_total": 7171.0,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 15,
+    "CLIENT1": 11
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:29:30.987000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 386,
+    "malicious": 18
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s2_fake_approval",
+   "reviews_per_day": 29.4,
+   "test_cases": 411,
+   "attack_cases": {
+    "REVIEW": 51
+   },
+   "class1_events_alerted": 257,
+   "attack_patterns_learned_at_end": 25,
+   "patterns_ever_learned": 25,
+   "peak_learned_at_once": 25,
+   "still_learned_at_end": 25,
+   "exposure_hours_total": 6977.8,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 15,
+    "CLIENT1": 10
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:02:26.328000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 385,
+    "malicious": 26
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s3_fake_approval",
+   "reviews_per_day": 29.1,
+   "test_cases": 407,
+   "attack_cases": {
+    "REVIEW": 47
+   },
+   "class1_events_alerted": 331,
+   "attack_patterns_learned_at_end": 38,
+   "patterns_ever_learned": 29,
+   "peak_learned_at_once": 29,
+   "still_learned_at_end": 29,
+   "exposure_hours_total": 7713.2,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 16,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 389,
+    "malicious": 18
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s4_fake_approval",
+   "reviews_per_day": 28.9,
+   "test_cases": 404,
+   "attack_cases": {
+    "REVIEW": 44
+   },
+   "class1_events_alerted": 242,
+   "attack_patterns_learned_at_end": 26,
+   "patterns_ever_learned": 25,
+   "peak_learned_at_once": 25,
+   "still_learned_at_end": 25,
+   "exposure_hours_total": 6854.0,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 13,
+    "CLIENT1": 12
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 385,
+    "malicious": 19
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s5_fake_approval",
+   "reviews_per_day": 29.6,
+   "test_cases": 414,
+   "attack_cases": {
+    "REVIEW": 54
+   },
+   "class1_events_alerted": 346,
+   "attack_patterns_learned_at_end": 36,
+   "patterns_ever_learned": 27,
+   "peak_learned_at_once": 27,
+   "still_learned_at_end": 27,
+   "exposure_hours_total": 7211.7,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 16,
+    "CLIENT1": 11
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 387,
+    "malicious": 27
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 5
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s6_fake_approval",
+   "reviews_per_day": 29.1,
+   "test_cases": 408,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 336,
+   "attack_patterns_learned_at_end": 31,
+   "patterns_ever_learned": 26,
+   "peak_learned_at_once": 26,
+   "still_learned_at_end": 26,
+   "exposure_hours_total": 7135.0,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 15,
+    "CLIENT1": 11
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 386,
+    "malicious": 22
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 6
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s7_fake_approval",
+   "reviews_per_day": 29.2,
+   "test_cases": 409,
+   "attack_cases": {
+    "REVIEW": 49
+   },
+   "class1_events_alerted": 134,
+   "attack_patterns_learned_at_end": 33,
+   "patterns_ever_learned": 27,
+   "peak_learned_at_once": 27,
+   "still_learned_at_end": 27,
+   "exposure_hours_total": 7434.0,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 16,
+    "CLIENT1": 11
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 387,
+    "malicious": 22
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 7
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s8_fake_approval",
+   "reviews_per_day": 28.9,
+   "test_cases": 405,
+   "attack_cases": {
+    "REVIEW": 45
+   },
+   "class1_events_alerted": 317,
+   "attack_patterns_learned_at_end": 29,
+   "patterns_ever_learned": 27,
+   "peak_learned_at_once": 27,
+   "still_learned_at_end": 27,
+   "exposure_hours_total": 7422.8,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 16,
+    "CLIENT1": 11
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.862000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 387,
+    "malicious": 18
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 8
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_nob5_s9_fake_approval",
+   "reviews_per_day": 28.6,
+   "test_cases": 401,
+   "attack_cases": {
+    "REVIEW": 41
+   },
+   "class1_events_alerted": 227,
+   "attack_patterns_learned_at_end": 29,
+   "patterns_ever_learned": 27,
+   "peak_learned_at_once": 27,
+   "still_learned_at_end": 27,
+   "exposure_hours_total": 7370.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 14,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 21
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 387,
+    "malicious": 14
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 9
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s0_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 446,
+    "malicious": 31
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s1_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 447,
+    "malicious": 30
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s2_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 2,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 1,
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:02:26.328000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 449,
+    "malicious": 28
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s3_fake_approval",
+   "reviews_per_day": 33.9,
+   "test_cases": 474,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 448,
+    "malicious": 26
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s4_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 446,
+    "malicious": 31
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s5_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 449,
+    "malicious": 28
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 5
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s6_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 446,
+    "malicious": 31
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 6
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s7_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 451,
+    "malicious": 26
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 7
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s8_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 447,
+    "malicious": 30
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 8
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Pcase_q100_m20_s9_fake_approval",
+   "reviews_per_day": 34.1,
+   "test_cases": 477,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 1,
+   "peak_learned_at_once": 1,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0.0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {
+    "CLIENT1": 1
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.526000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 38
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 450,
+    "malicious": 27
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "case",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 9
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_nob5_s0_fake_approval",
+   "reviews_per_day": 28.7,
+   "test_cases": 402,
+   "attack_cases": {
+    "REVIEW": 42
+   },
+   "class1_events_alerted": 154,
+   "attack_patterns_learned_at_end": 35,
+   "patterns_ever_learned": 31,
+   "peak_learned_at_once": 31,
+   "still_learned_at_end": 31,
+   "exposure_hours_total": 8556.4,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 12
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 29
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:29:30.989000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 391,
+    "malicious": 11
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_nob5_s1_fake_approval",
+   "reviews_per_day": 28.7,
+   "test_cases": 402,
+   "attack_cases": {
+    "REVIEW": 42
+   },
+   "class1_events_alerted": 154,
+   "attack_patterns_learned_at_end": 35,
+   "patterns_ever_learned": 31,
+   "peak_learned_at_once": 31,
+   "still_learned_at_end": 31,
+   "exposure_hours_total": 8556.4,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 12
+   },
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 29
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:29:30.989000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 391,
+    "malicious": 11
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_nob5_s2_fake_approval",
+   "reviews_per_day": 28.7,
+   "test_cases": 402,
+   "attack_cases": {
+    "REVIEW": 42
+   },
+   "class1_events_alerted": 232,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 28,
+   "peak_learned_at_once": 28,
+   "still_learned_at_end": 28,
+   "exposure_hours_total": 7513.1,
+   "exposure_hours_max": 321.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 15,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 26
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 388,
+    "malicious": 14
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_nob5_s3_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 32,
+   "peak_learned_at_once": 32,
+   "still_learned_at_end": 32,
+   "exposure_hours_total": 8919.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 392,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_nob5_s4_fake_approval",
+   "reviews_per_day": 28.7,
+   "test_cases": 402,
+   "attack_cases": {
+    "REVIEW": 42
+   },
+   "class1_events_alerted": 232,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 28,
+   "peak_learned_at_once": 28,
+   "still_learned_at_end": 28,
+   "exposure_hours_total": 7513.1,
+   "exposure_hours_max": 321.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 15,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 26
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 388,
+    "malicious": 14
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_s0_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_s1_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_s2_fake_approval",
+   "reviews_per_day": 32.9,
+   "test_cases": 461,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 0,
+   "peak_learned_at_once": 0,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {},
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 53
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:28:29.901000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 444,
+    "malicious": 17
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_s3_fake_approval",
+   "reviews_per_day": 32.9,
+   "test_cases": 461,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 0,
+   "peak_learned_at_once": 0,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {},
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 57
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-09T12:23:52.159000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 448,
+    "malicious": 13
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q050_m00_s4_fake_approval",
+   "reviews_per_day": 32.9,
+   "test_cases": 461,
+   "attack_cases": {
+    "REVIEW": 72
+   },
+   "class1_events_alerted": 400,
+   "attack_patterns_learned_at_end": 0,
+   "patterns_ever_learned": 0,
+   "peak_learned_at_once": 0,
+   "still_learned_at_end": 0,
+   "exposure_hours_total": 0,
+   "exposure_hours_max": 0.0,
+   "ever_learned_by_host": {},
+   "confirmed": {
+    "CLIENT1": "2025-01-08T19:28:29.199000Z",
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 53
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T15:00:05.662000Z",
+    "CLIENT1": "2025-01-08T19:28:29.901000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 444,
+    "malicious": 17
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 0.5,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m00_nob5_s0_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 32,
+   "peak_learned_at_once": 32,
+   "still_learned_at_end": 32,
+   "exposure_hours_total": 8919.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 392,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m00_nob5_s0_steer",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 32,
+   "peak_learned_at_once": 32,
+   "still_learned_at_end": 32,
+   "exposure_hours_total": 8919.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 392,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "steer",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m00_nob5_s0_suppress",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 32,
+   "peak_learned_at_once": 32,
+   "still_learned_at_end": 32,
+   "exposure_hours_total": 8919.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 392,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "suppress",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m00_s0_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m00_s0_steer",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "steer",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m00_s0_suppress",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "suppress",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.0,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s0_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 33,
+   "patterns_ever_learned": 33,
+   "peak_learned_at_once": 33,
+   "still_learned_at_end": 33,
+   "exposure_hours_total": 9241.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 20,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 393,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s1_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 32,
+   "peak_learned_at_once": 32,
+   "still_learned_at_end": 32,
+   "exposure_hours_total": 8919.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 392,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s2_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 34,
+   "patterns_ever_learned": 34,
+   "peak_learned_at_once": 34,
+   "still_learned_at_end": 34,
+   "exposure_hours_total": 9563.6,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 21,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:02:26.328000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 394,
+    "malicious": 4
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s3_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 32,
+   "peak_learned_at_once": 32,
+   "still_learned_at_end": 32,
+   "exposure_hours_total": 8919.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 392,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s4_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 33,
+   "patterns_ever_learned": 33,
+   "peak_learned_at_once": 33,
+   "still_learned_at_end": 33,
+   "exposure_hours_total": 9241.7,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 20,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 393,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s5_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 33,
+   "patterns_ever_learned": 33,
+   "peak_learned_at_once": 33,
+   "still_learned_at_end": 33,
+   "exposure_hours_total": 9241.7,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 20,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 393,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 5
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s6_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 34,
+   "patterns_ever_learned": 34,
+   "peak_learned_at_once": 34,
+   "still_learned_at_end": 34,
+   "exposure_hours_total": 9563.6,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 21,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 394,
+    "malicious": 4
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 6
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s7_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 33,
+   "patterns_ever_learned": 33,
+   "peak_learned_at_once": 33,
+   "still_learned_at_end": 33,
+   "exposure_hours_total": 9241.7,
+   "exposure_hours_max": 322.0,
+   "ever_learned_by_host": {
+    "CLIENT2": 20,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 393,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 7
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s8_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 33,
+   "patterns_ever_learned": 33,
+   "peak_learned_at_once": 33,
+   "still_learned_at_end": 33,
+   "exposure_hours_total": 9241.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 20,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 393,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 8
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_nob5_s9_fake_approval",
+   "reviews_per_day": 28.4,
+   "test_cases": 398,
+   "attack_cases": {
+    "REVIEW": 38
+   },
+   "class1_events_alerted": 99,
+   "attack_patterns_learned_at_end": 32,
+   "patterns_ever_learned": 32,
+   "peak_learned_at_once": 32,
+   "still_learned_at_end": 32,
+   "exposure_hours_total": 8919.7,
+   "exposure_hours_max": 321.9,
+   "ever_learned_by_host": {
+    "CLIENT2": 19,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 30
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 392,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": false,
+    "seed": 9
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s0_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 415,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 0
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s1_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 1
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s2_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 14,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.9,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT2": 1,
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:02:26.328000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 416,
+    "malicious": 4
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 2
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s3_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 3
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s4_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 415,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 4
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s5_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 415,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 5
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s6_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 416,
+    "malicious": 4
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 6
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s7_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 415,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 7
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s8_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 415,
+    "malicious": 5
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 8
+   }
+  },
+  {
+   "run": "gated_nce_analyst_Phost_q100_m20_s9_fake_approval",
+   "reviews_per_day": 30.0,
+   "test_cases": 420,
+   "attack_cases": {
+    "REVIEW": 48
+   },
+   "class1_events_alerted": 262,
+   "attack_patterns_learned_at_end": 13,
+   "patterns_ever_learned": 13,
+   "peak_learned_at_once": 13,
+   "still_learned_at_end": 13,
+   "exposure_hours_total": 3252.8,
+   "exposure_hours_max": 268.5,
+   "ever_learned_by_host": {
+    "CLIENT1": 13
+   },
+   "confirmed": {
+    "CLIENT1": null,
+    "CLIENT2": "2025-01-06T14:01:13.986000Z"
+   },
+   "persuaded_verdicts": {
+    "text": 2,
+    "host": 40
+   },
+   "persuaded_hosts": {
+    "CLIENT2": "2025-01-06T14:03:44.504000Z",
+    "CLIENT1": "2025-01-08T19:28:29.199000Z"
+   },
+   "analyst_verdicts": {
+    "benign": 414,
+    "malicious": 6
+   },
+   "condition": {
+    "family": "fake_approval",
+    "model": "host",
+    "q": 1.0,
+    "miss": 0.2,
+    "b5": true,
+    "seed": 9
+   }
+  }
+ ]
+}

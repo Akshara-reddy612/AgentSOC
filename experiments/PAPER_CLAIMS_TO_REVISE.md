@@ -74,6 +74,16 @@ The following sentences in the project documentation and paper require revision 
 - **Not in `RESULTS.md` but traceable** (cite the source if kept): 35.1 reviews/day and 491 cases at a 24 h delay with B5 off come from the pre-freeze review-loop evaluation (`experiments/dedale_results/review_eval_host.json`, 2026-10-11); 67 ALERT_PATTERN and 549 COMMUNICATES_WITH edges learned with D7 off come from the `gated_noact_F_noact` replay's `summary.json` (data folder, not in git); 590 labelled events of the kept event types from the Phase 2 extraction entry (`archive/RESEARCH_LOG_HISTORY.md:1489`).
 - **Unverifiable here:** the related-work statement that every studied LLM-agent approach missed at least 40.4% of attack-related alerts (external citation).
 
+### (i) The 8-page revision `paper/agentsoc_v3.tex` (2026-11-22, decisions P10 and P11; the version to submit as PDF)
+- Supersedes the docx for submission (user, 2026-11-22). None of the section (h) numbers flagged WRONG or untraceable appears in it (checked: 32.4, 624, 35.1, 549, 590, 67, the "six planned protocols" paragraph).
+- Every number in it traces to `experiments/RESULTS.md` or a score file (`experiments/tier2_scores.json`, `experiments/dedale_results/tier1_scores.json`, `persuaded_analyst_scores.json`). The derived figures 98.9%, 84.6% and the E1 0/72 CI 0-5.1% are generated into RESULTS.md. The 40.4% is an external citation [Tsegai et al.].
+- Claims that moved with Tier 1 and Tier 2:
+  - "Prompt-level defences were not tested" is no longer true. T2.2 measures delimited, spotlighting and instruction-hierarchy prompts on the undefended agent, on the first 150 dev pairs (P11 amended).
+  - The undefended agent's hijack rate holds on held-out data: 123/445 (27.6%) against 130/439 on dev (T2.1).
+  - An adaptive attacker that evades ERA gains nothing: 2/300 suppressed under both rules, the same pairs as the original payloads (T2.3).
+  - Targeted unlearning bounds independent analyst mistakes (0 attack patterns in every seed), but host-wide persuasion defeats it whenever CLIENT1's first attack case is cleared (A10). State this as a limit, not a guarantee.
+  - The frequency-threshold baseline (A7) only adds workload; the gate delay and the lookback sweep do not change the poisoning result.
+
 ## Supported replacement claims
 - The pipeline outcome under contamination shows no detectable effect relative to the clean twins (on the 206 genuinely clean, unique pairs: verdict changes 1 to 3 across conditions vs 3 between two runs of the same condition; no exact McNemar p below 0.25; the original n=320 comparison, which included 116 contaminated or mismatched "twins", gave 2 to 6 vs 3 and 6, p ≥ 0.21). State as "no detectable effect", never "statistically indistinguishable".
 - The pipeline's verdict is stable across LLM runs (3/320 changes between two clean runs, against 53.1% of technique sets changing), but it depends on a single binary event, a surviving T1071 hypothesis with an extractable host, because non-T1071 hypotheses are rejected on this graph regardless of the LLM.
