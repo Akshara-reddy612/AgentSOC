@@ -188,7 +188,7 @@ two training weeks, which are assumed clean.
 
 Events are normalized and enriched from the knowledge store (Fig.~\ref{fig:system}). Detectors raise an alert when
 a structured pattern is not yet learned as normal, and alerts with the same pattern are grouped into a case. NCE
-sees the first 512 characters of each text field. Entity binding checks that the hosts and accounts named in a
+receives each free-text field truncated to 512 characters. Entity binding checks that the hosts and accounts named in a
 hypothesis exist in trusted fields, and SSE keeps only feasible hypotheses for RSEM. On GUIDE, the Evidence Risk
 Assessment (ERA) also escalates alerts whose text looks like an injection. ERA is off on DEDALE, so there raw
 attacker text reaches NCE uninspected.
@@ -264,9 +264,9 @@ the 43 frozen replays, which run the loop directly, so they do not measure recov
 
 \subsection{GUIDE v2 Alert Pairs}
 
-From GUIDE v2~\cite{guide} we built 1,000 pairs: 500 for development and 500 held out. Each pair is a clean alert
-and a contaminated twin that differs only at the injection site. Entities, evidence text and payloads are
-synthetic. Alerts run through the single-alert pipeline, with no learned store. A pair is \emph{suppressed} when
+From GUIDE v2~\cite{guide} we built 1,000 pairs: 500 for development and 500 held out. In every pair, the
+contaminated alert repeats its clean counterpart except where the payload is inserted; all entities, evidence
+strings and payloads were generated for this study. Alerts run through the single-alert pipeline, with no learned store. A pair is \emph{suppressed} when
 the clean twin received a response (REVIEW or AUTO\_APPROVED) and the contaminated twin did not. We also count lost
 automatic containment: the clean twin's model-free block is missing from the contaminated twin. We report 95\%
 Wilson intervals and exact McNemar tests on the discordant pairs.
@@ -295,7 +295,8 @@ normal only if it occurred at least $K$ times in the clean weeks ($K = 1, 2, 5, 
 
 \subsection{Recorded Answers and Reproducibility}
 
-All LLM answers (gemini-3.1-flash-lite, and gpt-oss-20b on GUIDE development pairs) were recorded once. Every
+Each LLM response (gemini-3.1-flash-lite throughout, plus gpt-oss-20b on the GUIDE development pairs) was
+captured a single time. Every
 condition, under either rule, replays those answers deterministically, and one script rebuilds every number from
 the frozen score files in the repository.
 
@@ -444,7 +445,7 @@ and network reviews stayed at 7.9.
 \node[val, above] at (axis cs:nogate,27.4) {27.4};
 \end{axis}
 \end{tikzpicture}
-\caption{Host reviews per day on DEDALE, log scale. Learning without the gate has the fewest reviews only because it
+\caption{Daily host review load on DEDALE (logarithmic axis). Learning without the gate has the fewest reviews only because it
 learned 38 attack patterns as routine (99 attack events alerted, against 400 with the gate).}
 \label{fig:c2}
 \end{figure}
@@ -572,8 +573,8 @@ to 72\,h), because containment waited for approval. Host workload rose with dela
 \addlegendentry{no analyst}
 \end{axis}
 \end{tikzpicture}
-\caption{Host reviews per day against the analyst's response delay (targeted unlearning on). At every delay the 72
-attack cases were raised and the same 400 attack events alerted.}
+\caption{Host reviews per day against the analyst's response delay (targeted unlearning on). Detection did not
+depend on the delay: all 72 attack cases and the same 400 attack events surfaced in each setting.}
 \label{fig:delay}
 \end{figure}
 
