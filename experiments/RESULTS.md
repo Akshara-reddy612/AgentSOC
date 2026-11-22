@@ -1,4 +1,4 @@
-# Results (frozen 2026-11-22)
+# Results (frozen 2026-11-23)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
@@ -298,6 +298,21 @@ ERA off, all sets (suppressed of clean responded; induced by ERA; containments r
 - dev, gpt-oss-20b | acting | ERA off: 11/437; 0; 4/176
 - dev, gpt-oss-20b | asymmetric | ERA on: 10/437; 12; 0/178
 - dev, gpt-oss-20b | asymmetric | ERA off: 11/437; 0; 0/178
+
+## Escalation flooding (checklist A3, 2026-11-23)
+
+While it controls a host (CLIENT2 from initial access, CLIENT1 from lateral movement, until 2025-01-12), the attacker launches harmless never-seen programs at a fixed rate; each opens its own case and goes to review. Each day's review queue is ordered by the review service's priority (*v2*, all factors; NCE off) or oldest first (*fifo*); a team that reviews K cases a day reviews the top K. Design: `experiments/A3_FLOODING_DESIGN.md`. Offline.
+
+| Flood | Reviews / day | Attack cases raised | Order | Attack cases in the day's top 25 / 50 / 100 / 200 | Median rank | Best rank per attack step (initial access, lateral movement, collection, exfiltration) |
+|:--|--:|--:|:--|--:|--:|:--|
+| none | 65.2 | 72 of 72 | v2 | 67 / 71 / 72 / 72 (of 72) | 7 | 1, 1, 1, 1 |
+| none | 65.2 | 72 of 72 | fifo | 33 / 44 / 72 / 72 (of 72) | 27 | 10, 28, 1, 1 |
+| 5 / hour | 142.0 | 72 of 72 | v2 | 27 / 37 / 61 / 72 (of 72) | 49 | 1, 51, 21, 1 |
+| 5 / hour | 142.0 | 72 of 72 | fifo | 19 / 24 / 43 / 72 (of 72) | 85 | 15, 112, 85, 1 |
+| 50 / hour | 833.1 | 72 of 72 | v2 | 24 / 24 / 26 / 26 (of 72) | 429 | 1, 501, 201, 1 |
+| 50 / hour | 833.1 | 72 of 72 | fifo | 17 / 21 / 27 / 27 (of 72) | 811 | 15, 868, 833, 1 |
+
+Labelled attack events alerted in these runs: 400. The flood hides nothing from review; it buries the attack in the queue.
 
 ## Low-and-slow poisoning (checklist A8, 2026-11-22)
 

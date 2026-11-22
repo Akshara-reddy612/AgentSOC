@@ -168,6 +168,9 @@ def main() -> None:
                          "their detector keys are learned (experiments/dedale_plant.py)")
     ap.add_argument("--plant-detectors", nargs="+", default=None, choices=list(DETECTORS),
                     help="A8: detectors whose keys the attacker plants (default: lineage exec_file_write pipe)")
+    ap.add_argument("--flood", type=float, default=None,
+                    help="checklist A3 (2026-11-23): escalation flooding, harmless novel programs per hour on the "
+                         "hosts the attacker controls (experiments/dedale_flood.py)")
     ap.add_argument("--llm-authority", default="full", choices=["full", "escalate"],
                     help="escalate: asymmetric trust, NCE may raise scrutiny but never lower it (decision P9 A)")
     args = ap.parse_args()
@@ -278,6 +281,13 @@ def main() -> None:
             with open(run_dir / "plants.jsonl", "w", encoding="utf-8") as out:
                 for _, p in planted:
                     out.write(json.dumps(p) + "\n")
+        flooded = []
+        if args.flood:                     # A3: the attacker's junk, merged into the stream in time order
+            import heapq
+
+            from experiments.dedale_flood import flood
+            flooded = [f for f in flood(args.flood) if until is None or f[0] < until]
+            events = heapq.merge(events, flooded, key=lambda x: x[0])
         skip_from, skip_until = TRAIN_WINDOWS[args.train_window]
         while chunk := list(islice(events, CHUNK)):
             with db.batch(), (case_store.batch() if case_store else nullcontext()):   # one transaction per chunk
@@ -323,6 +333,7 @@ def main() -> None:
         **({"train_window": args.train_window} if args.train_window != "both" else {}),
         **({"plant": args.plant, "plant_detectors": args.plant_detectors or "lineage exec_file_write pipe",
             "planted_events": len(planted)} if args.plant else {}),
+        **({"flood_per_hour": args.flood, "flood_events": len(flooded)} if args.flood else {}),
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),
         "gate_pending_at_end": loop.updater.pending if loop.updater else None,
