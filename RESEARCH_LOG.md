@@ -12,6 +12,17 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: proofread corrections to the A3 / A8 entries below (they supersede those statements)
+
+- **PowerShell keys can be planted.** `script_fingerprint` hashes only the first 160 normalised characters, so a harmless script sharing that prefix has the attack script's key (checked in code). "Cannot be planted harmlessly", "only mimicry-resistant key" and "upper bound" in the A8 entries and design note are wrong. The 0 / 72 rows are a feasible attack.
+- **Conditioning assumes a foothold the threat model does not give.** Test-period plants run from 2025-01-06 00:10, before CLIENT2's compromise (10:01) and CLIENT1's (01-08); training-week plants run in weeks assumed clean.
+- **It is not low-and-slow.** The plants run in under 5 h and are learned through analyst verdicts. Gradual poisoning through the gate's 24 h delay stays untested: NCE is off and D7 sends every new pattern to review. Checklist A8 is partial.
+- **Cross-host unlearning is an in-sample mitigation** (designed after the result, same campaign). It depends on one confirmed host; here that came from CLIENT2's unplanted PowerShell cases.
+- **ERA:** off, suppression is unchanged on Gemini but 10 -> 11 of 437 on gpt-oss. "No suppression count" (also in commit 7e0ebd1) is wrong.
+- **Flooding:** oldest-first is not worse in every row: at 50/h it reaches 27 attack cases in the top 100 and 200, the priority order 26. Rates are per host. The capped same-host bonus as the cause was not tested.
+- **A8 runs used NCE off**, not a live asymmetric-trust LLM; Table V's caption now says so. Table I said V-D and 2 + 14 days; now V-F and 14 + 14.
+- **The number check is weak evidence:** it only tests that a number occurs somewhere in the sources, which small integers always do.
+
 ### 2026-11-23: pre-submission checks (no API calls)
 
 - **Live queue pre-check:** `tools/live_queue.sh` syntax valid; the four result paths are new files (nothing frozen is overwritten); 28 Gemini keys configured (count only); `--limit` picks exactly the missing alerts among the first 300; `tier2_score` runs with the A6 / B1 files absent and leaves `tier2_scores.json` unchanged; `build_results` already renders the telemetry row and the B1 repeats once the files exist.

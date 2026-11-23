@@ -316,7 +316,7 @@ Labelled attack events alerted in these runs: 400. The flood hides nothing from 
 
 ## Low-and-slow poisoning (checklist A8, 2026-11-22)
 
-The attacker first runs the tools its attack will use harmlessly, so that the attack's detector keys are seen on harmless activity (process lineage, file type written, pipe; the PowerShell key is a fingerprint of the script text and only the *PowerShell keys too* rows plant it). The simulated analyst sees nothing malicious in a harmless run. *Test period*: planted from 2025-01-06 00:10 (CLIENT2's attack starts at 10:01). *Training weeks*: 8 days before each key's first use. Design: `experiments/A8_LOW_AND_SLOW_DESIGN.md`. Offline, NCE off.
+The attacker first runs the tools its attack will use harmlessly, so that the attack's detector keys are seen on harmless activity (process lineage, file type written, pipe; the PowerShell key is a fingerprint of the first 160 characters of the script text; only the *PowerShell keys too* rows plant it, and a harmless script with the same prefix could). The simulated analyst sees nothing malicious in a harmless run. *Test period*: planted from 2025-01-06 00:10 (CLIENT2's attack starts at 10:01). *Training weeks*: 8 days before each key's first use. Design: `experiments/A8_LOW_AND_SLOW_DESIGN.md`. Offline, NCE off.
 
 | Planted | Condition | Attack cases raised | Labelled attack events alerted | Reviews / day | Minutes to detect each attack step | Plants alerted (all reviewed) | Baseline: cases; events |
 |:--|:--|--:|--:|--:|:--|--:|--:|
