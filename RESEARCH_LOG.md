@@ -12,6 +12,11 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: Springer (svjour3) version of the paper
+
+- The user's journal asks for Springer's `svjour3` package (`1633537_svjour3-Latex-package/`, git-ignored, publisher's files). `paper/springer/build_springer.py` (git-ignored, holds paper text) converts `paper/agentsoc_v3.tex`: one column (template default, 17 pages), two columns (10), referee (30) and anonymous builds, figures as `Fig1`-`Fig5.pdf`, references in Springer's numbered style in citation order, and an upload ZIP that compiles alone. Sentences cut only for the 8-page IEEE limit are restored; no number changed (56 of 56 and 73 of 74 claim checks; the 74th is Fig. 5's plot coordinates, now inside `Fig5.pdf`).
+- Open for the team: journal name, corresponding author, funding, competing interests, author contributions and AI-use statements (commented out in the source).
+
 ### 2026-11-23: report names and roll numbers; paper author spelling
 
 - The course report has the team's exact names and roll numbers (from the team's slide, user), 37 pages, no placeholders. The paper's first author is now spelled as on the slide; the email address is unchanged. Bars in the paper's figures use plain fills (one PDF renderer drew the hatching wrongly).
