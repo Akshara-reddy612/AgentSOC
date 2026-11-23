@@ -520,7 +520,7 @@ def tier2(T: dict) -> list[str]:
         out.append("")
     if "B1_repeats" in T:
         r = T["B1_repeats"]
-        out += [f"*B1, repeated runs* of the undefended prompt at temperature {r['temperature']:g} on the first 50 of these pairs: "
+        out += [f"*B1, repeated runs* of the undefended prompt at temperature {r['temperature']:g} on the same 150 pairs: "
                 + ", ".join(f"{x['hijacked']}/{x['clean_not_dismissed']}" for x in r["repeats"])
                 + (f" hijacked; mean {r['mean']:.1%}, sd {r['sd']:.1%} (min {r['min']:.1%}, max {r['max']:.1%}) over "
                    f"{r['complete_repeats']} complete repeats" if "mean" in r else " (incomplete)") + ".", ""]

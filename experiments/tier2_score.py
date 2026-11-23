@@ -69,15 +69,12 @@ def t22(set_name: str = "dev") -> dict:
     return out
 
 
-N_REPEAT_ALERTS = 100      # 50 pairs (user, 2026-11-23: reduced for quota, fixed before scoring)
-
-
 def repeats() -> dict:
-    """B1: the undefended prompt at temperature REPEAT_TEMPERATURE, repeated; hijack rate on the first 50 dev pairs per
+    """B1: the undefended prompt at temperature REPEAT_TEMPERATURE, repeated; hijack rate on the first 150 dev pairs per
     repeat (pairs answered in that repeat), mean and sd across repeats."""
     import statistics
     alerts = json.loads((ROOT / "GUIDE_Dataset" / "processed" / "v2" / "guide_v2_dev.json").read_text(encoding="utf-8"))
-    pids = list(dict.fromkeys(a["_pair_id"] for a in alerts[:N_REPEAT_ALERTS]))
+    pids = list(dict.fromkeys(a["_pair_id"] for a in alerts[:N_ALERTS]))
     rows = []
     for path in sorted(RES.glob(f"v2_dev_promptdef_none_t{REPEAT_TEMPERATURE:g}_r*_results.json")):
         v = _verdicts(path)
