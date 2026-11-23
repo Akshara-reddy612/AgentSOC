@@ -316,7 +316,7 @@ Labelled attack events alerted in these runs: 400. The flood hides nothing from 
 
 ## Low-and-slow poisoning (checklist A8, 2026-11-22)
 
-The attacker first runs the tools its attack will use harmlessly, so that the attack's detector keys are seen on harmless activity (process lineage, file type written, pipe; the PowerShell key is a fingerprint of the script text and only the *PowerShell keys too* rows plant it). The simulated analyst sees nothing malicious in a harmless run. *Test period*: planted from 2025-01-06 00:10 (CLIENT2's attack starts at 10:01). *Training weeks*: 8 days before each key's first use. Design: `experiments/A8_LOW_AND_SLOW_DESIGN.md`. Offline, NCE off.
+The attacker first runs the tools its attack will use harmlessly, so that the attack's detector keys are seen on harmless activity (process lineage, file type written, pipe; the PowerShell key is a fingerprint of the first 160 characters of the script text; only the *PowerShell keys too* rows plant it, and a harmless script with the same prefix could). The simulated analyst sees nothing malicious in a harmless run. *Test period*: planted from 2025-01-06 00:10 (CLIENT2's attack starts at 10:01). *Training weeks*: 8 days before each key's first use. Design: `experiments/A8_LOW_AND_SLOW_DESIGN.md`. Offline, NCE off.
 
 | Planted | Condition | Attack cases raised | Labelled attack events alerted | Reviews / day | Minutes to detect each attack step | Plants alerted (all reviewed) | Baseline: cases; events |
 |:--|:--|--:|--:|--:|:--|--:|--:|
@@ -340,6 +340,29 @@ Attack steps: initial access (CLIENT2), lateral movement, collection, exfiltrati
 | no attacker, analyst always right | 72 -> 72 | 400 -> 400 | 34.1 -> 45.2 | 1.2 / 28.5 / 30 / 1265 |
 | no attacker, analyst misses 20% | 72 -> 72 | 400 -> 400 | 34.1 -> 45.2 | 1.2 / 28.5 / 30 / 1265 |
 | no attacker, 5% false alarms | 72 -> 72 | 400 -> 400 | 44.6 -> 62.9 | 1.2 / 28.5 / 30 / 1265 |
+
+**Conditioning inside the threat model** (`experiments/a8_foothold_runs.py`): plants only after the attacker's first labelled event on each host, PowerShell included, attack schedule unchanged.
+
+| Condition | Attack cases raised | Attack events alerted | Attack cases' patterns learned | Reviews / day |
+|:--|--:|--:|--:|--:|
+| no analyst | 72 | 400 | 0 | 66.3 |
+| analyst 4 h, B5 on | 72 | 400 | 0 | 35.1 |
+| analyst 4 h, B5 off | 52 | 369 | 0 | 30.5 |
+| analyst 4 h, B5 all hosts | 72 | 400 | 0 | 46.3 |
+| misses 20%, B5 on (6 seeds, min-max) | 72 | 400 | 0 | 35.1 |
+| misses 20%, B5 off (6 seeds, min-max) | 35-47 | 219-348 | 8-14 | 29.3-30.1 |
+
+Planted events: 41, of which 33 alerted. Limits: the recorded schedule is kept (the attacker does not pause for plants to be learned), and a confirmation lasts 7 days, after which learning on the host resumes.
+
+**Full-text PowerShell keys** (`--script-full-text`, off by default; `experiments/ps_fulltext_runs.py`): the planted scripts are harmless and share the attack scripts' first 160 characters. Default identical to F_gated: yes.
+
+| Condition | Attack cases raised | Attack events alerted | Reviews / day |
+|:--|--:|--:|--:|
+| 160 characters, test-period plants, B5 all hosts | 0 | 0 | 28.4 |
+| full text, no attacker, no analyst | 72 | 400 | 65.2 |
+| full text, no attacker, analyst 4 h | 72 | 400 | 34.1 |
+| full text, test-period plants, B5 per host | 21 | 212 | 31.4 |
+| full text, test-period plants, B5 all hosts | 58 | 377 | 47.0 |
 
 ## Limits
 

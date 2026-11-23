@@ -126,9 +126,12 @@ def _file_write_edge(k: tuple) -> Edge:
                 _image(image), _host(host))
 
 
+SCRIPT_PREFIX: int | None = 160     # characters fingerprinted; None = all (experiment option, 2026-11-23)
+
+
 def script_fingerprint(text: str) -> str:
-    """SHA-256 of normalised script / command text (lower case, digits blanked, first 160 characters)."""
-    return hashlib.sha256(_DIGITS.sub("#", text.lower())[:160].encode("utf-8")).hexdigest()
+    """SHA-256 of normalised script / command text (lower case, digits blanked, first SCRIPT_PREFIX characters)."""
+    return hashlib.sha256(_DIGITS.sub("#", text.lower())[:SCRIPT_PREFIX].encode("utf-8")).hexdigest()
 
 
 def _powershell_key(e: dict) -> tuple | None:

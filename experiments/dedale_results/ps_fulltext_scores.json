@@ -1,0 +1,117 @@
+{
+ "PS_check_gated": {
+  "run": "gated_PS_check_gated",
+  "reviews_per_day": 65.2,
+  "test_cases": 913,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 72,
+  "precision": 0.0789,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   1.2,
+   28.5,
+   30.0,
+   1265.0
+  ]
+ },
+ "PS_160_test_d4_xh": {
+  "run": "gated_analyst_PS_160_test_d4_xh",
+  "reviews_per_day": 28.4,
+  "test_cases": 398,
+  "attack_cases_raised": 0,
+  "attack_cases_reviewed": 0,
+  "precision": 0.0,
+  "class1_events_alerted": 0,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ]
+ },
+ "PS_full_gated": {
+  "run": "gated_PS_full_gated",
+  "reviews_per_day": 65.2,
+  "test_cases": 913,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 72,
+  "precision": 0.0789,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   1.2,
+   28.5,
+   30.0,
+   1265.0
+  ]
+ },
+ "PS_full_d4": {
+  "run": "gated_analyst_PS_full_d4",
+  "reviews_per_day": 34.1,
+  "test_cases": 477,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 72,
+  "precision": 0.1509,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   1.2,
+   28.5,
+   30.0,
+   1265.0
+  ]
+ },
+ "PS_full_test_d4": {
+  "run": "gated_analyst_PS_full_test_d4",
+  "reviews_per_day": 31.4,
+  "test_cases": 440,
+  "attack_cases_raised": 21,
+  "attack_cases_reviewed": 21,
+  "precision": 0.0477,
+  "class1_events_alerted": 212,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   2.4,
+   null,
+   null,
+   null
+  ]
+ },
+ "PS_full_test_d4_xh": {
+  "run": "gated_analyst_PS_full_test_d4_xh",
+  "reviews_per_day": 47.0,
+  "test_cases": 658,
+  "attack_cases_raised": 58,
+  "attack_cases_reviewed": 58,
+  "precision": 0.0881,
+  "class1_events_alerted": 377,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   2.4,
+   28.5,
+   30.0,
+   1265.0
+  ]
+ },
+ "default_identical_to_F_gated": true
+}

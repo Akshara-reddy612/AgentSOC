@@ -59,3 +59,7 @@ reviewed plant is the attacker's tooling shown to an analyst).
 
 Whatever the result, it is reported as a result or a limitation; the pipeline is not changed before submission
 (user, 2026-11-22).
+
+## Corrections (2026-11-23)
+
+The PowerShell key hashes only the first 160 normalised characters, so it can be planted by a harmless script with the same prefix. The plants need a foothold before the recorded intrusion, outside the threat model. The gate's delay path is not exercised, so this is conditioning through the analyst, not low-and-slow poisoning. See RESEARCH_LOG.md.

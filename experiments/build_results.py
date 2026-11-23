@@ -660,6 +660,47 @@ def a8_mitigation() -> list[str]:
     return out + [""]
 
 
+def a8_in_model() -> list[str]:
+    """2026-11-23: conditioning after the real foothold, and full-text PowerShell keys."""
+    out = []
+    f, p = RESULTS / "a8_foothold_scores.json", RESULTS / "ps_fulltext_scores.json"
+    if f.exists():
+        r = _load(f)
+        out += ["**Conditioning inside the threat model** (`experiments/a8_foothold_runs.py`): plants only after the "
+                "attacker's first labelled event on each host, PowerShell included, attack schedule unchanged.", "",
+                "| Condition | Attack cases raised | Attack events alerted | Attack cases' patterns learned | Reviews / day |",
+                "|:--|--:|--:|--:|--:|"]
+        for k, label in (("A8f_gated", "no analyst"), ("A8f_d4", "analyst 4 h, B5 on"),
+                         ("A8f_d4_nob5", "analyst 4 h, B5 off"), ("A8f_d4_xh", "analyst 4 h, B5 all hosts")):
+            x = r[k]
+            out.append(f"| {label} | {x['attack_cases_raised']} | {x['class1_events_alerted']} | "
+                       f"{x['attack_cases_learned']} | {x['reviews_per_day']} |")
+        for k, label in (("A8f_m20_s", "misses 20%, B5 on (6 seeds, min-max)"),
+                         ("A8f_m20_nob5_s", "misses 20%, B5 off (6 seeds, min-max)")):
+            xs = [r[f"{k}{i}"] for i in range(6)]
+            rng = lambda key: "-".join(map(str, sorted({min(x[key] for x in xs), max(x[key] for x in xs)})))
+            out.append(f"| {label} | {rng('attack_cases_raised')} | {rng('class1_events_alerted')} | "
+                       f"{rng('attack_cases_learned')} | {rng('reviews_per_day')} |")
+        x = r["A8f_d4"]
+        out += ["", f"Planted events: {x['planted_events']}, of which {x['planted_alerted']} alerted. Limits: the recorded "
+                    "schedule is kept (the attacker does not pause for plants to be learned), and a confirmation lasts 7 "
+                    "days, after which learning on the host resumes.", ""]
+    if p.exists():
+        r = _load(p)
+        out += ["**Full-text PowerShell keys** (`--script-full-text`, off by default; `experiments/ps_fulltext_runs.py`): "
+                "the planted scripts are harmless and share the attack scripts' first 160 characters. Default identical "
+                f"to F_gated: {'yes' if r['default_identical_to_F_gated'] else 'NO'}.", "",
+                "| Condition | Attack cases raised | Attack events alerted | Reviews / day |", "|:--|--:|--:|--:|"]
+        for k, label in (("PS_160_test_d4_xh", "160 characters, test-period plants, B5 all hosts"),
+                         ("PS_full_gated", "full text, no attacker, no analyst"), ("PS_full_d4", "full text, no attacker, analyst 4 h"),
+                         ("PS_full_test_d4", "full text, test-period plants, B5 per host"),
+                         ("PS_full_test_d4_xh", "full text, test-period plants, B5 all hosts")):
+            x = r[k]
+            out.append(f"| {label} | {x['attack_cases_raised']} | {x['class1_events_alerted']} | {x['reviews_per_day']} |")
+        out.append("")
+    return out
+
+
 def low_and_slow() -> list[str]:
     """Checklist A8 (2026-11-22): low-and-slow poisoning (experiments/a8_runs.py, a8_score.py)."""
     path = RESULTS / "a8_scores.json"
@@ -669,7 +710,7 @@ def low_and_slow() -> list[str]:
     out = ["## Low-and-slow poisoning (checklist A8, 2026-11-22)", "",
            "The attacker first runs the tools its attack will use harmlessly, so that the attack's detector keys are "
            "seen on harmless activity (process lineage, file type written, pipe; the PowerShell key is a fingerprint "
-           "of the script text and only the *PowerShell keys too* rows plant it). The simulated analyst sees nothing "
+           "of the first 160 characters of the script text; only the *PowerShell keys too* rows plant it, and a harmless script with the same prefix could). The simulated analyst sees nothing "
            "malicious in a harmless run. *Test period*: planted from 2025-01-06 00:10 (CLIENT2's attack starts at "
            "10:01). *Training weeks*: 8 days before each key's first use. Design: "
            "`experiments/A8_LOW_AND_SLOW_DESIGN.md`. Offline, NCE off.", "",
@@ -691,7 +732,7 @@ def low_and_slow() -> list[str]:
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
