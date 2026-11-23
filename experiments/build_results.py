@@ -138,7 +138,8 @@ def c1() -> list[str]:
         d = (c - b) / n
         se = ((b + c) - (c - b) ** 2 / n) ** 0.5 / n
         paired_lines.append(f"- {name}: {b} suppressed, {c} induced otherwise, of {n} pairs: change in response rate "
-                            f"{d * 100:+.1f} points (paired 95% CI {(d - 1.96 * se) * 100:+.1f} to {(d + 1.96 * se) * 100:+.1f})")
+                            f"{d * 100:+.1f} points (paired 95% CI {(d - 1.96 * se) * 100:+.1f} to {(d + 1.96 * se) * 100:+.1f}); "
+                            f"with the {era} responses ERA's escalation induced counted: {(c + era - b) / n * 100:+.1f} points")
     lines += ["", "*Paired view* (each pair is its own control; Wald CI for paired proportions; no significance is "
               "claimed where the interval covers zero):", "", *paired_lines]
     lines += ["", "*Induced by ERA escalation*: the contaminated twin got a response the clean one did not because "

@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: line-by-line check of the journal version; one wrong sentence corrected
+
+- **Corrected:** the paired change in the response rate (0.0 / -0.6 / -1.0 points) was described as "over all 500 pairs", but `build_results.py` leaves out the responses ERA's escalation induced (12 / 10 / 12). With them it is +2.4 / +1.4 / +1.4 points, so "every interval covers zero" holds only without them. The paper now says both, and RESULTS.md prints both. No count changed.
+- **Wording:** GUIDE is the cited dataset and GUIDE v2 our corpus; the slow plants run in (not over) the second week (30 Dec - 2 Jan); Biba's model mirrors Bell and LaPadula's; "scripts rebuild the reported results" instead of "one script rebuilds every number"; Wald intervals named; page numbers added to seven references.
+- **Verified from the data:** the suppressed pairs are a subset of the suppressible ones (4 of 11, 3 of 9, 10 of 20); the T1071 explanation holds for 4 of 4, 3 of 3 and 9 of 10; the external claims spot-checked against arXiv abstracts (40.4%, memory poisoning, adaptive attacks, MemStream) match.
+- The IEEE copy `paper/agentsoc_v3.pdf` carries the same corrections and is now 9 pages; it is not the version to submit.
+
 ### 2026-11-23: Springer version checked against the journal's submission guidelines (user's PDF)
 
 - **Rules applied** (International Journal of Information Security): LaTeX `twocolumn`, single-blind (one build; anonymous, one-column and referee builds dropped), abstract 193 words (150-250), 6 keywords (4-6), decimal headings, abbreviations defined at first use (LLM, APT, LSASS, LANL, CI), full table captions, no full stop at the end of figure captions, panels lettered a / b, figures 84 / 174 mm with 8 pt Helvetica lettering and stripes besides colour, vector PDF and EPS, "Statements and Declarations" (ethics, consent, data and code availability).
