@@ -191,7 +191,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 | DEDALE frozen results incl. E1 and asymmetric trust | DONE; re-freeze reproduced byte-identically 2026-11-22 | `experiments/dedale_results/final_*_scores.json`, `e1_scores.json` |
 | Paper draft (current) | PARTIAL | `AgentSOC_IEEE_Revised.docx` (user, 2026-11-22): three wrong claims (see Known issues) |
 | Paper (LaTeX predecessor) | SUPERSEDED as the working draft | `paper/agentsoc_v2.tex` (authors and repository link TODO at `:6`); `paper/agentsoc_combined.tex` is older still |
-| SDC-II course report | DRAFTED 2026-11-23 | `GuardedSOC_SDC2_Report.docx` (git-ignored; copy in `D:\agentsoc_data\paper_private\`); roll numbers, mentor name and PO mapping are for the team; due date NOT IN THE REPOSITORY |
+| SDC-II course report | DRAFTED 2026-11-23 | `GuardedSOC_SDC2_Report.docx` (git-ignored; copy in `D:\agentsoc_data\paper_private\`); names, roll numbers and mentor filled in (user, 2026-11-23); the PO mapping is for the team; due date NOT IN THE REPOSITORY |
 | Prompt-level baseline (P9 D) | NOT STARTED (no result) | a hardened-prompt pilot was prepared and attempted on 2026-11-01 but the API returned only HTTP 503; its branch is not in the repo; a new attempt needs a design and a call budget |
 | Hash-chained audit log (review change 9) | NOT STARTED | no code; `PROJECT_PLAN.md` P8/P9 said "on its branch", no such branch exists |
 | E3 AIT-LDS | NOT STARTED (optional) | `PROJECT_PLAN.md` §4 |
@@ -201,7 +201,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 ## Known bugs, limits and gotchas
 
 **Paper:**
-- `paper/agentsoc_v3.tex` is 8 pages (user, 2026-11-22) and page 8 is full: it holds the ablation, A8 + cross-host unlearning and A3 flooding (2026-11-23), with red placeholders for A6 and B1. Filling them may need small trims. The 7-page version is in the backup folder (`agentsoc_v3_7page_20261123.*`).
+- `paper/agentsoc_v3.tex` is 8 pages (user, 2026-11-22) and page 8 is full: it holds the ablation, A8 + cross-host unlearning and A3 flooding (2026-11-23) plus the A4 bound and A8 through the gate; no placeholders left. The 7-page version is in the backup folder (`agentsoc_v3_7page_20261123.*`).
 - `AgentSOC_IEEE_Revised.docx` (superseded) has three claims that do not match the repository:
   - §IV-D says the six planned experiments have "execution harnesses implemented in the repository". None exists in any commit.
   - §VI-A says that on network alerts with 5% analyst false alarms (gated, analyst after 4 h, B5 on) "8 instances of benign destination IP unlearning" raised the workload "from 26.1 to 32.4 reviews/day". The frozen value for that condition is 21.2 reviews/day (`experiments/RESULTS.md:136`); the 8 are approved blocks that would have hit benign traffic (`RESULTS.md:138`), not unlearning; 32.4 appears in no result file.

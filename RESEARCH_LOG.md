@@ -12,6 +12,10 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: report names and roll numbers; paper author spelling
+
+- The course report has the team's exact names and roll numbers (from the team's slide, user), 37 pages, no placeholders. The paper's first author is now spelled as on the slide; the email address is unchanged. Bars in the paper's figures use plain fills (one PDF renderer drew the hatching wrongly).
+
 ### 2026-11-23: paper closed without the remaining live runs (user)
 
 - **Decision:** submit with what exists; the live runs may be tried later. All queues stopped, scheduled runs cancelled.
