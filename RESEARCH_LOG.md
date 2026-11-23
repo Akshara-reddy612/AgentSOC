@@ -12,6 +12,14 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: Springer version checked against the journal's submission guidelines (user's PDF)
+
+- **Rules applied** (International Journal of Information Security): LaTeX `twocolumn`, single-blind (one build; anonymous, one-column and referee builds dropped), abstract 193 words (150-250), 6 keywords (4-6), decimal headings, abbreviations defined at first use (LLM, APT, LSASS, LANL, CI), full table captions, no full stop at the end of figure captions, panels lettered a / b, figures 84 / 174 mm with 8 pt Helvetica lettering and stripes besides colour, vector PDF and EPS, "Statements and Declarations" (ethics, consent, data and code availability).
+- **References:** 28 of 40 carry a DOI checked on Crossref / DataCite; AgentDojo, InjecAgent, SecAlign, CaMeL, MemStream, the LLM survey and the GUIDE paper now cite their published versions, and AgentSOC has its DOI and pages. The other 12 have no DOI found (USENIX, NeurIPS 2020, PMLR, MITRE reports). Seven references are arXiv preprints only.
+- **Caught while checking:** my new Table 3 caption said "benign cases dismissed by NCE"; the ungated row's 1 is a LOW_PRIORITY case without NCE, so it now says "dismissed without review" (as in RESULTS.md).
+- **Checks:** upload ZIP compiles alone (10 pages, 0 errors); claim checks 56 of 56 and 72 of 74 (the two others are format only: Fig. 5's coordinates are inside the figure file, and "p90" is spelled out).
+- **Open (the team):** corresponding author, funding, competing interests, author contributions, AI-use statement (the guidelines require LLM use beyond copy editing to be documented), consent of all authors and the college. **Cost:** the guidelines give the publishing model as open access; a journal notice found by search says submissions from 2025-08-05 pay an article processing charge if accepted, unless waived (amount not found).
+
 ### 2026-11-23: Springer (svjour3) version of the paper
 
 - The user's journal asks for Springer's `svjour3` package (`1633537_svjour3-Latex-package/`, git-ignored, publisher's files). `paper/springer/build_springer.py` (git-ignored, holds paper text) converts `paper/agentsoc_v3.tex`: one column (template default, 17 pages), two columns (10), referee (30) and anonymous builds, figures as `Fig1`-`Fig5.pdf`, references in Springer's numbered style in citation order, and an upload ZIP that compiles alone. Sentences cut only for the 8-page IEEE limit are restored; no number changed (56 of 56 and 73 of 74 claim checks; the 74th is Fig. 5's plot coordinates, now inside `Fig5.pdf`).
