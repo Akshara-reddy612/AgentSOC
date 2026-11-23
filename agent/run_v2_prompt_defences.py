@@ -70,12 +70,16 @@ def call_telemetry(alert, model=MODEL, groq_keys=None):
     return _call("telemetry", alert, model)
 
 
+def call_findings(alert, model=MODEL, groq_keys=None):
+    return _call("findings", alert, model)
+
+
 def call_none(alert, model=MODEL, groq_keys=None):
     return _call("none", alert, model)
 
 
 CALLS = {"delimited": call_delimited, "spotlight": call_spotlight, "hierarchy": call_hierarchy,
-         "telemetry": call_telemetry, "none": call_none}
+         "telemetry": call_telemetry, "findings": call_findings, "none": call_none}
 
 
 def results_path(set_name: str, defence: str, temperature: float | None = None, repeat: int | None = None) -> Path:

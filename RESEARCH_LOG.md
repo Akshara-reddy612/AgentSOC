@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: checklist A4 bound, A8 through the gate, A6 baselines built (offline)
+
+- **A4** (`experiments/worst_case_bound.py`): under asymmetric trust any attacker text can suppress at most 11/428 dev (2.6%, CI 1.4-4.5), 9/437 held-out (2.1%, CI 1.1-3.9), 20/437 gpt-oss (4.6%, CI 3.0-7.0); 0 below the model-free decision. Recorded payloads took 4, 3 and 10 of these. A bound given the recorded clean answers, ERA off; NOT an optimized attacker. Checked: the model-free decision ignores free text (2,000 alerts, 3 scramblings).
+- **A8 gate** (`experiments/a8_gate_runs.py`, 16 replays; options `--gate-from`, `--unreasoned`, `--plant slow`, defaults identical to F_gated): train on week 1, attacker already on the hosts plants one pattern per host per 3 h. D7 on (the design): 0 learned, 72 / 400. D7 off: the 24 h gate learns 38 of 38 patterns not known from training before first use (0 without plants), attack cases raised 46 -> 0; first-day plants 22 of 38, 16 cases; at 168 h 23 (slow) and 65 (first day) of 72. D7, not the delay, protects the gate. D7 off dismisses every case, so only "raised" is meaningful there.
+- **A6:** `findings` agent (trusted context + the model-free finding) and hardened prompts on held-out (`--set heldout`) built and tested; NOT run. **Reduced plan approved by the user:** findings on 150 dev pairs (300 calls), B1 cut from 150 to 50 pairs x 3, held-out hierarchy only if quota is left (2,256 answered calls on 22 Nov, 346 on 23 Nov). B1 is partial; its line in `tier2_scores.json` must not be cited.
+- **Paper:** A4 and A8 added, prose trimmed, still 8 pages; limitation (4) and the conclusion (gate with D7) revised. Earlier tonight: five imprecise statements corrected (gate range 54.8-59.2, "not labelled malicious", latency on GUIDE, 11 of 11 persuaded runs, 29.95-30.62), abstract 197 words. Claim checks extended.
+
 ### 2026-11-23: SDC-II course report drafted
 
 - `GuardedSOC_SDC2_Report.docx` (git-ignored; copy and PDF in `D:\agentsoc_data\paper_private\`): a filled copy of `Documentation_Template-SDC-II.docx`, 37 pages, six chapters (a title page each, as in the template), 12 figures (architecture, four UML diagrams, seven screenshots). Screenshots from a demo server on a new home (`D:\agentsoc_data\report_shots`, recorded LLM answers); `tools/e2e_check.py` passed 9 / 9 on it.

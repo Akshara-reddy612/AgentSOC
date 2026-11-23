@@ -163,7 +163,7 @@ def main() -> None:
     ap.add_argument("--train-window", default="both", choices=list(TRAIN_WINDOWS),
                     help="checklist A11 (2026-11-22): which clean week(s) the store learns from; the test period "
                          "(from TRAINING_END) is unchanged and events outside the chosen training week are skipped")
-    ap.add_argument("--plant", default=None, choices=["test", "train", "foothold"],
+    ap.add_argument("--plant", default=None, choices=["test", "train", "foothold", "slow"],
                     help="checklist A8 (2026-11-22): low-and-slow attacker that first runs its tools harmlessly so "
                          "their detector keys are learned (experiments/dedale_plant.py)")
     ap.add_argument("--plant-detectors", nargs="+", default=None, choices=list(DETECTORS),
@@ -171,6 +171,11 @@ def main() -> None:
     ap.add_argument("--unlearn-scope", default="host", choices=["host", "all"],
                     help="A8 mitigation (2026-11-23): B5 retracts on the confirmed host only (default) or on every "
                          "host (cross-host unlearning)")
+    ap.add_argument("--gate-from", default=None,
+                    help="2026-11-23: UTC date where training ends and gated operation starts (default TRAINING_END; "
+                         "2024-12-30 trains on the first clean week only)")
+    ap.add_argument("--unreasoned", default="review", choices=["review", "no_actionable"],
+                    help="no_actionable: rule D7 off")
     ap.add_argument("--script-full-text", action="store_true",
                     help="2026-11-23: PowerShell keys fingerprint the whole script, not its first 160 characters")
     ap.add_argument("--flood", type=float, default=None,
@@ -269,7 +274,11 @@ def main() -> None:
         if args.script_full_text:              # for this run only; the module default is not edited
             import perception.host_detection as host_detection_module
             host_detection_module.SCRIPT_PREFIX = None
-        loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
+        if args.unreasoned != "review":
+            gate_options["unreasoned"] = args.unreasoned
+        training_end = (datetime.fromisoformat(args.gate_from).replace(tzinfo=timezone.utc) if args.gate_from
+                        else TRAINING_END)
+        loop = SocLoop(db, mode=args.mode, training_end=training_end, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
                        case_store=case_store, unlearn_on_confirm=not args.no_unlearn, unlearn_scope=args.unlearn_scope,
@@ -313,6 +322,16 @@ def main() -> None:
         with db.batch(), (case_store.batch() if case_store else nullcontext()):
             loop.finish(last)
 
+    planted_learned = None
+    if args.plant:                         # planted keys the gate had learned before the attack first used them
+        learned = {(s, d, k): at for s, d, k, _, at in db.learned_edges({"closed_benign"})}
+        planted_learned = {"through_gate": 0, "before_first_use": 0}
+        for _, p in planted:
+            e = DETECTORS[p["planted"]].edge(DETECTORS[p["planted"]].key(p))
+            at = learned.get((e.src, e.dst, e.key))
+            if at is not None:
+                planted_learned["through_gate"] += 1
+                planted_learned["before_first_use"] += at < _t(p["planted_for"])
     with open(run_dir / "watches.jsonl", "w", encoding="utf-8") as out:
         for w in loop.monitor.finished:
             out.write(json.dumps({"watch_id": w.watch_id, "case_id": w.case_id, "action": w.action,
@@ -340,7 +359,9 @@ def main() -> None:
            if args.min_train_count > 1 else {}),
         **({"train_window": args.train_window} if args.train_window != "both" else {}),
         **({"plant": args.plant, "plant_detectors": args.plant_detectors or "lineage exec_file_write pipe",
-            "planted_events": len(planted)} if args.plant else {}),
+            "planted_events": len(planted), "planted_learned": planted_learned} if args.plant else {}),
+        **({"gate_from": args.gate_from} if args.gate_from else {}),
+        **({"unreasoned": args.unreasoned} if args.unreasoned != "review" else {}),
         **({"unlearn_scope": args.unlearn_scope} if args.unlearn_scope != "host" else {}),
         **({"script_full_text": True} if args.script_full_text else {}),
         **({"flood_per_hour": args.flood, "flood_events": len(flooded)} if args.flood else {}),

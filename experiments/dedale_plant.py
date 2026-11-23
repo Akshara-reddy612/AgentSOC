@@ -22,6 +22,9 @@ Not plantable: the PowerShell key is a fingerprint of the script text, so only t
                 every 10 seconds, and only for keys the attack has not used by then (the others cannot be planted).
                 The recorded attack schedule is kept, so this attacker does not pause to let plants be learned
 
+  when="slow"   one plant per host every 3 hours from 2024-12-30 02:00 (with --gate-from 2024-12-30: a week before the
+                attack, in a period the learning gate already guards)
+
 Offline; reads the labels only to pick the attack events (as the E1 injector does).
 """
 from __future__ import annotations
@@ -40,6 +43,8 @@ TEST_END = datetime(2025, 1, 20, tzinfo=timezone.utc)
 SPACING = timedelta(minutes=10)
 TRAIN_LEAD = timedelta(days=8)
 FOOTHOLD_SPACING = timedelta(seconds=10)
+SLOW_START = datetime(2024, 12, 30, 2, tzinfo=timezone.utc)
+SLOW_SPACING = timedelta(hours=3)
 
 
 def _t(s: str) -> datetime:
@@ -92,8 +97,8 @@ def _harmless(e: dict, detector: str, i: int) -> dict:
 
 def plants(when: str, detectors=PLANTABLE) -> list[tuple[datetime, dict]]:
     """The planted events, in time order, as (time, event)."""
-    if when not in ("test", "train", "foothold"):
-        raise ValueError(f"when must be test, train or foothold: {when!r}")
+    if when not in ("test", "train", "foothold", "slow"):
+        raise ValueError(f"when must be test, train, foothold or slow: {when!r}")
     keys = sorted(attack_keys(detectors).items(), key=lambda kv: kv[1][0])
     footholds: dict[str, datetime] = {}
     if when == "foothold":              # first labelled event with any key on the host, whatever is planted
@@ -103,6 +108,9 @@ def plants(when: str, detectors=PLANTABLE) -> list[tuple[datetime, dict]]:
     for i, ((detector, _), (first_use, e)) in enumerate(keys):
         if when == "train":
             at = first_use - TRAIN_LEAD
+        elif when == "slow":
+            at = next_slot.get(e["host"], SLOW_START)
+            next_slot[e["host"]] = at + SLOW_SPACING
         elif when == "foothold":
             at = next_slot.get(e["host"], footholds[e["host"]] + FOOTHOLD_SPACING)
             if at >= first_use:             # already used in the attack: too late to plant

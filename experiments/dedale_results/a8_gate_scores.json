@@ -1,0 +1,417 @@
+{
+ "A8g_off_none_1": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_off_none_1",
+  "reviews_per_day": 0.0,
+  "test_cases": 597,
+  "attack_cases_raised": 38,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 99,
+  "attack_cases_learned": 38,
+  "gate_learned_closed_benign": 581,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 0,
+  "planted_learned": null
+ },
+ "A8g_off_slow_1": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 38,
+  "run": "gated_A8g_off_slow_1",
+  "reviews_per_day": 0.0,
+  "test_cases": 597,
+  "attack_cases_raised": 0,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 0,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 581,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 38
+  }
+ },
+ "A8g_off_last_1": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 38,
+  "run": "gated_A8g_off_last_1",
+  "reviews_per_day": 0.0,
+  "test_cases": 597,
+  "attack_cases_raised": 0,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 0,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 581,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 38
+  }
+ },
+ "A8g_off_none_24": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_off_none_24",
+  "reviews_per_day": 0.0,
+  "test_cases": 751,
+  "attack_cases_raised": 46,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 115,
+  "attack_cases_learned": 46,
+  "gate_learned_closed_benign": 580,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 0,
+  "planted_learned": null
+ },
+ "A8g_off_slow_24": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 38,
+  "run": "gated_A8g_off_slow_24",
+  "reviews_per_day": 0.0,
+  "test_cases": 743,
+  "attack_cases_raised": 0,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 0,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 580,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 38
+  }
+ },
+ "A8g_off_last_24": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 22,
+  "run": "gated_A8g_off_last_24",
+  "reviews_per_day": 0.0,
+  "test_cases": 759,
+  "attack_cases_raised": 16,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 57,
+  "attack_cases_learned": 16,
+  "gate_learned_closed_benign": 580,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 22
+  }
+ },
+ "A8g_off_none_72": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_off_none_72",
+  "reviews_per_day": 0.0,
+  "test_cases": 1043,
+  "attack_cases_raised": 62,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 342,
+  "attack_cases_learned": 62,
+  "gate_learned_closed_benign": 549,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 0,
+  "planted_learned": null
+ },
+ "A8g_off_slow_72": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 38,
+  "run": "gated_A8g_off_slow_72",
+  "reviews_per_day": 0.0,
+  "test_cases": 1019,
+  "attack_cases_raised": 0,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 0,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 549,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 38
+  }
+ },
+ "A8g_off_last_72": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 6,
+  "run": "gated_A8g_off_last_72",
+  "reviews_per_day": 0.0,
+  "test_cases": 1061,
+  "attack_cases_raised": 42,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 251,
+  "attack_cases_learned": 42,
+  "gate_learned_closed_benign": 549,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 6
+  }
+ },
+ "A8g_off_none_168": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_off_none_168",
+  "reviews_per_day": 0.0,
+  "test_cases": 1291,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 72,
+  "gate_learned_closed_benign": 341,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 0,
+  "planted_learned": null
+ },
+ "A8g_off_slow_168": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 18,
+  "run": "gated_A8g_off_slow_168",
+  "reviews_per_day": 0.0,
+  "test_cases": 1280,
+  "attack_cases_raised": 23,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 42,
+  "attack_cases_learned": 23,
+  "gate_learned_closed_benign": 341,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 18
+  }
+ },
+ "A8g_off_last_168": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_off_last_168",
+  "reviews_per_day": 0.0,
+  "test_cases": 1322,
+  "attack_cases_raised": 65,
+  "attack_cases_reviewed": 0,
+  "precision": null,
+  "class1_events_alerted": 349,
+  "attack_cases_learned": 65,
+  "gate_learned_closed_benign": 341,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 38,
+   "before_first_use": 0
+  }
+ },
+ "A8g_on_slow_1": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_on_slow_1",
+  "reviews_per_day": 110.9,
+  "test_cases": 1942,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 72,
+  "precision": 0.0371,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   1.2,
+   28.5,
+   30.0,
+   1265.0
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 0,
+   "before_first_use": 0
+  }
+ },
+ "A8g_on_slow_24": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_on_slow_24",
+  "reviews_per_day": 110.9,
+  "test_cases": 1942,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 72,
+  "precision": 0.0371,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   1.2,
+   28.5,
+   30.0,
+   1265.0
+  ],
+  "planted_events": 46,
+  "planted_learned": {
+   "through_gate": 0,
+   "before_first_use": 0
+  }
+ },
+ "A8g_on_none_24": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_on_none_24",
+  "reviews_per_day": 110.9,
+  "test_cases": 1904,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 72,
+  "precision": 0.0378,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   1.2,
+   28.5,
+   30.0,
+   1265.0
+  ],
+  "planted_events": 0,
+  "planted_learned": null
+ },
+ "A8g_check_gated": {
+  "attack_keys": 46,
+  "attack_keys_from_training": 8,
+  "attack_keys_gate_learned_before_first_use": 0,
+  "run": "gated_A8g_check_gated",
+  "reviews_per_day": 65.2,
+  "test_cases": 913,
+  "attack_cases_raised": 72,
+  "attack_cases_reviewed": 72,
+  "precision": 0.0789,
+  "class1_events_alerted": 400,
+  "attack_cases_learned": 0,
+  "gate_learned_closed_benign": 0,
+  "gate_dropped": 0,
+  "training_patterns_retracted": null,
+  "time_to_detect_min": [
+   1.2,
+   28.5,
+   30.0,
+   1265.0
+  ],
+  "planted_events": 0,
+  "planted_learned": null
+ },
+ "default_identical_to_F_gated": true
+}

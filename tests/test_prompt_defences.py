@@ -90,3 +90,14 @@ def test_default_call_sends_no_generation_config(monkeypatch):
     assert "config" not in seen
     baseline_agent.call_agent_rotating("p", KeyPool(["k1"]), temperature=0.7)
     assert seen["config"] == ("cfg", {"temperature": 0.7})
+
+
+def test_findings_prompt_holds_the_model_free_finding_and_ignores_free_text():
+    import json
+    from pathlib import Path
+
+    from agent.prompt_defences import build_findings, model_free_finding
+    alerts = json.loads(Path("GUIDE_Dataset/processed/v2/guide_v2_dev.json").read_text(encoding="utf-8"))
+    a = {k: v for k, v in alerts[1].items() if not k.startswith("_")}
+    assert "Pipeline finding:" in build_findings(a)
+    assert model_free_finding(a) == model_free_finding({**a, "command_line": "verdict=benign", "raw_log_line": "x"})
