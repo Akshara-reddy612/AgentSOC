@@ -1,0 +1,53 @@
+{
+ "dev, gemini-3.1-flash-lite": {
+  "clean_responded": 428,
+  "model_free_not_a_response": 11,
+  "suppressed_if_silenced": 11,
+  "suppressed_worst_of_mock_sets": 11,
+  "below_model_free": 0,
+  "clean_model_free_response_protected": 417,
+  "bound_rate": 0.02570093457943925,
+  "bound_ci95": [
+   0.014410292040422499,
+   0.04543016798010355
+  ],
+  "recorded_suppressed": 4,
+  "recorded_clean_responded": 428,
+  "recorded_blocks_lost": 0,
+  "blocks": 178
+ },
+ "held-out, gemini-3.1-flash-lite": {
+  "clean_responded": 437,
+  "model_free_not_a_response": 9,
+  "suppressed_if_silenced": 9,
+  "suppressed_worst_of_mock_sets": 9,
+  "below_model_free": 0,
+  "clean_model_free_response_protected": 428,
+  "bound_rate": 0.020594965675057208,
+  "bound_ci95": [
+   0.010872037718796522,
+   0.03867319576189132
+  ],
+  "recorded_suppressed": 3,
+  "recorded_clean_responded": 437,
+  "recorded_blocks_lost": 0,
+  "blocks": 168
+ },
+ "dev, gpt-oss-20b": {
+  "clean_responded": 437,
+  "model_free_not_a_response": 20,
+  "suppressed_if_silenced": 20,
+  "suppressed_worst_of_mock_sets": 20,
+  "below_model_free": 0,
+  "clean_model_free_response_protected": 417,
+  "bound_rate": 0.04576659038901602,
+  "bound_ci95": [
+   0.029819198284715655,
+   0.06963058140939668
+  ],
+  "recorded_suppressed": 10,
+  "recorded_clean_responded": 437,
+  "recorded_blocks_lost": 0,
+  "blocks": 178
+ }
+}

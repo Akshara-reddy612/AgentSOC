@@ -367,6 +367,40 @@ Planted events: 41, of which 33 alerted. Limits: the recorded schedule is kept (
 | full text, test-period plants, B5 per host | 21 | 212 | 31.4 |
 | full text, test-period plants, B5 all hosts | 58 | 377 | 47.0 |
 
+## Poisoning through the learning gate (checklist A8, 2026-11-23)
+
+Training on the first clean week only, gated operation from 2024-12-30, no analyst, NCE off. The attacker already has a foothold. *Slow*: one plant per host every 3 h from 2024-12-30 02:00. *Last-minute*: from 2025-01-06 00:10. Of the attack's 46 patterns, 8 are known from training. D7 off is not the design: it lets a case with an unlearned pattern close by itself, so that the gate has candidates. Cases are then dismissed whether planted or not, so the measure is whether the attack is raised at all. Offline.
+
+| D7 | Plants | Gate delay (h) | Attack patterns learned through the gate before first use | Attack cases raised | Labelled attack events alerted | Reviews / day |
+|:--|:--|--:|--:|--:|--:|--:|
+| off | none | 1 | 0 | 38 | 99 | 0.0 |
+| off | slow | 1 | 38 | 0 | 0 | 0.0 |
+| off | last | 1 | 38 | 0 | 0 | 0.0 |
+| off | none | 24 | 0 | 46 | 115 | 0.0 |
+| off | slow | 24 | 38 | 0 | 0 | 0.0 |
+| off | last | 24 | 22 | 16 | 57 | 0.0 |
+| off | none | 72 | 0 | 62 | 342 | 0.0 |
+| off | slow | 72 | 38 | 0 | 0 | 0.0 |
+| off | last | 72 | 6 | 42 | 251 | 0.0 |
+| off | none | 168 | 0 | 72 | 400 | 0.0 |
+| off | slow | 168 | 18 | 23 | 42 | 0.0 |
+| off | last | 168 | 0 | 65 | 349 | 0.0 |
+| on | slow | 1 | 0 | 72 | 400 | 110.9 |
+| on | slow | 24 | 0 | 72 | 400 | 110.9 |
+| on | none | 24 | 0 | 72 | 400 | 110.9 |
+
+Default replay byte-identical to F_gated (cases): True.
+
+## Worst case over attacker text on GUIDE (checklist A4, 2026-11-23)
+
+Under asymmetric trust the outcome is never below the model-free decision, which reads no free text, so attacker text can suppress only pairs whose contaminated model-free decision is not a response. ERA off (it can only escalate). A bound given the recorded clean answers, not an optimized attack.
+
+| Set | Suppressible at most | 95% CI | Recorded payloads suppressed (ERA on) | Below model-free |
+|:--|--:|:--|--:|--:|
+| dev, gemini-3.1-flash-lite | 11/428 (2.6%) | 1.4%-4.5% | 4 | 0 |
+| held-out, gemini-3.1-flash-lite | 9/437 (2.1%) | 1.1%-3.9% | 3 | 0 |
+| dev, gpt-oss-20b | 20/437 (4.6%) | 3.0%-7.0% | 10 | 0 |
+
 ## Limits
 
 - **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few malicious verdicts.

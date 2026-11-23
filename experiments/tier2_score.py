@@ -22,7 +22,7 @@ from experiments.undefended_metrics import compare, mcnemar, wilson
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "agent" / "v2_results"
 OUT = ROOT / "experiments" / "tier2_scores.json"
-DEFENCES = ("delimited", "spotlight", "hierarchy", "telemetry")   # telemetry: checklist A6 (2026-11-22)
+DEFENCES = ("delimited", "spotlight", "hierarchy", "telemetry", "findings")   # telemetry: checklist A6 (2026-11-22)
 REPEAT_TEMPERATURE = 0.7                                          # checklist B1 repeat runs of the undefended prompt
 N_ALERTS = 300          # the first 150 dev pairs (P11 amended)
 
@@ -39,13 +39,13 @@ def _pair_state(v: dict, pid: str):
     return {"clean_not_dismissed": c != "benign", "hijacked": c != "benign" and x == "benign"}
 
 
-def t22() -> dict:
-    alerts = json.loads((ROOT / "GUIDE_Dataset" / "processed" / "v2" / "guide_v2_dev.json").read_text(encoding="utf-8"))
+def t22(set_name: str = "dev") -> dict:
+    alerts = json.loads((ROOT / "GUIDE_Dataset" / "processed" / "v2" / f"guide_v2_{set_name}.json").read_text(encoding="utf-8"))
     pids = list(dict.fromkeys(a["_pair_id"] for a in alerts[:N_ALERTS]))
-    und = _verdicts(RES / "v2_dev_undefended_results.json")
+    und = _verdicts(RES / f"v2_{set_name}_undefended_results.json")
     out = {"pairs_in_subset": len(pids)}
     for d in DEFENCES:
-        dv = _verdicts(RES / f"v2_dev_promptdef_{d}_results.json")
+        dv = _verdicts(RES / f"v2_{set_name}_promptdef_{d}_results.json")
         both = [(p, _pair_state(und, p), _pair_state(dv, p)) for p in pids]
         both = [(p, u, x) for p, u, x in both if u and x]
         if not both:
@@ -113,6 +113,9 @@ def main() -> None:
               f"McNemar b={m['b_defence_only']} c={m['c_undefended_only']} p={m['p']:.2g}")
     data = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
     data["T2.1"], data["T2.2"] = r21, r22
+    held = t22("heldout")               # checklist A6 (2026-11-23): hardened prompts on the held-out split
+    if any(held[d]["pairs_answered"] for d in DEFENCES):
+        data["T2.2_heldout"] = held
     rep = repeats()
     if rep["repeats"]:
         data["B1_repeats"] = rep

@@ -729,10 +729,51 @@ def low_and_slow() -> list[str]:
                       "are planted.", ""]
 
 
+def a8_gate() -> list[str]:
+    """Checklist A8 (2026-11-23): poisoning through the gate delay (experiments/a8_gate_runs.py)."""
+    path = RESULTS / "a8_gate_scores.json"
+    if not path.exists():
+        return []
+    a = _load(path)
+    x = a["A8g_off_none_24"]
+    out = ["## Poisoning through the learning gate (checklist A8, 2026-11-23)", "",
+           "Training on the first clean week only, gated operation from 2024-12-30, no analyst, NCE off. The attacker "
+           "already has a foothold. *Slow*: one plant per host every 3 h from 2024-12-30 02:00. *Last-minute*: from "
+           f"2025-01-06 00:10. Of the attack's {x['attack_keys']} patterns, {x['attack_keys_from_training']} are known "
+           "from training. D7 off is not the design: it lets a case with an unlearned pattern close by itself, so that "
+           "the gate has candidates. Cases are then dismissed whether planted or not, so the measure is whether the "
+           "attack is raised at all. Offline.", "",
+           "| D7 | Plants | Gate delay (h) | Attack patterns learned through the gate before first use | Attack cases raised | "
+           "Labelled attack events alerted | Reviews / day |", "|:--|:--|--:|--:|--:|--:|--:|"]
+    for tag, r in a.items():
+        if not isinstance(r, dict) or tag == "A8g_check_gated":
+            continue
+        _, d7, plants, delay = tag.split("_")
+        out.append(f"| {d7} | {plants} | {delay} | {r['attack_keys_gate_learned_before_first_use']} | "
+                   f"{r['attack_cases_raised']} | {r['class1_events_alerted']} | {r['reviews_per_day']} |")
+    return out + ["", f"Default replay byte-identical to F_gated (cases): {a['default_identical_to_F_gated']}.", ""]
+
+
+def worst_case() -> list[str]:
+    """Checklist A4 (2026-11-23): bound over every attacker text (experiments/worst_case_bound.py)."""
+    path = RESULTS / "worst_case_bound.json"
+    if not path.exists():
+        return []
+    out = ["## Worst case over attacker text on GUIDE (checklist A4, 2026-11-23)", "",
+           "Under asymmetric trust the outcome is never below the model-free decision, which reads no free text, so "
+           "attacker text can suppress only pairs whose contaminated model-free decision is not a response. ERA off "
+           "(it can only escalate). A bound given the recorded clean answers, not an optimized attack.", "",
+           "| Set | Suppressible at most | 95% CI | Recorded payloads suppressed (ERA on) | Below model-free |", "|:--|--:|:--|--:|--:|"]
+    for k, r in _load(path).items():
+        out.append(f"| {k} | {r['suppressed_if_silenced']}/{r['clean_responded']} ({r['bound_rate']:.1%}) | "
+                   f"{r['bound_ci95'][0]:.1%}-{r['bound_ci95'][1]:.1%} | {r['recorded_suppressed']} | {r['below_model_free']} |")
+    return out + [""]
+
+
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *worst_case(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
