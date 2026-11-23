@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: live queue moved to a faster transport (user approved, mid-A6)
+
+- **Problem:** 165 of 300 A6 answers in 54 min; 205 attempts hit the 180 s cutoff. Each call started a process and built a new `genai.Client`, 8-11 s here (the CA file loaded twice, 4.2 s each; why it is slow is not established), tried every key in turn on a 429, and the SDK retries silently (5 attempts).
+- **Change:** `tools/run_fast.py` (one client per key, no SDK retries, 60 s timeout, in-thread calls, an exhausted key is retired instead of stopping the run); `tools/live_queue.sh` uses it and probes keys for 90 s. Prompts, model, temperature, parsing and files are unchanged (checked offline with a fake client). `tools/run_patient.py` is kept.
+- **A6 therefore mixes two transports:** the first 165 answers came through `run_patient`, the rest through `run_fast`. The old queue was killed at about 12:49 UTC and the new one started at 12:50.
+- **First minutes:** 14 answers in 65 s, median 3.4 s per successful call. Most failures are 429; two of three such keys answered moments later, so not daily quota for those.
+
 ### 2026-11-23: conditioning inside the threat model, full-text PowerShell keys, claim-level number check (offline)
 
 - **In-model attacker** (`--plant foothold`, `experiments/a8_foothold_runs.py` -> `a8_foothold_scores.json`, 16 replays): plants only after its first labelled event on each host, PowerShell included, 41 plants, 33 alerted. B5 on: 72 / 72 attack cases and 400 / 400 events with a correct analyst and in all 6 seeds of a 20% miss rate (35.1 reviews/day). B5 off: 52 / 369 with a correct analyst, 35-47 cases at 20% misses (219-348 events; without the attacker the same seeds raise 47-65 cases). Limits: recorded schedule kept, so 22 of 41 patterns are used 4 h or more after planting; a confirmation lasts 7 days and an attacker that outwaits it is untested.
