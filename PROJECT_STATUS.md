@@ -191,7 +191,7 @@ $env:HF_HUB_OFFLINE = "1"                                               # PowerS
 | DEDALE frozen results incl. E1 and asymmetric trust | DONE; re-freeze reproduced byte-identically 2026-11-22 | `experiments/dedale_results/final_*_scores.json`, `e1_scores.json` |
 | Paper draft (current) | PARTIAL | `AgentSOC_IEEE_Revised.docx` (user, 2026-11-22): three wrong claims (see Known issues) |
 | Paper (LaTeX predecessor) | SUPERSEDED as the working draft | `paper/agentsoc_v2.tex` (authors and repository link TODO at `:6`); `paper/agentsoc_combined.tex` is older still |
-| SDC-II course report | NOT STARTED | `Documentation_Template-SDC-II.docx` is KMIT's blank "Skill Development Course-2" report template; no step uses it yet and its due date is NOT IN THE REPOSITORY |
+| SDC-II course report | DRAFTED 2026-11-23 | `GuardedSOC_SDC2_Report.docx` (git-ignored; copy in `D:\agentsoc_data\paper_private\`); roll numbers, mentor name and PO mapping are for the team; due date NOT IN THE REPOSITORY |
 | Prompt-level baseline (P9 D) | NOT STARTED (no result) | a hardened-prompt pilot was prepared and attempted on 2026-11-01 but the API returned only HTTP 503; its branch is not in the repo; a new attempt needs a design and a call budget |
 | Hash-chained audit log (review change 9) | NOT STARTED | no code; `PROJECT_PLAN.md` P8/P9 said "on its branch", no such branch exists |
 | E3 AIT-LDS | NOT STARTED (optional) | `PROJECT_PLAN.md` §4 |

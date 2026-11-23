@@ -12,6 +12,11 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: SDC-II course report drafted
+
+- `GuardedSOC_SDC2_Report.docx` (git-ignored; copy and PDF in `D:\agentsoc_data\paper_private\`): a filled copy of `Documentation_Template-SDC-II.docx`, 31 pages, six chapters, 12 figures (architecture, four UML diagrams, seven screenshots). Screenshots from a demo server on a new home (`D:\agentsoc_data\report_shots`, recorded LLM answers); `tools/e2e_check.py` passed 9 / 9 on it.
+- Open for the team: roll numbers, mentor name, the PO mapping (proposed), and the template's own inconsistencies (II Year II Semester / III Year I Semester; 2025-26 / 2026-27; a PO12 column without a PO12).
+
 ### 2026-11-23: A6, the telemetry-aware undefended agent (complete, 300 of 300)
 
 - **Result** (first 150 dev pairs, `experiments/tier2_scores.json`): hijacked 36/135 (26.7%, CI 19.9-34.7%) against 36/128 without the context on the same pairs; McNemar b = 8, c = 8, p = 1; paired difference 0.0 points (CI -5.2 to 5.2).
