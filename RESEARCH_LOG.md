@@ -15,7 +15,8 @@ The history of the project and the reasons behind it, newest first. The current 
 ### 2026-11-23: Springer (svjour3) version of the paper
 
 - The user's journal asks for Springer's `svjour3` package (`1633537_svjour3-Latex-package/`, git-ignored, publisher's files). `paper/springer/build_springer.py` (git-ignored, holds paper text) converts `paper/agentsoc_v3.tex`: one column (template default, 17 pages), two columns (10), referee (30) and anonymous builds, figures as `Fig1`-`Fig5.pdf`, references in Springer's numbered style in citation order, and an upload ZIP that compiles alone. Sentences cut only for the 8-page IEEE limit are restored; no number changed (56 of 56 and 73 of 74 claim checks; the 74th is Fig. 5's plot coordinates, now inside `Fig5.pdf`).
-- Open for the team: journal name, corresponding author, funding, competing interests, author contributions and AI-use statements (commented out in the source).
+- **Target journal (user): International Journal of Information Security.** A web search result quoting its guidelines says Springer's macro package with the option `twocolumn`; that is now the main build (10 pages, journal name set, heading "Statements and Declarations"). The guidelines page itself redirects to a Springer sign-in, so review type, length limit, abstract limits and AI policy are not verified.
+- Open for the team: corresponding author, funding, competing interests, author contributions and AI-use statements (commented out in the source).
 
 ### 2026-11-23: report names and roll numbers; paper author spelling
 
