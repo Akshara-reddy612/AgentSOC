@@ -28,11 +28,11 @@ r = int(a[a.index('--repeat') + 1]) if '--repeat' in a else None
 st = a[a.index('--set') + 1] if '--set' in a else 'dev'
 print(results_path(st, a[0], t, r))" "$1"
 }
-missing() {        # alerts among the first 300 (B1 repeats: 100, 2026-11-23) without a verdict in the given results file
+missing() {        # alerts among the first 300 alerts of the set without a verdict in the given results file
   $PY -c "
 import json, os, sys
 st = 'heldout' if 'v2_heldout_' in sys.argv[1] else 'dev'
-alerts = json.load(open(f'GUIDE_Dataset/processed/v2/guide_v2_{st}.json', encoding='utf-8'))[:100 if '_promptdef_none_t' in sys.argv[1] else 300]
+alerts = json.load(open(f'GUIDE_Dataset/processed/v2/guide_v2_{st}.json', encoding='utf-8'))[:300]
 p = sys.argv[1]
 done = {r['alert_id']: r for r in json.load(open(p, encoding='utf-8'))} if os.path.exists(p) else {}
 print(sum(1 for a in alerts if 'verdict' not in done.get(a['alert_id'], {})))" "$1"
