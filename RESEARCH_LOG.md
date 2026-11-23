@@ -14,8 +14,8 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ### 2026-11-23: SDC-II course report drafted
 
-- `GuardedSOC_SDC2_Report.docx` (git-ignored; copy and PDF in `D:\agentsoc_data\paper_private\`): a filled copy of `Documentation_Template-SDC-II.docx`, 31 pages, six chapters, 12 figures (architecture, four UML diagrams, seven screenshots). Screenshots from a demo server on a new home (`D:\agentsoc_data\report_shots`, recorded LLM answers); `tools/e2e_check.py` passed 9 / 9 on it.
-- Open for the team: roll numbers, mentor name, the PO mapping (proposed), and the template's own inconsistencies (II Year II Semester / III Year I Semester; 2025-26 / 2026-27; a PO12 column without a PO12).
+- `GuardedSOC_SDC2_Report.docx` (git-ignored; copy and PDF in `D:\agentsoc_data\paper_private\`): a filled copy of `Documentation_Template-SDC-II.docx`, 37 pages, six chapters (a title page each, as in the template), 12 figures (architecture, four UML diagrams, seven screenshots). Screenshots from a demo server on a new home (`D:\agentsoc_data\report_shots`, recorded LLM answers); `tools/e2e_check.py` passed 9 / 9 on it.
+- Fig. 1 is the paper's drawing (compared pixel by pixel); its caption in both no longer says attacker text reaches only NCE (the T1071 grounding check and, on GUIDE, ERA read it too). Open for the team: highlighted placeholders (roll numbers, mentor, year and semester, academic year), the PO mapping (proposed), and the template's own inconsistencies (II Year II Semester / III Year I Semester; 2025-26 / 2026-27; a PO12 column without a PO12).
 
 ### 2026-11-23: A6, the telemetry-aware undefended agent (complete, 300 of 300)
 
