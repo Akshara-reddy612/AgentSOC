@@ -18,6 +18,7 @@ JOBS=(
   "none --temperature 0.7 --repeat 2"
   "none --temperature 0.7 --repeat 3"
 )
+[ $# -gt 0 ] && JOBS=("$@")         # e.g.  bash tools/live_queue.sh telemetry   runs that job only
 results_file() {   # results path for a job, via the runner's own naming
   $PY -c "
 import sys
