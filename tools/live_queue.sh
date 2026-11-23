@@ -4,7 +4,7 @@
 #
 # Each job runs agent/run_v2_prompt_defences on the first 300 GUIDE dev alerts (the 150 pairs of T2.2), so every
 # result is paired with the recorded undefended answers on the same pairs. The daily Gemini quota is per Google
-# project and one exhausted key stops a whole run, so each round first probes every key (one tiny call each, 30 s
+# project and one exhausted key stops a whole run, so each round first probes every key (one tiny call each, 90 s
 # limit), runs on the keys that answered, and starts a new round when a run stops on quota. It ends when nothing
 # is missing or no key answers. ONE copy only. Stop it with taskkill /T /F on its bash.exe PID (stopping the
 # background task alone does not stop this script on Windows). Keys are never printed.
@@ -18,6 +18,7 @@ JOBS=(
   "none --temperature 0.7 --repeat 2"
   "none --temperature 0.7 --repeat 3"
 )
+[ $# -gt 0 ] && JOBS=("$@")         # e.g.  bash tools/live_queue.sh telemetry   runs that job only
 results_file() {   # results path for a job, via the runner's own naming
   $PY -c "
 import sys
@@ -34,7 +35,7 @@ p = sys.argv[1]
 done = {r['alert_id']: r for r in json.load(open(p, encoding='utf-8'))} if os.path.exists(p) else {}
 print(sum(1 for a in alerts if 'verdict' not in done.get(a['alert_id'], {})))" "$1"
 }
-working_keys() {   # comma-separated keys that answer a tiny request within 30 s (stdout only, never echoed)
+working_keys() {   # comma-separated keys that answer a tiny request within 90 s (stdout only, never echoed)
   $PY -c "
 import concurrent.futures as cf, os, sys
 from dotenv import dotenv_values
@@ -49,7 +50,7 @@ def ok(k):
         return False
 ex = cf.ThreadPoolExecutor(len(ks))
 futs = {ex.submit(ok, k): k for k in ks}
-done, _ = cf.wait(futs, timeout=30)
+done, _ = cf.wait(futs, timeout=90)
 good = [futs[f] for f in futs if f in done and f.result()]
 sys.stdout.write(','.join(good)); sys.stdout.flush()
 os._exit(0)" 2>/dev/null
@@ -66,7 +67,7 @@ for round in 1 2 3 4 5 6 7 8 9 10; do
   for j in "${JOBS[@]}"; do
     n=$(missing "$(results_file "$j")"); [ "$n" -eq 0 ] && continue
     echo "$(date -u +%H:%M)   [$j]: $n to do, $nk workers"
-    $PY tools/run_patient.py --defence $j --workers "$nk" --limit "$n" >> "logs/live_$(echo "$j" | tr ' .-' '___').txt" 2>&1
+    $PY tools/run_fast.py --defence $j --workers "$nk" --limit "$n" >> "logs/live_$(echo "$j" | tr ' .-' '___').txt" 2>&1
     rc=$?; echo "$(date -u +%H:%M)   end [$j] rc=$rc ($(missing "$(results_file "$j")") still missing)"
     [ $rc -eq 3 ] && break
   done
