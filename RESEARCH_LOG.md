@@ -12,6 +12,13 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: Fig. 1 compared with the AgentSOC paper's Fig. 1; journal version redrawn
+
+- **Comparison** (`agenso_.research_base.pdf`, its Fig. 1 on page 5): the earlier Fig. 1 (`fig1_architecture.tex`) was redrawn and extended, but kept its arrangement (three stacked layers, the same nine boxes in the same order, the store and monitoring at the right, four of its arrow labels). The base paper is (c) 2026 IEEE and its arXiv copy carries only arXiv's non-exclusive distribution licence, so an adaptation would need permission.
+- **Journal version:** a new Fig. 1 with its own layout (`paper/springer/fig1_guardedsoc.tex`, git-ignored): model-free and model-assisted paths, their fusion, outcomes, and what may teach the store. Checked against Algorithm 1, `triage_gate.py`, `defended_pipeline.py` and `outcome_monitor.py`. The old layout remains in the IEEE copy and the course report.
+- **Statements about AgentSOC checked against its PDF:** "four layers" was wrong (three layers and an internal knowledge store); "the rest run with audit and rollback" is now "execute, first as audited dry runs that can be rolled back"; "learns from earlier cases" is now "keeps enterprise context and what earlier cycles showed". 5,000 LANL events, 50 nodes, GPT-4, the attack model and the routing of high-impact playbooks to analysts match.
+- Word overlap of the final text with the base paper: 8 of 7,435 words in a shared 6-word run, all one component name.
+
 ### 2026-11-23: line-by-line check of the journal version; one wrong sentence corrected
 
 - **Corrected:** the paired change in the response rate (0.0 / -0.6 / -1.0 points) was described as "over all 500 pairs", but `build_results.py` leaves out the responses ERA's escalation induced (12 / 10 / 12). With them it is +2.4 / +1.4 / +1.4 points, so "every interval covers zero" holds only without them. The paper now says both, and RESULTS.md prints both. No count changed.
