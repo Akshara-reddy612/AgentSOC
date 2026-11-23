@@ -341,6 +341,29 @@ Attack steps: initial access (CLIENT2), lateral movement, collection, exfiltrati
 | no attacker, analyst misses 20% | 72 -> 72 | 400 -> 400 | 34.1 -> 45.2 | 1.2 / 28.5 / 30 / 1265 |
 | no attacker, 5% false alarms | 72 -> 72 | 400 -> 400 | 44.6 -> 62.9 | 1.2 / 28.5 / 30 / 1265 |
 
+**Conditioning inside the threat model** (`experiments/a8_foothold_runs.py`): plants only after the attacker's first labelled event on each host, PowerShell included, attack schedule unchanged.
+
+| Condition | Attack cases raised | Attack events alerted | Attack cases' patterns learned | Reviews / day |
+|:--|--:|--:|--:|--:|
+| no analyst | 72 | 400 | 0 | 66.3 |
+| analyst 4 h, B5 on | 72 | 400 | 0 | 35.1 |
+| analyst 4 h, B5 off | 52 | 369 | 0 | 30.5 |
+| analyst 4 h, B5 all hosts | 72 | 400 | 0 | 46.3 |
+| misses 20%, B5 on (6 seeds, min-max) | 72 | 400 | 0 | 35.1 |
+| misses 20%, B5 off (6 seeds, min-max) | 35-47 | 219-348 | 8-14 | 29.3-30.1 |
+
+Planted events: 41, of which 33 alerted. Limits: the recorded schedule is kept (the attacker does not pause for plants to be learned), and a confirmation lasts 7 days, after which learning on the host resumes.
+
+**Full-text PowerShell keys** (`--script-full-text`, off by default; `experiments/ps_fulltext_runs.py`): the planted scripts are harmless and share the attack scripts' first 160 characters. Default identical to F_gated: yes.
+
+| Condition | Attack cases raised | Attack events alerted | Reviews / day |
+|:--|--:|--:|--:|
+| 160 characters, test-period plants, B5 all hosts | 0 | 0 | 28.4 |
+| full text, no attacker, no analyst | 72 | 400 | 65.2 |
+| full text, no attacker, analyst 4 h | 72 | 400 | 34.1 |
+| full text, test-period plants, B5 per host | 21 | 212 | 31.4 |
+| full text, test-period plants, B5 all hosts | 58 | 377 | 47.0 |
+
 ## Limits
 
 - **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few malicious verdicts.

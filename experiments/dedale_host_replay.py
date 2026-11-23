@@ -163,7 +163,7 @@ def main() -> None:
     ap.add_argument("--train-window", default="both", choices=list(TRAIN_WINDOWS),
                     help="checklist A11 (2026-11-22): which clean week(s) the store learns from; the test period "
                          "(from TRAINING_END) is unchanged and events outside the chosen training week are skipped")
-    ap.add_argument("--plant", default=None, choices=["test", "train"],
+    ap.add_argument("--plant", default=None, choices=["test", "train", "foothold"],
                     help="checklist A8 (2026-11-22): low-and-slow attacker that first runs its tools harmlessly so "
                          "their detector keys are learned (experiments/dedale_plant.py)")
     ap.add_argument("--plant-detectors", nargs="+", default=None, choices=list(DETECTORS),
@@ -171,6 +171,8 @@ def main() -> None:
     ap.add_argument("--unlearn-scope", default="host", choices=["host", "all"],
                     help="A8 mitigation (2026-11-23): B5 retracts on the confirmed host only (default) or on every "
                          "host (cross-host unlearning)")
+    ap.add_argument("--script-full-text", action="store_true",
+                    help="2026-11-23: PowerShell keys fingerprint the whole script, not its first 160 characters")
     ap.add_argument("--flood", type=float, default=None,
                     help="checklist A3 (2026-11-23): escalation flooding, harmless novel programs per hour on the "
                          "hosts the attacker controls (experiments/dedale_flood.py)")
@@ -264,6 +266,9 @@ def main() -> None:
         if args.unlearn_lookback != 7.0:       # experiment setting for this run only; the module constant is not edited
             import perception.soc_loop as soc_loop_module
             soc_loop_module.UNLEARN_LOOKBACK = timedelta(days=args.unlearn_lookback)
+        if args.script_full_text:              # for this run only; the module default is not edited
+            import perception.host_detection as host_detection_module
+            host_detection_module.SCRIPT_PREFIX = None
         loop = SocLoop(db, mode=args.mode, training_end=TRAINING_END, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
@@ -337,6 +342,7 @@ def main() -> None:
         **({"plant": args.plant, "plant_detectors": args.plant_detectors or "lineage exec_file_write pipe",
             "planted_events": len(planted)} if args.plant else {}),
         **({"unlearn_scope": args.unlearn_scope} if args.unlearn_scope != "host" else {}),
+        **({"script_full_text": True} if args.script_full_text else {}),
         **({"flood_per_hour": args.flood, "flood_events": len(flooded)} if args.flood else {}),
         "counts": dict(loop.counts), "test_outcomes": dict(outcomes),
         "analyst_verdicts": dict(Counter(v for _, _, v in loop.verdicts)),

@@ -31,3 +31,14 @@ def test_powershell_is_not_plantable_by_default():
 def test_plants_rejects_unknown_timing():
     with pytest.raises(ValueError):
         plants("later")
+
+
+def test_prefix_sharing_script_fools_the_160_character_key_but_not_the_full_text(monkeypatch):
+    import perception.host_detection as hd
+    attack = {"t": "2025-01-06T10:03:00Z", "host": "CLIENT2", "rid": 5, "ch": "powershell", "code": 4104,
+              "script": "a1234" * 100 + " attack body"}
+    plant = _harmless(attack, "powershell", 0)
+    assert "attack body" not in plant["script"]
+    assert DETECTORS["powershell"].key(plant) == DETECTORS["powershell"].key(attack)
+    monkeypatch.setattr(hd, "SCRIPT_PREFIX", None)
+    assert DETECTORS["powershell"].key(plant) != DETECTORS["powershell"].key(attack)
