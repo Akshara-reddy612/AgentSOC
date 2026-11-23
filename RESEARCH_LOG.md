@@ -12,6 +12,12 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-23: A6, the telemetry-aware undefended agent (complete, 300 of 300)
+
+- **Result** (first 150 dev pairs, `experiments/tier2_scores.json`): hijacked 36/135 (26.7%, CI 19.9-34.7%) against 36/128 without the context on the same pairs; McNemar b = 8, c = 8, p = 1; paired difference 0.0 points (CI -5.2 to 5.2).
+- **The added context was nearly empty.** All 300 alerts got one identical inventory context (role unknown, zones UNKNOWN, prior access no): GUIDE's generated entities are not in the inventory. New per alert: target host, destination, and a known-bad flag on 44 of 300. `rescore_v2` uses the same default store, so the comparison is like for like, but it does not test an agent with rich telemetry. Stated in the paper (text and limitation (7)).
+- B1 repeat 1 is partial; its incomplete line in `tier2_scores.json` / RESULTS.md must not be cited.
+
 ### 2026-11-23: live queue moved to a faster transport (user approved, mid-A6)
 
 - **Problem:** 165 of 300 A6 answers in 54 min; 205 attempts hit the 180 s cutoff. Each call started a process and built a new `genai.Client`, 8-11 s here (the CA file loaded twice, 4.2 s each; why it is slow is not established), tried every key in turn on a 429, and the SDK retries silently (5 attempts).
