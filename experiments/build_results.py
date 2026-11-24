@@ -173,12 +173,12 @@ def c1() -> list[str]:
 
 
 def e1() -> list[str]:
-    """C1 through the full loop on real telemetry (E1): attacker text in the attacker's own command lines."""
+    """C1 through the full loop on testbed telemetry (E1): attacker text in the attacker's own command lines."""
     path = RESULTS / "e1_scores.json"
     if not path.exists():
         return []
     e = _load(path)
-    lines = ["**Through the full loop on real telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the "
+    lines = ["**Through the full loop on testbed telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the "
              "attacker appends text to the command lines of their own processes (84 events; 38 cases whose first "
              "alert carries it).", "",
              "| Attacker text | Condition | Attack cases dismissed | Attack cases' patterns learned as routine | "
@@ -311,7 +311,7 @@ def dedale() -> list[str]:
            hrow("misses 5% of attacks, B5 off", H["m5_nob5"]), hrow("misses 5% of attacks, B5 on", H["m5"]),
            hrow("misses 20% of attacks, B5 off", H["m20_nob5"]), hrow("misses 20% of attacks, B5 on", H["m20"]),
            hrow("5% false alarms, B5 off", H["fa5_nob5"]), hrow("5% false alarms, B5 on", H["fa5"]), "",
-           "## C4 — What the LLM adds on real telemetry, and a failure mode", "",
+           "## C4 — What the LLM adds on testbed telemetry, and a failure mode", "",
            "Host logs, gated. NCE = gemini-3.1-flash-lite hypotheses from the cache of the live Phase 3 run "
            "(cache misses go to review unreasoned). With an analyst and B5 the system sees alerts the cached "
            "run did not (different learning), so some cases were not reasoned about: the cache-miss column.", "",
@@ -799,7 +799,7 @@ def main() -> None:
              "Built by `python -m experiments.build_results` from frozen result files only; see "
              "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *worst_case(), *optimized(),
              "## Limits", "",
-             "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
+             "- **DEDALE:** one testbed dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
              "- **Analyst:** simulated (an oracle that follows the labels, with random per-case mistakes).",
              "- **LLM:** one model on DEDALE. On GUIDE, the second model (gpt-oss-20b) ran on the dev set only, "

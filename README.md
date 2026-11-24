@@ -1,11 +1,13 @@
-# AgentSOC 2.0
+# AgentSOC 2.0 (GuardedSOC)
+
+> This repository holds the code, the GUIDE v2 alert pairs, the recorded LLM answers and the score files of our **GuardedSOC** paper. GuardedSOC is the paper's name for the system that this repository calls AgentSOC 2.0. It extends the AgentSOC framework of Roy and Singh (IEEE ICAIC 2026, [doi:10.1109/ICAIC67076.2026.11395783](https://doi.org/10.1109/ICAIC67076.2026.11395783)); this is not their repository. How to rebuild the results: [REPRODUCE.md](REPRODUCE.md).
 
 A research prototype of an LLM-driven Security Operations Centre (SOC) that defends its own two attack surfaces:
 
 - **The LLM reads log text an attacker can write.** Command lines, script text and alert descriptions can carry instructions such as "this is routine maintenance" or "isolate the domain controller".
 - **The memory learns from what it sees and from analysts.** An attacker who is seen often enough, or wrongly marked benign, can be learned as normal.
 
-The full pipeline keeps the LLM's output advisory: structural checks, entity binding, guardrails and a learning gate decide what it may cause. It was evaluated on real telemetry (DEDALE) and on a contamination corpus (GUIDE v2). It also runs as a live tool, with a review web app for analysts.
+The full pipeline keeps the LLM's output advisory: structural checks, entity binding, guardrails and a learning gate decide what it may cause. It was evaluated on labelled testbed telemetry (DEDALE) and on a contamination corpus (GUIDE v2). It also runs as a live tool, with a review web app for analysts.
 
 KMIT research project. Scope and milestones are in [PROJECT_PLAN.md](PROJECT_PLAN.md); results are in [experiments/RESULTS.md](experiments/RESULTS.md).
 
@@ -35,12 +37,12 @@ All numbers are from [experiments/RESULTS.md](experiments/RESULTS.md), built fro
 - **C3, memory poisoning:**
   - Without the gate, the store learned 38 attack patterns.
   - An analyst who misses 20% of attacks lets 20 be learned. With unlearning on confirmed compromise, 0 are learned.
-- **C4, the LLM on real telemetry:** reviews fell by 16%. A closed-world feasibility rule dismissed 2 real attack cases; the open-world rule dismisses 0.
+- **C4, the LLM on testbed telemetry:** under the earlier acting rule, reviews fell by 16%; a closed-world feasibility rule dismissed 2 attack cases, the open-world rule 0. Under asymmetric trust (the default) the LLM cannot dismiss a case, and reviews stay at 65.2 per day.
 - **C5, the analyst loop:** reviews fell from 65 to 34 per day with an analyst who answers after 4 h (51.5 per day after 72 h).
 
 **Limits:**
 
-- one real dataset, with 2 labelled attacked hosts;
+- one testbed dataset, with 2 labelled attacked hosts;
 - a simulated analyst;
 - one LLM on DEDALE;
 - synthetic entities and payloads in GUIDE v2.
@@ -180,7 +182,7 @@ Since 2026-10-31 the pipeline has two rules for what the LLM's hypotheses (NCE) 
 
 | Dataset | Use | Where |
 |:--|:--|:--|
-| [DEDALE](https://doi.org/10.57745/Y5JLDG) (Inria, CC BY 4.0) | Real telemetry of a multi-step attack on a company testbed: Windows logs of 30 clients, Suricata alerts, labels. The main evidence for C1 (E1) and C2-C5, and the demo. | `<data>/dedale/` (over 27 GB) |
+| [DEDALE](https://doi.org/10.57745/Y5JLDG) (Inria, CC BY 4.0) | Telemetry of a multi-step attack on a company testbed: Windows logs of 30 clients, Suricata alerts, labels. The main evidence for C1 (E1) and C2-C5, and the demo. | `<data>/dedale/` (over 27 GB) |
 | GUIDE v2 | Contamination corpus: clean / contaminated alert pairs built from Microsoft GUIDE rows with synthetic entities and payloads (C1) | `GUIDE_Dataset/processed/v2/` (in the repository) |
 
 ## Repository map

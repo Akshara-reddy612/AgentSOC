@@ -2,3 +2,7 @@
 *.log
 *.out
 *.synctex.gz
+# earlier Fig. 1 (layout close to the AgentSOC paper's figure): kept locally only, since 2026-11-24
+Fig1_architecture.png
+fig1_architecture.tex
+build_fig1.py
