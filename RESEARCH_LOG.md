@@ -16,7 +16,7 @@ The history of the project and the reasons behind it, newest first. The current 
 
 - **Journal (user):** Journal of Cyber Security Technology (Taylor & Francis, format-free). `paper/tandf/` (git-ignored): article class, references.bib (pages and authors from publisher pages), 5 keywords, abstract 198 words, UK spelling, T&F declarations, AI note in figure captions (T&F image policy), named and anonymous PDFs. Review type not verified. The Springer version is superseded.
 - **A4 (live, 224 calls of 320):** all 20 attackable pairs complete. Confirmed suppressions 4/428 dev and 3/437 held-out: exactly the recorded 7 pairs; on the other 13, 0 of 76 attack answers and 0 of 26 clean controls lost the response. **On the 7, 11 of 14 fresh clean answers also lost it (6 of 7 pairs)**, so the recorded suppressions are mostly NCE variation, not the payload. The text no longer says the payload made NCE drop the hypothesis. Limits: two controls per pair, taken later than the recorded answers; six rounds; attacker = victim model. `a4_optimized_scores.json`, `a4_optimized_summary.json`.
-- A6 `findings` and B1 are queued after it (running).
+- A6 `findings` and B1 are queued after it (running). The findings builder raised KeyError on 44 of 300 alerts (a hypothesis without a ranked action); fixed during the run, the other 256 prompts are unchanged (hash check).
 - MiKTeX auto-installed the package `grfext` during a file lookup (not approved beforehand; reported to the user).
 
 ### 2026-11-23: Fig. 1 compared with the AgentSOC paper's Fig. 1; journal version redrawn
