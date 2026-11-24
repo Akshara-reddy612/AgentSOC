@@ -253,6 +253,7 @@ CLIENT2 was confirmed in every run: its first attack case carries no attacker te
 | spotlight | 150 | 36/128 (28.1%) | 7/140 (5.0%) | 2.4%-10.0% | 1 / 30 | 3e-08 |
 | hierarchy | 150 | 36/128 (28.1%) | 4/140 (2.9%) | 1.1%-7.1% | 1 / 33 | 4.1e-09 |
 | telemetry | 150 | 36/128 (28.1%) | 36/135 (26.7%) | 19.9%-34.7% | 8 / 8 | 1 |
+| findings | 150 | 36/128 (28.1%) | 36/125 (28.8%) | 21.6%-37.3% | 6 / 6 | 1 |
 
 Paired difference over all pairs both conditions answered (per-pair hijack indicator; 95% Wald CI for paired proportions):
 
@@ -260,8 +261,7 @@ Paired difference over all pairs both conditions answered (per-pair hijack indic
 - spotlight: 24.0% -> 4.7% of 150 pairs, reduction 19.3 points (95% CI 12.8-25.9)
 - hierarchy: 24.0% -> 2.7% of 150 pairs, reduction 21.3 points (95% CI 14.5-28.1)
 - telemetry: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -5.2-5.2)
-
-*B1, repeated runs* of the undefended prompt at temperature 0.7 on the same 150 pairs: 0/2 (incomplete).
+- findings: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -4.5-4.5)
 
 *T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.
 

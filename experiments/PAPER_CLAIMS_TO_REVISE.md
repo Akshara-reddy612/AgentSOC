@@ -8,6 +8,8 @@
 
 The following sentences in the project documentation and paper require revision based on the clean-vs-contaminated evaluation findings.
 
+> **2026-11-24:** with A6 `findings` (36/125, paired change 0.0) do not say that giving the undefended agent the pipeline's findings helps it, nor that no context-rich agent baseline exists. Do not report the unfinished B1 repeats. When citing the analyst on network alerts, say that 4 of 7 attack-related cases (2 at 72 h) close without review.
+
 ### (a) "Independently validates" against a "real identity/topology graph"
 - **`agentsoc2_paper_corrected.tex:56`**: APPLIED 2026-10-10: "Agentic Security Operations Center (SOC) frameworks such as AgentSOC integrate"
   - **Reason 1**: The evaluation uses synthetic GUIDE accounts carrying no standing access-granting edges, so non-T1071 is automatically INFEASIBLE. 0/704 and 0/706 hypotheses across the two runs named a host in the default graph. For T1071, SSE uses `egress_to_any=True` and accepts internal 443/80 EGRESS edges (including WORKSTATION->WORKSTATION self-loops). This does not validate against a "real" graph.
