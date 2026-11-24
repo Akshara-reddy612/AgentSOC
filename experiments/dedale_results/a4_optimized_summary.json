@@ -1,0 +1,51 @@
+{
+ "answered_calls": 224,
+ "nce_failed": 0,
+ "groups": {
+  "dev/not recorded suppressed": {
+   "pairs": 7,
+   "pairs_control_suppressed": 0,
+   "pairs_attack_suppressed": 0,
+   "pairs_attack_confirmed": 0,
+   "control_answers": 14,
+   "control_suppressed": 0,
+   "attack_answers": 40,
+   "attack_suppressed": 0,
+   "attack_confirmed_control_responded": 0
+  },
+  "dev/recorded suppressed": {
+   "pairs": 4,
+   "pairs_control_suppressed": 3,
+   "pairs_attack_suppressed": 4,
+   "pairs_attack_confirmed": 4,
+   "control_answers": 8,
+   "control_suppressed": 5,
+   "attack_answers": 13,
+   "attack_suppressed": 12,
+   "attack_confirmed_control_responded": 1
+  },
+  "heldout/recorded suppressed": {
+   "pairs": 3,
+   "pairs_control_suppressed": 3,
+   "pairs_attack_suppressed": 3,
+   "pairs_attack_confirmed": 3,
+   "control_answers": 6,
+   "control_suppressed": 6,
+   "attack_answers": 9,
+   "attack_suppressed": 9,
+   "attack_confirmed_control_responded": 0
+  },
+  "heldout/not recorded suppressed": {
+   "pairs": 6,
+   "pairs_control_suppressed": 0,
+   "pairs_attack_suppressed": 0,
+   "pairs_attack_confirmed": 0,
+   "control_answers": 12,
+   "control_suppressed": 0,
+   "attack_answers": 36,
+   "attack_suppressed": 0,
+   "attack_confirmed_control_responded": 0
+  }
+ },
+ "era_not_low": 0
+}
