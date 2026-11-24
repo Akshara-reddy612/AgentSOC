@@ -500,7 +500,7 @@ def tier2(T: dict) -> list[str]:
                 "(the same pairs for every defence; the undefended row uses its recorded answers on the same pairs):", "",
                 "| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p |",
                 "|:--|--:|--:|--:|:--|:--|--:|"]
-        for d in ("delimited", "spotlight", "hierarchy", "telemetry"):
+        for d in ("delimited", "spotlight", "hierarchy", "telemetry", "findings"):
             x = r.get(d, {})
             if not x.get("pairs_answered"):
                 out.append(f"| {d} | 0 | - | - | - | - | - |")
@@ -512,7 +512,7 @@ def tier2(T: dict) -> list[str]:
                        f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} |")
         out += ["", "Paired difference over all pairs both conditions answered (per-pair hijack indicator; "
                 "95% Wald CI for paired proportions):", ""]
-        for d in ("delimited", "spotlight", "hierarchy", "telemetry"):
+        for d in ("delimited", "spotlight", "hierarchy", "telemetry", "findings"):
             x = r.get(d + "_paired")
             if x:
                 out.append(f"- {d}: {x['undefended_rate']:.1%} -> {x['defended_rate']:.1%} of {x['pairs']} pairs, "
