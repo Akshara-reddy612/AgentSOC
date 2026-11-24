@@ -14,7 +14,7 @@ It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.2013
 - Pipeline and tool are finished. The GUIDE and DEDALE results were frozen on 2026-10-31. Tests pass (825 passed, 1 deselected; 2026-11-24, branch `paper-revision-design`).
 - Re-checked on this machine: the three GUIDE acting-rule re-scores are byte-identical to the committed ones. The full offline DEDALE re-freeze (43 replays) reproduced every frozen score file byte-identically (see "Reproduce" below).
 - The paper to submit is the journal version in `paper/tandf/` (since 2026-11-24; generated from `paper/agentsoc_v3.tex`; git-ignored, backup in `D:\agentsoc_data\paper_private\`). The Word file `AgentSOC_IEEE_Revised.docx` is no longer the submission file.
-- Left for the team: submit the journal version once the running experiments are in it, record the demo video, hand in the SDC-II course report (`GuardedSOC_SDC2_Report.docx`, git-ignored; it still has the earlier Fig. 1), and (optional) a third dataset.
+- Left for the team: submit the journal version once the running experiments are in it, record the demo video, hand in the SDC-II course report (`GuardedSOC_SDC2_Report.docx`, git-ignored; new Fig. 1 since 2026-11-24), and (optional) a third dataset.
 
 ## Terms used in this file
 
