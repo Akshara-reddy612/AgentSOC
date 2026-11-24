@@ -66,7 +66,7 @@ It builds on the AgentSOC paper (Roy and Singh, IEEE ICAIC 2026, arXiv:2604.2013
 | C1 through the full loop (E1, DEDALE) | Attack cases dismissed without an analyst 1 / 3 / 1 of 72 (acting rule), 0 under asymmetric trust; 0 attack patterns learned; the same 400 labelled attack events alerted | `RESULTS.md:42-57`; re-freeze reproduced byte-identically 2026-11-22 |
 | C2 gated learning cuts load | Host reviews per day 6,095.4 (static) → 65.2 (gated); 72/72 attack cases reviewed. Network 552.3 → 26.1 | `RESULTS.md:67-79` |
 | C3 poisoning | Ungated: 38 attack patterns learned. Analyst missing 20%: 20 learned, 256/400 events alerted; with B5: 0, 400/400 | `RESULTS.md:70,88-95` |
-| C4 the LLM on real telemetry | NCE −16% reviews (65.2 → 54.8), all of it dismissals; closed-world SSE dismissed 2 attack cases, open world 0; under asymmetric trust NCE dismisses nothing (65.2) | `RESULTS.md:103-110` |
+| C4 the LLM on testbed telemetry | NCE −16% reviews (65.2 → 54.8), all of it dismissals; closed-world SSE dismissed 2 attack cases, open world 0; under asymmetric trust NCE dismisses nothing (65.2) | `RESULTS.md:103-110` |
 | C5 analyst loop | 33.1 / 34.1 / 38.1 / 51.5 reviews per day at 1 / 4 / 24 / 72 h delay; network containment time = delay | `RESULTS.md:118-140` |
 | C6 asymmetric trust | E1 dismissals 1/3/1 → 0; GUIDE automatic containments removed by contamination 20/178, 18/168, 21/176 → 0; cost +0.9 reviews/day with an analyst | `RESULTS.md:11-16,50-57,107-108` |
 
