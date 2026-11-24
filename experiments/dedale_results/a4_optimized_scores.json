@@ -1,0 +1,237 @@
+{
+ "answered_calls": 224,
+ "sets": {
+  "dev": {
+   "attackable": 11,
+   "complete": 11,
+   "found": 4,
+   "confirmed": 4,
+   "responses": 428,
+   "confirmed_rate": 0.009345794392523364,
+   "ci95": [
+    0.0036401703933360563,
+    0.02378099514513916
+   ],
+   "control_suppressed_answers": 5,
+   "control_answers": 22,
+   "confirmed_and_control_never_suppressed": 1
+  },
+  "heldout": {
+   "attackable": 9,
+   "complete": 9,
+   "found": 3,
+   "confirmed": 3,
+   "responses": 437,
+   "confirmed_rate": 0.006864988558352402,
+   "ci95": [
+    0.0023373641320203146,
+    0.01998720777770871
+   ],
+   "control_suppressed_answers": 6,
+   "control_answers": 18,
+   "confirmed_and_control_never_suppressed": 0
+  }
+ },
+ "pairs": {
+  "v2d-206158434794": {
+   "set": "dev",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2d-120259086544": {
+   "set": "dev",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 5,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2d-1700807050817": {
+   "set": "dev",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 5,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2d-1460288881362": {
+   "set": "dev",
+   "recorded_suppressed": true,
+   "control_suppressed": 2,
+   "controls": 2,
+   "queries": 2,
+   "found": true,
+   "confirmed": true,
+   "complete": true
+  },
+  "v2d-1623497643022": {
+   "set": "dev",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2d-214748367509": {
+   "set": "dev",
+   "recorded_suppressed": true,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 1,
+   "found": true,
+   "confirmed": true,
+   "complete": true
+  },
+  "v2d-257698039607": {
+   "set": "dev",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2d-60129547017": {
+   "set": "dev",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2d-764504181718": {
+   "set": "dev",
+   "recorded_suppressed": true,
+   "control_suppressed": 1,
+   "controls": 2,
+   "queries": 1,
+   "found": true,
+   "confirmed": true,
+   "complete": true
+  },
+  "v2d-1451698949676": {
+   "set": "dev",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2d-678604834947": {
+   "set": "dev",
+   "recorded_suppressed": true,
+   "control_suppressed": 2,
+   "controls": 2,
+   "queries": 1,
+   "found": true,
+   "confirmed": true,
+   "complete": true
+  },
+  "v2h-1657857378851": {
+   "set": "heldout",
+   "recorded_suppressed": true,
+   "control_suppressed": 2,
+   "controls": 2,
+   "queries": 1,
+   "found": true,
+   "confirmed": true,
+   "complete": true
+  },
+  "v2h-1563368100308": {
+   "set": "heldout",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2h-1108101564096": {
+   "set": "heldout",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2h-764504182352": {
+   "set": "heldout",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2h-1271310320242": {
+   "set": "heldout",
+   "recorded_suppressed": true,
+   "control_suppressed": 2,
+   "controls": 2,
+   "queries": 1,
+   "found": true,
+   "confirmed": true,
+   "complete": true
+  },
+  "v2h-1314259997603": {
+   "set": "heldout",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2h-687194771426.1": {
+   "set": "heldout",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2h-231928234783": {
+   "set": "heldout",
+   "recorded_suppressed": false,
+   "control_suppressed": 0,
+   "controls": 2,
+   "queries": 6,
+   "found": false,
+   "confirmed": false,
+   "complete": true
+  },
+  "v2h-1425929145552": {
+   "set": "heldout",
+   "recorded_suppressed": true,
+   "control_suppressed": 2,
+   "controls": 2,
+   "queries": 1,
+   "found": true,
+   "confirmed": true,
+   "complete": true
+  }
+ }
+}

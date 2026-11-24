@@ -138,7 +138,8 @@ def c1() -> list[str]:
         d = (c - b) / n
         se = ((b + c) - (c - b) ** 2 / n) ** 0.5 / n
         paired_lines.append(f"- {name}: {b} suppressed, {c} induced otherwise, of {n} pairs: change in response rate "
-                            f"{d * 100:+.1f} points (paired 95% CI {(d - 1.96 * se) * 100:+.1f} to {(d + 1.96 * se) * 100:+.1f})")
+                            f"{d * 100:+.1f} points (paired 95% CI {(d - 1.96 * se) * 100:+.1f} to {(d + 1.96 * se) * 100:+.1f}); "
+                            f"with the {era} responses ERA's escalation induced counted: {(c + era - b) / n * 100:+.1f} points")
     lines += ["", "*Paired view* (each pair is its own control; Wald CI for paired proportions; no significance is "
               "claimed where the interval covers zero):", "", *paired_lines]
     lines += ["", "*Induced by ERA escalation*: the contaminated twin got a response the clean one did not because "
@@ -770,10 +771,33 @@ def worst_case() -> list[str]:
     return out + [""]
 
 
+def optimized() -> list[str]:
+    """Checklist A4 (2026-11-24): the optimized attacker (experiments/a4_optimized.py, a4_optimized_summary.py)."""
+    a, b = RESULTS / "a4_optimized_scores.json", RESULTS / "a4_optimized_summary.json"
+    if not (a.exists() and b.exists()):
+        return []
+    s, t = _load(a), _load(b)
+    out = ["## Optimized attacker on GUIDE (checklist A4, 2026-11-24)", "",
+           "An attacker LLM (the victim's model) sees the alert, its earlier payloads and the pipeline's answers, up to six "
+           "rounds per pair, on the 20 pairs any text can suppress; a suppressing payload is re-sent twice (confirmed = at "
+           "least 2 of 3). Controls: two fresh NCE answers on each clean twin. Asymmetric trust, ERA on. "
+           f"{t['answered_calls']} answered calls, {t['nce_failed']} unusable NCE answers.", "",
+           "| Set | Attackable | Confirmed suppressed | 95% CI |", "|:--|--:|--:|:--|"]
+    for k, r in s["sets"].items():
+        out.append(f"| {k} | {r['attackable']} | {r['confirmed']}/{r['responses']} ({r['confirmed_rate']:.1%}) | "
+                   f"{r['ci95'][0]:.1%}-{r['ci95'][1]:.1%} |")
+    out += ["", "| Pairs | Pairs | Attack: confirmed | Attack answers suppressed | Clean controls suppressed | Pairs with a "
+            "suppressed control |", "|:--|--:|--:|--:|--:|--:|"]
+    for k, r in t["groups"].items():
+        out.append(f"| {k} | {r['pairs']} | {r['pairs_attack_confirmed']} | {r['attack_suppressed']}/{r['attack_answers']} | "
+                   f"{r['control_suppressed']}/{r['control_answers']} | {r['pairs_control_suppressed']} |")
+    return out + [""]
+
+
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *worst_case(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *worst_case(), *optimized(),
              "## Limits", "",
              "- **DEDALE:** one real dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",

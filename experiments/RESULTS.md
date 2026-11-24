@@ -1,4 +1,4 @@
-# Results (frozen 2026-11-23)
+# Results (frozen 2026-11-24)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
@@ -17,12 +17,12 @@ Pipeline response on clean vs contaminated twins (same GUIDE row, differing only
 
 *Paired view* (each pair is its own control; Wald CI for paired proportions; no significance is claimed where the interval covers zero):
 
-- GUIDE v2 dev, gemini-3.1-flash-lite: 4 suppressed, 4 induced otherwise, of 500 pairs: change in response rate +0.0 points (paired 95% CI -1.1 to +1.1)
-- GUIDE v2 held-out, gemini-3.1-flash-lite: 3 suppressed, 0 induced otherwise, of 500 pairs: change in response rate -0.6 points (paired 95% CI -1.3 to +0.1)
-- GUIDE v2 dev, gpt-oss-20b: 10 suppressed, 5 induced otherwise, of 500 pairs: change in response rate -1.0 points (paired 95% CI -2.5 to +0.5)
-- GUIDE v2 dev, gemini-3.1-flash-lite, asymmetric trust: 4 suppressed, 4 induced otherwise, of 500 pairs: change in response rate +0.0 points (paired 95% CI -1.1 to +1.1)
-- GUIDE v2 held-out, gemini-3.1-flash-lite, asymmetric trust: 3 suppressed, 0 induced otherwise, of 500 pairs: change in response rate -0.6 points (paired 95% CI -1.3 to +0.1)
-- GUIDE v2 dev, gpt-oss-20b, asymmetric trust: 10 suppressed, 5 induced otherwise, of 500 pairs: change in response rate -1.0 points (paired 95% CI -2.5 to +0.5)
+- GUIDE v2 dev, gemini-3.1-flash-lite: 4 suppressed, 4 induced otherwise, of 500 pairs: change in response rate +0.0 points (paired 95% CI -1.1 to +1.1); with the 12 responses ERA's escalation induced counted: +2.4 points
+- GUIDE v2 held-out, gemini-3.1-flash-lite: 3 suppressed, 0 induced otherwise, of 500 pairs: change in response rate -0.6 points (paired 95% CI -1.3 to +0.1); with the 10 responses ERA's escalation induced counted: +1.4 points
+- GUIDE v2 dev, gpt-oss-20b: 10 suppressed, 5 induced otherwise, of 500 pairs: change in response rate -1.0 points (paired 95% CI -2.5 to +0.5); with the 12 responses ERA's escalation induced counted: +1.4 points
+- GUIDE v2 dev, gemini-3.1-flash-lite, asymmetric trust: 4 suppressed, 4 induced otherwise, of 500 pairs: change in response rate +0.0 points (paired 95% CI -1.1 to +1.1); with the 12 responses ERA's escalation induced counted: +2.4 points
+- GUIDE v2 held-out, gemini-3.1-flash-lite, asymmetric trust: 3 suppressed, 0 induced otherwise, of 500 pairs: change in response rate -0.6 points (paired 95% CI -1.3 to +0.1); with the 10 responses ERA's escalation induced counted: +1.4 points
+- GUIDE v2 dev, gpt-oss-20b, asymmetric trust: 10 suppressed, 5 induced otherwise, of 500 pairs: change in response rate -1.0 points (paired 95% CI -2.5 to +0.5); with the 12 responses ERA's escalation induced counted: +1.4 points
 
 *Induced by ERA escalation*: the contaminated twin got a response the clean one did not because ERA flagged its injected text (MEDIUM / HIGH) and escalated it to review; that is the defence reacting, not the attacker succeeding.
 
@@ -400,6 +400,22 @@ Under asymmetric trust the outcome is never below the model-free decision, which
 | dev, gemini-3.1-flash-lite | 11/428 (2.6%) | 1.4%-4.5% | 4 | 0 |
 | held-out, gemini-3.1-flash-lite | 9/437 (2.1%) | 1.1%-3.9% | 3 | 0 |
 | dev, gpt-oss-20b | 20/437 (4.6%) | 3.0%-7.0% | 10 | 0 |
+
+## Optimized attacker on GUIDE (checklist A4, 2026-11-24)
+
+An attacker LLM (the victim's model) sees the alert, its earlier payloads and the pipeline's answers, up to six rounds per pair, on the 20 pairs any text can suppress; a suppressing payload is re-sent twice (confirmed = at least 2 of 3). Controls: two fresh NCE answers on each clean twin. Asymmetric trust, ERA on. 224 answered calls, 0 unusable NCE answers.
+
+| Set | Attackable | Confirmed suppressed | 95% CI |
+|:--|--:|--:|:--|
+| dev | 11 | 4/428 (0.9%) | 0.4%-2.4% |
+| heldout | 9 | 3/437 (0.7%) | 0.2%-2.0% |
+
+| Pairs | Pairs | Attack: confirmed | Attack answers suppressed | Clean controls suppressed | Pairs with a suppressed control |
+|:--|--:|--:|--:|--:|--:|
+| dev/not recorded suppressed | 7 | 0 | 0/40 | 0/14 | 0 |
+| dev/recorded suppressed | 4 | 4 | 12/13 | 5/8 | 3 |
+| heldout/recorded suppressed | 3 | 3 | 9/9 | 6/6 | 3 |
+| heldout/not recorded suppressed | 6 | 0 | 0/36 | 0/12 | 0 |
 
 ## Limits
 

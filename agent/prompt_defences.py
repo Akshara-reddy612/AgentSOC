@@ -162,7 +162,7 @@ def model_free_finding(alert: dict) -> list[str]:
     lines = [f"Pipeline finding:   {res['outcome']} ({' '.join(res['outcome_reasons'])})"]
     for h in res["hypotheses"]:
         lines.append(f"Supported technique: {h['technique_id']} from {h['source_host']} to {h['target_host']}; "
-                     f"structural check {h['sse_verdict']}; response {h['top_action']} ({h['playbook_status']})")
+                     f"structural check {h['sse_verdict']}; response {h.get('top_action') or 'none'} ({h.get('playbook_status') or 'not ranked'})")
     return lines
 
 

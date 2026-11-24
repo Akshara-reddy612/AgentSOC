@@ -12,6 +12,42 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-24: target journal changed; A4 optimized attacker run
+
+- **Journal (user):** Journal of Cyber Security Technology (Taylor & Francis, format-free). `paper/tandf/` (git-ignored): article class, references.bib (pages and authors from publisher pages), 5 keywords, abstract 198 words, UK spelling, T&F declarations, AI note in figure captions (T&F image policy), named and anonymous PDFs. Review type not verified. The Springer version is superseded.
+- **A4 (live, 224 calls of 320):** all 20 attackable pairs complete. Confirmed suppressions 4/428 dev and 3/437 held-out: exactly the recorded 7 pairs; on the other 13, 0 of 76 attack answers and 0 of 26 clean controls lost the response. **On the 7, 11 of 14 fresh clean answers also lost it (6 of 7 pairs)**, so the recorded suppressions are mostly NCE variation, not the payload. The text no longer says the payload made NCE drop the hypothesis. Limits: two controls per pair, taken later than the recorded answers; six rounds; attacker = victim model. `a4_optimized_scores.json`, `a4_optimized_summary.json`.
+- A6 `findings` and B1 are queued after it (running). The findings builder raised KeyError on 44 of 300 alerts (a hypothesis without a ranked action); fixed during the run, the other 256 prompts are unchanged (hash check).
+- MiKTeX auto-installed the package `grfext` during a file lookup (not approved beforehand; reported to the user).
+
+### 2026-11-23: Fig. 1 compared with the AgentSOC paper's Fig. 1; journal version redrawn
+
+- **Comparison** (`agenso_.research_base.pdf`, its Fig. 1 on page 5): the earlier Fig. 1 (`fig1_architecture.tex`) was redrawn and extended, but kept its arrangement (three stacked layers, the same nine boxes in the same order, the store and monitoring at the right, four of its arrow labels). The base paper is (c) 2026 IEEE and its arXiv copy carries only arXiv's non-exclusive distribution licence, so an adaptation would need permission.
+- **Journal version:** a new Fig. 1 with its own layout (`paper/springer/fig1_guardedsoc.tex`, git-ignored): model-free and model-assisted paths, their fusion, outcomes, and what may teach the store. Checked against Algorithm 1, `triage_gate.py`, `defended_pipeline.py` and `outcome_monitor.py`. The old layout remains in the IEEE copy and the course report.
+- **Statements about AgentSOC checked against its PDF:** "four layers" was wrong (three layers and an internal knowledge store); "the rest run with audit and rollback" is now "execute, first as audited dry runs that can be rolled back"; "learns from earlier cases" is now "keeps enterprise context and what earlier cycles showed". 5,000 LANL events, 50 nodes, GPT-4, the attack model and the routing of high-impact playbooks to analysts match.
+- Word overlap of the final text with the base paper: 8 of 7,435 words in a shared 6-word run, all one component name.
+
+### 2026-11-23: line-by-line check of the journal version; one wrong sentence corrected
+
+- **Corrected:** the paired change in the response rate (0.0 / -0.6 / -1.0 points) was described as "over all 500 pairs", but `build_results.py` leaves out the responses ERA's escalation induced (12 / 10 / 12). With them it is +2.4 / +1.4 / +1.4 points, so "every interval covers zero" holds only without them. The paper now says both, and RESULTS.md prints both. No count changed.
+- **Wording:** GUIDE is the cited dataset and GUIDE v2 our corpus; the slow plants run in (not over) the second week (30 Dec - 2 Jan); Biba's model mirrors Bell and LaPadula's; "scripts rebuild the reported results" instead of "one script rebuilds every number"; Wald intervals named; page numbers added to seven references.
+- **Verified from the data:** the suppressed pairs are a subset of the suppressible ones (4 of 11, 3 of 9, 10 of 20); the T1071 explanation holds for 4 of 4, 3 of 3 and 9 of 10; the external claims spot-checked against arXiv abstracts (40.4%, memory poisoning, adaptive attacks, MemStream) match.
+- The IEEE copy `paper/agentsoc_v3.pdf` carries the same corrections and is now 9 pages; it is not the version to submit.
+
+### 2026-11-23: Springer version checked against the journal's submission guidelines (user's PDF)
+
+- **Rules applied** (International Journal of Information Security): LaTeX `twocolumn`, single-blind (one build; anonymous, one-column and referee builds dropped), abstract 193 words (150-250), 6 keywords (4-6), decimal headings, abbreviations defined at first use (LLM, APT, LSASS, LANL, CI), full table captions, no full stop at the end of figure captions, panels lettered a / b, figures 84 / 174 mm with 8 pt Helvetica lettering and stripes besides colour, vector PDF and EPS, "Statements and Declarations" (ethics, consent, data and code availability).
+- **References:** 28 of 40 carry a DOI checked on Crossref / DataCite; AgentDojo, InjecAgent, SecAlign, CaMeL, MemStream, the LLM survey and the GUIDE paper now cite their published versions, and AgentSOC has its DOI and pages. The other 12 have no DOI found (USENIX, NeurIPS 2020, PMLR, MITRE reports). Seven references are arXiv preprints only.
+- **Caught while checking:** my new Table 3 caption said "benign cases dismissed by NCE"; the ungated row's 1 is a LOW_PRIORITY case without NCE, so it now says "dismissed without review" (as in RESULTS.md).
+- **Checks:** upload ZIP compiles alone (10 pages, 0 errors); claim checks 56 of 56 and 72 of 74 (the two others are format only: Fig. 5's coordinates are inside the figure file, and "p90" is spelled out).
+- **Declarations:** funding (none), author contributions and Sect. 4.4 "Use of AI Assistance" (the guidelines require LLM use beyond copy editing to be documented; consistent with decision P6 and the co-author lines in this repository's commits) are in the text. The user then confirmed the contributions, "no competing interests" and the corresponding author, so the statement is in the text, the build notes and unused formats are out of the source, and the upload file is `GuardedSOC_IJIS_submission.zip` (final; text compared with the draft: only those changes).
+- **Open (the team):** consent of all authors and the college; the publication fee. **Cost:** the guidelines give the publishing model as open access; a journal notice found by search says submissions from 2025-08-05 pay an article processing charge if accepted, unless waived (amount not found).
+
+### 2026-11-23: Springer (svjour3) version of the paper
+
+- The user's journal asks for Springer's `svjour3` package (`1633537_svjour3-Latex-package/`, git-ignored, publisher's files). `paper/springer/build_springer.py` (git-ignored, holds paper text) converts `paper/agentsoc_v3.tex`: one column (template default, 17 pages), two columns (10), referee (30) and anonymous builds, figures as `Fig1`-`Fig5.pdf`, references in Springer's numbered style in citation order, and an upload ZIP that compiles alone. Sentences cut only for the 8-page IEEE limit are restored; no number changed (56 of 56 and 73 of 74 claim checks; the 74th is Fig. 5's plot coordinates, now inside `Fig5.pdf`).
+- **Target journal (user): International Journal of Information Security.** A web search result quoting its guidelines says Springer's macro package with the option `twocolumn`; that is now the main build (10 pages, journal name set, heading "Statements and Declarations"). The guidelines page itself redirects to a Springer sign-in, so review type, length limit, abstract limits and AI policy are not verified.
+- Open for the team: corresponding author, funding, competing interests, author contributions and AI-use statements (commented out in the source).
+
 ### 2026-11-23: report names and roll numbers; paper author spelling
 
 - The course report has the team's exact names and roll numbers (from the team's slide, user), 37 pages, no placeholders. The paper's first author is now spelled as on the slide; the email address is unchanged. Bars in the paper's figures use plain fills (one PDF renderer drew the hatching wrongly).
