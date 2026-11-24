@@ -69,7 +69,7 @@ for round in 1 2 3 4 5 6 7 8 9 10; do
   for j in "${JOBS[@]}"; do
     n=$(missing "$(results_file "$j")"); [ "$n" -eq 0 ] && continue
     echo "$(date -u +%H:%M)   [$j]: $n to do, $nk workers"
-    $PY tools/run_fast.py --defence $j --workers "$nk" --limit "$n" >> "logs/live_$(echo "$j" | tr ' .-' '___').txt" 2>&1
+    $PY tools/run_fast.py --defence $j --workers "$(( nk < ${MAX_WORKERS:-99} ? nk : ${MAX_WORKERS:-99} ))" --limit "$n" >> "logs/live_$(echo "$j" | tr ' .-' '___').txt" 2>&1
     rc=$?; echo "$(date -u +%H:%M)   end [$j] rc=$rc ($(missing "$(results_file "$j")") still missing)"
     [ $rc -eq 3 ] && break
   done
