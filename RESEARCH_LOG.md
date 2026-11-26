@@ -12,6 +12,12 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-26: authors' rewrites of the passages Turnitin marked as AI-written (test draft only)
+
+- Turnitin on the anonymous PDF: 2% similarity, 28% AI. The authors rewrote 25 of the 29 marked passages themselves (`paper/tandf/rewrite_passages.txt`, private); I corrected only errors of meaning, terms, grammar and spelling (UK).
+- `paper/tandf/turnitin_draft.py` builds a separate test PDF (`paper/tandf/turnitin_draft/`); the submission files are unchanged. Checks: every number and citation of each passage kept, all 40 references cited, abstract 199 words, 103 table and figure values match, no identifying text, Word UK proofing clean.
+- Not yet rewritten: passages 21, 23, 24, 26, 27, 28. The rewrites go into the manuscript only if the AI score falls below 20% (user).
+
 ### 2026-11-24: target journal changed; A4 optimized attacker run
 
 - **Journal (user):** Journal of Cyber Security Technology (Taylor & Francis, format-free). `paper/tandf/` (git-ignored): article class, references.bib (pages and authors from publisher pages), 5 keywords, abstract 198 words, UK spelling, T&F declarations, AI note in figure captions (T&F image policy), named and anonymous PDFs. Review type not verified. The Springer version is superseded.
