@@ -12,6 +12,23 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-28: B1 complete; P9 B implemented (options, off by default)
+
+- **B1 (live, complete 2026-11-27 18:58 UTC):**
+  - repeats 2 and 3 finished in 4 queue rounds (repeat 1 was already complete);
+  - undefended prompt, temperature 0.7, first 150 dev pairs: hijacked 38/127, 37/129, 36/129, which is mean 28.8%, sd 1.0 point, range 27.9-29.9% (`experiments.tier2_score.repeats()`);
+  - the recorded default-sampling run on the same pairs: 36/128 (28.1%, Wilson 21.1-36.5%);
+  - so run-to-run variation at 0.7 is about 1 point, small against the 29.6% vs 0.9% gap;
+  - `tier2_scores.json` is not rewritten yet, because `tier2_score` also reads the held-out files A6 is now writing;
+  - API logs checked for key strings: none.
+- **P9 B code:**
+  - R1 / R1b corroboration in `KnowledgeUpdater._learn` covers every post-training host-key learning path (verdicts, gate releases, ungated);
+  - R1b's verdict tally skips hosts the monitor has confirmed;
+  - R6 in `SocLoop._confirmed_malicious` reads the confirmed host's patterns before B5 retracts them, and appends its retractions to `done["retracted"]`, so withdrawing the verdict restores them;
+  - R4 is a replay-only post-training filter (`_retract_single_host`), applied after the fleet index is built;
+  - the updater holds the monitor object, not its bound method: the runner's safe checkpoint loader refuses unlisted bound methods, which `test_fail_safe` caught;
+  - checks: 11 new tests, suite 836 passed; a default replay of `F_d4` is byte-identical to the recorded run.
+
 ### 2026-11-28: live runs resumed; A7 MemStream and P9 B designed (JCST paused by the user)
 
 - **User:** JCST is set aside; the goal is the strongest version of the project, with results in the repository only. Approved: finish B1, A6 hardened prompts on held-out (900 calls), and A7 MemStream and P9 B (a design first).

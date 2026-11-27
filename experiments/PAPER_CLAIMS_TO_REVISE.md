@@ -96,7 +96,7 @@ The following sentences in the project documentation and paper require revision 
   - The paired change in the response rate (0.0 / -0.6 / -1.0 points) excludes ERA-induced responses; with them +2.4 / +1.4 / +1.4. Never state it as "over all pairs" without that.
   - AgentSOC has three layers and an internal knowledge store (not four layers). A figure that keeps the AgentSOC paper's Fig. 1 arrangement needs IEEE permission; the journal version uses its own layout.
   - GUIDE suppressions (4/428, 3/437): do not say the payload removed the escalation; 11 of 14 fresh clean answers on those pairs lose it too (A4, 2026-11-24).
-  - B1 was not completed: the paper states that run-to-run variance is unmeasured; do not cite the partial repeat. No attacker was optimized against the full pipeline (limitation (7)).
+  - B1 was not completed when the JCST text was written: that text says run-to-run variance is unmeasured. [2026-11-28: complete, in the repository only (JCST paused): at temperature 0.7, 3 repeats on the first 150 dev pairs give 28.8% mean, sd 1.0 point (`tier2_score.repeats()`). Recorded runs used the API default, so say "at temperature 0.7". If the text is revised, limitation (3) can say this.] No attacker was optimized against the full pipeline (limitation (7)).
   - Any-text bound (A4): at most 11/428, 9/437, 20/437 suppressed (`worst_case_bound.json`); do not call it an optimized attacker.
   - The result does not depend on the training window (A11): training on one clean week gives 110.9 / 111.4 reviews/day (98.2% below static), the same 72 attack cases and 400 events, and 0 attack patterns under unlearning (`rotation_scores.json`).
 

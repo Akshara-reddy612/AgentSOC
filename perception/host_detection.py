@@ -231,6 +231,31 @@ def host_alert(event: dict, detector: str, key: tuple, db: KnowledgeDB) -> dict:
     return alert
 
 
+_PER_HOST_DST = frozenset({"LOGON", "READS_LSASS", "USES_PIPE", "WRITES_FILE_TYPE"})
+
+
+def edge_pattern(edge_type: str, src: str, dst: str, key) -> tuple[tuple, str] | None:
+    """
+    (pattern, host) of a detector edge, or None for any other edge (P9 B, 2026-11-28).  The pattern is the key
+    without its host -- parent -> child image, image + pipe, image + file type, image reading LSASS, account +
+    logon type + source, script fingerprint -- so the same activity on two hosts has the same pattern.
+    The host is lower case, as the store's host nodes are.
+    """
+    if edge_type == "SPAWNED":
+        return (edge_type, src, dst), str(key).split(":", 1)[1].lower()
+    if edge_type in _PER_HOST_DST:
+        return (edge_type, src, str(key)), dst.split(":", 1)[1].lower()
+    if edge_type == "RUNS_SCRIPT":
+        return (edge_type, dst), src.split(":", 1)[1].lower()
+    return None
+
+
+def key_pattern(detector: str, key: tuple) -> tuple[tuple, str]:
+    """(pattern, host) of a detector key (see edge_pattern)."""
+    e = DETECTORS[detector].edge(tuple(key))
+    return edge_pattern(e.edge_type, e.src, e.dst, e.key)
+
+
 def learn_key(db: KnowledgeDB, detector: str, key: tuple, *, provenance: str, at, writer: str,
               first_seen=None, last_seen=None, count: int = 1) -> None:
     """Record a key as learned (one edge, created or counted), plus HAS_PRIOR_ACCESS for a first logon."""

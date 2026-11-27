@@ -58,7 +58,8 @@ from typing import Callable
 
 from perception.case_builder import Case, CaseBuilder, alert_case_key
 from perception.case_store import CaseStore, approvals_needed, host_tier, other_targets
-from perception.host_detection import DETECTORS, host_alert, learn_key, malformed_host_event, novel_keys
+from perception.host_detection import (DETECTORS, host_alert, key_pattern, learn_key, malformed_host_event,
+                                       novel_keys)
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_updater import GATE_DELAY, KnowledgeUpdater, endpoint_node_id, ensure_endpoint
 from perception.network_alert import malformed_network_alert, with_entities
@@ -88,7 +89,8 @@ class SocLoop:
                  detectors: tuple[str, ...] = tuple(DETECTORS),
                  on_alert: Callable[[Case, dict], None] | None = None,
                  case_store: CaseStore | None = None, unlearn_on_confirm: bool = True,
-                 unlearn_scope: str = "host") -> None:
+                 unlearn_scope: str = "host", corroboration: str = "none", corroboration_hosts: int = 2,
+                 follow_patterns: bool = False) -> None:
         if mode not in LEARNING_MODES:
             raise ValueError(f"mode must be one of {LEARNING_MODES}")
         if unlearn_scope not in UNLEARN_SCOPES:
@@ -96,6 +98,9 @@ class SocLoop:
         # B5 retracts on the confirmed host only ("host", default), or on every host ("all": cross-host
         # unlearning, 2026-11-23, checklist A8 mitigation; an attacker may already have moved on).
         self.unlearn_scope = unlearn_scope
+        # P9 B (2026-11-28, options, off by default): corroborated learning (knowledge_updater module docstring) and
+        # R6 pattern-following unlearning (a confirmation also retracts the same patterns learned on other hosts).
+        self.follow_patterns = follow_patterns
         self.analyst = analyst
         self.analyst_delay = analyst_delay
         self.case_store = case_store                # test-window cases, decisions, alerts (review loop)
@@ -114,7 +119,9 @@ class SocLoop:
         self.monitor = OutcomeMonitor(db)
         self.gate = TriageGate(db, watch=self.monitor.reasons, **(gate_options or {}))
         self.updater = (None if mode == "static"
-                        else KnowledgeUpdater(db, gate=mode != "ungated", gate_delay=gate_delay))
+                        else KnowledgeUpdater(db, gate=mode != "ungated", gate_delay=gate_delay,
+                                              corroboration=corroboration, corroboration_hosts=corroboration_hosts,
+                                              monitor=self.monitor))
         self.on_case = on_case
         self.counts: Counter[str] = Counter()
         self._decisions: dict[str, Decision] = {}
@@ -235,7 +242,9 @@ class SocLoop:
                 return done
             done["learned"] = self.updater is not None and self.mode != "frozen"
             if done["learned"]:
-                self.updater.analyst_closed_benign(case, at, analyst)
+                done["learned"] = self.updater.analyst_closed_benign(case, at, analyst)
+                if not done["learned"]:
+                    done["reason"] = "pattern not corroborated by other hosts (P9 B); nothing is learned"
         elif verdict == "benign_once":
             done["learned"] = False
             if self.updater is not None:
@@ -338,13 +347,24 @@ class SocLoop:
             if self.unlearn_on_confirm and self.updater is not None:
                 retract = (self.updater.retract_all_learning if self.unlearn_scope == "all"
                            else self.updater.retract_host_learning)
+                follow = self.follow_patterns and self.unlearn_scope == "host"      # R6 (P9 B)
+                # the host's patterns are read before B5 retracts them (a retracted edge keeps no attributes)
+                patterns = (self.updater.learned_patterns(done["flagged_host"], at - UNLEARN_LOOKBACK)
+                            if follow else set())
                 done["retracted"] = retract(done["flagged_host"], at - UNLEARN_LOOKBACK, at, writer)
+                if follow:
+                    if a.get("kind") == "host":
+                        patterns.add(key_pattern(a["detector"], a["detector_key"])[0])
+                    done["retracted"] += self.updater.retract_pattern_learning(
+                        patterns, done["flagged_host"], at - UNLEARN_LOOKBACK, at, writer)
         return done
 
     def _end_training(self) -> None:
         for c in self.cases.close_all(self.training_end, reason="end_of_training"):
             self._closed(c)
         self._in_training = False
+        if self.updater is not None and self.updater.corroboration != "none":
+            self.updater.index_training()           # P9 B: which hosts showed each pattern in training
 
     def _closed(self, case: Case) -> None:
         training = case.opened < self.training_end
