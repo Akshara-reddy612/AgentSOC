@@ -12,6 +12,14 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-28: live runs resumed; A7 MemStream and P9 B designed (JCST paused by the user)
+
+- **User:** JCST is set aside; the goal is the strongest version of the project, with results in the repository only. Approved: finish B1, A6 hardened prompts on held-out (900 calls), and A7 MemStream and P9 B (a design first).
+- **B1 resumed** 2026-11-27 18:26 UTC: repeat 1 was complete (300/300); 65 (repeat 2) and 124 (repeat 3) missing; 33 keys answered the probe. **A6 held-out** is chained to start when the B1 queue ends (one queue at a time). Both result paths are new files.
+- **Designs (nothing run):**
+  - `experiments/A7_MEMSTREAM_DESIGN.md`: MemStream written from the paper, on structured fields only (I1); alerts through the same loop; τ at matched workload and by MemStream's own rule; A8 plants.
+  - `experiments/P9B_CORROBORATED_LEARNING_DESIGN.md`: rules R1-R5 (fleet corroboration, second verdict, lifetime, training corroboration, two analysts on critical hosts) as options defaulting to today's behaviour. Predictions recorded beforehand.
+
 ### 2026-11-26: authors' rewrites of the passages Turnitin marked as AI-written (test draft only)
 
 - Turnitin on the anonymous PDF: 2% similarity, 28% AI. The authors rewrote 25 of the 29 marked passages themselves (`paper/tandf/rewrite_passages.txt`, private); I corrected only errors of meaning, terms, grammar and spelling (UK).
