@@ -46,6 +46,24 @@ arXiv 2106.03837v2. I write our own implementation from these; nothing is downlo
   the rest of the training weeks then stream through with updates. Variant: initial memory and autoencoder
   from a uniform sample of N training records, a stronger baseline, run at the best β only.
 
+## Changes made during implementation (2026-11-28, before any result)
+
+- **Stream start.** MemStream streams from 24 h before the test period, or before the first plant. Every day
+  brings far more than N = 2048 accepted updates, and the FIFO memory evicts everything older, so its state at the
+  start of the test period does not depend on the earlier weeks. This roughly halves the cost (about 3.4 M records
+  per pass).
+- **Feature width.** Hashed width is d = 64 (DIM 66): 0.4-0.8 ms per record, against 2.3 ms at d = 130.
+- **Pure MemStream runs the store in `static` mode, not `frozen`.** Triage closes an alert whose key the store
+  learned as routine as LOW_PRIORITY (`triage_gate.py`), so a `frozen` store would silently add the keyed store's
+  memory to the baseline. `frozen` + MemStream *is* stage 4, the combination.
+- **β grid** {0.3, 1, 3, 10, 30, 100}, not the reference grid (≤ 10). A pilot of 50,000 records against the
+  initial memory scored 2-114, median 53. On this scale the reference grid admits only a few percent of records.
+- **Both initialisations over the whole grid** (12 passes). The reference code's first N records are the first
+  minutes of the training weeks and nearly identical (autoencoder loss 5e-5), so the uniform sample is the fairer
+  baseline.
+- **Code:** `experiments/memstream.py`, `memstream_eval.py` (score, curve), `memstream_loop.py` (the replay hook:
+  `--memstream-scores TAG --memstream-tau X`) and `a7_runs.py`. Tests: `tests/test_memstream.py` (7).
+
 ## Stages
 
 1. **Event level, no replay:**

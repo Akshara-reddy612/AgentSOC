@@ -211,6 +211,10 @@ def main() -> None:
                     help="no_actionable: rule D7 off")
     ap.add_argument("--script-full-text", action="store_true",
                     help="2026-11-23: PowerShell keys fingerprint the whole script, not its first 160 characters")
+    ap.add_argument("--memstream-scores", default=None,
+                    help="A7 (2026-11-28): tag of a MemStream score file (experiments/memstream_eval.py); MemStream "
+                         "then decides which test-period events alert (experiments/memstream_loop.py)")
+    ap.add_argument("--memstream-tau", type=float, default=None, help="A7: score above which an event alerts")
     ap.add_argument("--flood", type=float, default=None,
                     help="checklist A3 (2026-11-23): escalation flooding, harmless novel programs per hour on the "
                          "hosts the attacker controls (experiments/dedale_flood.py)")
@@ -311,12 +315,23 @@ def main() -> None:
             gate_options["unreasoned"] = args.unreasoned
         training_end = (datetime.fromisoformat(args.gate_from).replace(tzinfo=timezone.utc) if args.gate_from
                         else TRAINING_END)
-        loop = SocLoop(db, mode=args.mode, training_end=training_end, on_case=on_case, analyst=analyst,
+        loop_cls, loop_extra = SocLoop, {}
+        if args.memstream_scores:          # A7: MemStream decides novelty in the test period
+            from experiments.memstream_eval import OUT_DIR as MS_DIR
+            from experiments.memstream_loop import MemStreamLoop, ScoreStream
+            ms_meta = json.loads((MS_DIR / f"{args.memstream_scores}.json").read_text(encoding="utf-8"))
+            if ms_meta.get("plant") != args.plant or args.memstream_tau is None or args.flood or args.inject:
+                raise SystemExit("--memstream-scores needs --memstream-tau, the score file's --plant, no flood or inject")
+            loop_cls = MemStreamLoop
+            loop_extra = {"scores": ScoreStream(MS_DIR / f"{args.memstream_scores}.npz", ms_meta["hosts"]),
+                          "tau": args.memstream_tau}
+        loop = loop_cls(db, mode=args.mode, training_end=training_end, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
                        case_store=case_store, unlearn_on_confirm=not args.no_unlearn, unlearn_scope=args.unlearn_scope,
                        gate_delay=timedelta(hours=args.gate_delay), corroboration=args.corroboration,
-                       corroboration_hosts=args.corroboration_hosts, follow_patterns=args.follow_patterns)
+                       corroboration_hosts=args.corroboration_hosts, follow_patterns=args.follow_patterns,
+                       **loop_extra)
         thresholded = args.min_train_count <= 1 and not args.train_corroboration
         retracted_single = None
         train_freq = _training_frequencies(tuple(args.detectors)) if args.min_train_count > 1 else None
@@ -400,6 +415,8 @@ def main() -> None:
             "uncorroborated_not_learned": loop.updater.uncorroborated if loop.updater else None}
            if args.corroboration != "none" else {}),
         **({"follow_patterns": True} if args.follow_patterns else {}),
+        **({"memstream_scores": args.memstream_scores, "memstream_tau": args.memstream_tau}
+           if args.memstream_scores else {}),
         **({"train_corroboration": True, "training_patterns_retracted_single_host": retracted_single}
            if args.train_corroboration else {}),
         **({"plant": args.plant, "plant_detectors": args.plant_detectors or "lineage exec_file_write pipe",
