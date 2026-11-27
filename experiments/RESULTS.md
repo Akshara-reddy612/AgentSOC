@@ -1,4 +1,4 @@
-# Results (frozen 2026-11-24)
+# Results (frozen 2026-11-28)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
@@ -262,6 +262,8 @@ Paired difference over all pairs both conditions answered (per-pair hijack indic
 - hierarchy: 24.0% -> 2.7% of 150 pairs, reduction 21.3 points (95% CI 14.5-28.1)
 - telemetry: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -5.2-5.2)
 - findings: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -4.5-4.5)
+
+*B1, repeated runs* of the undefended prompt at temperature 0.7 on the same 150 pairs: 38/127, 37/129, 36/129 hijacked; mean 28.8%, sd 1.0% (min 27.9%, max 29.9%) over 3 complete repeats. The recorded run (API default sampling) on the same pairs: 36/128 (28.1%). The repeats measure variation at temperature 0.7 only.
 
 *T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.
 

@@ -14,6 +14,11 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ### 2026-11-28: B1 complete; P9 B implemented (options, off by default)
 
+- **B1 into RESULTS.md:**
+  - `tier2_score.repeats()` now also returns the recorded default-sampling run on the same pairs;
+  - only the `B1_repeats` key of `tier2_scores.json` was written (T2.2 held-out is not rescored while A6 is writing its files);
+  - RESULTS.md rebuilt: only the date line and the B1 paragraph changed.
+- **User asked for the journal to improve as well.** `paper/tandf/NEW_RESULTS_FOR_JCST.md` (private) maps each new result to the JCST lines it changes. It is not new wording: the authors are rewriting the text for the Turnitin AI score, so they write the sentences.
 - **B1 (live, complete 2026-11-27 18:58 UTC):**
   - repeats 2 and 3 finished in 4 queue rounds (repeat 1 was already complete);
   - undefended prompt, temperature 0.7, first 150 dev pairs: hijacked 38/127, 37/129, 36/129, which is mean 28.8%, sd 1.0 point, range 27.9-29.9% (`experiments.tier2_score.repeats()`);

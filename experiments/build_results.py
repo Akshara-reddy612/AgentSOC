@@ -524,7 +524,11 @@ def tier2(T: dict) -> list[str]:
         out += [f"*B1, repeated runs* of the undefended prompt at temperature {r['temperature']:g} on the same 150 pairs: "
                 + ", ".join(f"{x['hijacked']}/{x['clean_not_dismissed']}" for x in r["repeats"])
                 + (f" hijacked; mean {r['mean']:.1%}, sd {r['sd']:.1%} (min {r['min']:.1%}, max {r['max']:.1%}) over "
-                   f"{r['complete_repeats']} complete repeats" if "mean" in r else " (incomplete)") + ".", ""]
+                   f"{r['complete_repeats']} complete repeats" if "mean" in r else " (incomplete)") + "."
+                + (f" The recorded run (API default sampling) on the same pairs: "
+                   f"{r['recorded_default_sampling']['hijacked']}/{r['recorded_default_sampling']['clean_not_dismissed']} "
+                   f"({r['recorded_default_sampling']['rate']:.1%}). The repeats measure variation at temperature "
+                   f"{r['temperature']:g} only." if r.get("recorded_default_sampling") else ""), ""]
     if "T2.3" in T:
         r = T["T2.3"]
         out += [f"*T2.3, the adaptive attacker:* {r['pairs']} dev pairs whose payload was rewritten until ERA rated it "
