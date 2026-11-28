@@ -265,6 +265,14 @@ Paired difference over all pairs both conditions answered (per-pair hijack indic
 - telemetry: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -5.2-5.2)
 - findings: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -4.5-4.5)
 
+*Prompt-level defences on the held-out split,* first 150 held-out pairs (the undefended row uses the recorded T2.1 answers on the same pairs):
+
+| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p | Paired reduction (95% CI) |
+|:--|--:|--:|--:|:--|:--|--:|:--|
+| delimited | 150 | 40/133 (30.1%) | 3/142 (2.1%) | 0.7%-6.0% | 1 / 38 | 1.5e-10 | 24.7 points (17.5-31.8) |
+| spotlight | 150 | 40/133 (30.1%) | 4/140 (2.9%) | 1.1%-7.1% | 1 / 37 | 2.8e-10 | 24.0 points (16.9-31.1) |
+| hierarchy | 150 | 40/133 (30.1%) | 2/138 (1.4%) | 0.4%-5.1% | 0 / 38 | 7.3e-12 | 25.3 points (18.4-32.3) |
+
 *B1, repeated runs* of the undefended prompt at temperature 0.7 on the same 150 pairs: 38/127, 37/129, 36/129 hijacked; mean 28.8%, sd 1.0% (min 27.9%, max 29.9%) over 3 complete repeats. The recorded run (API default sampling) on the same pairs: 36/128 (28.1%). The repeats measure variation at temperature 0.7 only.
 
 *T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.

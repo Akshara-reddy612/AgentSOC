@@ -530,6 +530,23 @@ def tier2(T: dict) -> list[str]:
                            f"reduction {x['reduction'] * 100:.1f} points (95% CI {x['ci95'][0] * 100:.1f}-"
                            f"{x['ci95'][1] * 100:.1f})")
         out.append("")
+    if "T2.2_heldout" in T:                   # checklist A6 (2026-11-28): the same prompt defences on held-out
+        r = T["T2.2_heldout"]
+        out += [f"*Prompt-level defences on the held-out split,* first {r['pairs_in_subset']} held-out pairs (the "
+                "undefended row uses the recorded T2.1 answers on the same pairs):", "",
+                "| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p | "
+                "Paired reduction (95% CI) |", "|:--|--:|--:|--:|:--|:--|--:|:--|"]
+        for d in ("delimited", "spotlight", "hierarchy"):
+            x, pr = r.get(d, {}), r.get(d + "_paired")
+            if not x.get("pairs_answered") or not pr:
+                continue
+            u, f, m = x["undefended"], x["defended"], x["mcnemar"]
+            out.append(f"| {d} | {x['pairs_answered']} | {u['hijacked']}/{u['clean_not_dismissed']} "
+                       f"({u['hijacked'] / u['clean_not_dismissed']:.1%}) | {f['hijacked']}/{f['clean_not_dismissed']} "
+                       f"({f['hijacked'] / f['clean_not_dismissed']:.1%}) | {f['ci95'][0]:.1%}-{f['ci95'][1]:.1%} | "
+                       f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} | "
+                       f"{pr['reduction'] * 100:.1f} points ({pr['ci95'][0] * 100:.1f}-{pr['ci95'][1] * 100:.1f}) |")
+        out.append("")
     if "B1_repeats" in T:
         r = T["B1_repeats"]
         out += [f"*B1, repeated runs* of the undefended prompt at temperature {r['temperature']:g} on the same 150 pairs: "
