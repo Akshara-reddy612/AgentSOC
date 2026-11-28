@@ -172,3 +172,17 @@ def test_a_corroborating_loop_survives_the_safe_checkpoint_loader(db):
     buf.seek(0)
     back = _Unpickler(buf, {"ks": db}).load()
     assert back.updater.corroboration == "fleet_verdicts" and back.updater._monitor is back.monitor
+
+
+def test_a_checkpoint_from_before_p9b_restores_with_the_rules_off(db):
+    from soc_server.runner import _Pickler, _Unpickler
+    loop = SocLoop(db, mode="gated", training_end=TRAIN_END)
+    for attr in ("corroboration", "corroboration_hosts", "_monitor", "_fleet", "_verdict_hosts", "uncorroborated"):
+        del loop.updater.__dict__[attr]                     # as pickled by the code before 2026-11-28
+    del loop.__dict__["follow_patterns"]
+    buf = io.BytesIO()
+    _Pickler(buf, {id(db): "ks"}).dump(loop)
+    buf.seek(0)
+    back = _Unpickler(buf, {"ks": db}).load()
+    assert back.follow_patterns is False and back.updater.corroboration == "none"
+    assert back.updater.corroborated("lineage", ("CLIENT2", "a", "b"))      # "none": everything learnable, as before

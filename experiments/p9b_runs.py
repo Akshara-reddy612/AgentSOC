@@ -45,6 +45,7 @@ for rule in ("R1", "R1b", "R4"):
     for s in range(1, 6):
         _add(f"P9B_{rule}_m20_s{s}", ["--mode", "gated", *ORACLE, "--analyst-miss", "0.2", "--analyst-seed", str(s),
                                       *RULES[rule]], f"gated_analyst_T1_m20_s{s}")
+_add("P9B_R6_d4", ["--mode", "gated", *ORACLE, *RULES["R6"]], "gated_analyst_F_d4")   # R6 cost (added after the first scoring)
 # The precursor attack with the analyst (4 h, B5 on).
 for rule in ("R1", "R1b", "R4", "R6"):
     _add(f"P9B_{rule}_test", [*ANALYST, "--plant", "test", *RULES[rule]], "gated_analyst_A8_test_d4")

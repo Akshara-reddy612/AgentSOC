@@ -131,6 +131,11 @@ class SocLoop:
         # cannot attribute is an event nobody would see.
         self.rejected: deque[tuple[datetime, str, dict]] = deque(maxlen=1000)
 
+    def __setstate__(self, state: dict) -> None:
+        """A checkpoint pickled before P9 B (2026-11-28) lacks follow_patterns: restore it as off."""
+        self.__dict__.update({"follow_patterns": False})
+        self.__dict__.update(state)
+
     def _reject(self, event, at: datetime, problem: str) -> None:
         self.counts["events_rejected"] += 1
         self.rejected.append((at, problem, event if isinstance(event, dict) else {"value": repr(event)[:500]}))

@@ -91,6 +91,12 @@ class KnowledgeUpdater:
         self._escalations: dict[str, dict[str, datetime]] = {}   # address -> {case id: escalation time}
         self.dropped = 0                                         # benign cases not learned (escalation nearby)
 
+    def __setstate__(self, state: dict) -> None:
+        """A checkpoint pickled before P9 B (2026-11-28) lacks the corroboration state: restore it as "off"."""
+        self.__dict__.update({"corroboration": "none", "corroboration_hosts": 2, "_monitor": None, "_fleet": None,
+                              "_verdict_hosts": {}, "uncorroborated": 0})
+        self.__dict__.update(state)
+
     # -- inputs from the triage loop ------------------------------------------
 
     def record_outcome(self, case: Case, outcome: str, at: datetime) -> None:

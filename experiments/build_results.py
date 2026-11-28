@@ -759,6 +759,55 @@ def a8_gate() -> list[str]:
     return out + ["", f"Default replay byte-identical to F_gated (cases): {a['default_identical_to_F_gated']}.", ""]
 
 
+P9B_ROWS = [  # (planting, condition, job tag per rule; None = not run)
+    ("none (cost)", "analyst 4 h", "d4"),
+    ("test period", "analyst 4 h", "test"),
+    ("slow, from 2024-12-30", "analyst 4 h", "slow"),
+    ("after the intrusion", "analyst 4 h", "foothold"),
+    ("training weeks", "analyst 4 h", "train"),
+    ("slow, from 2024-12-30", "D7 off, no analyst", "gate_slow"),
+]
+P9B_RULES = (("R1b", "R1b verdicts on 2 other hosts"), ("R1", "R1 seen elsewhere in training"),
+             ("R4", "R4 training corroboration"), ("R6", "R6 pattern-following unlearning"))
+
+
+def p9b() -> list[str]:
+    """Decision P9 B (2026-11-28): corroborated learning (experiments/p9b_runs.py, p9b_score.py)."""
+    path = RESULTS / "p9b_scores.json"
+    if not path.exists():
+        return []
+    jobs = _load(path)["jobs"]
+    out = ["## Corroborated learning against the precursor attack (P9 B, 2026-11-28)", "",
+           "Options of the learning path, off by default (a default replay of F_d4 is byte-identical to the recorded "
+           "run). The pattern of a host key is the key without its host. *R1*: a key is learned after training only if "
+           "its pattern was seen on another host in training. *R1b*: R1, or analysts closed the pattern as benign on at "
+           "least 2 other hosts not confirmed compromised at the time. *R4*: at the end of training, forget keys whose "
+           "pattern only one host showed. *R6*: a confirmation also retracts the same patterns learned on other hosts. "
+           "R1 and R1b also govern gate learning. Planting as in the A8 sections (slow: `--gate-from 2024-12-30`, "
+           "PowerShell keys planted too). Design: `experiments/P9B_CORROBORATED_LEARNING_DESIGN.md`. Offline, NCE off.",
+           "", "Each cell: attack cases raised (of 72) / labelled attack events alerted / reviews per day.", "",
+           "| Planting | Condition | Without a rule | " + " | ".join(l for _, l in P9B_RULES) + " |",
+           "|:--|:--|--:|" + "--:|" * len(P9B_RULES)]
+
+    def cell(r):
+        return f"{r['attack_cases_raised']} / {r['class1_events_alerted']} / {r['reviews_per_day']}"
+
+    for plant, cond, job in P9B_ROWS:
+        base = next((jobs[f"P9B_{k}_{job}"]["baseline"] for k, _ in P9B_RULES if f"P9B_{k}_{job}" in jobs), None)
+        if base is None:
+            continue
+        cells = [cell(jobs[f"P9B_{k}_{job}"]) if f"P9B_{k}_{job}" in jobs else "-" for k, _ in P9B_RULES]
+        out.append(f"| {plant} | {cond} | {cell(base)} | " + " | ".join(cells) + " |")
+    seeds = _load(path).get("m20_seeds", {})
+    if seeds:
+        out += ["", "With 20% analyst misses (6 seeds), reviews per day: " + "; ".join(
+            f"{k} {v['rule']['reviews_per_day']['mean']:g} (without {v['baseline']['reviews_per_day']['mean']:g})"
+            for k, v in seeds.items()) + "; attack patterns learned 0 in every seed, with and without a rule (B5)."]
+    return out + ["", "Without a rule the test-period and slow rows are the A8 baselines (`a8_scores.json`; the slow "
+                      "row with an analyst is new). The D7-off row raises no reviews by construction (D7 off lets "
+                      "unlearned cases close by themselves); it measures whether the attack is still raised.", ""]
+
+
 def worst_case() -> list[str]:
     """Checklist A4 (2026-11-23): bound over every attacker text (experiments/worst_case_bound.py)."""
     path = RESULTS / "worst_case_bound.json"
@@ -801,7 +850,7 @@ def optimized() -> list[str]:
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *worst_case(), *optimized(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *p9b(), *worst_case(), *optimized(),
              "## Limits", "",
              "- **DEDALE:** one testbed dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
