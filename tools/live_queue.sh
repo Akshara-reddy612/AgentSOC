@@ -32,7 +32,7 @@ missing() {        # alerts among the first 300 alerts of the set without a verd
   $PY -c "
 import json, os, sys
 st = 'heldout' if 'v2_heldout_' in sys.argv[1] else 'dev'
-alerts = json.load(open(f'GUIDE_Dataset/processed/v2/guide_v2_{st}.json', encoding='utf-8'))[:300]
+alerts = json.load(open(f'GUIDE_Dataset/processed/v2/guide_v2_{st}.json', encoding='utf-8'))[:int(os.environ.get('N_ALERTS', '300'))]
 p = sys.argv[1]
 done = {r['alert_id']: r for r in json.load(open(p, encoding='utf-8'))} if os.path.exists(p) else {}
 print(sum(1 for a in alerts if 'verdict' not in done.get(a['alert_id'], {})))" "$1"
