@@ -110,6 +110,30 @@ def _training_frequencies(detectors: tuple[str, ...]) -> Counter:
     return freq
 
 
+def _retract_single_host(db: KnowledgeDB) -> int:
+    """
+    P9 B rule R4 (2026-11-28): retract training-learned detector keys whose pattern (the key without its host)
+    only one host showed in training, so an attacker present in training on one host cannot have its tools
+    learned there.  Returns how many were retracted.
+    """
+    from perception.host_detection import edge_pattern
+    hosts: dict[tuple, set[str]] = {}
+    keys = []
+    for src, dst, key, _, _ in db.learned_edges({"training"}):
+        attrs = db.edge_attrs(src, dst, key)
+        hp = edge_pattern(attrs.get("edge_type", ""), src, dst, key) if attrs and "detector" in attrs else None
+        if hp is not None:
+            hosts.setdefault(hp[0], set()).add(hp[1])
+            keys.append((src, dst, key, hp[0]))
+    n = 0
+    for src, dst, key, pattern in keys:
+        if len(hosts[pattern]) < 2:
+            db.retract_edge(src, dst, key, writer="experiment:train_corroboration", at=TRAINING_END,
+                            reason="P9 B R4: pattern seen on one host only in training")
+            n += 1
+    return n
+
+
 def _retract_rare(db: KnowledgeDB, k: int, freq: Counter) -> int:
     """Tier 1 baseline (P10): retract training-learned detector patterns that occurred fewer than `k` times."""
     n = 0
@@ -157,6 +181,15 @@ def main() -> None:
                     help="Tier 1 (P10): hours a dismissed case waits before the gate learns it (default 24 = GATE_DELAY)")
     ap.add_argument("--unlearn-lookback", type=float, default=7.0,
                     help="Tier 1 (P10): days of learning B5 retracts on confirmation (default 7 = UNLEARN_LOOKBACK)")
+    ap.add_argument("--corroboration", default="none", choices=["none", "fleet", "fleet_verdicts"],
+                    help="P9 B (2026-11-28): learn a host key after training only if other hosts corroborate its "
+                         "pattern (R1 fleet: seen in training elsewhere; R1b fleet_verdicts: or benign verdicts on "
+                         "--corroboration-hosts other unconfirmed hosts)")
+    ap.add_argument("--corroboration-hosts", type=int, default=2, help="P9 B R1b: other hosts with a benign verdict")
+    ap.add_argument("--follow-patterns", action="store_true",
+                    help="P9 B R6: a confirmation also retracts the same patterns learned on other hosts")
+    ap.add_argument("--train-corroboration", action="store_true",
+                    help="P9 B R4: at the end of training, forget detector keys whose pattern only one host showed")
     ap.add_argument("--min-train-count", type=int, default=1,
                     help="Tier 1 (P10) baseline: a training pattern counts as normal only if seen at least K times "
                          "(rarer ones are retracted when training ends; default 1 = all)")
@@ -178,6 +211,10 @@ def main() -> None:
                     help="no_actionable: rule D7 off")
     ap.add_argument("--script-full-text", action="store_true",
                     help="2026-11-23: PowerShell keys fingerprint the whole script, not its first 160 characters")
+    ap.add_argument("--memstream-scores", default=None,
+                    help="A7 (2026-11-28): tag of a MemStream score file (experiments/memstream_eval.py); MemStream "
+                         "then decides which test-period events alert (experiments/memstream_loop.py)")
+    ap.add_argument("--memstream-tau", type=float, default=None, help="A7: score above which an event alerts")
     ap.add_argument("--flood", type=float, default=None,
                     help="checklist A3 (2026-11-23): escalation flooding, harmless novel programs per hour on the "
                          "hosts the attacker controls (experiments/dedale_flood.py)")
@@ -278,13 +315,26 @@ def main() -> None:
             gate_options["unreasoned"] = args.unreasoned
         training_end = (datetime.fromisoformat(args.gate_from).replace(tzinfo=timezone.utc) if args.gate_from
                         else TRAINING_END)
-        loop = SocLoop(db, mode=args.mode, training_end=training_end, on_case=on_case, analyst=analyst,
+        loop_cls, loop_extra = SocLoop, {}
+        if args.memstream_scores:          # A7: MemStream decides novelty in the test period
+            from experiments.memstream_eval import OUT_DIR as MS_DIR
+            from experiments.memstream_loop import MemStreamLoop, ScoreStream
+            ms_meta = json.loads((MS_DIR / f"{args.memstream_scores}.json").read_text(encoding="utf-8"))
+            if ms_meta.get("plant") != args.plant or args.memstream_tau is None or args.flood or args.inject:
+                raise SystemExit("--memstream-scores needs --memstream-tau, the score file's --plant, no flood or inject")
+            loop_cls = MemStreamLoop
+            loop_extra = {"scores": ScoreStream(MS_DIR / f"{args.memstream_scores}.npz", ms_meta["hosts"]),
+                          "tau": args.memstream_tau}
+        loop = loop_cls(db, mode=args.mode, training_end=training_end, on_case=on_case, analyst=analyst,
                        analyst_delay=timedelta(hours=args.analyst_delay),
                        detectors=tuple(args.detectors), on_alert=on_alert, gate_options=gate_options,
                        case_store=case_store, unlearn_on_confirm=not args.no_unlearn, unlearn_scope=args.unlearn_scope,
-                       gate_delay=timedelta(hours=args.gate_delay))
-        thresholded = args.min_train_count <= 1
-        train_freq = _training_frequencies(tuple(args.detectors)) if not thresholded else None
+                       gate_delay=timedelta(hours=args.gate_delay), corroboration=args.corroboration,
+                       corroboration_hosts=args.corroboration_hosts, follow_patterns=args.follow_patterns,
+                       **loop_extra)
+        thresholded = args.min_train_count <= 1 and not args.train_corroboration
+        retracted_single = None
+        train_freq = _training_frequencies(tuple(args.detectors)) if args.min_train_count > 1 else None
         last = TRAINING_START
         events = iter_events(until)
         planted = []
@@ -313,7 +363,10 @@ def main() -> None:
                         continue
                     if not thresholded and at >= TRAINING_END:     # baseline: forget rare training patterns
                         loop.tick(TRAINING_END)
-                        retracted_rare = _retract_rare(db, args.min_train_count, train_freq)
+                        if args.min_train_count > 1:
+                            retracted_rare = _retract_rare(db, args.min_train_count, train_freq)
+                        if args.train_corroboration:                   # P9 B R4
+                            retracted_single = _retract_single_host(db)
                         thresholded = True
                     if injector is not None:
                         event = injector(event)
@@ -358,6 +411,14 @@ def main() -> None:
         **({"min_train_count": args.min_train_count, "training_patterns_retracted": retracted_rare}
            if args.min_train_count > 1 else {}),
         **({"train_window": args.train_window} if args.train_window != "both" else {}),
+        **({"corroboration": args.corroboration, "corroboration_hosts": args.corroboration_hosts,
+            "uncorroborated_not_learned": loop.updater.uncorroborated if loop.updater else None}
+           if args.corroboration != "none" else {}),
+        **({"follow_patterns": True} if args.follow_patterns else {}),
+        **({"memstream_scores": args.memstream_scores, "memstream_tau": args.memstream_tau}
+           if args.memstream_scores else {}),
+        **({"train_corroboration": True, "training_patterns_retracted_single_host": retracted_single}
+           if args.train_corroboration else {}),
         **({"plant": args.plant, "plant_detectors": args.plant_detectors or "lineage exec_file_write pipe",
             "planted_events": len(planted), "planted_learned": planted_learned} if args.plant else {}),
         **({"gate_from": args.gate_from} if args.gate_from else {}),

@@ -40,6 +40,10 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
 5. **The tables:** `python -m experiments.build_results` writes `experiments/RESULTS.md`.
    - **[Audit 2026-11-22]** It reads the GUIDE re-scores from `logs/` (git-ignored). If the three `--llm-authority escalate` re-scores of step 3 are missing, it silently leaves the asymmetric-trust rows out of the C1 table (`experiments/build_results.py:105-106`); run all six re-scores first.
 6. **The paper's figures:** `python -m experiments.build_figures` writes `paper/fig_*.dat` from the same frozen files; `pdflatex agentsoc_combined.tex` in `paper/` (twice) draws them.
+7. **Experiments added on 2026-11-28** (offline, unless noted). Each writes a score file that step 5 reads:
+   - **Corroborated learning (P9 B):** `python -m experiments.p9b_runs --workers 7` runs 45 replays, then `python -m experiments.p9b_score` writes `experiments/dedale_results/p9b_scores.json`. Each job's baseline is a recorded run named in `p9b_runs.BASELINES`, which step 4 and the A8 / A10 runners produce.
+   - **MemStream baseline (A7):** `python -m experiments.a7_runs --workers 6` runs 12 scoring passes into `<data>/runs/a7_memstream/` (about 50 min each, in parallel). Then `python -m experiments.memstream_eval curve` writes `a7_memstream_curve.json`, and `python -m experiments.a7_loop_runs --tag b1_sample` writes `a7_memstream_scores.json`. The model is seeded, so the passes are deterministic.
+   - **B1 repeats, prompt defences on held-out, a second and third model:** recorded LLM output in `agent/v2_results/` (`*_t0.7_r*`, `v2_heldout_promptdef_*`, `*_groq-openai-gpt-oss-20b_*`, `*_groq-qwen-qwen3.8-27b_*`). `python -m experiments.tier2_score` writes `experiments/tier2_scores.json`, and step 5 renders it. Re-running these runs needs API keys (section 5).
 
 ## 4. Determinism
 
@@ -50,4 +54,4 @@ How to rebuild every number in `experiments/RESULTS.md` (claims C1–C5 of `PROJ
 ## 5. What cannot be reproduced offline
 
 - **New LLM output.** Re-running NCE live gives different hypotheses: the model is not deterministic, and model versions change. The recorded outputs are the evidence.
-- **The comparison runs** (undefended agent; gpt-oss-20b), complete on all 500 dev pairs. Re-running them (`agent/run_v2_undefended.py` / `agent/run_v2_eval.py`) needs API keys and an approved call budget, and gives new LLM output.
+- **The comparison runs:** the undefended agent and the pipeline with gpt-oss-20b, and, from 2026-11-28, with Qwen 3.8 27B, both on Groq; complete on all 500 dev pairs. Re-running them (`agent/run_v2_undefended.py` / `agent/run_v2_eval.py`) needs API keys and an approved call budget, and gives new LLM output.

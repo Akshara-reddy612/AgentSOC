@@ -12,6 +12,79 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-28 (evening): three model families; R1b also answers persuasion; submission prepared
+
+- **Qwen 3.8 27B** (option B, approved; Llama 3.3 70B is not offered on these Groq keys): 2,194 attempts for 2,000 answers. Undefended 126/334 (37.7%, McNemar b=126, c=75, p=3.9e-4); pipeline 11/435 suppressed; 0 misdirected executed. Qwen dismisses more clean twins (334 counted) and contamination flipped 75 of its dismissals to escalations, hence the weaker test.
+- **A6 held-out complete** (Gemini; 900 calls). An earlier "daily quota" reading was wrong: 429 also signals per-minute limits, and the keys recovered (16 -> 29-32 answering).
+- **Groq daily limit is real for gpt-oss-20b:** 200,000 tokens per day per account (Groq message). The held-out pipeline stopped at 303; it resumes with new accounts' keys. The Groq caller already rotates past capped keys; a run stops only when every key is capped. A single-key resume used `keys[-1]`, which was not the new key, an error found and corrected the same hour.
+- **R1b vs the A10 persuaded analyst** (q = 1, host-wide, recorded NCE answers): 48 -> 72 attack cases, 262 -> 400 events, 13 -> 0 learned, 30.0 -> 42.8/day; B5 off: 38 -> 72, 32 -> 0 learned. **M = 1:** 71/72 under test and slow planting, 44.1 vs 44.4/day on clean traffic.
+- **Gemini full-500 prompt defences** (approved, 4,200 calls, `N_ALERTS=1000` in `tools/live_queue.sh`, default unchanged) started 16:00 IST; slow (about 7% of calls answered).
+- **Paper (JISA):** the abstract, Sections 4.3, 5.1 and 5.5, Tables 1-2, the Discussion and the Conclusion now carry the three models and both R1b results. All 90 numbers in the JISA edits were checked against RESULTS.md. The graphical abstract and the cover letter were updated.
+
+### 2026-11-28 (later): P9 B and a second model scored; JISA version built
+
+- **MemStream loop replays** (`a7_loop_runs.py`, b1_sample, store static): matched workload 2/72 cases, 7 events, 61.8/day (target 65.2); calibrated tau 8/72 at 339.9/day; combination 65/72 at 64.1 and 54/72 at 58.6. The prediction (fewer attack cases at matched workload; the combination loses cases) held. Stage 3 dropped beforehand (design). In the JISA text: a paragraph in 5.2, and limitation (7) now says "No StruQ baseline".
+- **JISA package:** cover letter, suggested reviewers (Cavallaro, Tramèr, G. Wang, S. Bhatia, P. Gao; emails to be copied from official pages), graphical abstract (TikZ; matplotlib is not installed), submission-form text generated from the manuscript, vitae (approved by the user). All 61 numbers in the JISA edits were checked against RESULTS.md.
+- **P9 B, 40 replays** (39 + the R6 cost row; scores `experiments/dedale_results/p9b_scores.json`, RESULTS.md section). Cells are attack cases of 72 / reviews per day:
+  - clean traffic: no rule 34.1; R1b 44.4; R1 63.7; R4 92.5; R6 36.2;
+  - test-period plants: 21 -> R1b 72 (46.9), R1 72, R4 21, R6 52;
+  - slow plants with the analyst (new baseline): 0 -> R1b 72 (44.8), R1 72, R6 0;
+  - after the intrusion: 72 with or without a rule;
+  - training-week plants: 2 -> R4 67 (92.1), all others 2;
+  - gate path (D7 off): 0 -> R1 and R1b 72.
+  - The design's predictions held for R1, R1b and R4. R6 did better than predicted (52 rather than "little change").
+- **Second model** (approved option A; Groq, 9 keys, 1,002 attempts for 1,000 answers):
+  - undefended gpt-oss-20b hijacked 202/419 (48.2%, CI 43.5-53.0%, p 3e-36);
+  - the same model inside the pipeline: 10/437 suppressed;
+  - `undefended_metrics.compare` gained `defended_path` (default unchanged), and Gemini's 130/439 and 4/428 reproduce exactly.
+  - The first Groq start used only the 5 keys present when it began; it was restarted with 9 workers (the run resumes; 308 answers kept).
+- **MemStream first-N passes (6):** about chance at every beta (b3: 235/473 attack events at a 50% alert rate). Suspected cause: the reference initialisation (the first 2,048 records, minutes of data) gives the hour feature a near-zero spread, so scores track time of day. Not reported until the sampled-init passes finish.
+- **Bug found while preparing the screenshot:** checkpoints pickled before P9 B would fail on restore (missing attributes); `__setstate__` defaults added, with a test.
+- **JISA:**
+  - JCST declined the paper on fit; target now JISA. Its guide (pasted by the user) states no length limit, an abstract of at most 250 words, highlights, mandatory CRediT roles, vitae with photos, and the Option C research-data deposit.
+  - The build (`paper/jisa/`, private) is at 29 pages; the abstract is 221 words.
+  - The console screenshot was taken on a copy of `D:\agentsoc_data\demo` with a throwaway account; the real home was untouched.
+
+### 2026-11-28: B1 complete; P9 B implemented (options, off by default)
+
+- **B1 into RESULTS.md:**
+  - `tier2_score.repeats()` now also returns the recorded default-sampling run on the same pairs;
+  - only the `B1_repeats` key of `tier2_scores.json` was written (T2.2 held-out is not rescored while A6 is writing its files);
+  - RESULTS.md rebuilt: only the date line and the B1 paragraph changed.
+- **User asked for the journal to improve as well.** `paper/tandf/NEW_RESULTS_FOR_JCST.md` (private) maps each new result to the JCST lines it changes. It is not new wording: the authors are rewriting the text for the Turnitin AI score, so they write the sentences.
+- **B1 (live, complete 2026-11-27 18:58 UTC):**
+  - repeats 2 and 3 finished in 4 queue rounds (repeat 1 was already complete);
+  - undefended prompt, temperature 0.7, first 150 dev pairs: hijacked 38/127, 37/129, 36/129, which is mean 28.8%, sd 1.0 point, range 27.9-29.9% (`experiments.tier2_score.repeats()`);
+  - the recorded default-sampling run on the same pairs: 36/128 (28.1%, Wilson 21.1-36.5%);
+  - so run-to-run variation at 0.7 is about 1 point, small against the 29.6% vs 0.9% gap;
+  - `tier2_scores.json` is not rewritten yet, because `tier2_score` also reads the held-out files A6 is now writing;
+  - API logs checked for key strings: none.
+- **P9 B code:**
+  - R1 / R1b corroboration in `KnowledgeUpdater._learn` covers every post-training host-key learning path (verdicts, gate releases, ungated);
+  - R1b's verdict tally skips hosts the monitor has confirmed;
+  - R6 in `SocLoop._confirmed_malicious` reads the confirmed host's patterns before B5 retracts them, and appends its retractions to `done["retracted"]`, so withdrawing the verdict restores them;
+  - R4 is a replay-only post-training filter (`_retract_single_host`), applied after the fleet index is built;
+  - the updater holds the monitor object, not its bound method: the runner's safe checkpoint loader refuses unlisted bound methods, which `test_fail_safe` caught;
+  - checks: 11 new tests, suite 836 passed; a default replay of `F_d4` is byte-identical to the recorded run.
+
+### 2026-11-28: live runs resumed; A7 MemStream and P9 B designed (JCST paused by the user)
+
+- **User:** JCST is set aside; the goal is the strongest version of the project, with results in the repository only. Approved: finish B1, A6 hardened prompts on held-out (900 calls), and A7 MemStream and P9 B (a design first).
+- **B1 resumed** 2026-11-27 18:26 UTC: repeat 1 was complete (300/300); 65 (repeat 2) and 124 (repeat 3) missing; 33 keys answered the probe. **A6 held-out** is chained to start when the B1 queue ends (one queue at a time). Both result paths are new files.
+- **Designs (nothing run):**
+  - `experiments/A7_MEMSTREAM_DESIGN.md`: MemStream written from the paper, on structured fields only (I1); alerts through the same loop; τ at matched workload and by MemStream's own rule; A8 plants.
+  - `experiments/P9B_CORROBORATED_LEARNING_DESIGN.md`: rules R1-R5 (fleet corroboration, second verdict, lifetime, training corroboration, two analysts on critical hosts) as options defaulting to today's behaviour. Predictions recorded beforehand.
+- **Designs checked and revised (user: "double check the design ... if not then continue"):**
+  - **A7:** MemStream checked against `code/memstream-knn.py` / `memstream.py` (Apache-2.0) and arXiv 2106.03837v2. The first draft had normalisation from memory updated with it, N = 2048 and β = 0.1 as the defaults, and K = 3 with γ = 0 meaning nearest-neighbour; it is corrected to the code. The input is restricted to the 6.6 M detector-keyed events (3,459,514 training, 3,142,395 test; 13.5 M host events in all), so the comparison is on the same events and a pass costs about 30 min. Added: a threshold-free event-level curve, a stronger sampled-init variant, plants scored in-stream, and a keyed-and-MemStream combination.
+  - **P9 B pre-check** (`experiments/p9b_precheck.py`, read-only): 37 of 42 plantable attack keys have a pattern never seen on another host in training (the other 5 are CLIENT2's Python tool chain, seen on 29 hosts). But 236 of the 311 keys an honest analyst teaches on clean traffic (`F_d4`) are single-host too, so R1 has a real cost. Host counts are bimodal (0 or ≥ 3), so the M sweep was dropped. Only 2 of 40 attack patterns occur on both attacked hosts. 497 of 6,484 training keys (8%) are single-host (R4's cost).
+  - **P9 B changes:** the rules now cover gate learning as well as verdicts. R1b counts benign verdicts on unsuspected hosts (M = 2), with the tally kept even when nothing is learned (the first draft's version deadlocked). R6 (P8 change 7) added. R2 and R3 dropped (a repeating attacker defeats both by construction). R5 dropped (DEDALE host logs cover only tier-0 clients). The 0%-miss seeds were collapsed (deterministic). 84 -> about 39 replays.
+
+### 2026-11-26: authors' rewrites of the passages Turnitin marked as AI-written (test draft only)
+
+- Turnitin on the anonymous PDF: 2% similarity, 28% AI. The authors rewrote 25 of the 29 marked passages themselves (`paper/tandf/rewrite_passages.txt`, private); I corrected only errors of meaning, terms, grammar and spelling (UK).
+- `paper/tandf/turnitin_draft.py` builds a separate test PDF (`paper/tandf/turnitin_draft/`); the submission files are unchanged. Checks: every number and citation of each passage kept, all 40 references cited, abstract 199 words, 103 table and figure values match, no identifying text, Word UK proofing clean.
+- Not yet rewritten: passages 21, 23, 24, 26, 27, 28. The rewrites go into the manuscript only if the AI score falls below 20% (user).
+
 ### 2026-11-24: target journal changed; A4 optimized attacker run
 
 - **Journal (user):** Journal of Cyber Security Technology (Taylor & Francis, format-free). `paper/tandf/` (git-ignored): article class, references.bib (pages and authors from publisher pages), 5 keywords, abstract 198 words, UK spelling, T&F declarations, AI note in figure captions (T&F image policy), named and anonymous PDFs. Review type not verified. The Springer version is superseded.

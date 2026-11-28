@@ -29,6 +29,18 @@ When (invariant I3, the learning gate):
     whole host -- reviews on a host blocked nearly all learning there);
   - with the gate switched off (ablation C3): every closed case at once,
     provenance "ungated".
+
+Corroborated learning (decision P9 B, 2026-11-28; experiments/P9B_CORROBORATED_LEARNING_DESIGN.md; option,
+off by default).  An attacker can get its tools' host keys learned by running them harmlessly first and letting
+an analyst truthfully close those cases as benign (checklist A8).  With `corroboration` set, a host key learned
+after training (verdict, gate release or ungated) is learned only if its pattern -- the key without its host,
+`host_detection.edge_pattern` -- is corroborated by other hosts:
+  - "fleet" (R1): the pattern was seen in training on another host;
+  - "fleet_verdicts" (R1b): R1, or analysts closed the pattern as benign on at least `corroboration_hosts`
+    other hosts that were not confirmed compromised at the time (the tally counts verdicts even when nothing is
+    learned, so the first hosts are not deadlocked; it is kept in memory: a restarted loop starts it afresh).
+An uncorroborated case is not learned: its hold is lifted (as `benign_once`) and its key alerts again.
+Network patterns are per endpoint pair already and are not affected.
 Network cases only for now (the case's first alert has src_ip / dst_ip /
 signature_id / protocol / dst_port).  Every write goes through KnowledgeDB and
 its audit log (invariant I6).
@@ -41,7 +53,7 @@ from datetime import datetime, timedelta
 
 from perception.case_builder import Case
 from perception.environment import parse_ipv4
-from perception.host_detection import DETECTORS, learn_key
+from perception.host_detection import DETECTORS, edge_pattern, key_pattern, learn_key
 from perception.knowledge_db import KnowledgeDB
 from perception.knowledge_graph import destination_node_id, host_node_id
 from perception.knowledge_store import KnowledgeFact
@@ -52,13 +64,24 @@ BENIGN_OUTCOMES = frozenset({"LOW_PRIORITY", "NO_ACTIONABLE"})
 RETRACTABLE = frozenset({"closed_benign", "analyst", "ungated"})   # learned after training (decision B5)
 ESCALATED_OUTCOMES = frozenset({"REVIEW", "AUTO_APPROVED"})
 GATE_DELAY = timedelta(hours=24)
+CORROBORATION = ("none", "fleet", "fleet_verdicts")        # decision P9 B (option; "none" = today's behaviour)
 
 
 class KnowledgeUpdater:
     """The only writer of learned knowledge (see module docstring)."""
 
     def __init__(self, db: KnowledgeDB, *, gate: bool = True, gate_delay: timedelta = GATE_DELAY,
-                 writer: str = "updater") -> None:
+                 writer: str = "updater", corroboration: str = "none", corroboration_hosts: int = 2,
+                 monitor=None) -> None:
+        if corroboration not in CORROBORATION:
+            raise ValueError(f"corroboration must be one of {CORROBORATION}")
+        self.corroboration = corroboration
+        self.corroboration_hosts = corroboration_hosts
+        self._monitor = monitor          # OutcomeMonitor: is a host confirmed compromised? (an object, not a
+                                         # bound method: the runner's safe checkpoint loader refuses those)
+        self._fleet: dict[tuple, set[str]] | None = None         # pattern -> hosts that showed it in training
+        self._verdict_hosts: dict[tuple, set[str]] = {}          # pattern -> hosts with a benign verdict on it
+        self.uncorroborated = 0                                  # cases not learned for want of corroboration
         self.db = db
         self.gate = gate
         self.gate_delay = gate_delay
@@ -67,6 +90,12 @@ class KnowledgeUpdater:
         self._seq = itertools.count()
         self._escalations: dict[str, dict[str, datetime]] = {}   # address -> {case id: escalation time}
         self.dropped = 0                                         # benign cases not learned (escalation nearby)
+
+    def __setstate__(self, state: dict) -> None:
+        """A checkpoint pickled before P9 B (2026-11-28) lacks the corroboration state: restore it as "off"."""
+        self.__dict__.update({"corroboration": "none", "corroboration_hosts": 2, "_monitor": None, "_fleet": None,
+                              "_verdict_hosts": {}, "uncorroborated": 0})
+        self.__dict__.update(state)
 
     # -- inputs from the triage loop ------------------------------------------
 
@@ -96,18 +125,50 @@ class KnowledgeUpdater:
             if self._escalated_since(case):
                 self.dropped += 1
                 continue
-            self._learn(case, "closed_benign", release)
-            learned += 1
+            learned += self._learn(case, "closed_benign", release)
         return learned
 
     def _escalated_since(self, case: Case) -> bool:
         """Was a case involving one of this case's endpoints escalated after it opened (and not closed benign)?"""
         return any(t >= case.opened for a in _addresses(case) for t in self._escalations.get(a, {}).values())
 
-    def analyst_closed_benign(self, case: Case, at: datetime, analyst: str) -> None:
-        """The analyst closed an escalated case as benign: learn it, and lift its hold on its endpoints."""
+    def analyst_closed_benign(self, case: Case, at: datetime, analyst: str) -> bool:
+        """
+        The analyst closed an escalated case as benign: lift its hold on its endpoints and learn it.  False if
+        it was not learned (P9 B: its pattern is not corroborated).
+        """
         self.lift_hold(case)
-        self._learn(case, "analyst", at, writer=f"analyst:{analyst}")
+        a = case.first_alert
+        if self.corroboration == "fleet_verdicts" and a.get("kind") == "host":
+            pattern, host = key_pattern(a["detector"], a["detector_key"])
+            host_name = str(a.get("target_host"))              # the monitor's own spelling of the host
+            if self._monitor is None or not self._monitor.host_confirmed(host_name, at):
+                self._verdict_hosts.setdefault(pattern, set()).add(host)
+        return self._learn(case, "analyst", at, writer=f"analyst:{analyst}")
+
+    # -- corroboration (P9 B) -----------------------------------------------------
+
+    def index_training(self) -> None:
+        """Record which hosts showed each pattern in training (called when training ends; rebuilt lazily if not)."""
+        fleet: dict[tuple, set[str]] = {}
+        for src, dst, key, _, _ in self.db.learned_edges({"training"}):
+            attrs = self.db.edge_attrs(src, dst, key)
+            hp = edge_pattern(attrs.get("edge_type", ""), src, dst, key) if attrs and "detector" in attrs else None
+            if hp is not None:
+                fleet.setdefault(hp[0], set()).add(hp[1])
+        self._fleet = fleet
+
+    def corroborated(self, detector: str, key: tuple) -> bool:
+        """Is this host key's pattern corroborated by other hosts (see module docstring)?"""
+        if self.corroboration == "none":
+            return True
+        if self._fleet is None:
+            self.index_training()
+        pattern, host = key_pattern(detector, key)
+        if self._fleet.get(pattern, set()) - {host}:
+            return True
+        return (self.corroboration == "fleet_verdicts"
+                and len(self._verdict_hosts.get(pattern, set()) - {host}) >= self.corroboration_hosts)
 
     def lift_hold(self, case: Case) -> None:
         """The analyst resolved this escalated case as not malicious: it stops blocking gated learning."""
@@ -151,19 +212,56 @@ class KnowledgeUpdater:
             out.append({"src": src, "dst": dst, "key": key})
         return out
 
+    def learned_patterns(self, host: str, since: datetime) -> set[tuple]:
+        """P9 B patterns of the host keys learned on `host` since `since` that B5 would retract (R6 reads them first)."""
+        node, lineage_key, out = host_node_id(host), f"host:{host.lower()}", set()
+        for src, dst, key, _, learned_at in self.db.learned_edges(RETRACTABLE):
+            if learned_at < since or not (node in (src, dst) or key == lineage_key):
+                continue
+            attrs = self.db.edge_attrs(src, dst, key)
+            hp = edge_pattern(attrs.get("edge_type", ""), src, dst, key) if attrs and "detector" in attrs else None
+            if hp is not None:
+                out.add(hp[0])
+        return out
+
+    def retract_pattern_learning(self, patterns: set[tuple], host: str, since: datetime, at: datetime,
+                                 writer: str) -> list[dict]:
+        """
+        Pattern-following unlearning (P9 B rule R6 / P8 change 7, option, 2026-11-28): `host` is confirmed
+        compromised, so the same patterns learned since `since` on other hosts (closed cases or verdicts) are
+        retracted too.  Same return value as retract_host_learning.
+        """
+        out = []
+        for src, dst, key, _, learned_at in self.db.learned_edges(RETRACTABLE):
+            if learned_at < since or not self.db.graph.graph.has_edge(src, dst, key):
+                continue
+            attrs = self.db.edge_attrs(src, dst, key)
+            hp = edge_pattern(attrs.get("edge_type", ""), src, dst, key) if attrs and "detector" in attrs else None
+            if hp is None or hp[0] not in patterns or hp[1] == host.lower():
+                continue
+            self.db.retract_edge(src, dst, key, writer=writer, at=at,
+                                 reason=f"host {host} confirmed compromised; same pattern learned since "
+                                        f"{since.isoformat()}")
+            out.append({"src": src, "dst": dst, "key": key})
+        return out
+
     @property
     def pending(self) -> int:
         return len(self._pending)
 
     # -- writing ----------------------------------------------------------------
 
-    def _learn(self, case: Case, provenance: str, at: datetime, writer: str | None = None) -> None:
+    def _learn(self, case: Case, provenance: str, at: datetime, writer: str | None = None) -> bool:
+        """Learn a case; False if P9 B corroboration refused it (host keys after training only)."""
         a = case.first_alert
         writer = writer or self.writer
         if a.get("kind") == "host":                     # host alert: its detector key (Phase 2)
+            if provenance in RETRACTABLE and not self.corroborated(a["detector"], tuple(a["detector_key"])):
+                self.uncorroborated += 1
+                return False
             learn_key(self.db, a["detector"], tuple(a["detector_key"]), provenance=provenance, at=at,
                       writer=writer, first_seen=case.opened, last_seen=case.last_seen, count=case.alert_count)
-            return
+            return True
         sid = int(a["signature_id"])
         with self.db.batch():
             src = self._endpoint(str(a["src_ip"]), at, writer)
@@ -174,6 +272,7 @@ class KnowledgeUpdater:
             self._count_edge(src, dst, f"{proto}/{port}",
                              {"edge_type": "COMMUNICATES_WITH", "protocol": proto, "port": port},
                              case, provenance, at, writer)
+        return True
 
     def _endpoint(self, address: str, at: datetime, writer: str) -> str:
         return ensure_endpoint(self.db, address, at, writer)

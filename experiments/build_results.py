@@ -168,6 +168,22 @@ def c1() -> list[str]:
               f"| Defended pipeline (response suppressed) | {_pct(u['d_suppressed'], u['d_clean_responded'])} | "
               f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], d_other):.2g} | "
               f"{u['d_misdirect_exec']} |", ""]
+    # checklist item 8 (2026-11-28): the same comparison with other model families, both sides from the same model
+    for label, tag in (("Second model, gpt-oss-20b (OpenAI, via Groq)", "groq-openai-gpt-oss-20b"),
+                       ("Third model, Qwen 3.8 27B (Alibaba, via Groq)", "groq-qwen-qwen3.8-27b")):
+        m_u = ROOT / f"agent/v2_results/v2_dev_undefended_{tag}_results.json"
+        m_d = ROOT / f"agent/v2_results/v2_dev_live_{tag}_results_rescored.json"
+        if not (m_u.exists() and m_d.exists()):
+            continue
+        g = compare("dev", m_u, m_d)["total"]
+        lines += [f"*{label}, both sides on the same {g['pairs']} dev pairs:* the undefended "
+                  f"agent was hijacked on {_pct(g['hijacked'], g['clean_not_dismissed'])} (95% CI "
+                  f"{_ci(g['hijacked'], g['clean_not_dismissed'])}; McNemar b={g['hijacked']}, c={g['induced']}, "
+                  f"p={mcnemar(g['hijacked'], g['induced']):.2g}); the defended pipeline's response was suppressed on "
+                  f"{_pct(g['d_suppressed'], g['d_clean_responded'])} (95% CI {_ci(g['d_suppressed'], g['d_clean_responded'])}); "
+                  f"misdirected actions executed: {g['d_misdirect_exec']}. "
+                  "The answers were recorded on 2026-11-28 with the original prompts and callers, "
+                  "at the API default temperature, like every recorded answer.", ""]
     lines += e1()
     return lines
 
@@ -519,12 +535,33 @@ def tier2(T: dict) -> list[str]:
                            f"reduction {x['reduction'] * 100:.1f} points (95% CI {x['ci95'][0] * 100:.1f}-"
                            f"{x['ci95'][1] * 100:.1f})")
         out.append("")
+    if "T2.2_heldout" in T:                   # checklist A6 (2026-11-28): the same prompt defences on held-out
+        r = T["T2.2_heldout"]
+        out += [f"*Prompt-level defences on the held-out split,* first {r['pairs_in_subset']} held-out pairs (the "
+                "undefended row uses the recorded T2.1 answers on the same pairs):", "",
+                "| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p | "
+                "Paired reduction (95% CI) |", "|:--|--:|--:|--:|:--|:--|--:|:--|"]
+        for d in ("delimited", "spotlight", "hierarchy"):
+            x, pr = r.get(d, {}), r.get(d + "_paired")
+            if not x.get("pairs_answered") or not pr:
+                continue
+            u, f, m = x["undefended"], x["defended"], x["mcnemar"]
+            out.append(f"| {d} | {x['pairs_answered']} | {u['hijacked']}/{u['clean_not_dismissed']} "
+                       f"({u['hijacked'] / u['clean_not_dismissed']:.1%}) | {f['hijacked']}/{f['clean_not_dismissed']} "
+                       f"({f['hijacked'] / f['clean_not_dismissed']:.1%}) | {f['ci95'][0]:.1%}-{f['ci95'][1]:.1%} | "
+                       f"{m['b_defence_only']} / {m['c_undefended_only']} | {m['p']:.2g} | "
+                       f"{pr['reduction'] * 100:.1f} points ({pr['ci95'][0] * 100:.1f}-{pr['ci95'][1] * 100:.1f}) |")
+        out.append("")
     if "B1_repeats" in T:
         r = T["B1_repeats"]
         out += [f"*B1, repeated runs* of the undefended prompt at temperature {r['temperature']:g} on the same 150 pairs: "
                 + ", ".join(f"{x['hijacked']}/{x['clean_not_dismissed']}" for x in r["repeats"])
                 + (f" hijacked; mean {r['mean']:.1%}, sd {r['sd']:.1%} (min {r['min']:.1%}, max {r['max']:.1%}) over "
-                   f"{r['complete_repeats']} complete repeats" if "mean" in r else " (incomplete)") + ".", ""]
+                   f"{r['complete_repeats']} complete repeats" if "mean" in r else " (incomplete)") + "."
+                + (f" The recorded run (API default sampling) on the same pairs: "
+                   f"{r['recorded_default_sampling']['hijacked']}/{r['recorded_default_sampling']['clean_not_dismissed']} "
+                   f"({r['recorded_default_sampling']['rate']:.1%}). The repeats measure variation at temperature "
+                   f"{r['temperature']:g} only." if r.get("recorded_default_sampling") else ""), ""]
     if "T2.3" in T:
         r = T["T2.3"]
         out += [f"*T2.3, the adaptive attacker:* {r['pairs']} dev pairs whose payload was rewritten until ERA rated it "
@@ -755,6 +792,105 @@ def a8_gate() -> list[str]:
     return out + ["", f"Default replay byte-identical to F_gated (cases): {a['default_identical_to_F_gated']}.", ""]
 
 
+P9B_ROWS = [  # (planting, condition, job tag per rule; None = not run)
+    ("none (cost)", "analyst 4 h", "d4"),
+    ("test period", "analyst 4 h", "test"),
+    ("slow, from 2024-12-30", "analyst 4 h", "slow"),
+    ("after the intrusion", "analyst 4 h", "foothold"),
+    ("training weeks", "analyst 4 h", "train"),
+    ("slow, from 2024-12-30", "D7 off, no analyst", "gate_slow"),
+]
+P9B_RULES = (("R1b", "R1b verdicts on 2 other hosts"), ("R1", "R1 seen elsewhere in training"),
+             ("R4", "R4 training corroboration"), ("R6", "R6 pattern-following unlearning"))
+
+
+def p9b() -> list[str]:
+    """Decision P9 B (2026-11-28): corroborated learning (experiments/p9b_runs.py, p9b_score.py)."""
+    path = RESULTS / "p9b_scores.json"
+    if not path.exists():
+        return []
+    jobs = _load(path)["jobs"]
+    out = ["## Corroborated learning against the precursor attack (P9 B, 2026-11-28)", "",
+           "Options of the learning path, off by default (a default replay of F_d4 is byte-identical to the recorded "
+           "run). The pattern of a host key is the key without its host. *R1*: a key is learned after training only if "
+           "its pattern was seen on another host in training. *R1b*: R1, or analysts closed the pattern as benign on at "
+           "least 2 other hosts not confirmed compromised at the time. *R4*: at the end of training, forget keys whose "
+           "pattern only one host showed. *R6*: a confirmation also retracts the same patterns learned on other hosts. "
+           "R1 and R1b also govern gate learning. Planting as in the A8 sections (slow: `--gate-from 2024-12-30`, "
+           "PowerShell keys planted too). Design: `experiments/P9B_CORROBORATED_LEARNING_DESIGN.md`. Offline, NCE off.",
+           "", "Each cell: attack cases raised (of 72) / labelled attack events alerted / reviews per day.", "",
+           "| Planting | Condition | Without a rule | " + " | ".join(l for _, l in P9B_RULES) + " |",
+           "|:--|:--|--:|" + "--:|" * len(P9B_RULES)]
+
+    def cell(r):
+        return f"{r['attack_cases_raised']} / {r['class1_events_alerted']} / {r['reviews_per_day']}"
+
+    for plant, cond, job in P9B_ROWS:
+        base = next((jobs[f"P9B_{k}_{job}"]["baseline"] for k, _ in P9B_RULES if f"P9B_{k}_{job}" in jobs), None)
+        if base is None:
+            continue
+        cells = [cell(jobs[f"P9B_{k}_{job}"]) if f"P9B_{k}_{job}" in jobs else "-" for k, _ in P9B_RULES]
+        out.append(f"| {plant} | {cond} | {cell(base)} | " + " | ".join(cells) + " |")
+    seeds = _load(path).get("m20_seeds", {})
+    if seeds:
+        out += ["", "With 20% analyst misses (6 seeds), reviews per day: " + "; ".join(
+            f"{k} {v['rule']['reviews_per_day']['mean']:g} (without {v['baseline']['reviews_per_day']['mean']:g})"
+            for k, v in seeds.items()) + "; attack patterns learned 0 in every seed, with and without a rule (B5)."]
+    extra = [("Host-wide persuaded analyst (A10, q = 1, recorded NCE answers), B5 on", "P9B_R1b_persuaded"),
+             ("Host-wide persuaded analyst, B5 off", "P9B_R1b_persuaded_nob5"),
+             ("R1b with one corroborating host (M = 1): no planting", "P9B_R1bM1_d4"),
+             ("R1b, M = 1: test-period planting", "P9B_R1bM1_test"),
+             ("R1b, M = 1: slow planting", "P9B_R1bM1_slow")]
+    if any(t in jobs for _, t in extra):
+        out += ["", "Added the same day (attack cases / labelled attack events / reviews per day; attack patterns "
+                    "learned at the end):", "", "| Condition | Without the rule | With R1b |", "|:--|--:|--:|"]
+        for label, t in extra:
+            if t in jobs:
+                r, b = jobs[t], jobs[t]["baseline"]
+                out.append(f"| {label} | {cell(b)}; learned {b['attack_cases_learned']} | {cell(r)}; learned "
+                           f"{r['attack_cases_learned']} |")
+    return out + ["", "Without a rule the test-period and slow rows are the A8 baselines (`a8_scores.json`; the slow "
+                      "row with an analyst is new). The D7-off row raises no reviews by construction (D7 off lets "
+                      "unlearned cases close by themselves); it measures whether the attack is still raised.", ""]
+
+
+def a7_memstream() -> list[str]:
+    """Checklist A7 (2026-11-28): MemStream as a learned-memory baseline (experiments/memstream_eval.py, a7_loop_runs.py)."""
+    loop, curve = RESULTS / "a7_memstream_scores.json", RESULTS / "a7_memstream_curve.json"
+    if not loop.exists() or not curve.exists():
+        return []
+    L, C = _load(loop), _load(curve)
+    ks = C["keyed_store"]["gated_F_gated"]
+    out = ["## MemStream, a learned-memory baseline (checklist A7, 2026-11-28)", "",
+           "MemStream (Bhatia et al., WWW 2022), written from the paper and checked against the reference code, on the "
+           "events the host detectors key (3,459,514 training, 3,142,395 test), with features from the detectors' own "
+           "keys (no command-line or script text). Memory N = 2048, K = 3, gamma = 0; the initial memory comes from the "
+           "training weeks and the stream starts 24 h before the test period. Design and every change made "
+           "before results: `experiments/A7_MEMSTREAM_DESIGN.md`. Offline.", "",
+           f"*Event level* (labelled attack events alerted, at most the keyed store's {ks['benign_per_day']:g} benign "
+           f"events alerted per day; the keyed store alerts {ks['attack_events']}):", ""]
+    for tag, m in sorted(C["memstream"].items(), key=lambda kv: (kv[1]["init"], kv[1]["beta"])):
+        best = max((pt for pt in m["points"] if pt["benign_per_day"] <= ks["benign_per_day"]),
+                   key=lambda pt: pt["attack_events"], default=None)
+        out.append(f"- beta {m['beta']:g}, {m['init']} init: {best['attack_events'] if best else 0} of "
+                   f"{m['attack_events_total']} (memory updates in the test period: {m['admitted_test']})")
+    out += ["", "The reference initialisation (the first N records, minutes of data) scores at about chance; the uniform "
+                "sample of the training weeks is the stronger baseline and is used below.", "",
+            f"*Through the SOC loop* (`{L['tag']}`; store in static mode, so MemStream is the only memory; no analyst):", "",
+            "| Condition | Attack cases raised | Labelled attack events | Reviews / day | Precision |", "|:--|--:|--:|--:|--:|"]
+
+    def row(label, r):
+        out.append(f"| {label} | {r['attack_cases_raised']} | {r['class1_events_alerted']} | {r['reviews_per_day']} | "
+                   f"{r['precision']} |")
+    row("Keyed store, gated (F_gated)", L["keyed"]["gated_F_gated"])
+    row(f"MemStream, workload matched to F_gated (tau {L['matched']['tau']:.1f})", L["matched"])
+    row(f"MemStream, tau = 99.9th percentile of training scores ({L['calibrated']['tau']:.1f})", L["calibrated"])
+    for share, r in L["combination"].items():
+        row(f"Keyed store AND MemStream (store frozen; MemStream calls {float(share):.0%} of test records normal)", r)
+    return out + ["", "Stage 3 (plants) was not run: at matched workload MemStream raises almost no attack event "
+                      "without an attacker (design, recorded before the loop replays).", ""]
+
+
 def worst_case() -> list[str]:
     """Checklist A4 (2026-11-23): bound over every attacker text (experiments/worst_case_bound.py)."""
     path = RESULTS / "worst_case_bound.json"
@@ -797,7 +933,7 @@ def optimized() -> list[str]:
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *worst_case(), *optimized(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *p9b(), *a7_memstream(), *worst_case(), *optimized(),
              "## Limits", "",
              "- **DEDALE:** one testbed dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",

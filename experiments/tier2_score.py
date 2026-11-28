@@ -84,6 +84,12 @@ def repeats() -> dict:
                      "rate": round(h / n, 4) if n else None})
     rates = [r["rate"] for r in rows if r["rate"] is not None and r["pairs_answered"] == len(pids)]
     out = {"temperature": REPEAT_TEMPERATURE, "repeats": rows}
+    v = _verdicts(RES / "v2_dev_undefended_results.json")      # the recorded run (API default sampling), same pairs
+    states = [s for s in (_pair_state(v, p) for p in pids) if s]
+    h, n = sum(s["hijacked"] for s in states), sum(s["clean_not_dismissed"] for s in states)
+    out["recorded_default_sampling"] = {"pairs_answered": len(states), "hijacked": h, "clean_not_dismissed": n,
+                                        "rate": round(h / n, 4) if n else None,
+                                        "ci95": [round(x, 4) for x in wilson(h, n)] if n else None}
     if len(rates) >= 2:
         out.update({"complete_repeats": len(rates), "mean": round(statistics.mean(rates), 4),
                     "sd": round(statistics.stdev(rates), 4), "min": min(rates), "max": max(rates)})

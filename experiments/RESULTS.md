@@ -1,4 +1,4 @@
-# Results (frozen 2026-11-24)
+# Results (frozen 2026-11-28)
 
 Built by `python -m experiments.build_results` from frozen result files only; see `REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.
 
@@ -43,6 +43,10 @@ Outcomes per run (alerts, clean and contaminated; AUTO_APPROVED = an automatic r
 |:--|--:|--:|--:|--:|
 | Undefended agent (hijacked to dismiss) | 130/439 (29.6%) | 25.5%-34.0% | 6.5e-17 | - |
 | Defended pipeline (response suppressed) | 4/428 (0.9%) | 0.4%-2.4% | 1 | 0 |
+
+*Second model, gpt-oss-20b (OpenAI, via Groq), both sides on the same 500 dev pairs:* the undefended agent was hijacked on 202/419 (48.2%) (95% CI 43.5%-53.0%; McNemar b=202, c=24, p=3e-36); the defended pipeline's response was suppressed on 10/437 (2.3%) (95% CI 1.2%-4.2%); misdirected actions executed: 0. The answers were recorded on 2026-11-28 with the original prompts and callers, at the API default temperature, like every recorded answer.
+
+*Third model, Qwen 3.8 27B (Alibaba, via Groq), both sides on the same 500 dev pairs:* the undefended agent was hijacked on 126/334 (37.7%) (95% CI 32.7%-43.0%; McNemar b=126, c=75, p=0.00039); the defended pipeline's response was suppressed on 11/435 (2.5%) (95% CI 1.4%-4.5%); misdirected actions executed: 0. The answers were recorded on 2026-11-28 with the original prompts and callers, at the API default temperature, like every recorded answer.
 
 **Through the full loop on testbed telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the attacker appends text to the command lines of their own processes (84 events; 38 cases whose first alert carries it).
 
@@ -263,6 +267,16 @@ Paired difference over all pairs both conditions answered (per-pair hijack indic
 - telemetry: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -5.2-5.2)
 - findings: 24.0% -> 24.0% of 150 pairs, reduction 0.0 points (95% CI -4.5-4.5)
 
+*Prompt-level defences on the held-out split,* first 150 held-out pairs (the undefended row uses the recorded T2.1 answers on the same pairs):
+
+| Defence | Pairs answered | Undefended: hijacked | Defended: hijacked | 95% CI (defended) | McNemar b / c | p | Paired reduction (95% CI) |
+|:--|--:|--:|--:|:--|:--|--:|:--|
+| delimited | 150 | 40/133 (30.1%) | 3/142 (2.1%) | 0.7%-6.0% | 1 / 38 | 1.5e-10 | 24.7 points (17.5-31.8) |
+| spotlight | 150 | 40/133 (30.1%) | 4/140 (2.9%) | 1.1%-7.1% | 1 / 37 | 2.8e-10 | 24.0 points (16.9-31.1) |
+| hierarchy | 150 | 40/133 (30.1%) | 2/138 (1.4%) | 0.4%-5.1% | 0 / 38 | 7.3e-12 | 25.3 points (18.4-32.3) |
+
+*B1, repeated runs* of the undefended prompt at temperature 0.7 on the same 150 pairs: 38/127, 37/129, 36/129 hijacked; mean 28.8%, sd 1.0% (min 27.9%, max 29.9%) over 3 complete repeats. The recorded run (API default sampling) on the same pairs: 36/128 (28.1%). The repeats measure variation at temperature 0.7 only.
+
 *T2.3, the adaptive attacker:* 300 dev pairs whose payload was rewritten until ERA rated it LOW (ERA-flagged 53 -> 0) and placed in NCE's 512-character view (300/300); NCE errors 0.
 
 | Rule | Suppressed, original payload | Suppressed, adaptive payload | 95% CI | McNemar b / c | Outcome changed | Techniques changed | Review removed (back to the clean response) |
@@ -390,6 +404,68 @@ Training on the first clean week only, gated operation from 2024-12-30, no analy
 | on | none | 24 | 0 | 72 | 400 | 110.9 |
 
 Default replay byte-identical to F_gated (cases): True.
+
+## Corroborated learning against the precursor attack (P9 B, 2026-11-28)
+
+Options of the learning path, off by default (a default replay of F_d4 is byte-identical to the recorded run). The pattern of a host key is the key without its host. *R1*: a key is learned after training only if its pattern was seen on another host in training. *R1b*: R1, or analysts closed the pattern as benign on at least 2 other hosts not confirmed compromised at the time. *R4*: at the end of training, forget keys whose pattern only one host showed. *R6*: a confirmation also retracts the same patterns learned on other hosts. R1 and R1b also govern gate learning. Planting as in the A8 sections (slow: `--gate-from 2024-12-30`, PowerShell keys planted too). Design: `experiments/P9B_CORROBORATED_LEARNING_DESIGN.md`. Offline, NCE off.
+
+Each cell: attack cases raised (of 72) / labelled attack events alerted / reviews per day.
+
+| Planting | Condition | Without a rule | R1b verdicts on 2 other hosts | R1 seen elsewhere in training | R4 training corroboration | R6 pattern-following unlearning |
+|:--|:--|--:|--:|--:|--:|--:|
+| none (cost) | analyst 4 h | 72 / 400 / 34.1 | 72 / 400 / 44.4 | 72 / 400 / 63.7 | 73 / 404 / 92.5 | 72 / 400 / 36.2 |
+| test period | analyst 4 h | 21 / 212 / 31.2 | 72 / 400 / 46.9 | 72 / 400 / 66.3 | 21 / 212 / 74.0 | 52 / 362 / 37.4 |
+| slow, from 2024-12-30 | analyst 4 h | 0 / 0 / 25.7 | 72 / 400 / 44.8 | 72 / 400 / 64.3 | - | 0 / 0 / 25.7 |
+| after the intrusion | analyst 4 h | 72 / 400 / 35.1 | 72 / 400 / 45.4 | 72 / 400 / 64.8 | 73 / 404 / 93.6 | 72 / 400 / 37.3 |
+| training weeks | analyst 4 h | 2 / 34 / 26.7 | 2 / 34 / 37.8 | 2 / 34 / 58.4 | 67 / 398 / 92.1 | 2 / 34 / 26.7 |
+| slow, from 2024-12-30 | D7 off, no analyst | 0 / 0 / 0.0 | 72 / 400 / 0.0 | 72 / 400 / 0.0 | - | - |
+
+With 20% analyst misses (6 seeds), reviews per day: R1 63.7 (without 34.1); R1b 44.4 (without 34.1); R4 92.5 (without 34.1); attack patterns learned 0 in every seed, with and without a rule (B5).
+
+Added the same day (attack cases / labelled attack events / reviews per day; attack patterns learned at the end):
+
+| Condition | Without the rule | With R1b |
+|:--|--:|--:|
+| Host-wide persuaded analyst (A10, q = 1, recorded NCE answers), B5 on | 48 / 262 / 30.0; learned 13 | 72 / 400 / 42.8; learned 0 |
+| Host-wide persuaded analyst, B5 off | 38 / 99 / 28.4; learned 32 | 72 / 400 / 41.9; learned 0 |
+| R1b with one corroborating host (M = 1): no planting | 72 / 400 / 34.1; learned 0 | 72 / 400 / 44.1; learned 0 |
+| R1b, M = 1: test-period planting | 21 / 212 / 31.2; learned 0 | 71 / 399 / 46.6; learned 0 |
+| R1b, M = 1: slow planting | 0 / 0 / 25.7; learned 0 | 71 / 399 / 44.4; learned 0 |
+
+Without a rule the test-period and slow rows are the A8 baselines (`a8_scores.json`; the slow row with an analyst is new). The D7-off row raises no reviews by construction (D7 off lets unlearned cases close by themselves); it measures whether the attack is still raised.
+
+## MemStream, a learned-memory baseline (checklist A7, 2026-11-28)
+
+MemStream (Bhatia et al., WWW 2022), written from the paper and checked against the reference code, on the events the host detectors key (3,459,514 training, 3,142,395 test), with features from the detectors' own keys (no command-line or script text). Memory N = 2048, K = 3, gamma = 0; the initial memory comes from the training weeks and the stream starts 24 h before the test period. Design and every change made before results: `experiments/A7_MEMSTREAM_DESIGN.md`. Offline.
+
+*Event level* (labelled attack events alerted, at most the keyed store's 102.4 benign events alerted per day; the keyed store alerts 400):
+
+- beta 0.3, first init: 0 of 473 (memory updates in the test period: 109)
+- beta 1, first init: 0 of 473 (memory updates in the test period: 245)
+- beta 3, first init: 0 of 473 (memory updates in the test period: 2200)
+- beta 10, first init: 0 of 473 (memory updates in the test period: 17772)
+- beta 30, first init: 0 of 473 (memory updates in the test period: 156417)
+- beta 100, first init: 0 of 473 (memory updates in the test period: 2103482)
+- beta 0.3, sample init: 9 of 473 (memory updates in the test period: 9)
+- beta 1, sample init: 9 of 473 (memory updates in the test period: 362)
+- beta 3, sample init: 6 of 473 (memory updates in the test period: 5271)
+- beta 10, sample init: 0 of 473 (memory updates in the test period: 38381)
+- beta 30, sample init: 0 of 473 (memory updates in the test period: 285497)
+- beta 100, sample init: 0 of 473 (memory updates in the test period: 334195)
+
+The reference initialisation (the first N records, minutes of data) scores at about chance; the uniform sample of the training weeks is the stronger baseline and is used below.
+
+*Through the SOC loop* (`b1_sample`; store in static mode, so MemStream is the only memory; no analyst):
+
+| Condition | Attack cases raised | Labelled attack events | Reviews / day | Precision |
+|:--|--:|--:|--:|--:|
+| Keyed store, gated (F_gated) | 72 | 400 | 65.2 | 0.0789 |
+| MemStream, workload matched to F_gated (tau 100.9) | 2 | 7 | 61.8 | 0.0023 |
+| MemStream, tau = 99.9th percentile of training scores (36.5) | 8 | 25 | 339.9 | 0.0017 |
+| Keyed store AND MemStream (store frozen; MemStream calls 50% of test records normal) | 65 | 393 | 64.1 | 0.0724 |
+| Keyed store AND MemStream (store frozen; MemStream calls 90% of test records normal) | 54 | 358 | 58.6 | 0.0659 |
+
+Stage 3 (plants) was not run: at matched workload MemStream raises almost no attack event without an attacker (design, recorded before the loop replays).
 
 ## Worst case over attacker text on GUIDE (checklist A4, 2026-11-23)
 
