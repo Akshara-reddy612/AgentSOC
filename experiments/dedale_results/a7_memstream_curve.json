@@ -1,0 +1,4530 @@
+{
+ "keyed_store": {
+  "frozen_F_frozen": {
+   "attack_events": 400,
+   "benign_per_day": 102.4
+  },
+  "gated_F_gated": {
+   "attack_events": 400,
+   "benign_per_day": 102.4
+  },
+  "gated_analyst_F_d4": {
+   "attack_events": 400,
+   "benign_per_day": 44.4
+  }
+ },
+ "memstream": {
+  "b0.3_first": {
+   "beta": 0.3,
+   "init": "first",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 109,
+   "tau_train_p999": 114.29718017578125,
+   "points": [
+    {
+     "tau": 116.38404054962726,
+     "share_alerted": 1e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 116.1961882309891,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.7
+    },
+    {
+     "tau": 116.03722424052842,
+     "share_alerted": 1.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.3
+    },
+    {
+     "tau": 115.88721391080819,
+     "share_alerted": 1.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 115.82481405097178,
+     "share_alerted": 2.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.7
+    },
+    {
+     "tau": 115.77178367630353,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.6
+    },
+    {
+     "tau": 115.7008056640625,
+     "share_alerted": 2.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.4
+    },
+    {
+     "tau": 115.7008056640625,
+     "share_alerted": 2.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.4
+    },
+    {
+     "tau": 115.7008056640625,
+     "share_alerted": 2.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.4
+    },
+    {
+     "tau": 115.7008056640625,
+     "share_alerted": 2.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.4
+    },
+    {
+     "tau": 115.7008056640625,
+     "share_alerted": 2.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.4
+    },
+    {
+     "tau": 115.70022583007812,
+     "share_alerted": 6.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 15.6
+    },
+    {
+     "tau": 115.70022583007812,
+     "share_alerted": 6.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 15.6
+    },
+    {
+     "tau": 115.69674682617188,
+     "share_alerted": 0.000108,
+     "attack_events": 0,
+     "benign_per_day": 24.3
+    },
+    {
+     "tau": 115.68577575683594,
+     "share_alerted": 0.000122,
+     "attack_events": 0,
+     "benign_per_day": 27.3
+    },
+    {
+     "tau": 115.67535400390625,
+     "share_alerted": 0.000151,
+     "attack_events": 0,
+     "benign_per_day": 33.9
+    },
+    {
+     "tau": 115.66863250732422,
+     "share_alerted": 0.000161,
+     "attack_events": 0,
+     "benign_per_day": 36.1
+    },
+    {
+     "tau": 115.6533203125,
+     "share_alerted": 0.000201,
+     "attack_events": 0,
+     "benign_per_day": 45.1
+    },
+    {
+     "tau": 115.63484191894531,
+     "share_alerted": 0.00026,
+     "attack_events": 0,
+     "benign_per_day": 58.3
+    },
+    {
+     "tau": 115.63484191894531,
+     "share_alerted": 0.00026,
+     "attack_events": 0,
+     "benign_per_day": 58.3
+    },
+    {
+     "tau": 115.60332489013672,
+     "share_alerted": 0.000383,
+     "attack_events": 0,
+     "benign_per_day": 86.1
+    },
+    {
+     "tau": 115.5905532836914,
+     "share_alerted": 0.000427,
+     "attack_events": 0,
+     "benign_per_day": 95.9
+    },
+    {
+     "tau": 115.50616366900462,
+     "share_alerted": 0.000565,
+     "attack_events": 0,
+     "benign_per_day": 126.9
+    },
+    {
+     "tau": 115.44530487060547,
+     "share_alerted": 0.000655,
+     "attack_events": 0,
+     "benign_per_day": 147.1
+    },
+    {
+     "tau": 115.41776275634766,
+     "share_alerted": 0.000782,
+     "attack_events": 0,
+     "benign_per_day": 175.4
+    },
+    {
+     "tau": 115.38467407226562,
+     "share_alerted": 0.000969,
+     "attack_events": 0,
+     "benign_per_day": 217.6
+    },
+    {
+     "tau": 115.38212585449219,
+     "share_alerted": 0.000992,
+     "attack_events": 0,
+     "benign_per_day": 222.6
+    },
+    {
+     "tau": 115.35446166992188,
+     "share_alerted": 0.001157,
+     "attack_events": 0,
+     "benign_per_day": 259.8
+    },
+    {
+     "tau": 115.28468322753906,
+     "share_alerted": 0.001401,
+     "attack_events": 0,
+     "benign_per_day": 314.6
+    },
+    {
+     "tau": 115.23372650146484,
+     "share_alerted": 0.001679,
+     "attack_events": 0,
+     "benign_per_day": 376.8
+    },
+    {
+     "tau": 115.12873840332031,
+     "share_alerted": 0.002031,
+     "attack_events": 0,
+     "benign_per_day": 455.8
+    },
+    {
+     "tau": 115.03369903564453,
+     "share_alerted": 0.002449,
+     "attack_events": 0,
+     "benign_per_day": 549.6
+    },
+    {
+     "tau": 114.98796081542969,
+     "share_alerted": 0.002918,
+     "attack_events": 0,
+     "benign_per_day": 655.1
+    },
+    {
+     "tau": 114.96745300292969,
+     "share_alerted": 0.003531,
+     "attack_events": 0,
+     "benign_per_day": 792.5
+    },
+    {
+     "tau": 114.89570617675781,
+     "share_alerted": 0.004231,
+     "attack_events": 0,
+     "benign_per_day": 949.8
+    },
+    {
+     "tau": 114.78350830078125,
+     "share_alerted": 0.005099,
+     "attack_events": 0,
+     "benign_per_day": 1144.4
+    },
+    {
+     "tau": 114.69683837890625,
+     "share_alerted": 0.00613,
+     "attack_events": 0,
+     "benign_per_day": 1375.9
+    },
+    {
+     "tau": 114.61286926269531,
+     "share_alerted": 0.007332,
+     "attack_events": 0,
+     "benign_per_day": 1645.7
+    },
+    {
+     "tau": 114.56013488769531,
+     "share_alerted": 0.008837,
+     "attack_events": 0,
+     "benign_per_day": 1983.6
+    },
+    {
+     "tau": 114.49837884273067,
+     "share_alerted": 0.010628,
+     "attack_events": 0,
+     "benign_per_day": 2385.6
+    },
+    {
+     "tau": 114.42826843261719,
+     "share_alerted": 0.012766,
+     "attack_events": 0,
+     "benign_per_day": 2865.4
+    },
+    {
+     "tau": 114.34849548339844,
+     "share_alerted": 0.015337,
+     "attack_events": 0,
+     "benign_per_day": 3442.5
+    },
+    {
+     "tau": 114.27446746826172,
+     "share_alerted": 0.018417,
+     "attack_events": 0,
+     "benign_per_day": 4133.8
+    },
+    {
+     "tau": 114.1787109375,
+     "share_alerted": 0.022128,
+     "attack_events": 0,
+     "benign_per_day": 4966.8
+    },
+    {
+     "tau": 114.07637023925781,
+     "share_alerted": 0.026482,
+     "attack_events": 0,
+     "benign_per_day": 5944.1
+    },
+    {
+     "tau": 113.94852447509766,
+     "share_alerted": 0.031938,
+     "attack_events": 0,
+     "benign_per_day": 7168.6
+    },
+    {
+     "tau": 113.82496643066406,
+     "share_alerted": 0.038362,
+     "attack_events": 0,
+     "benign_per_day": 8610.5
+    },
+    {
+     "tau": 113.71798706054688,
+     "share_alerted": 0.046085,
+     "attack_events": 0,
+     "benign_per_day": 10344.0
+    },
+    {
+     "tau": 113.60565185546875,
+     "share_alerted": 0.055364,
+     "attack_events": 0,
+     "benign_per_day": 12426.9
+    },
+    {
+     "tau": 113.4826431274414,
+     "share_alerted": 0.066502,
+     "attack_events": 0,
+     "benign_per_day": 14926.9
+    },
+    {
+     "tau": 113.38609313964844,
+     "share_alerted": 0.079872,
+     "attack_events": 0,
+     "benign_per_day": 17927.9
+    },
+    {
+     "tau": 113.27747344970703,
+     "share_alerted": 0.095951,
+     "attack_events": 0,
+     "benign_per_day": 21536.9
+    },
+    {
+     "tau": 113.17098999023438,
+     "share_alerted": 0.115268,
+     "attack_events": 0,
+     "benign_per_day": 25872.6
+    },
+    {
+     "tau": 113.04100036621094,
+     "share_alerted": 0.138456,
+     "attack_events": 0,
+     "benign_per_day": 31077.3
+    },
+    {
+     "tau": 112.89419555664062,
+     "share_alerted": 0.166372,
+     "attack_events": 0,
+     "benign_per_day": 37343.4
+    },
+    {
+     "tau": 112.73114013671875,
+     "share_alerted": 0.199844,
+     "attack_events": 0,
+     "benign_per_day": 44856.4
+    },
+    {
+     "tau": 112.53720092773438,
+     "share_alerted": 0.240084,
+     "attack_events": 3,
+     "benign_per_day": 53888.4
+    },
+    {
+     "tau": 112.3585433959961,
+     "share_alerted": 0.288428,
+     "attack_events": 9,
+     "benign_per_day": 64739.1
+    },
+    {
+     "tau": 112.13865661621094,
+     "share_alerted": 0.34648,
+     "attack_events": 25,
+     "benign_per_day": 77768.0
+    },
+    {
+     "tau": 111.8184585571289,
+     "share_alerted": 0.416208,
+     "attack_events": 113,
+     "benign_per_day": 93412.6
+    },
+    {
+     "tau": 111.47797393798828,
+     "share_alerted": 0.5,
+     "attack_events": 188,
+     "benign_per_day": 112214.9
+    }
+   ]
+  },
+  "b0.3_sample": {
+   "beta": 0.3,
+   "init": "sample",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 9,
+   "tau_train_p999": 36.698410369872924,
+   "points": [
+    {
+     "tau": 124.47458751394885,
+     "share_alerted": 1e-05,
+     "attack_events": 6,
+     "benign_per_day": 1.9
+    },
+    {
+     "tau": 124.1044327092921,
+     "share_alerted": 1.2e-05,
+     "attack_events": 6,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 124.037336240384,
+     "share_alerted": 1.5e-05,
+     "attack_events": 6,
+     "benign_per_day": 2.9
+    },
+    {
+     "tau": 124.0323902320298,
+     "share_alerted": 1.8e-05,
+     "attack_events": 6,
+     "benign_per_day": 3.5
+    },
+    {
+     "tau": 123.98118591308594,
+     "share_alerted": 2.1e-05,
+     "attack_events": 6,
+     "benign_per_day": 4.2
+    },
+    {
+     "tau": 123.97657703573668,
+     "share_alerted": 2.5e-05,
+     "attack_events": 6,
+     "benign_per_day": 5.2
+    },
+    {
+     "tau": 123.96354426498348,
+     "share_alerted": 3e-05,
+     "attack_events": 6,
+     "benign_per_day": 6.4
+    },
+    {
+     "tau": 123.9415150304427,
+     "share_alerted": 3.6e-05,
+     "attack_events": 6,
+     "benign_per_day": 7.7
+    },
+    {
+     "tau": 123.92119598388672,
+     "share_alerted": 4.3e-05,
+     "attack_events": 6,
+     "benign_per_day": 9.3
+    },
+    {
+     "tau": 123.91416691314869,
+     "share_alerted": 5.2e-05,
+     "attack_events": 6,
+     "benign_per_day": 11.3
+    },
+    {
+     "tau": 123.89808981116967,
+     "share_alerted": 6.3e-05,
+     "attack_events": 6,
+     "benign_per_day": 13.6
+    },
+    {
+     "tau": 123.87743039411318,
+     "share_alerted": 7.5e-05,
+     "attack_events": 6,
+     "benign_per_day": 16.5
+    },
+    {
+     "tau": 123.83087158203125,
+     "share_alerted": 9e-05,
+     "attack_events": 6,
+     "benign_per_day": 19.8
+    },
+    {
+     "tau": 123.66536736202384,
+     "share_alerted": 0.000109,
+     "attack_events": 6,
+     "benign_per_day": 23.9
+    },
+    {
+     "tau": 114.37271253850534,
+     "share_alerted": 0.00013,
+     "attack_events": 6,
+     "benign_per_day": 28.9
+    },
+    {
+     "tau": 113.85456848144531,
+     "share_alerted": 0.000156,
+     "attack_events": 6,
+     "benign_per_day": 34.6
+    },
+    {
+     "tau": 113.18456772679852,
+     "share_alerted": 0.000188,
+     "attack_events": 7,
+     "benign_per_day": 41.7
+    },
+    {
+     "tau": 112.69209006175825,
+     "share_alerted": 0.000226,
+     "attack_events": 7,
+     "benign_per_day": 50.2
+    },
+    {
+     "tau": 101.62825775146484,
+     "share_alerted": 0.000271,
+     "attack_events": 7,
+     "benign_per_day": 60.4
+    },
+    {
+     "tau": 99.47398395411733,
+     "share_alerted": 0.000326,
+     "attack_events": 8,
+     "benign_per_day": 72.6
+    },
+    {
+     "tau": 97.22192894728838,
+     "share_alerted": 0.000392,
+     "attack_events": 9,
+     "benign_per_day": 87.3
+    },
+    {
+     "tau": 95.59914358255698,
+     "share_alerted": 0.000471,
+     "attack_events": 9,
+     "benign_per_day": 105.0
+    },
+    {
+     "tau": 81.24387906713525,
+     "share_alerted": 0.000565,
+     "attack_events": 9,
+     "benign_per_day": 126.2
+    },
+    {
+     "tau": 67.08682136602872,
+     "share_alerted": 0.000679,
+     "attack_events": 9,
+     "benign_per_day": 151.8
+    },
+    {
+     "tau": 50.30512041790494,
+     "share_alerted": 0.000816,
+     "attack_events": 24,
+     "benign_per_day": 181.4
+    },
+    {
+     "tau": 49.24526715493409,
+     "share_alerted": 0.00098,
+     "attack_events": 24,
+     "benign_per_day": 218.2
+    },
+    {
+     "tau": 49.08733711242684,
+     "share_alerted": 0.001,
+     "attack_events": 24,
+     "benign_per_day": 222.8
+    },
+    {
+     "tau": 46.46553514381257,
+     "share_alerted": 0.001177,
+     "attack_events": 25,
+     "benign_per_day": 262.4
+    },
+    {
+     "tau": 43.760426946609996,
+     "share_alerted": 0.001414,
+     "attack_events": 25,
+     "benign_per_day": 315.6
+    },
+    {
+     "tau": 41.32233428955078,
+     "share_alerted": 0.001698,
+     "attack_events": 26,
+     "benign_per_day": 379.3
+    },
+    {
+     "tau": 36.90300301839003,
+     "share_alerted": 0.00204,
+     "attack_events": 28,
+     "benign_per_day": 455.9
+    },
+    {
+     "tau": 34.20644911079199,
+     "share_alerted": 0.002451,
+     "attack_events": 30,
+     "benign_per_day": 548.0
+    },
+    {
+     "tau": 30.98456709040169,
+     "share_alerted": 0.002944,
+     "attack_events": 31,
+     "benign_per_day": 658.6
+    },
+    {
+     "tau": 29.0785457187141,
+     "share_alerted": 0.003537,
+     "attack_events": 40,
+     "benign_per_day": 791.0
+    },
+    {
+     "tau": 27.02448844909668,
+     "share_alerted": 0.004248,
+     "attack_events": 40,
+     "benign_per_day": 950.6
+    },
+    {
+     "tau": 25.748493194580078,
+     "share_alerted": 0.005103,
+     "attack_events": 41,
+     "benign_per_day": 1142.6
+    },
+    {
+     "tau": 24.67386817932129,
+     "share_alerted": 0.00613,
+     "attack_events": 45,
+     "benign_per_day": 1372.7
+    },
+    {
+     "tau": 23.5589724542425,
+     "share_alerted": 0.007365,
+     "attack_events": 180,
+     "benign_per_day": 1640.3
+    },
+    {
+     "tau": 22.593369124897762,
+     "share_alerted": 0.008847,
+     "attack_events": 183,
+     "benign_per_day": 1972.8
+    },
+    {
+     "tau": 22.1071960805493,
+     "share_alerted": 0.010628,
+     "attack_events": 183,
+     "benign_per_day": 2372.5
+    },
+    {
+     "tau": 21.41862922524051,
+     "share_alerted": 0.012767,
+     "attack_events": 186,
+     "benign_per_day": 2852.4
+    },
+    {
+     "tau": 20.787260055541992,
+     "share_alerted": 0.015337,
+     "attack_events": 189,
+     "benign_per_day": 3429.0
+    },
+    {
+     "tau": 20.240063072255094,
+     "share_alerted": 0.018424,
+     "attack_events": 192,
+     "benign_per_day": 4121.7
+    },
+    {
+     "tau": 19.634777300756515,
+     "share_alerted": 0.022132,
+     "attack_events": 194,
+     "benign_per_day": 4953.9
+    },
+    {
+     "tau": 19.187826397555114,
+     "share_alerted": 0.026587,
+     "attack_events": 197,
+     "benign_per_day": 5953.6
+    },
+    {
+     "tau": 18.564231821158202,
+     "share_alerted": 0.031939,
+     "attack_events": 197,
+     "benign_per_day": 7154.8
+    },
+    {
+     "tau": 18.209674835205078,
+     "share_alerted": 0.038365,
+     "attack_events": 245,
+     "benign_per_day": 8593.7
+    },
+    {
+     "tau": 17.616130828857422,
+     "share_alerted": 0.046089,
+     "attack_events": 247,
+     "benign_per_day": 10327.4
+    },
+    {
+     "tau": 17.006519317626953,
+     "share_alerted": 0.055361,
+     "attack_events": 247,
+     "benign_per_day": 12408.4
+    },
+    {
+     "tau": 16.265124251587775,
+     "share_alerted": 0.066511,
+     "attack_events": 248,
+     "benign_per_day": 14911.1
+    },
+    {
+     "tau": 15.400108495664986,
+     "share_alerted": 0.079898,
+     "attack_events": 257,
+     "benign_per_day": 17915.3
+    },
+    {
+     "tau": 14.151224136352539,
+     "share_alerted": 0.095914,
+     "attack_events": 284,
+     "benign_per_day": 21508.3
+    },
+    {
+     "tau": 7.910492420196533,
+     "share_alerted": 0.115288,
+     "attack_events": 401,
+     "benign_per_day": 25848.6
+    },
+    {
+     "tau": 5.372350244805421,
+     "share_alerted": 0.138505,
+     "attack_events": 401,
+     "benign_per_day": 31059.7
+    },
+    {
+     "tau": 3.8607206897796376,
+     "share_alerted": 0.166383,
+     "attack_events": 405,
+     "benign_per_day": 37316.9
+    },
+    {
+     "tau": 2.8279666900634766,
+     "share_alerted": 0.19987,
+     "attack_events": 405,
+     "benign_per_day": 44833.2
+    },
+    {
+     "tau": 2.3928143978118896,
+     "share_alerted": 0.2401,
+     "attack_events": 408,
+     "benign_per_day": 53862.9
+    },
+    {
+     "tau": 1.9374051094055176,
+     "share_alerted": 0.288416,
+     "attack_events": 408,
+     "benign_per_day": 64707.8
+    },
+    {
+     "tau": 1.5031321048736572,
+     "share_alerted": 0.346483,
+     "attack_events": 416,
+     "benign_per_day": 77740.9
+    },
+    {
+     "tau": 1.1307384967803955,
+     "share_alerted": 0.416199,
+     "attack_events": 432,
+     "benign_per_day": 93387.9
+    },
+    {
+     "tau": 0.957956075668335,
+     "share_alerted": 0.499988,
+     "attack_events": 432,
+     "benign_per_day": 112194.9
+    }
+   ]
+  },
+  "b100_first": {
+   "beta": 100.0,
+   "init": "first",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 2103482,
+   "tau_train_p999": 72.83143798828121,
+   "points": [
+    {
+     "tau": 125.52934265136719,
+     "share_alerted": 9e-06,
+     "attack_events": 0,
+     "benign_per_day": 2.1
+    },
+    {
+     "tau": 125.52930836986185,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.7
+    },
+    {
+     "tau": 125.52925717362389,
+     "share_alerted": 1.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.3
+    },
+    {
+     "tau": 124.92137145996094,
+     "share_alerted": 1.7e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.7
+    },
+    {
+     "tau": 124.92137145996094,
+     "share_alerted": 1.7e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.7
+    },
+    {
+     "tau": 124.92074584960938,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.6
+    },
+    {
+     "tau": 124.92057037353516,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.894775390625,
+     "share_alerted": 3.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 7.6
+    },
+    {
+     "tau": 123.89356994628906,
+     "share_alerted": 4.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 9.4
+    },
+    {
+     "tau": 123.84577178955078,
+     "share_alerted": 5.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 11.4
+    },
+    {
+     "tau": 123.75823211669922,
+     "share_alerted": 6e-05,
+     "attack_events": 0,
+     "benign_per_day": 13.6
+    },
+    {
+     "tau": 123.68336486816406,
+     "share_alerted": 7.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 16.9
+    },
+    {
+     "tau": 122.87575179676963,
+     "share_alerted": 9e-05,
+     "attack_events": 0,
+     "benign_per_day": 20.3
+    },
+    {
+     "tau": 122.86631774902344,
+     "share_alerted": 0.000105,
+     "attack_events": 0,
+     "benign_per_day": 23.5
+    },
+    {
+     "tau": 122.84783172607422,
+     "share_alerted": 0.000127,
+     "attack_events": 0,
+     "benign_per_day": 28.4
+    },
+    {
+     "tau": 122.82984924316406,
+     "share_alerted": 0.000156,
+     "attack_events": 0,
+     "benign_per_day": 35.0
+    },
+    {
+     "tau": 122.79269409179688,
+     "share_alerted": 0.000185,
+     "attack_events": 0,
+     "benign_per_day": 41.6
+    },
+    {
+     "tau": 122.66903686523438,
+     "share_alerted": 0.000226,
+     "attack_events": 0,
+     "benign_per_day": 50.6
+    },
+    {
+     "tau": 122.39498901367188,
+     "share_alerted": 0.00027,
+     "attack_events": 0,
+     "benign_per_day": 60.5
+    },
+    {
+     "tau": 122.1720962524414,
+     "share_alerted": 0.00032,
+     "attack_events": 0,
+     "benign_per_day": 71.7
+    },
+    {
+     "tau": 122.06067657470703,
+     "share_alerted": 0.000391,
+     "attack_events": 0,
+     "benign_per_day": 87.8
+    },
+    {
+     "tau": 121.74777221679688,
+     "share_alerted": 0.000466,
+     "attack_events": 0,
+     "benign_per_day": 104.6
+    },
+    {
+     "tau": 121.40557861328125,
+     "share_alerted": 0.000564,
+     "attack_events": 0,
+     "benign_per_day": 126.6
+    },
+    {
+     "tau": 120.85556143196926,
+     "share_alerted": 0.000679,
+     "attack_events": 0,
+     "benign_per_day": 152.4
+    },
+    {
+     "tau": 120.11121929600658,
+     "share_alerted": 0.000816,
+     "attack_events": 0,
+     "benign_per_day": 183.1
+    },
+    {
+     "tau": 119.44430541992188,
+     "share_alerted": 0.000979,
+     "attack_events": 1,
+     "benign_per_day": 219.7
+    },
+    {
+     "tau": 119.27400207519531,
+     "share_alerted": 0.000995,
+     "attack_events": 1,
+     "benign_per_day": 223.3
+    },
+    {
+     "tau": 118.89396667480469,
+     "share_alerted": 0.001147,
+     "attack_events": 1,
+     "benign_per_day": 257.4
+    },
+    {
+     "tau": 118.45236206054688,
+     "share_alerted": 0.001413,
+     "attack_events": 1,
+     "benign_per_day": 317.0
+    },
+    {
+     "tau": 118.04991149902344,
+     "share_alerted": 0.001697,
+     "attack_events": 2,
+     "benign_per_day": 380.9
+    },
+    {
+     "tau": 117.80597686767578,
+     "share_alerted": 0.002038,
+     "attack_events": 2,
+     "benign_per_day": 457.3
+    },
+    {
+     "tau": 117.53669738769531,
+     "share_alerted": 0.00245,
+     "attack_events": 2,
+     "benign_per_day": 549.9
+    },
+    {
+     "tau": 117.27450561523438,
+     "share_alerted": 0.002942,
+     "attack_events": 3,
+     "benign_per_day": 660.2
+    },
+    {
+     "tau": 117.124755859375,
+     "share_alerted": 0.003536,
+     "attack_events": 3,
+     "benign_per_day": 793.5
+    },
+    {
+     "tau": 117.03484344482422,
+     "share_alerted": 0.004225,
+     "attack_events": 3,
+     "benign_per_day": 948.1
+    },
+    {
+     "tau": 116.93812561035156,
+     "share_alerted": 0.005102,
+     "attack_events": 3,
+     "benign_per_day": 1145.1
+    },
+    {
+     "tau": 116.59518432617188,
+     "share_alerted": 0.006127,
+     "attack_events": 3,
+     "benign_per_day": 1375.1
+    },
+    {
+     "tau": 116.19827270507812,
+     "share_alerted": 0.007347,
+     "attack_events": 4,
+     "benign_per_day": 1648.9
+    },
+    {
+     "tau": 116.00601959228516,
+     "share_alerted": 0.008841,
+     "attack_events": 7,
+     "benign_per_day": 1983.9
+    },
+    {
+     "tau": 115.79451751708984,
+     "share_alerted": 0.010627,
+     "attack_events": 41,
+     "benign_per_day": 2382.4
+    },
+    {
+     "tau": 115.6943130493164,
+     "share_alerted": 0.012767,
+     "attack_events": 41,
+     "benign_per_day": 2862.7
+    },
+    {
+     "tau": 115.4022216796875,
+     "share_alerted": 0.015323,
+     "attack_events": 42,
+     "benign_per_day": 3436.4
+    },
+    {
+     "tau": 115.01449584960938,
+     "share_alerted": 0.018416,
+     "attack_events": 49,
+     "benign_per_day": 4130.1
+    },
+    {
+     "tau": 114.66773223876953,
+     "share_alerted": 0.022127,
+     "attack_events": 50,
+     "benign_per_day": 4963.0
+    },
+    {
+     "tau": 114.04996490478516,
+     "share_alerted": 0.026582,
+     "attack_events": 57,
+     "benign_per_day": 5962.4
+    },
+    {
+     "tau": 113.00447845458984,
+     "share_alerted": 0.031931,
+     "attack_events": 58,
+     "benign_per_day": 7163.0
+    },
+    {
+     "tau": 110.12808227539062,
+     "share_alerted": 0.038319,
+     "attack_events": 58,
+     "benign_per_day": 8596.7
+    },
+    {
+     "tau": 109.22171101349038,
+     "share_alerted": 0.04609,
+     "attack_events": 100,
+     "benign_per_day": 10338.0
+    },
+    {
+     "tau": 108.87628936767578,
+     "share_alerted": 0.055365,
+     "attack_events": 100,
+     "benign_per_day": 12420.0
+    },
+    {
+     "tau": 108.61386088210477,
+     "share_alerted": 0.066511,
+     "attack_events": 100,
+     "benign_per_day": 14921.6
+    },
+    {
+     "tau": 108.46067810058594,
+     "share_alerted": 0.079896,
+     "attack_events": 105,
+     "benign_per_day": 17925.6
+    },
+    {
+     "tau": 108.14945983886719,
+     "share_alerted": 0.095939,
+     "attack_events": 105,
+     "benign_per_day": 21526.6
+    },
+    {
+     "tau": 107.66627502441406,
+     "share_alerted": 0.115296,
+     "attack_events": 105,
+     "benign_per_day": 25871.5
+    },
+    {
+     "tau": 107.01177978515625,
+     "share_alerted": 0.138504,
+     "attack_events": 105,
+     "benign_per_day": 31080.6
+    },
+    {
+     "tau": 106.00948333740234,
+     "share_alerted": 0.166382,
+     "attack_events": 107,
+     "benign_per_day": 37337.9
+    },
+    {
+     "tau": 105.15599822998047,
+     "share_alerted": 0.199868,
+     "attack_events": 107,
+     "benign_per_day": 44854.1
+    },
+    {
+     "tau": 104.21565262804376,
+     "share_alerted": 0.240102,
+     "attack_events": 161,
+     "benign_per_day": 53881.1
+    },
+    {
+     "tau": 103.44349670410156,
+     "share_alerted": 0.288427,
+     "attack_events": 185,
+     "benign_per_day": 64726.3
+    },
+    {
+     "tau": 30.884034064690393,
+     "share_alerted": 0.346484,
+     "attack_events": 246,
+     "benign_per_day": 77753.1
+    },
+    {
+     "tau": 6.288241604286961,
+     "share_alerted": 0.416223,
+     "attack_events": 290,
+     "benign_per_day": 93403.4
+    },
+    {
+     "tau": 0.8925058841705322,
+     "share_alerted": 0.5,
+     "attack_events": 348,
+     "benign_per_day": 112203.5
+    }
+   ]
+  },
+  "b100_sample": {
+   "beta": 100.0,
+   "init": "sample",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 334195,
+   "tau_train_p999": 80.35795855712864,
+   "points": [
+    {
+     "tau": 125.43709630890098,
+     "share_alerted": 1e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 125.29425438759527,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.7
+    },
+    {
+     "tau": 125.28352123223767,
+     "share_alerted": 1.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.3
+    },
+    {
+     "tau": 125.26933267506482,
+     "share_alerted": 1.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 125.22377620841007,
+     "share_alerted": 2.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.7
+    },
+    {
+     "tau": 125.13402820912242,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.96893310546875,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.68336486816406,
+     "share_alerted": 0.000424,
+     "attack_events": 0,
+     "benign_per_day": 95.1
+    },
+    {
+     "tau": 124.62837219238281,
+     "share_alerted": 0.003514,
+     "attack_events": 0,
+     "benign_per_day": 788.7
+    },
+    {
+     "tau": 124.62837219238281,
+     "share_alerted": 0.003514,
+     "attack_events": 0,
+     "benign_per_day": 788.7
+    },
+    {
+     "tau": 124.50166320800781,
+     "share_alerted": 0.004958,
+     "attack_events": 0,
+     "benign_per_day": 1112.9
+    },
+    {
+     "tau": 124.49327850341797,
+     "share_alerted": 0.005753,
+     "attack_events": 0,
+     "benign_per_day": 1291.3
+    },
+    {
+     "tau": 124.08181762695312,
+     "share_alerted": 0.007205,
+     "attack_events": 0,
+     "benign_per_day": 1617.3
+    },
+    {
+     "tau": 124.05963134765625,
+     "share_alerted": 0.008334,
+     "attack_events": 0,
+     "benign_per_day": 1870.6
+    },
+    {
+     "tau": 124.05963134765625,
+     "share_alerted": 0.008334,
+     "attack_events": 0,
+     "benign_per_day": 1870.6
+    },
+    {
+     "tau": 124.05477905273438,
+     "share_alerted": 0.011465,
+     "attack_events": 0,
+     "benign_per_day": 2573.4
+    },
+    {
+     "tau": 123.90948486328125,
+     "share_alerted": 0.014862,
+     "attack_events": 0,
+     "benign_per_day": 3335.9
+    },
+    {
+     "tau": 123.81161499023438,
+     "share_alerted": 0.0161,
+     "attack_events": 0,
+     "benign_per_day": 3613.8
+    },
+    {
+     "tau": 123.81161499023438,
+     "share_alerted": 0.0161,
+     "attack_events": 0,
+     "benign_per_day": 3613.8
+    },
+    {
+     "tau": 123.73820495605469,
+     "share_alerted": 0.026565,
+     "attack_events": 0,
+     "benign_per_day": 5962.6
+    },
+    {
+     "tau": 123.35012817382812,
+     "share_alerted": 0.031931,
+     "attack_events": 0,
+     "benign_per_day": 7167.1
+    },
+    {
+     "tau": 123.11126708984375,
+     "share_alerted": 0.038348,
+     "attack_events": 0,
+     "benign_per_day": 8607.4
+    },
+    {
+     "tau": 122.87342071533203,
+     "share_alerted": 0.042924,
+     "attack_events": 0,
+     "benign_per_day": 9634.6
+    },
+    {
+     "tau": 122.87342071533203,
+     "share_alerted": 0.042924,
+     "attack_events": 0,
+     "benign_per_day": 9634.6
+    },
+    {
+     "tau": 122.41094970703125,
+     "share_alerted": 0.064959,
+     "attack_events": 0,
+     "benign_per_day": 14580.6
+    },
+    {
+     "tau": 122.24162292480469,
+     "share_alerted": 0.077963,
+     "attack_events": 0,
+     "benign_per_day": 17499.4
+    },
+    {
+     "tau": 122.1297607421875,
+     "share_alerted": 0.093174,
+     "attack_events": 0,
+     "benign_per_day": 20913.5
+    },
+    {
+     "tau": 121.60115051269531,
+     "share_alerted": 0.115079,
+     "attack_events": 55,
+     "benign_per_day": 25826.4
+    },
+    {
+     "tau": 121.3717041015625,
+     "share_alerted": 0.137771,
+     "attack_events": 63,
+     "benign_per_day": 30919.2
+    },
+    {
+     "tau": 120.98387145996094,
+     "share_alerted": 0.16537,
+     "attack_events": 63,
+     "benign_per_day": 37113.9
+    },
+    {
+     "tau": 120.57243347167969,
+     "share_alerted": 0.198553,
+     "attack_events": 94,
+     "benign_per_day": 44559.9
+    },
+    {
+     "tau": 119.88656616210938,
+     "share_alerted": 0.23883,
+     "attack_events": 138,
+     "benign_per_day": 53597.1
+    },
+    {
+     "tau": 119.49871063232422,
+     "share_alerted": 0.286247,
+     "attack_events": 139,
+     "benign_per_day": 64240.2
+    },
+    {
+     "tau": 118.96493530273438,
+     "share_alerted": 0.340459,
+     "attack_events": 147,
+     "benign_per_day": 76407.9
+    },
+    {
+     "tau": 118.58984375,
+     "share_alerted": 0.406778,
+     "attack_events": 152,
+     "benign_per_day": 91293.2
+    },
+    {
+     "tau": 117.71611022949219,
+     "share_alerted": 0.499175,
+     "attack_events": 154,
+     "benign_per_day": 112032.1
+    }
+   ]
+  },
+  "b10_first": {
+   "beta": 10.0,
+   "init": "first",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 17772,
+   "tau_train_p999": 114.29718017578125,
+   "points": [
+    {
+     "tau": 126.80879211425781,
+     "share_alerted": 9e-06,
+     "attack_events": 0,
+     "benign_per_day": 2.0
+    },
+    {
+     "tau": 126.80879211425781,
+     "share_alerted": 9e-06,
+     "attack_events": 0,
+     "benign_per_day": 2.0
+    },
+    {
+     "tau": 126.76738739013672,
+     "share_alerted": 1.3e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.9
+    },
+    {
+     "tau": 126.76465606689453,
+     "share_alerted": 1.7e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 126.76371765136719,
+     "share_alerted": 2e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.5
+    },
+    {
+     "tau": 126.75900268554688,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.6
+    },
+    {
+     "tau": 126.74903869628906,
+     "share_alerted": 2.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.2
+    },
+    {
+     "tau": 126.74695587158203,
+     "share_alerted": 3.3e-05,
+     "attack_events": 0,
+     "benign_per_day": 7.5
+    },
+    {
+     "tau": 126.72596740722656,
+     "share_alerted": 4.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 9.4
+    },
+    {
+     "tau": 126.66671752929688,
+     "share_alerted": 4.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 10.7
+    },
+    {
+     "tau": 126.65626525878906,
+     "share_alerted": 5.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 13.1
+    },
+    {
+     "tau": 126.5074691772461,
+     "share_alerted": 7.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 16.9
+    },
+    {
+     "tau": 126.43930053710938,
+     "share_alerted": 9e-05,
+     "attack_events": 0,
+     "benign_per_day": 20.1
+    },
+    {
+     "tau": 126.40811157226562,
+     "share_alerted": 0.000108,
+     "attack_events": 0,
+     "benign_per_day": 24.2
+    },
+    {
+     "tau": 126.3759765625,
+     "share_alerted": 0.00013,
+     "attack_events": 0,
+     "benign_per_day": 29.2
+    },
+    {
+     "tau": 126.3041232409945,
+     "share_alerted": 0.000157,
+     "attack_events": 0,
+     "benign_per_day": 35.1
+    },
+    {
+     "tau": 126.2513427734375,
+     "share_alerted": 0.000186,
+     "attack_events": 0,
+     "benign_per_day": 41.8
+    },
+    {
+     "tau": 126.2118148803711,
+     "share_alerted": 0.000226,
+     "attack_events": 0,
+     "benign_per_day": 50.6
+    },
+    {
+     "tau": 126.12165832519531,
+     "share_alerted": 0.00027,
+     "attack_events": 0,
+     "benign_per_day": 60.6
+    },
+    {
+     "tau": 125.95089721679688,
+     "share_alerted": 0.000324,
+     "attack_events": 0,
+     "benign_per_day": 72.8
+    },
+    {
+     "tau": 125.8508955184509,
+     "share_alerted": 0.000392,
+     "attack_events": 0,
+     "benign_per_day": 87.9
+    },
+    {
+     "tau": 125.78697204589844,
+     "share_alerted": 0.000469,
+     "attack_events": 0,
+     "benign_per_day": 105.4
+    },
+    {
+     "tau": 125.65038299560547,
+     "share_alerted": 0.000565,
+     "attack_events": 0,
+     "benign_per_day": 126.8
+    },
+    {
+     "tau": 125.56407165527344,
+     "share_alerted": 0.000679,
+     "attack_events": 0,
+     "benign_per_day": 152.4
+    },
+    {
+     "tau": 125.43038177490234,
+     "share_alerted": 0.000814,
+     "attack_events": 0,
+     "benign_per_day": 182.7
+    },
+    {
+     "tau": 125.28287506103516,
+     "share_alerted": 0.000978,
+     "attack_events": 0,
+     "benign_per_day": 219.4
+    },
+    {
+     "tau": 125.27183532714844,
+     "share_alerted": 0.000998,
+     "attack_events": 0,
+     "benign_per_day": 224.0
+    },
+    {
+     "tau": 125.10499572753906,
+     "share_alerted": 0.001176,
+     "attack_events": 0,
+     "benign_per_day": 263.9
+    },
+    {
+     "tau": 124.60166931152344,
+     "share_alerted": 0.001412,
+     "attack_events": 0,
+     "benign_per_day": 316.9
+    },
+    {
+     "tau": 123.98738861083984,
+     "share_alerted": 0.001696,
+     "attack_events": 0,
+     "benign_per_day": 380.8
+    },
+    {
+     "tau": 123.66868591308594,
+     "share_alerted": 0.002039,
+     "attack_events": 0,
+     "benign_per_day": 457.7
+    },
+    {
+     "tau": 123.30583224461827,
+     "share_alerted": 0.002451,
+     "attack_events": 0,
+     "benign_per_day": 550.1
+    },
+    {
+     "tau": 122.61415272438845,
+     "share_alerted": 0.002944,
+     "attack_events": 0,
+     "benign_per_day": 660.9
+    },
+    {
+     "tau": 121.6241455078125,
+     "share_alerted": 0.003532,
+     "attack_events": 0,
+     "benign_per_day": 792.8
+    },
+    {
+     "tau": 121.25896609730175,
+     "share_alerted": 0.004249,
+     "attack_events": 0,
+     "benign_per_day": 953.6
+    },
+    {
+     "tau": 121.0091552734375,
+     "share_alerted": 0.005103,
+     "attack_events": 0,
+     "benign_per_day": 1145.5
+    },
+    {
+     "tau": 120.5543212890625,
+     "share_alerted": 0.00613,
+     "attack_events": 0,
+     "benign_per_day": 1375.9
+    },
+    {
+     "tau": 120.23863220214844,
+     "share_alerted": 0.007365,
+     "attack_events": 1,
+     "benign_per_day": 1653.0
+    },
+    {
+     "tau": 120.01227569580078,
+     "share_alerted": 0.008838,
+     "attack_events": 1,
+     "benign_per_day": 1983.7
+    },
+    {
+     "tau": 119.77967071533203,
+     "share_alerted": 0.010627,
+     "attack_events": 1,
+     "benign_per_day": 2385.1
+    },
+    {
+     "tau": 119.35889049407517,
+     "share_alerted": 0.012767,
+     "attack_events": 1,
+     "benign_per_day": 2865.6
+    },
+    {
+     "tau": 119.04598999023438,
+     "share_alerted": 0.015335,
+     "attack_events": 1,
+     "benign_per_day": 3442.1
+    },
+    {
+     "tau": 118.84056091308594,
+     "share_alerted": 0.018399,
+     "attack_events": 1,
+     "benign_per_day": 4129.7
+    },
+    {
+     "tau": 118.54974365234375,
+     "share_alerted": 0.022131,
+     "attack_events": 1,
+     "benign_per_day": 4967.4
+    },
+    {
+     "tau": 118.30162334778183,
+     "share_alerted": 0.026587,
+     "attack_events": 1,
+     "benign_per_day": 5967.6
+    },
+    {
+     "tau": 118.10005950927734,
+     "share_alerted": 0.031932,
+     "attack_events": 1,
+     "benign_per_day": 7167.3
+    },
+    {
+     "tau": 117.88870316584648,
+     "share_alerted": 0.038367,
+     "attack_events": 1,
+     "benign_per_day": 8611.7
+    },
+    {
+     "tau": 117.65916442871094,
+     "share_alerted": 0.046076,
+     "attack_events": 1,
+     "benign_per_day": 10341.9
+    },
+    {
+     "tau": 117.37198638916016,
+     "share_alerted": 0.055366,
+     "attack_events": 1,
+     "benign_per_day": 12427.1
+    },
+    {
+     "tau": 116.96080017089844,
+     "share_alerted": 0.066508,
+     "attack_events": 1,
+     "benign_per_day": 14928.1
+    },
+    {
+     "tau": 116.37823486328125,
+     "share_alerted": 0.079876,
+     "attack_events": 1,
+     "benign_per_day": 17928.7
+    },
+    {
+     "tau": 115.83360290527344,
+     "share_alerted": 0.095971,
+     "attack_events": 6,
+     "benign_per_day": 21540.9
+    },
+    {
+     "tau": 115.26167641405246,
+     "share_alerted": 0.115298,
+     "attack_events": 11,
+     "benign_per_day": 25878.6
+    },
+    {
+     "tau": 114.69287109375,
+     "share_alerted": 0.138496,
+     "attack_events": 11,
+     "benign_per_day": 31085.5
+    },
+    {
+     "tau": 113.99129809197427,
+     "share_alerted": 0.166383,
+     "attack_events": 11,
+     "benign_per_day": 37345.0
+    },
+    {
+     "tau": 113.29171752929688,
+     "share_alerted": 0.19987,
+     "attack_events": 16,
+     "benign_per_day": 44860.9
+    },
+    {
+     "tau": 112.54258728027344,
+     "share_alerted": 0.240091,
+     "attack_events": 16,
+     "benign_per_day": 53889.0
+    },
+    {
+     "tau": 111.97396251998937,
+     "share_alerted": 0.288429,
+     "attack_events": 16,
+     "benign_per_day": 64738.8
+    },
+    {
+     "tau": 111.3833124828226,
+     "share_alerted": 0.346484,
+     "attack_events": 21,
+     "benign_per_day": 77769.1
+    },
+    {
+     "tau": 110.78102111816406,
+     "share_alerted": 0.416222,
+     "attack_events": 43,
+     "benign_per_day": 93420.8
+    },
+    {
+     "tau": 109.98101806640625,
+     "share_alerted": 0.499976,
+     "attack_events": 63,
+     "benign_per_day": 112218.6
+    }
+   ]
+  },
+  "b10_sample": {
+   "beta": 10.0,
+   "init": "sample",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 38381,
+   "tau_train_p999": 101.13393865966796,
+   "points": [
+    {
+     "tau": 126.26817957535455,
+     "share_alerted": 1e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 126.17061600757238,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.7
+    },
+    {
+     "tau": 126.09931182861328,
+     "share_alerted": 1.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.1
+    },
+    {
+     "tau": 126.0689926147461,
+     "share_alerted": 1.7e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 125.945046835835,
+     "share_alerted": 2.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.7
+    },
+    {
+     "tau": 125.85930354629699,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.6
+    },
+    {
+     "tau": 125.72832489013672,
+     "share_alerted": 3e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.7
+    },
+    {
+     "tau": 125.68467291651793,
+     "share_alerted": 3.6e-05,
+     "attack_events": 0,
+     "benign_per_day": 8.1
+    },
+    {
+     "tau": 125.62229629253271,
+     "share_alerted": 4.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 9.8
+    },
+    {
+     "tau": 125.44330644865826,
+     "share_alerted": 5.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 11.7
+    },
+    {
+     "tau": 125.27829650395282,
+     "share_alerted": 6.3e-05,
+     "attack_events": 0,
+     "benign_per_day": 14.1
+    },
+    {
+     "tau": 125.1149816212091,
+     "share_alerted": 7.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 16.9
+    },
+    {
+     "tau": 124.99014381708974,
+     "share_alerted": 9e-05,
+     "attack_events": 0,
+     "benign_per_day": 20.3
+    },
+    {
+     "tau": 124.85437179879054,
+     "share_alerted": 0.000109,
+     "attack_events": 0,
+     "benign_per_day": 24.4
+    },
+    {
+     "tau": 124.72335064987323,
+     "share_alerted": 0.00013,
+     "attack_events": 0,
+     "benign_per_day": 29.3
+    },
+    {
+     "tau": 124.54717060218697,
+     "share_alerted": 0.000157,
+     "attack_events": 0,
+     "benign_per_day": 35.1
+    },
+    {
+     "tau": 124.33351420066114,
+     "share_alerted": 0.000188,
+     "attack_events": 0,
+     "benign_per_day": 42.2
+    },
+    {
+     "tau": 124.09616120796534,
+     "share_alerted": 0.000226,
+     "attack_events": 0,
+     "benign_per_day": 50.7
+    },
+    {
+     "tau": 123.82007562097705,
+     "share_alerted": 0.000271,
+     "attack_events": 0,
+     "benign_per_day": 60.9
+    },
+    {
+     "tau": 123.58280527774548,
+     "share_alerted": 0.000326,
+     "attack_events": 0,
+     "benign_per_day": 73.2
+    },
+    {
+     "tau": 123.29093905710198,
+     "share_alerted": 0.000392,
+     "attack_events": 0,
+     "benign_per_day": 87.9
+    },
+    {
+     "tau": 122.96458065935765,
+     "share_alerted": 0.000471,
+     "attack_events": 0,
+     "benign_per_day": 105.6
+    },
+    {
+     "tau": 122.7956746672728,
+     "share_alerted": 0.000565,
+     "attack_events": 0,
+     "benign_per_day": 126.9
+    },
+    {
+     "tau": 122.5326390797518,
+     "share_alerted": 0.000679,
+     "attack_events": 0,
+     "benign_per_day": 152.4
+    },
+    {
+     "tau": 122.31999998626648,
+     "share_alerted": 0.000816,
+     "attack_events": 0,
+     "benign_per_day": 183.1
+    },
+    {
+     "tau": 122.14485591855325,
+     "share_alerted": 0.00098,
+     "attack_events": 0,
+     "benign_per_day": 219.9
+    },
+    {
+     "tau": 122.12027017211929,
+     "share_alerted": 0.001,
+     "attack_events": 0,
+     "benign_per_day": 224.5
+    },
+    {
+     "tau": 121.90892008079086,
+     "share_alerted": 0.001177,
+     "attack_events": 0,
+     "benign_per_day": 264.2
+    },
+    {
+     "tau": 121.21927317591347,
+     "share_alerted": 0.001414,
+     "attack_events": 3,
+     "benign_per_day": 317.1
+    },
+    {
+     "tau": 120.5723539619529,
+     "share_alerted": 0.001698,
+     "attack_events": 3,
+     "benign_per_day": 381.0
+    },
+    {
+     "tau": 119.66871600235743,
+     "share_alerted": 0.00204,
+     "attack_events": 3,
+     "benign_per_day": 457.7
+    },
+    {
+     "tau": 118.25826309581095,
+     "share_alerted": 0.002451,
+     "attack_events": 3,
+     "benign_per_day": 549.9
+    },
+    {
+     "tau": 117.25883483886719,
+     "share_alerted": 0.002944,
+     "attack_events": 3,
+     "benign_per_day": 660.5
+    },
+    {
+     "tau": 116.12006837566345,
+     "share_alerted": 0.003537,
+     "attack_events": 3,
+     "benign_per_day": 793.6
+    },
+    {
+     "tau": 115.24921781626944,
+     "share_alerted": 0.004249,
+     "attack_events": 3,
+     "benign_per_day": 953.4
+    },
+    {
+     "tau": 114.4730835037915,
+     "share_alerted": 0.005104,
+     "attack_events": 3,
+     "benign_per_day": 1145.4
+    },
+    {
+     "tau": 113.24409247536079,
+     "share_alerted": 0.006131,
+     "attack_events": 3,
+     "benign_per_day": 1375.9
+    },
+    {
+     "tau": 112.32506276037114,
+     "share_alerted": 0.007365,
+     "attack_events": 3,
+     "benign_per_day": 1652.9
+    },
+    {
+     "tau": 111.48908233642578,
+     "share_alerted": 0.008825,
+     "attack_events": 3,
+     "benign_per_day": 1980.6
+    },
+    {
+     "tau": 110.85220336914062,
+     "share_alerted": 0.010571,
+     "attack_events": 3,
+     "benign_per_day": 2372.4
+    },
+    {
+     "tau": 110.28495714205093,
+     "share_alerted": 0.012767,
+     "attack_events": 3,
+     "benign_per_day": 2865.5
+    },
+    {
+     "tau": 109.81877136230469,
+     "share_alerted": 0.015282,
+     "attack_events": 8,
+     "benign_per_day": 3429.6
+    },
+    {
+     "tau": 109.02905051726809,
+     "share_alerted": 0.018424,
+     "attack_events": 8,
+     "benign_per_day": 4134.9
+    },
+    {
+     "tau": 108.3782756362714,
+     "share_alerted": 0.022132,
+     "attack_events": 49,
+     "benign_per_day": 4964.3
+    },
+    {
+     "tau": 107.25906808803813,
+     "share_alerted": 0.026587,
+     "attack_events": 50,
+     "benign_per_day": 5964.1
+    },
+    {
+     "tau": 106.16403679454947,
+     "share_alerted": 0.031939,
+     "attack_events": 51,
+     "benign_per_day": 7165.2
+    },
+    {
+     "tau": 105.19038391113281,
+     "share_alerted": 0.038365,
+     "attack_events": 52,
+     "benign_per_day": 8607.6
+    },
+    {
+     "tau": 104.36670123978064,
+     "share_alerted": 0.04609,
+     "attack_events": 57,
+     "benign_per_day": 10341.1
+    },
+    {
+     "tau": 103.52258279259655,
+     "share_alerted": 0.055367,
+     "attack_events": 61,
+     "benign_per_day": 12423.1
+    },
+    {
+     "tau": 102.53645324707031,
+     "share_alerted": 0.06651,
+     "attack_events": 67,
+     "benign_per_day": 14923.9
+    },
+    {
+     "tau": 101.51507568359375,
+     "share_alerted": 0.079898,
+     "attack_events": 69,
+     "benign_per_day": 17928.6
+    },
+    {
+     "tau": 100.64103698730469,
+     "share_alerted": 0.095978,
+     "attack_events": 79,
+     "benign_per_day": 21537.4
+    },
+    {
+     "tau": 99.43871112832528,
+     "share_alerted": 0.115298,
+     "attack_events": 94,
+     "benign_per_day": 25872.7
+    },
+    {
+     "tau": 98.19022369384766,
+     "share_alerted": 0.138504,
+     "attack_events": 95,
+     "benign_per_day": 31081.4
+    },
+    {
+     "tau": 96.91383361816406,
+     "share_alerted": 0.166336,
+     "attack_events": 129,
+     "benign_per_day": 37326.0
+    },
+    {
+     "tau": 95.56649780273438,
+     "share_alerted": 0.199862,
+     "attack_events": 137,
+     "benign_per_day": 44850.5
+    },
+    {
+     "tau": 93.8749771118164,
+     "share_alerted": 0.240087,
+     "attack_events": 137,
+     "benign_per_day": 53879.4
+    },
+    {
+     "tau": 91.93963623046875,
+     "share_alerted": 0.288403,
+     "attack_events": 144,
+     "benign_per_day": 64723.8
+    },
+    {
+     "tau": 90.22834777832031,
+     "share_alerted": 0.346483,
+     "attack_events": 144,
+     "benign_per_day": 77760.3
+    },
+    {
+     "tau": 88.47947692871094,
+     "share_alerted": 0.416176,
+     "attack_events": 144,
+     "benign_per_day": 93403.1
+    },
+    {
+     "tau": 86.48638916015625,
+     "share_alerted": 0.499999,
+     "attack_events": 271,
+     "benign_per_day": 112208.9
+    }
+   ]
+  },
+  "b1_first": {
+   "beta": 1.0,
+   "init": "first",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 245,
+   "tau_train_p999": 114.29718017578125,
+   "points": [
+    {
+     "tau": 116.27340860490092,
+     "share_alerted": 1e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 116.05384437726306,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.7
+    },
+    {
+     "tau": 115.96612180898347,
+     "share_alerted": 1.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.3
+    },
+    {
+     "tau": 115.93644626868218,
+     "share_alerted": 1.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 115.89931657353509,
+     "share_alerted": 2.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.7
+    },
+    {
+     "tau": 115.79327392578125,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.5
+    },
+    {
+     "tau": 115.79116821289062,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 115.79116821289062,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.6
+    },
+    {
+     "tau": 115.79059600830078,
+     "share_alerted": 3.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 8.6
+    },
+    {
+     "tau": 115.79059600830078,
+     "share_alerted": 3.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 8.6
+    },
+    {
+     "tau": 115.79059600830078,
+     "share_alerted": 3.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 8.6
+    },
+    {
+     "tau": 115.78547668457031,
+     "share_alerted": 7e-05,
+     "attack_events": 0,
+     "benign_per_day": 15.7
+    },
+    {
+     "tau": 115.78535461425781,
+     "share_alerted": 8.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 18.4
+    },
+    {
+     "tau": 115.7745132446289,
+     "share_alerted": 0.000105,
+     "attack_events": 0,
+     "benign_per_day": 23.6
+    },
+    {
+     "tau": 115.7745132446289,
+     "share_alerted": 0.000105,
+     "attack_events": 0,
+     "benign_per_day": 23.6
+    },
+    {
+     "tau": 115.74999237060547,
+     "share_alerted": 0.000156,
+     "attack_events": 0,
+     "benign_per_day": 35.0
+    },
+    {
+     "tau": 115.7480614368048,
+     "share_alerted": 0.000188,
+     "attack_events": 0,
+     "benign_per_day": 42.2
+    },
+    {
+     "tau": 115.7319107055664,
+     "share_alerted": 0.000222,
+     "attack_events": 0,
+     "benign_per_day": 49.8
+    },
+    {
+     "tau": 115.69857025146484,
+     "share_alerted": 0.000262,
+     "attack_events": 0,
+     "benign_per_day": 58.9
+    },
+    {
+     "tau": 115.68225860595703,
+     "share_alerted": 0.000323,
+     "attack_events": 0,
+     "benign_per_day": 72.5
+    },
+    {
+     "tau": 115.65692138671875,
+     "share_alerted": 0.000382,
+     "attack_events": 0,
+     "benign_per_day": 85.7
+    },
+    {
+     "tau": 115.65074211380009,
+     "share_alerted": 0.000471,
+     "attack_events": 0,
+     "benign_per_day": 105.6
+    },
+    {
+     "tau": 115.59942940419339,
+     "share_alerted": 0.000565,
+     "attack_events": 0,
+     "benign_per_day": 126.9
+    },
+    {
+     "tau": 115.54748251963957,
+     "share_alerted": 0.000679,
+     "attack_events": 0,
+     "benign_per_day": 152.4
+    },
+    {
+     "tau": 115.44889831542969,
+     "share_alerted": 0.000814,
+     "attack_events": 0,
+     "benign_per_day": 182.6
+    },
+    {
+     "tau": 115.26582686515948,
+     "share_alerted": 0.00098,
+     "attack_events": 0,
+     "benign_per_day": 219.9
+    },
+    {
+     "tau": 115.2615966796875,
+     "share_alerted": 0.000986,
+     "attack_events": 0,
+     "benign_per_day": 221.4
+    },
+    {
+     "tau": 115.22386932373047,
+     "share_alerted": 0.001158,
+     "attack_events": 0,
+     "benign_per_day": 259.9
+    },
+    {
+     "tau": 115.20133464897437,
+     "share_alerted": 0.001414,
+     "attack_events": 0,
+     "benign_per_day": 317.4
+    },
+    {
+     "tau": 115.14794921875,
+     "share_alerted": 0.001688,
+     "attack_events": 0,
+     "benign_per_day": 378.9
+    },
+    {
+     "tau": 115.059814453125,
+     "share_alerted": 0.002039,
+     "attack_events": 0,
+     "benign_per_day": 457.7
+    },
+    {
+     "tau": 115.02861785888672,
+     "share_alerted": 0.002449,
+     "attack_events": 0,
+     "benign_per_day": 549.8
+    },
+    {
+     "tau": 114.98617553710938,
+     "share_alerted": 0.002923,
+     "attack_events": 0,
+     "benign_per_day": 656.0
+    },
+    {
+     "tau": 114.94273376464844,
+     "share_alerted": 0.003524,
+     "attack_events": 0,
+     "benign_per_day": 791.0
+    },
+    {
+     "tau": 114.88491821289062,
+     "share_alerted": 0.004242,
+     "attack_events": 0,
+     "benign_per_day": 952.2
+    },
+    {
+     "tau": 114.79788208007812,
+     "share_alerted": 0.005095,
+     "attack_events": 0,
+     "benign_per_day": 1143.7
+    },
+    {
+     "tau": 114.70053100585938,
+     "share_alerted": 0.006131,
+     "attack_events": 0,
+     "benign_per_day": 1376.1
+    },
+    {
+     "tau": 114.60960388183594,
+     "share_alerted": 0.007355,
+     "attack_events": 0,
+     "benign_per_day": 1650.9
+    },
+    {
+     "tau": 114.54911041259766,
+     "share_alerted": 0.008843,
+     "attack_events": 0,
+     "benign_per_day": 1984.9
+    },
+    {
+     "tau": 114.48954010009766,
+     "share_alerted": 0.010621,
+     "attack_events": 0,
+     "benign_per_day": 2384.0
+    },
+    {
+     "tau": 114.42350006103516,
+     "share_alerted": 0.012751,
+     "attack_events": 0,
+     "benign_per_day": 2862.1
+    },
+    {
+     "tau": 114.37161254882812,
+     "share_alerted": 0.015334,
+     "attack_events": 0,
+     "benign_per_day": 3441.9
+    },
+    {
+     "tau": 114.31298828125,
+     "share_alerted": 0.018423,
+     "attack_events": 0,
+     "benign_per_day": 4135.1
+    },
+    {
+     "tau": 114.2347296587839,
+     "share_alerted": 0.022132,
+     "attack_events": 0,
+     "benign_per_day": 4967.8
+    },
+    {
+     "tau": 114.14865112304688,
+     "share_alerted": 0.026583,
+     "attack_events": 0,
+     "benign_per_day": 5966.8
+    },
+    {
+     "tau": 114.03051622089193,
+     "share_alerted": 0.031939,
+     "attack_events": 0,
+     "benign_per_day": 7168.9
+    },
+    {
+     "tau": 113.89410400390625,
+     "share_alerted": 0.038366,
+     "attack_events": 0,
+     "benign_per_day": 8611.5
+    },
+    {
+     "tau": 113.76832742248857,
+     "share_alerted": 0.04609,
+     "attack_events": 0,
+     "benign_per_day": 10345.1
+    },
+    {
+     "tau": 113.65508270263672,
+     "share_alerted": 0.055364,
+     "attack_events": 0,
+     "benign_per_day": 12426.9
+    },
+    {
+     "tau": 113.55213928222656,
+     "share_alerted": 0.066509,
+     "attack_events": 0,
+     "benign_per_day": 14928.5
+    },
+    {
+     "tau": 113.44597625732422,
+     "share_alerted": 0.079889,
+     "attack_events": 0,
+     "benign_per_day": 17931.6
+    },
+    {
+     "tau": 113.34228515625,
+     "share_alerted": 0.095963,
+     "attack_events": 0,
+     "benign_per_day": 21539.5
+    },
+    {
+     "tau": 113.220458984375,
+     "share_alerted": 0.115279,
+     "attack_events": 0,
+     "benign_per_day": 25875.1
+    },
+    {
+     "tau": 113.09036254882812,
+     "share_alerted": 0.138457,
+     "attack_events": 0,
+     "benign_per_day": 31077.6
+    },
+    {
+     "tau": 112.94624328613281,
+     "share_alerted": 0.166313,
+     "attack_events": 0,
+     "benign_per_day": 37330.1
+    },
+    {
+     "tau": 112.76564025878906,
+     "share_alerted": 0.199868,
+     "attack_events": 1,
+     "benign_per_day": 44861.6
+    },
+    {
+     "tau": 112.54869842529297,
+     "share_alerted": 0.240102,
+     "attack_events": 1,
+     "benign_per_day": 53892.4
+    },
+    {
+     "tau": 112.3602294921875,
+     "share_alerted": 0.288414,
+     "attack_events": 6,
+     "benign_per_day": 64736.0
+    },
+    {
+     "tau": 112.14248657226562,
+     "share_alerted": 0.346473,
+     "attack_events": 27,
+     "benign_per_day": 77766.2
+    },
+    {
+     "tau": 111.81196594238281,
+     "share_alerted": 0.416219,
+     "attack_events": 56,
+     "benign_per_day": 93419.3
+    },
+    {
+     "tau": 111.48548889160156,
+     "share_alerted": 0.499983,
+     "attack_events": 197,
+     "benign_per_day": 112210.5
+    }
+   ]
+  },
+  "b1_sample": {
+   "beta": 1.0,
+   "init": "sample",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 362,
+   "tau_train_p999": 36.49644128417959,
+   "points": [
+    {
+     "tau": 124.43675544620271,
+     "share_alerted": 1e-05,
+     "attack_events": 6,
+     "benign_per_day": 1.9
+    },
+    {
+     "tau": 124.11364471241139,
+     "share_alerted": 1.2e-05,
+     "attack_events": 6,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 124.03530609123492,
+     "share_alerted": 1.5e-05,
+     "attack_events": 6,
+     "benign_per_day": 2.9
+    },
+    {
+     "tau": 124.0244518711423,
+     "share_alerted": 1.8e-05,
+     "attack_events": 6,
+     "benign_per_day": 3.5
+    },
+    {
+     "tau": 123.98528829797988,
+     "share_alerted": 2.1e-05,
+     "attack_events": 6,
+     "benign_per_day": 4.3
+    },
+    {
+     "tau": 123.97526273812338,
+     "share_alerted": 2.5e-05,
+     "attack_events": 6,
+     "benign_per_day": 5.2
+    },
+    {
+     "tau": 123.95993204513434,
+     "share_alerted": 3e-05,
+     "attack_events": 6,
+     "benign_per_day": 6.4
+    },
+    {
+     "tau": 123.94385443374699,
+     "share_alerted": 3.6e-05,
+     "attack_events": 6,
+     "benign_per_day": 7.7
+    },
+    {
+     "tau": 123.91785430908203,
+     "share_alerted": 4.3e-05,
+     "attack_events": 6,
+     "benign_per_day": 9.3
+    },
+    {
+     "tau": 123.9056344049487,
+     "share_alerted": 5.2e-05,
+     "attack_events": 6,
+     "benign_per_day": 11.3
+    },
+    {
+     "tau": 123.8972737090225,
+     "share_alerted": 6.3e-05,
+     "attack_events": 6,
+     "benign_per_day": 13.6
+    },
+    {
+     "tau": 123.87413237567904,
+     "share_alerted": 7.5e-05,
+     "attack_events": 6,
+     "benign_per_day": 16.5
+    },
+    {
+     "tau": 123.83550011713083,
+     "share_alerted": 9e-05,
+     "attack_events": 6,
+     "benign_per_day": 19.9
+    },
+    {
+     "tau": 123.75840097536651,
+     "share_alerted": 0.000109,
+     "attack_events": 6,
+     "benign_per_day": 23.9
+    },
+    {
+     "tau": 114.34094146067534,
+     "share_alerted": 0.00013,
+     "attack_events": 6,
+     "benign_per_day": 28.9
+    },
+    {
+     "tau": 113.77458798873498,
+     "share_alerted": 0.000157,
+     "attack_events": 6,
+     "benign_per_day": 34.7
+    },
+    {
+     "tau": 113.1493209597449,
+     "share_alerted": 0.000188,
+     "attack_events": 7,
+     "benign_per_day": 41.7
+    },
+    {
+     "tau": 112.48177140581295,
+     "share_alerted": 0.000226,
+     "attack_events": 7,
+     "benign_per_day": 50.2
+    },
+    {
+     "tau": 101.4125183234195,
+     "share_alerted": 0.000271,
+     "attack_events": 7,
+     "benign_per_day": 60.4
+    },
+    {
+     "tau": 99.15150380318511,
+     "share_alerted": 0.000326,
+     "attack_events": 9,
+     "benign_per_day": 72.6
+    },
+    {
+     "tau": 97.96266981861183,
+     "share_alerted": 0.000392,
+     "attack_events": 9,
+     "benign_per_day": 87.3
+    },
+    {
+     "tau": 96.3314151858219,
+     "share_alerted": 0.000471,
+     "attack_events": 9,
+     "benign_per_day": 105.0
+    },
+    {
+     "tau": 80.64107249017395,
+     "share_alerted": 0.000565,
+     "attack_events": 9,
+     "benign_per_day": 126.2
+    },
+    {
+     "tau": 79.59329914739365,
+     "share_alerted": 0.000679,
+     "attack_events": 9,
+     "benign_per_day": 151.8
+    },
+    {
+     "tau": 78.07011413574219,
+     "share_alerted": 0.000815,
+     "attack_events": 9,
+     "benign_per_day": 182.4
+    },
+    {
+     "tau": 66.41077956096692,
+     "share_alerted": 0.00098,
+     "attack_events": 9,
+     "benign_per_day": 219.3
+    },
+    {
+     "tau": 65.24026191711806,
+     "share_alerted": 0.001,
+     "attack_events": 9,
+     "benign_per_day": 223.9
+    },
+    {
+     "tau": 56.17008972167969,
+     "share_alerted": 0.001177,
+     "attack_events": 9,
+     "benign_per_day": 263.5
+    },
+    {
+     "tau": 49.15643980224003,
+     "share_alerted": 0.001414,
+     "attack_events": 25,
+     "benign_per_day": 315.6
+    },
+    {
+     "tau": 44.757539602650944,
+     "share_alerted": 0.001698,
+     "attack_events": 25,
+     "benign_per_day": 379.4
+    },
+    {
+     "tau": 36.22019958496094,
+     "share_alerted": 0.00204,
+     "attack_events": 26,
+     "benign_per_day": 456.0
+    },
+    {
+     "tau": 33.803619133390384,
+     "share_alerted": 0.002451,
+     "attack_events": 27,
+     "benign_per_day": 548.2
+    },
+    {
+     "tau": 32.18368148803711,
+     "share_alerted": 0.002944,
+     "attack_events": 28,
+     "benign_per_day": 658.8
+    },
+    {
+     "tau": 30.325199921435193,
+     "share_alerted": 0.003537,
+     "attack_events": 31,
+     "benign_per_day": 791.6
+    },
+    {
+     "tau": 28.61638246617285,
+     "share_alerted": 0.004249,
+     "attack_events": 33,
+     "benign_per_day": 951.3
+    },
+    {
+     "tau": 27.149093329593182,
+     "share_alerted": 0.005104,
+     "attack_events": 33,
+     "benign_per_day": 1143.2
+    },
+    {
+     "tau": 26.226890563964844,
+     "share_alerted": 0.006131,
+     "attack_events": 35,
+     "benign_per_day": 1373.6
+    },
+    {
+     "tau": 25.445634322670745,
+     "share_alerted": 0.007365,
+     "attack_events": 42,
+     "benign_per_day": 1650.1
+    },
+    {
+     "tau": 24.576419830322266,
+     "share_alerted": 0.008846,
+     "attack_events": 171,
+     "benign_per_day": 1973.4
+    },
+    {
+     "tau": 23.87989166646542,
+     "share_alerted": 0.010628,
+     "attack_events": 177,
+     "benign_per_day": 2372.9
+    },
+    {
+     "tau": 23.215566635131836,
+     "share_alerted": 0.012766,
+     "attack_events": 177,
+     "benign_per_day": 2852.8
+    },
+    {
+     "tau": 22.552261352539062,
+     "share_alerted": 0.015337,
+     "attack_events": 185,
+     "benign_per_day": 3429.3
+    },
+    {
+     "tau": 21.81138953180634,
+     "share_alerted": 0.018424,
+     "attack_events": 186,
+     "benign_per_day": 4122.1
+    },
+    {
+     "tau": 21.12396240234375,
+     "share_alerted": 0.022132,
+     "attack_events": 189,
+     "benign_per_day": 4954.2
+    },
+    {
+     "tau": 20.687583923339844,
+     "share_alerted": 0.026544,
+     "attack_events": 191,
+     "benign_per_day": 5944.3
+    },
+    {
+     "tau": 20.158967946101562,
+     "share_alerted": 0.031939,
+     "attack_events": 196,
+     "benign_per_day": 7154.9
+    },
+    {
+     "tau": 19.629059771519834,
+     "share_alerted": 0.038367,
+     "attack_events": 197,
+     "benign_per_day": 8597.7
+    },
+    {
+     "tau": 19.094484329223633,
+     "share_alerted": 0.046089,
+     "attack_events": 211,
+     "benign_per_day": 10330.0
+    },
+    {
+     "tau": 18.513435981617747,
+     "share_alerted": 0.055367,
+     "attack_events": 246,
+     "benign_per_day": 12409.9
+    },
+    {
+     "tau": 17.772171020507812,
+     "share_alerted": 0.066509,
+     "attack_events": 247,
+     "benign_per_day": 14910.8
+    },
+    {
+     "tau": 16.995591299457608,
+     "share_alerted": 0.079898,
+     "attack_events": 247,
+     "benign_per_day": 17916.0
+    },
+    {
+     "tau": 15.878014872159444,
+     "share_alerted": 0.09598,
+     "attack_events": 339,
+     "benign_per_day": 21519.1
+    },
+    {
+     "tau": 14.666089703001049,
+     "share_alerted": 0.115298,
+     "attack_events": 367,
+     "benign_per_day": 25853.2
+    },
+    {
+     "tau": 9.239947935340723,
+     "share_alerted": 0.138505,
+     "attack_events": 401,
+     "benign_per_day": 31059.7
+    },
+    {
+     "tau": 7.692006587982178,
+     "share_alerted": 0.166372,
+     "attack_events": 401,
+     "benign_per_day": 37314.7
+    },
+    {
+     "tau": 6.351213715470788,
+     "share_alerted": 0.199872,
+     "attack_events": 401,
+     "benign_per_day": 44834.0
+    },
+    {
+     "tau": 5.553119659423828,
+     "share_alerted": 0.240096,
+     "attack_events": 401,
+     "benign_per_day": 53862.6
+    },
+    {
+     "tau": 4.824957370758057,
+     "share_alerted": 0.288425,
+     "attack_events": 405,
+     "benign_per_day": 64709.9
+    },
+    {
+     "tau": 4.421622276306152,
+     "share_alerted": 0.346482,
+     "attack_events": 405,
+     "benign_per_day": 77741.4
+    },
+    {
+     "tau": 4.089729309082031,
+     "share_alerted": 0.416211,
+     "attack_events": 405,
+     "benign_per_day": 93392.4
+    },
+    {
+     "tau": 3.7662153244018555,
+     "share_alerted": 0.499997,
+     "attack_events": 405,
+     "benign_per_day": 112198.7
+    }
+   ]
+  },
+  "b30_first": {
+   "beta": 30.0,
+   "init": "first",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 156417,
+   "tau_train_p999": 105.17970275878906,
+   "points": [
+    {
+     "tau": 126.49510192871094,
+     "share_alerted": 7e-06,
+     "attack_events": 0,
+     "benign_per_day": 1.6
+    },
+    {
+     "tau": 126.49510192871094,
+     "share_alerted": 7e-06,
+     "attack_events": 0,
+     "benign_per_day": 1.6
+    },
+    {
+     "tau": 126.48616027832031,
+     "share_alerted": 1.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.2
+    },
+    {
+     "tau": 126.48616027832031,
+     "share_alerted": 1.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.2
+    },
+    {
+     "tau": 126.48616027832031,
+     "share_alerted": 1.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.2
+    },
+    {
+     "tau": 126.46141052246094,
+     "share_alerted": 2.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.9
+    },
+    {
+     "tau": 126.45899200439453,
+     "share_alerted": 2.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.5
+    },
+    {
+     "tau": 126.45740480182339,
+     "share_alerted": 3.6e-05,
+     "attack_events": 0,
+     "benign_per_day": 8.1
+    },
+    {
+     "tau": 126.44920856607536,
+     "share_alerted": 4.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 9.8
+    },
+    {
+     "tau": 126.41716003417969,
+     "share_alerted": 5.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 11.4
+    },
+    {
+     "tau": 126.40693664550781,
+     "share_alerted": 5.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 13.1
+    },
+    {
+     "tau": 126.04386138916016,
+     "share_alerted": 7.3e-05,
+     "attack_events": 0,
+     "benign_per_day": 16.4
+    },
+    {
+     "tau": 123.4238052368164,
+     "share_alerted": 8.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 19.9
+    },
+    {
+     "tau": 121.80474853515625,
+     "share_alerted": 0.000106,
+     "attack_events": 0,
+     "benign_per_day": 23.8
+    },
+    {
+     "tau": 120.73498399476422,
+     "share_alerted": 0.00013,
+     "attack_events": 0,
+     "benign_per_day": 29.3
+    },
+    {
+     "tau": 120.35846710205078,
+     "share_alerted": 0.000155,
+     "attack_events": 0,
+     "benign_per_day": 34.8
+    },
+    {
+     "tau": 120.20774841308594,
+     "share_alerted": 0.000187,
+     "attack_events": 0,
+     "benign_per_day": 41.9
+    },
+    {
+     "tau": 120.05950927734375,
+     "share_alerted": 0.000223,
+     "attack_events": 0,
+     "benign_per_day": 50.1
+    },
+    {
+     "tau": 119.85367075985317,
+     "share_alerted": 0.000271,
+     "attack_events": 0,
+     "benign_per_day": 60.9
+    },
+    {
+     "tau": 119.73857116699219,
+     "share_alerted": 0.000325,
+     "attack_events": 0,
+     "benign_per_day": 73.0
+    },
+    {
+     "tau": 119.59312438964844,
+     "share_alerted": 0.000388,
+     "attack_events": 0,
+     "benign_per_day": 87.0
+    },
+    {
+     "tau": 119.46792602539062,
+     "share_alerted": 0.000459,
+     "attack_events": 0,
+     "benign_per_day": 103.0
+    },
+    {
+     "tau": 119.39926147460938,
+     "share_alerted": 0.000546,
+     "attack_events": 0,
+     "benign_per_day": 122.6
+    },
+    {
+     "tau": 119.27399444580078,
+     "share_alerted": 0.000669,
+     "attack_events": 0,
+     "benign_per_day": 150.1
+    },
+    {
+     "tau": 119.2158203125,
+     "share_alerted": 0.000815,
+     "attack_events": 0,
+     "benign_per_day": 182.9
+    },
+    {
+     "tau": 119.14553833007812,
+     "share_alerted": 0.000958,
+     "attack_events": 0,
+     "benign_per_day": 215.1
+    },
+    {
+     "tau": 119.12883758544922,
+     "share_alerted": 0.000998,
+     "attack_events": 0,
+     "benign_per_day": 224.1
+    },
+    {
+     "tau": 118.95433044433594,
+     "share_alerted": 0.001176,
+     "attack_events": 0,
+     "benign_per_day": 263.9
+    },
+    {
+     "tau": 118.71847534179688,
+     "share_alerted": 0.001413,
+     "attack_events": 0,
+     "benign_per_day": 317.2
+    },
+    {
+     "tau": 118.47563864125725,
+     "share_alerted": 0.001698,
+     "attack_events": 0,
+     "benign_per_day": 381.2
+    },
+    {
+     "tau": 118.09515380859375,
+     "share_alerted": 0.002023,
+     "attack_events": 0,
+     "benign_per_day": 454.1
+    },
+    {
+     "tau": 117.76276062347972,
+     "share_alerted": 0.002451,
+     "attack_events": 0,
+     "benign_per_day": 550.1
+    },
+    {
+     "tau": 117.31371860715126,
+     "share_alerted": 0.002944,
+     "attack_events": 0,
+     "benign_per_day": 660.9
+    },
+    {
+     "tau": 116.97718048095703,
+     "share_alerted": 0.003534,
+     "attack_events": 0,
+     "benign_per_day": 793.1
+    },
+    {
+     "tau": 116.61349487304688,
+     "share_alerted": 0.004248,
+     "attack_events": 0,
+     "benign_per_day": 953.6
+    },
+    {
+     "tau": 116.30673217773438,
+     "share_alerted": 0.005103,
+     "attack_events": 0,
+     "benign_per_day": 1145.5
+    },
+    {
+     "tau": 115.94695281982422,
+     "share_alerted": 0.006131,
+     "attack_events": 0,
+     "benign_per_day": 1376.1
+    },
+    {
+     "tau": 115.56874890179907,
+     "share_alerted": 0.007365,
+     "attack_events": 0,
+     "benign_per_day": 1653.1
+    },
+    {
+     "tau": 115.15682983398438,
+     "share_alerted": 0.008825,
+     "attack_events": 0,
+     "benign_per_day": 1980.8
+    },
+    {
+     "tau": 114.80895233154297,
+     "share_alerted": 0.010627,
+     "attack_events": 0,
+     "benign_per_day": 2385.2
+    },
+    {
+     "tau": 114.35246276855469,
+     "share_alerted": 0.012755,
+     "attack_events": 0,
+     "benign_per_day": 2862.9
+    },
+    {
+     "tau": 113.84587097167969,
+     "share_alerted": 0.015315,
+     "attack_events": 0,
+     "benign_per_day": 3437.6
+    },
+    {
+     "tau": 113.34674072265625,
+     "share_alerted": 0.018401,
+     "attack_events": 0,
+     "benign_per_day": 4130.2
+    },
+    {
+     "tau": 112.83343505859375,
+     "share_alerted": 0.022132,
+     "attack_events": 0,
+     "benign_per_day": 4967.7
+    },
+    {
+     "tau": 112.34552001953125,
+     "share_alerted": 0.026586,
+     "attack_events": 0,
+     "benign_per_day": 5967.4
+    },
+    {
+     "tau": 111.92371368408203,
+     "share_alerted": 0.031921,
+     "attack_events": 0,
+     "benign_per_day": 7164.9
+    },
+    {
+     "tau": 111.53602600097656,
+     "share_alerted": 0.038367,
+     "attack_events": 0,
+     "benign_per_day": 8611.7
+    },
+    {
+     "tau": 111.09646606445312,
+     "share_alerted": 0.046067,
+     "attack_events": 0,
+     "benign_per_day": 10340.1
+    },
+    {
+     "tau": 110.61799610821234,
+     "share_alerted": 0.055367,
+     "attack_events": 0,
+     "benign_per_day": 12427.4
+    },
+    {
+     "tau": 110.03564453125,
+     "share_alerted": 0.066508,
+     "attack_events": 0,
+     "benign_per_day": 14928.1
+    },
+    {
+     "tau": 109.48271179199219,
+     "share_alerted": 0.079897,
+     "attack_events": 0,
+     "benign_per_day": 17933.4
+    },
+    {
+     "tau": 109.05210876464844,
+     "share_alerted": 0.095978,
+     "attack_events": 6,
+     "benign_per_day": 21542.6
+    },
+    {
+     "tau": 108.77423095703125,
+     "share_alerted": 0.115297,
+     "attack_events": 6,
+     "benign_per_day": 25878.9
+    },
+    {
+     "tau": 108.51568603515625,
+     "share_alerted": 0.138493,
+     "attack_events": 56,
+     "benign_per_day": 31081.7
+    },
+    {
+     "tau": 108.27729797363281,
+     "share_alerted": 0.16638,
+     "attack_events": 80,
+     "benign_per_day": 37339.4
+    },
+    {
+     "tau": 107.99674224853516,
+     "share_alerted": 0.199862,
+     "attack_events": 87,
+     "benign_per_day": 44854.2
+    },
+    {
+     "tau": 107.6612548828125,
+     "share_alerted": 0.240101,
+     "attack_events": 96,
+     "benign_per_day": 53885.4
+    },
+    {
+     "tau": 107.16537475585938,
+     "share_alerted": 0.288426,
+     "attack_events": 105,
+     "benign_per_day": 64731.6
+    },
+    {
+     "tau": 106.64261627197266,
+     "share_alerted": 0.346483,
+     "attack_events": 155,
+     "benign_per_day": 77759.3
+    },
+    {
+     "tau": 106.06550598144531,
+     "share_alerted": 0.416222,
+     "attack_events": 212,
+     "benign_per_day": 93408.7
+    },
+    {
+     "tau": 105.22142791748047,
+     "share_alerted": 0.499977,
+     "attack_events": 222,
+     "benign_per_day": 112207.4
+    }
+   ]
+  },
+  "b30_sample": {
+   "beta": 30.0,
+   "init": "sample",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 285497,
+   "tau_train_p999": 94.58376702880857,
+   "points": [
+    {
+     "tau": 125.26389315003253,
+     "share_alerted": 1e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 125.11351013183594,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.6
+    },
+    {
+     "tau": 124.9700605496741,
+     "share_alerted": 1.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.3
+    },
+    {
+     "tau": 124.86539719558755,
+     "share_alerted": 1.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 124.77130737540938,
+     "share_alerted": 2.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.7
+    },
+    {
+     "tau": 124.66822624605079,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.6
+    },
+    {
+     "tau": 124.48558762258303,
+     "share_alerted": 3e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.8
+    },
+    {
+     "tau": 124.351076821882,
+     "share_alerted": 3.6e-05,
+     "attack_events": 0,
+     "benign_per_day": 8.1
+    },
+    {
+     "tau": 124.2030836266275,
+     "share_alerted": 4.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 9.8
+    },
+    {
+     "tau": 124.08801095092406,
+     "share_alerted": 5.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 11.7
+    },
+    {
+     "tau": 123.98614484408678,
+     "share_alerted": 6.3e-05,
+     "attack_events": 0,
+     "benign_per_day": 14.1
+    },
+    {
+     "tau": 123.87309919745701,
+     "share_alerted": 7.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 16.9
+    },
+    {
+     "tau": 123.74785614013672,
+     "share_alerted": 9e-05,
+     "attack_events": 0,
+     "benign_per_day": 20.2
+    },
+    {
+     "tau": 123.61625140255832,
+     "share_alerted": 0.000109,
+     "attack_events": 0,
+     "benign_per_day": 24.4
+    },
+    {
+     "tau": 123.47999649289036,
+     "share_alerted": 0.00013,
+     "attack_events": 0,
+     "benign_per_day": 29.3
+    },
+    {
+     "tau": 123.31381984441504,
+     "share_alerted": 0.000157,
+     "attack_events": 0,
+     "benign_per_day": 35.1
+    },
+    {
+     "tau": 123.12309058875671,
+     "share_alerted": 0.000188,
+     "attack_events": 0,
+     "benign_per_day": 42.2
+    },
+    {
+     "tau": 122.86254639474893,
+     "share_alerted": 0.000226,
+     "attack_events": 0,
+     "benign_per_day": 50.7
+    },
+    {
+     "tau": 122.64437628065329,
+     "share_alerted": 0.000271,
+     "attack_events": 0,
+     "benign_per_day": 60.9
+    },
+    {
+     "tau": 122.27607727050781,
+     "share_alerted": 0.000326,
+     "attack_events": 0,
+     "benign_per_day": 73.1
+    },
+    {
+     "tau": 121.4450407730039,
+     "share_alerted": 0.000392,
+     "attack_events": 0,
+     "benign_per_day": 87.9
+    },
+    {
+     "tau": 120.26433865507309,
+     "share_alerted": 0.000471,
+     "attack_events": 0,
+     "benign_per_day": 105.6
+    },
+    {
+     "tau": 119.53379821777344,
+     "share_alerted": 0.000563,
+     "attack_events": 0,
+     "benign_per_day": 126.3
+    },
+    {
+     "tau": 118.49041411134769,
+     "share_alerted": 0.000679,
+     "attack_events": 0,
+     "benign_per_day": 152.4
+    },
+    {
+     "tau": 117.17777851760857,
+     "share_alerted": 0.000816,
+     "attack_events": 0,
+     "benign_per_day": 183.1
+    },
+    {
+     "tau": 116.4823490640679,
+     "share_alerted": 0.00098,
+     "attack_events": 0,
+     "benign_per_day": 219.9
+    },
+    {
+     "tau": 116.33423912048403,
+     "share_alerted": 0.001,
+     "attack_events": 0,
+     "benign_per_day": 224.5
+    },
+    {
+     "tau": 115.35537004558535,
+     "share_alerted": 0.001177,
+     "attack_events": 0,
+     "benign_per_day": 264.2
+    },
+    {
+     "tau": 114.76953887939453,
+     "share_alerted": 0.001413,
+     "attack_events": 0,
+     "benign_per_day": 317.2
+    },
+    {
+     "tau": 114.0867919921875,
+     "share_alerted": 0.001697,
+     "attack_events": 0,
+     "benign_per_day": 380.9
+    },
+    {
+     "tau": 113.55244445800781,
+     "share_alerted": 0.002031,
+     "attack_events": 0,
+     "benign_per_day": 455.9
+    },
+    {
+     "tau": 113.0789794921875,
+     "share_alerted": 0.002443,
+     "attack_events": 0,
+     "benign_per_day": 548.4
+    },
+    {
+     "tau": 112.69896697998047,
+     "share_alerted": 0.002943,
+     "attack_events": 0,
+     "benign_per_day": 660.6
+    },
+    {
+     "tau": 112.09925842285156,
+     "share_alerted": 0.003527,
+     "attack_events": 2,
+     "benign_per_day": 791.6
+    },
+    {
+     "tau": 111.56355285644531,
+     "share_alerted": 0.004246,
+     "attack_events": 3,
+     "benign_per_day": 952.8
+    },
+    {
+     "tau": 111.26821899414062,
+     "share_alerted": 0.005102,
+     "attack_events": 3,
+     "benign_per_day": 1145.0
+    },
+    {
+     "tau": 110.75606536865234,
+     "share_alerted": 0.006128,
+     "attack_events": 3,
+     "benign_per_day": 1375.2
+    },
+    {
+     "tau": 110.55836486816406,
+     "share_alerted": 0.007361,
+     "attack_events": 4,
+     "benign_per_day": 1652.0
+    },
+    {
+     "tau": 110.31342315673828,
+     "share_alerted": 0.008847,
+     "attack_events": 4,
+     "benign_per_day": 1985.4
+    },
+    {
+     "tau": 110.04428962977163,
+     "share_alerted": 0.010628,
+     "attack_events": 4,
+     "benign_per_day": 2385.3
+    },
+    {
+     "tau": 109.63865364144587,
+     "share_alerted": 0.012767,
+     "attack_events": 5,
+     "benign_per_day": 2865.4
+    },
+    {
+     "tau": 109.19033813476562,
+     "share_alerted": 0.015336,
+     "attack_events": 5,
+     "benign_per_day": 3441.9
+    },
+    {
+     "tau": 108.80372619628906,
+     "share_alerted": 0.018403,
+     "attack_events": 8,
+     "benign_per_day": 4130.2
+    },
+    {
+     "tau": 108.45907592773438,
+     "share_alerted": 0.022114,
+     "attack_events": 9,
+     "benign_per_day": 4963.1
+    },
+    {
+     "tau": 108.17388916015625,
+     "share_alerted": 0.026587,
+     "attack_events": 14,
+     "benign_per_day": 5966.6
+    },
+    {
+     "tau": 107.83808898925781,
+     "share_alerted": 0.031918,
+     "attack_events": 14,
+     "benign_per_day": 7163.1
+    },
+    {
+     "tau": 107.4649658203125,
+     "share_alerted": 0.038366,
+     "attack_events": 15,
+     "benign_per_day": 8610.4
+    },
+    {
+     "tau": 106.9605712890625,
+     "share_alerted": 0.046089,
+     "attack_events": 15,
+     "benign_per_day": 10344.0
+    },
+    {
+     "tau": 106.37998962402344,
+     "share_alerted": 0.055365,
+     "attack_events": 17,
+     "benign_per_day": 12425.9
+    },
+    {
+     "tau": 105.78445434570312,
+     "share_alerted": 0.066502,
+     "attack_events": 18,
+     "benign_per_day": 14925.5
+    },
+    {
+     "tau": 105.19810485839844,
+     "share_alerted": 0.079893,
+     "attack_events": 20,
+     "benign_per_day": 17931.1
+    },
+    {
+     "tau": 104.53803942281391,
+     "share_alerted": 0.09598,
+     "attack_events": 25,
+     "benign_per_day": 21541.5
+    },
+    {
+     "tau": 103.86392211914062,
+     "share_alerted": 0.115295,
+     "attack_events": 29,
+     "benign_per_day": 25876.8
+    },
+    {
+     "tau": 103.08935546875,
+     "share_alerted": 0.138504,
+     "attack_events": 37,
+     "benign_per_day": 31085.4
+    },
+    {
+     "tau": 102.14317321777344,
+     "share_alerted": 0.166374,
+     "attack_events": 103,
+     "benign_per_day": 37336.4
+    },
+    {
+     "tau": 101.06638790187974,
+     "share_alerted": 0.199872,
+     "attack_events": 115,
+     "benign_per_day": 44854.4
+    },
+    {
+     "tau": 99.95805358886719,
+     "share_alerted": 0.240082,
+     "attack_events": 171,
+     "benign_per_day": 53875.7
+    },
+    {
+     "tau": 98.79219055175781,
+     "share_alerted": 0.28839,
+     "attack_events": 221,
+     "benign_per_day": 64715.4
+    },
+    {
+     "tau": 97.2468490600586,
+     "share_alerted": 0.346473,
+     "attack_events": 229,
+     "benign_per_day": 77751.9
+    },
+    {
+     "tau": 94.97842407226562,
+     "share_alerted": 0.416223,
+     "attack_events": 230,
+     "benign_per_day": 93407.6
+    },
+    {
+     "tau": 91.09798431396484,
+     "share_alerted": 0.5,
+     "attack_events": 231,
+     "benign_per_day": 112211.9
+    }
+   ]
+  },
+  "b3_first": {
+   "beta": 3.0,
+   "init": "first",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 2200,
+   "tau_train_p999": 114.29718017578125,
+   "points": [
+    {
+     "tau": 116.03175434296529,
+     "share_alerted": 1e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.3
+    },
+    {
+     "tau": 115.97606279071249,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.7
+    },
+    {
+     "tau": 115.9241423899693,
+     "share_alerted": 1.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.3
+    },
+    {
+     "tau": 115.83442687988281,
+     "share_alerted": 1.7e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 115.7892352629492,
+     "share_alerted": 2.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.7
+    },
+    {
+     "tau": 115.76551818847656,
+     "share_alerted": 2.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.0
+    },
+    {
+     "tau": 115.76470184326172,
+     "share_alerted": 3e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.7
+    },
+    {
+     "tau": 115.76470184326172,
+     "share_alerted": 3e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.7
+    },
+    {
+     "tau": 115.76343536376953,
+     "share_alerted": 4.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 9.3
+    },
+    {
+     "tau": 115.76343536376953,
+     "share_alerted": 4.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 9.3
+    },
+    {
+     "tau": 115.74995422363281,
+     "share_alerted": 6.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 13.9
+    },
+    {
+     "tau": 115.73654174804688,
+     "share_alerted": 6.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 14.5
+    },
+    {
+     "tau": 115.71824645996094,
+     "share_alerted": 8.9e-05,
+     "attack_events": 0,
+     "benign_per_day": 20.1
+    },
+    {
+     "tau": 115.68072509765625,
+     "share_alerted": 0.000106,
+     "attack_events": 0,
+     "benign_per_day": 23.9
+    },
+    {
+     "tau": 115.52716064453125,
+     "share_alerted": 0.000127,
+     "attack_events": 0,
+     "benign_per_day": 28.6
+    },
+    {
+     "tau": 115.524658203125,
+     "share_alerted": 0.000139,
+     "attack_events": 0,
+     "benign_per_day": 31.2
+    },
+    {
+     "tau": 115.5177001953125,
+     "share_alerted": 0.000162,
+     "attack_events": 0,
+     "benign_per_day": 36.4
+    },
+    {
+     "tau": 115.49752807617188,
+     "share_alerted": 0.000224,
+     "attack_events": 0,
+     "benign_per_day": 50.2
+    },
+    {
+     "tau": 115.43962097167969,
+     "share_alerted": 0.000263,
+     "attack_events": 0,
+     "benign_per_day": 58.9
+    },
+    {
+     "tau": 115.41117858886719,
+     "share_alerted": 0.000288,
+     "attack_events": 0,
+     "benign_per_day": 64.7
+    },
+    {
+     "tau": 115.34498596191406,
+     "share_alerted": 0.000385,
+     "attack_events": 0,
+     "benign_per_day": 86.4
+    },
+    {
+     "tau": 115.30807495117188,
+     "share_alerted": 0.000464,
+     "attack_events": 0,
+     "benign_per_day": 104.1
+    },
+    {
+     "tau": 115.25474548339844,
+     "share_alerted": 0.000557,
+     "attack_events": 0,
+     "benign_per_day": 124.9
+    },
+    {
+     "tau": 115.2324027875399,
+     "share_alerted": 0.000679,
+     "attack_events": 0,
+     "benign_per_day": 152.4
+    },
+    {
+     "tau": 115.18218656387238,
+     "share_alerted": 0.000816,
+     "attack_events": 0,
+     "benign_per_day": 183.1
+    },
+    {
+     "tau": 115.13141632080078,
+     "share_alerted": 0.000972,
+     "attack_events": 0,
+     "benign_per_day": 218.2
+    },
+    {
+     "tau": 115.12788391113281,
+     "share_alerted": 0.000991,
+     "attack_events": 0,
+     "benign_per_day": 222.4
+    },
+    {
+     "tau": 115.08995056152344,
+     "share_alerted": 0.001169,
+     "attack_events": 0,
+     "benign_per_day": 262.4
+    },
+    {
+     "tau": 115.03333282470703,
+     "share_alerted": 0.001402,
+     "attack_events": 0,
+     "benign_per_day": 314.7
+    },
+    {
+     "tau": 114.99341583251953,
+     "share_alerted": 0.001675,
+     "attack_events": 0,
+     "benign_per_day": 376.1
+    },
+    {
+     "tau": 114.94561004638672,
+     "share_alerted": 0.002038,
+     "attack_events": 0,
+     "benign_per_day": 457.4
+    },
+    {
+     "tau": 114.87189483642578,
+     "share_alerted": 0.002442,
+     "attack_events": 0,
+     "benign_per_day": 548.1
+    },
+    {
+     "tau": 114.81582641601562,
+     "share_alerted": 0.002935,
+     "attack_events": 0,
+     "benign_per_day": 658.9
+    },
+    {
+     "tau": 114.74954986572266,
+     "share_alerted": 0.003536,
+     "attack_events": 0,
+     "benign_per_day": 793.7
+    },
+    {
+     "tau": 114.67742919921875,
+     "share_alerted": 0.004247,
+     "attack_events": 0,
+     "benign_per_day": 953.4
+    },
+    {
+     "tau": 114.59556579589844,
+     "share_alerted": 0.005103,
+     "attack_events": 0,
+     "benign_per_day": 1145.5
+    },
+    {
+     "tau": 114.49870300292969,
+     "share_alerted": 0.00613,
+     "attack_events": 0,
+     "benign_per_day": 1375.9
+    },
+    {
+     "tau": 114.40691375732422,
+     "share_alerted": 0.007345,
+     "attack_events": 0,
+     "benign_per_day": 1648.7
+    },
+    {
+     "tau": 114.31015014648438,
+     "share_alerted": 0.00884,
+     "attack_events": 0,
+     "benign_per_day": 1984.2
+    },
+    {
+     "tau": 114.21807861328125,
+     "share_alerted": 0.010608,
+     "attack_events": 0,
+     "benign_per_day": 2381.0
+    },
+    {
+     "tau": 114.120361328125,
+     "share_alerted": 0.012767,
+     "attack_events": 0,
+     "benign_per_day": 2865.6
+    },
+    {
+     "tau": 114.02165222167969,
+     "share_alerted": 0.015327,
+     "attack_events": 0,
+     "benign_per_day": 3440.3
+    },
+    {
+     "tau": 113.92398071289062,
+     "share_alerted": 0.018424,
+     "attack_events": 0,
+     "benign_per_day": 4135.4
+    },
+    {
+     "tau": 113.82701110839844,
+     "share_alerted": 0.022097,
+     "attack_events": 0,
+     "benign_per_day": 4959.9
+    },
+    {
+     "tau": 113.70632934570312,
+     "share_alerted": 0.026574,
+     "attack_events": 0,
+     "benign_per_day": 5964.6
+    },
+    {
+     "tau": 113.58212907489583,
+     "share_alerted": 0.031939,
+     "attack_events": 0,
+     "benign_per_day": 7168.9
+    },
+    {
+     "tau": 113.47212219238281,
+     "share_alerted": 0.038362,
+     "attack_events": 0,
+     "benign_per_day": 8610.6
+    },
+    {
+     "tau": 113.3555908203125,
+     "share_alerted": 0.046067,
+     "attack_events": 0,
+     "benign_per_day": 10340.1
+    },
+    {
+     "tau": 113.2360610961914,
+     "share_alerted": 0.055359,
+     "attack_events": 0,
+     "benign_per_day": 12425.6
+    },
+    {
+     "tau": 113.1215591430664,
+     "share_alerted": 0.066441,
+     "attack_events": 0,
+     "benign_per_day": 14913.1
+    },
+    {
+     "tau": 112.96854400634766,
+     "share_alerted": 0.079878,
+     "attack_events": 0,
+     "benign_per_day": 17929.1
+    },
+    {
+     "tau": 112.77897644042969,
+     "share_alerted": 0.095966,
+     "attack_events": 0,
+     "benign_per_day": 21540.2
+    },
+    {
+     "tau": 112.5768051147461,
+     "share_alerted": 0.115281,
+     "attack_events": 0,
+     "benign_per_day": 25875.7
+    },
+    {
+     "tau": 112.39152526855469,
+     "share_alerted": 0.138504,
+     "attack_events": 4,
+     "benign_per_day": 31087.9
+    },
+    {
+     "tau": 112.14103698730469,
+     "share_alerted": 0.16638,
+     "attack_events": 24,
+     "benign_per_day": 37343.4
+    },
+    {
+     "tau": 111.81282043457031,
+     "share_alerted": 0.199869,
+     "attack_events": 112,
+     "benign_per_day": 44853.9
+    },
+    {
+     "tau": 111.44393671992734,
+     "share_alerted": 0.240102,
+     "attack_events": 186,
+     "benign_per_day": 53879.3
+    },
+    {
+     "tau": 110.92890930175781,
+     "share_alerted": 0.288421,
+     "attack_events": 193,
+     "benign_per_day": 64724.2
+    },
+    {
+     "tau": 109.54765319824219,
+     "share_alerted": 0.346468,
+     "attack_events": 212,
+     "benign_per_day": 77751.9
+    },
+    {
+     "tau": 106.76969909667969,
+     "share_alerted": 0.41622,
+     "attack_events": 213,
+     "benign_per_day": 93408.2
+    },
+    {
+     "tau": 102.05819702148438,
+     "share_alerted": 0.499991,
+     "attack_events": 235,
+     "benign_per_day": 112209.6
+    }
+   ]
+  },
+  "b3_sample": {
+   "beta": 3.0,
+   "init": "sample",
+   "attack_events_total": 473,
+   "test_records": 3142395,
+   "admitted_test": 5271,
+   "tau_train_p999": 43.292606353759766,
+   "points": [
+    {
+     "tau": 122.24214172363281,
+     "share_alerted": 1e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.2
+    },
+    {
+     "tau": 122.23667907714844,
+     "share_alerted": 1.2e-05,
+     "attack_events": 0,
+     "benign_per_day": 2.6
+    },
+    {
+     "tau": 122.21958923339844,
+     "share_alerted": 1.4e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.2
+    },
+    {
+     "tau": 122.21814475493721,
+     "share_alerted": 1.8e-05,
+     "attack_events": 0,
+     "benign_per_day": 3.9
+    },
+    {
+     "tau": 122.20939636230469,
+     "share_alerted": 2.1e-05,
+     "attack_events": 0,
+     "benign_per_day": 4.6
+    },
+    {
+     "tau": 122.2037582397461,
+     "share_alerted": 2.5e-05,
+     "attack_events": 0,
+     "benign_per_day": 5.6
+    },
+    {
+     "tau": 122.180419921875,
+     "share_alerted": 3e-05,
+     "attack_events": 0,
+     "benign_per_day": 6.7
+    },
+    {
+     "tau": 122.12581894380405,
+     "share_alerted": 3.6e-05,
+     "attack_events": 0,
+     "benign_per_day": 8.1
+    },
+    {
+     "tau": 121.72895670434005,
+     "share_alerted": 4.4e-05,
+     "attack_events": 6,
+     "benign_per_day": 9.4
+    },
+    {
+     "tau": 121.21551327494736,
+     "share_alerted": 5.2e-05,
+     "attack_events": 6,
+     "benign_per_day": 11.3
+    },
+    {
+     "tau": 120.6078676702502,
+     "share_alerted": 6.3e-05,
+     "attack_events": 6,
+     "benign_per_day": 13.6
+    },
+    {
+     "tau": 120.54912265418531,
+     "share_alerted": 7.5e-05,
+     "attack_events": 6,
+     "benign_per_day": 16.5
+    },
+    {
+     "tau": 120.50569475685364,
+     "share_alerted": 9e-05,
+     "attack_events": 6,
+     "benign_per_day": 19.9
+    },
+    {
+     "tau": 120.36364540239205,
+     "share_alerted": 0.000109,
+     "attack_events": 6,
+     "benign_per_day": 23.9
+    },
+    {
+     "tau": 120.11305236816406,
+     "share_alerted": 0.00013,
+     "attack_events": 6,
+     "benign_per_day": 28.6
+    },
+    {
+     "tau": 119.95225651378271,
+     "share_alerted": 0.000157,
+     "attack_events": 6,
+     "benign_per_day": 34.7
+    },
+    {
+     "tau": 119.79096984863281,
+     "share_alerted": 0.00018,
+     "attack_events": 6,
+     "benign_per_day": 39.9
+    },
+    {
+     "tau": 119.6192398071289,
+     "share_alerted": 0.000222,
+     "attack_events": 6,
+     "benign_per_day": 49.4
+    },
+    {
+     "tau": 119.5953369140625,
+     "share_alerted": 0.00027,
+     "attack_events": 6,
+     "benign_per_day": 60.2
+    },
+    {
+     "tau": 119.56156921386719,
+     "share_alerted": 0.000326,
+     "attack_events": 6,
+     "benign_per_day": 72.6
+    },
+    {
+     "tau": 119.52105712890625,
+     "share_alerted": 0.000385,
+     "attack_events": 6,
+     "benign_per_day": 86.0
+    },
+    {
+     "tau": 119.50505355320867,
+     "share_alerted": 0.000471,
+     "attack_events": 6,
+     "benign_per_day": 105.2
+    },
+    {
+     "tau": 119.47480773925781,
+     "share_alerted": 0.000565,
+     "attack_events": 6,
+     "benign_per_day": 126.3
+    },
+    {
+     "tau": 119.449462890625,
+     "share_alerted": 0.000678,
+     "attack_events": 6,
+     "benign_per_day": 151.6
+    },
+    {
+     "tau": 119.14273071289062,
+     "share_alerted": 0.000804,
+     "attack_events": 6,
+     "benign_per_day": 179.9
+    },
+    {
+     "tau": 118.87123107910156,
+     "share_alerted": 0.00098,
+     "attack_events": 6,
+     "benign_per_day": 219.4
+    },
+    {
+     "tau": 118.8468299560547,
+     "share_alerted": 0.001,
+     "attack_events": 6,
+     "benign_per_day": 224.1
+    },
+    {
+     "tau": 118.70451354980469,
+     "share_alerted": 0.001153,
+     "attack_events": 6,
+     "benign_per_day": 258.3
+    },
+    {
+     "tau": 118.69381713867188,
+     "share_alerted": 0.001389,
+     "attack_events": 6,
+     "benign_per_day": 311.3
+    },
+    {
+     "tau": 118.67420196533203,
+     "share_alerted": 0.001696,
+     "attack_events": 6,
+     "benign_per_day": 380.2
+    },
+    {
+     "tau": 118.64501190185547,
+     "share_alerted": 0.002014,
+     "attack_events": 6,
+     "benign_per_day": 451.6
+    },
+    {
+     "tau": 118.57972717285156,
+     "share_alerted": 0.002438,
+     "attack_events": 6,
+     "benign_per_day": 546.8
+    },
+    {
+     "tau": 118.40884399414062,
+     "share_alerted": 0.002925,
+     "attack_events": 6,
+     "benign_per_day": 656.0
+    },
+    {
+     "tau": 118.16209411621094,
+     "share_alerted": 0.003536,
+     "attack_events": 6,
+     "benign_per_day": 793.4
+    },
+    {
+     "tau": 118.06525421142578,
+     "share_alerted": 0.004224,
+     "attack_events": 6,
+     "benign_per_day": 947.6
+    },
+    {
+     "tau": 117.90375518798828,
+     "share_alerted": 0.005092,
+     "attack_events": 6,
+     "benign_per_day": 1142.6
+    },
+    {
+     "tau": 116.97979736328125,
+     "share_alerted": 0.006121,
+     "attack_events": 6,
+     "benign_per_day": 1373.4
+    },
+    {
+     "tau": 116.38199615478516,
+     "share_alerted": 0.00736,
+     "attack_events": 6,
+     "benign_per_day": 1651.6
+    },
+    {
+     "tau": 116.14326477050781,
+     "share_alerted": 0.008845,
+     "attack_events": 6,
+     "benign_per_day": 1984.9
+    },
+    {
+     "tau": 115.578857421875,
+     "share_alerted": 0.010628,
+     "attack_events": 6,
+     "benign_per_day": 2385.1
+    },
+    {
+     "tau": 115.522705078125,
+     "share_alerted": 0.012766,
+     "attack_events": 6,
+     "benign_per_day": 2865.1
+    },
+    {
+     "tau": 115.48672485351562,
+     "share_alerted": 0.015327,
+     "attack_events": 6,
+     "benign_per_day": 3439.9
+    },
+    {
+     "tau": 115.37701416015625,
+     "share_alerted": 0.018423,
+     "attack_events": 6,
+     "benign_per_day": 4134.7
+    },
+    {
+     "tau": 115.16827392578125,
+     "share_alerted": 0.022132,
+     "attack_events": 7,
+     "benign_per_day": 4967.1
+    },
+    {
+     "tau": 114.87976396037055,
+     "share_alerted": 0.026587,
+     "attack_events": 7,
+     "benign_per_day": 5967.2
+    },
+    {
+     "tau": 114.06326293945312,
+     "share_alerted": 0.031887,
+     "attack_events": 7,
+     "benign_per_day": 7156.8
+    },
+    {
+     "tau": 113.82638549804688,
+     "share_alerted": 0.038364,
+     "attack_events": 7,
+     "benign_per_day": 8610.6
+    },
+    {
+     "tau": 112.513427734375,
+     "share_alerted": 0.046068,
+     "attack_events": 8,
+     "benign_per_day": 10339.6
+    },
+    {
+     "tau": 112.3217544555664,
+     "share_alerted": 0.055325,
+     "attack_events": 8,
+     "benign_per_day": 12417.4
+    },
+    {
+     "tau": 111.93284606933594,
+     "share_alerted": 0.066507,
+     "attack_events": 8,
+     "benign_per_day": 14927.4
+    },
+    {
+     "tau": 110.1842041015625,
+     "share_alerted": 0.079892,
+     "attack_events": 8,
+     "benign_per_day": 17931.7
+    },
+    {
+     "tau": 109.75631713867188,
+     "share_alerted": 0.095969,
+     "attack_events": 8,
+     "benign_per_day": 21540.2
+    },
+    {
+     "tau": 109.59963989257812,
+     "share_alerted": 0.115282,
+     "attack_events": 8,
+     "benign_per_day": 25875.3
+    },
+    {
+     "tau": 109.534423828125,
+     "share_alerted": 0.138424,
+     "attack_events": 8,
+     "benign_per_day": 31069.6
+    },
+    {
+     "tau": 109.38923645019531,
+     "share_alerted": 0.166377,
+     "attack_events": 8,
+     "benign_per_day": 37343.9
+    },
+    {
+     "tau": 108.82929992675781,
+     "share_alerted": 0.199868,
+     "attack_events": 8,
+     "benign_per_day": 44861.2
+    },
+    {
+     "tau": 106.39668273925781,
+     "share_alerted": 0.240095,
+     "attack_events": 9,
+     "benign_per_day": 53890.2
+    },
+    {
+     "tau": 104.82421112060547,
+     "share_alerted": 0.288419,
+     "attack_events": 9,
+     "benign_per_day": 64737.0
+    },
+    {
+     "tau": 91.84834289550781,
+     "share_alerted": 0.346467,
+     "attack_events": 25,
+     "benign_per_day": 77765.1
+    },
+    {
+     "tau": 80.51185607910156,
+     "share_alerted": 0.416223,
+     "attack_events": 42,
+     "benign_per_day": 93421.0
+    },
+    {
+     "tau": 58.36466979980469,
+     "share_alerted": 0.499996,
+     "attack_events": 63,
+     "benign_per_day": 112223.1
+    }
+   ]
+  }
+ }
+}

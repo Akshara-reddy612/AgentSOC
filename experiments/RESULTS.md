@@ -414,6 +414,39 @@ With 20% analyst misses (6 seeds), reviews per day: R1 63.7 (without 34.1); R1b 
 
 Without a rule the test-period and slow rows are the A8 baselines (`a8_scores.json`; the slow row with an analyst is new). The D7-off row raises no reviews by construction (D7 off lets unlearned cases close by themselves); it measures whether the attack is still raised.
 
+## MemStream, a learned-memory baseline (checklist A7, 2026-11-28)
+
+MemStream (Bhatia et al., WWW 2022), written from the paper and checked against the reference code, on the events the host detectors key (3,459,514 training, 3,142,395 test), with features from the detectors' own keys (no command-line or script text). Memory N = 2048, K = 3, gamma = 0; the initial memory comes from the training weeks and the stream starts 24 h before the test period. Design and every change made before results: `experiments/A7_MEMSTREAM_DESIGN.md`. Offline.
+
+*Event level* (labelled attack events alerted, at most the keyed store's 102.4 benign events alerted per day; the keyed store alerts 400):
+
+- beta 0.3, first init: 0 of 473 (memory updates in the test period: 109)
+- beta 1, first init: 0 of 473 (memory updates in the test period: 245)
+- beta 3, first init: 0 of 473 (memory updates in the test period: 2200)
+- beta 10, first init: 0 of 473 (memory updates in the test period: 17772)
+- beta 30, first init: 0 of 473 (memory updates in the test period: 156417)
+- beta 100, first init: 0 of 473 (memory updates in the test period: 2103482)
+- beta 0.3, sample init: 9 of 473 (memory updates in the test period: 9)
+- beta 1, sample init: 9 of 473 (memory updates in the test period: 362)
+- beta 3, sample init: 6 of 473 (memory updates in the test period: 5271)
+- beta 10, sample init: 0 of 473 (memory updates in the test period: 38381)
+- beta 30, sample init: 0 of 473 (memory updates in the test period: 285497)
+- beta 100, sample init: 0 of 473 (memory updates in the test period: 334195)
+
+The reference initialisation (the first N records, minutes of data) scores at about chance; the uniform sample of the training weeks is the stronger baseline and is used below.
+
+*Through the SOC loop* (`b1_sample`; store in static mode, so MemStream is the only memory; no analyst):
+
+| Condition | Attack cases raised | Labelled attack events | Reviews / day | Precision |
+|:--|--:|--:|--:|--:|
+| Keyed store, gated (F_gated) | 72 | 400 | 65.2 | 0.0789 |
+| MemStream, workload matched to F_gated (tau 100.9) | 2 | 7 | 61.8 | 0.0023 |
+| MemStream, tau = 99.9th percentile of training scores (36.5) | 8 | 25 | 339.9 | 0.0017 |
+| Keyed store AND MemStream (store frozen; MemStream calls 50% of test records normal) | 65 | 393 | 64.1 | 0.0724 |
+| Keyed store AND MemStream (store frozen; MemStream calls 90% of test records normal) | 54 | 358 | 58.6 | 0.0659 |
+
+Stage 3 (plants) was not run: at matched workload MemStream raises almost no attack event without an attacker (design, recorded before the loop replays).
+
 ## Worst case over attacker text on GUIDE (checklist A4, 2026-11-23)
 
 Under asymmetric trust the outcome is never below the model-free decision, which reads no free text, so attacker text can suppress only pairs whose contaminated model-free decision is not a response. ERA off (it can only escalate). A bound given the recorded clean answers, not an optimized attack.

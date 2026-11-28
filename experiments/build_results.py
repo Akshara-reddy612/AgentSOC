@@ -819,6 +819,43 @@ def p9b() -> list[str]:
                       "unlearned cases close by themselves); it measures whether the attack is still raised.", ""]
 
 
+def a7_memstream() -> list[str]:
+    """Checklist A7 (2026-11-28): MemStream as a learned-memory baseline (experiments/memstream_eval.py, a7_loop_runs.py)."""
+    loop, curve = RESULTS / "a7_memstream_scores.json", RESULTS / "a7_memstream_curve.json"
+    if not loop.exists() or not curve.exists():
+        return []
+    L, C = _load(loop), _load(curve)
+    ks = C["keyed_store"]["gated_F_gated"]
+    out = ["## MemStream, a learned-memory baseline (checklist A7, 2026-11-28)", "",
+           "MemStream (Bhatia et al., WWW 2022), written from the paper and checked against the reference code, on the "
+           "events the host detectors key (3,459,514 training, 3,142,395 test), with features from the detectors' own "
+           "keys (no command-line or script text). Memory N = 2048, K = 3, gamma = 0; the initial memory comes from the "
+           "training weeks and the stream starts 24 h before the test period. Design and every change made "
+           "before results: `experiments/A7_MEMSTREAM_DESIGN.md`. Offline.", "",
+           f"*Event level* (labelled attack events alerted, at most the keyed store's {ks['benign_per_day']:g} benign "
+           f"events alerted per day; the keyed store alerts {ks['attack_events']}):", ""]
+    for tag, m in sorted(C["memstream"].items(), key=lambda kv: (kv[1]["init"], kv[1]["beta"])):
+        best = max((pt for pt in m["points"] if pt["benign_per_day"] <= ks["benign_per_day"]),
+                   key=lambda pt: pt["attack_events"], default=None)
+        out.append(f"- beta {m['beta']:g}, {m['init']} init: {best['attack_events'] if best else 0} of "
+                   f"{m['attack_events_total']} (memory updates in the test period: {m['admitted_test']})")
+    out += ["", "The reference initialisation (the first N records, minutes of data) scores at about chance; the uniform "
+                "sample of the training weeks is the stronger baseline and is used below.", "",
+            f"*Through the SOC loop* (`{L['tag']}`; store in static mode, so MemStream is the only memory; no analyst):", "",
+            "| Condition | Attack cases raised | Labelled attack events | Reviews / day | Precision |", "|:--|--:|--:|--:|--:|"]
+
+    def row(label, r):
+        out.append(f"| {label} | {r['attack_cases_raised']} | {r['class1_events_alerted']} | {r['reviews_per_day']} | "
+                   f"{r['precision']} |")
+    row("Keyed store, gated (F_gated)", L["keyed"]["gated_F_gated"])
+    row(f"MemStream, workload matched to F_gated (tau {L['matched']['tau']:.1f})", L["matched"])
+    row(f"MemStream, tau = 99.9th percentile of training scores ({L['calibrated']['tau']:.1f})", L["calibrated"])
+    for share, r in L["combination"].items():
+        row(f"Keyed store AND MemStream (store frozen; MemStream calls {float(share):.0%} of test records normal)", r)
+    return out + ["", "Stage 3 (plants) was not run: at matched workload MemStream raises almost no attack event "
+                      "without an attacker (design, recorded before the loop replays).", ""]
+
+
 def worst_case() -> list[str]:
     """Checklist A4 (2026-11-23): bound over every attacker text (experiments/worst_case_bound.py)."""
     path = RESULTS / "worst_case_bound.json"
@@ -861,7 +898,7 @@ def optimized() -> list[str]:
 def main() -> None:
     lines = [f"# Results (frozen {date.today().isoformat()})", "",
              "Built by `python -m experiments.build_results` from frozen result files only; see "
-             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *p9b(), *worst_case(), *optimized(),
+             "`REPRODUCE.md`. Claims as in `PROJECT_PLAN.md` section 3.", "", *c1(), *dedale(), *revision(), *ablation(), *flooding(), *low_and_slow(), *a8_mitigation(), *a8_in_model(), *a8_gate(), *p9b(), *a7_memstream(), *worst_case(), *optimized(),
              "## Limits", "",
              "- **DEDALE:** one testbed dataset. Labels exist for 2 attacked clients; the network results rest on few "
              "malicious verdicts.",
