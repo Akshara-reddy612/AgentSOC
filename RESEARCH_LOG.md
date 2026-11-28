@@ -14,6 +14,8 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ### 2026-11-28 (later): P9 B and a second model scored; JISA version built
 
+- **MemStream loop replays** (`a7_loop_runs.py`, b1_sample, store static): matched workload 2/72 cases, 7 events, 61.8/day (target 65.2); calibrated tau 8/72 at 339.9/day; combination 65/72 at 64.1 and 54/72 at 58.6. The prediction (fewer attack cases at matched workload; the combination loses cases) held. Stage 3 dropped beforehand (design). In the JISA text: a paragraph in 5.2, and limitation (7) now says "No StruQ baseline".
+- **JISA package:** cover letter, suggested reviewers (Cavallaro, Tramèr, G. Wang, S. Bhatia, P. Gao; emails to be copied from official pages), graphical abstract (TikZ; matplotlib is not installed), submission-form text generated from the manuscript, vitae (approved by the user). All 61 numbers in the JISA edits were checked against RESULTS.md.
 - **P9 B, 40 replays** (39 + the R6 cost row; scores `experiments/dedale_results/p9b_scores.json`, RESULTS.md section). Cells are attack cases of 72 / reviews per day:
   - clean traffic: no rule 34.1; R1b 44.4; R1 63.7; R4 92.5; R6 36.2;
   - test-period plants: 21 -> R1b 72 (46.9), R1 72, R4 21, R6 52;
