@@ -12,6 +12,15 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-28 (evening): three model families; R1b also answers persuasion; submission prepared
+
+- **Qwen 3.8 27B** (option B, approved; Llama 3.3 70B is not offered on these Groq keys): 2,194 attempts for 2,000 answers. Undefended 126/334 (37.7%, McNemar b=126, c=75, p=3.9e-4); pipeline 11/435 suppressed; 0 misdirected executed. Qwen dismisses more clean twins (334 counted) and contamination flipped 75 of its dismissals to escalations, hence the weaker test.
+- **A6 held-out complete** (Gemini; 900 calls). An earlier "daily quota" reading was wrong: 429 also signals per-minute limits, and the keys recovered (16 -> 29-32 answering).
+- **Groq daily limit is real for gpt-oss-20b:** 200,000 tokens per day per account (Groq message). The held-out pipeline stopped at 303; it resumes with new accounts' keys. The Groq caller already rotates past capped keys; a run stops only when every key is capped. A single-key resume used `keys[-1]`, which was not the new key, an error found and corrected the same hour.
+- **R1b vs the A10 persuaded analyst** (q = 1, host-wide, recorded NCE answers): 48 -> 72 attack cases, 262 -> 400 events, 13 -> 0 learned, 30.0 -> 42.8/day; B5 off: 38 -> 72, 32 -> 0 learned. **M = 1:** 71/72 under test and slow planting, 44.1 vs 44.4/day on clean traffic.
+- **Gemini full-500 prompt defences** (approved, 4,200 calls, `N_ALERTS=1000` in `tools/live_queue.sh`, default unchanged) started 16:00 IST; slow (about 7% of calls answered).
+- **Paper (JISA):** the abstract, Sections 4.3, 5.1 and 5.5, Tables 1-2, the Discussion and the Conclusion now carry the three models and both R1b results. All 90 numbers in the JISA edits were checked against RESULTS.md. The graphical abstract and the cover letter were updated.
+
 ### 2026-11-28 (later): P9 B and a second model scored; JISA version built
 
 - **MemStream loop replays** (`a7_loop_runs.py`, b1_sample, store static): matched workload 2/72 cases, 7 events, 61.8/day (target 65.2); calibrated tau 8/72 at 339.9/day; combination 65/72 at 64.1 and 54/72 at 58.6. The prediction (fewer attack cases at matched workload; the combination loses cases) held. Stage 3 dropped beforehand (design). In the JISA text: a paragraph in 5.2, and limitation (7) now says "No StruQ baseline".
