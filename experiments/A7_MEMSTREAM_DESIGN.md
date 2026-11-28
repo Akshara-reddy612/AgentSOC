@@ -64,6 +64,16 @@ arXiv 2106.03837v2. I write our own implementation from these; nothing is downlo
 - **Code:** `experiments/memstream.py`, `memstream_eval.py` (score, curve), `memstream_loop.py` (the replay hook:
   `--memstream-scores TAG --memstream-tau X`) and `a7_runs.py`. Tests: `tests/test_memstream.py` (7).
 
+- **Event-level results, recorded 2026-11-28, before any loop replay:**
+  - **First-N init:** near chance at every β (b3: 235/473 attack events at a 50% alert rate). With the reference
+    initialisation the memory spans a few minutes, so the hour feature's spread is near zero and scores track time
+    of day. This is reported as a property of the reference initialisation on this data, not as MemStream's ceiling.
+  - **Sampled init:** at the keyed store's benign rate (102.4 benign events/day) the best β (0.3, 1) alerts 9 of 473
+    labelled attack events, against the keyed store's 400. β that admit more records do worse.
+- **Stage 3 (plants) dropped:** at matched workload MemStream raises almost no attack event without an attacker, so
+  plants have nothing left to hide, and two more scoring passes (~50 min each) would not change the conclusion.
+  Stages 2 and 4 run with `b1_sample`.
+
 ## Stages
 
 1. **Event level, no replay:**
