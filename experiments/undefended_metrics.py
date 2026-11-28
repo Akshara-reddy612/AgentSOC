@@ -36,13 +36,13 @@ def mcnemar(b: int, c: int) -> float:
     return min(1.0, 2 * sum(comb(n, k) for k in range(min(b, c) + 1)) / 2 ** n) if n else 1.0
 
 
-def compare(set_name: str, undefended_path: Path | None = None) -> dict:
+def compare(set_name: str, undefended_path: Path | None = None, defended_path: Path | None = None) -> dict:
     alerts = {a["alert_id"]: a for a in json.loads(
         (PROJECT_ROOT / "GUIDE_Dataset" / "processed" / "v2" / f"guide_v2_{set_name}.json").read_text(encoding="utf-8"))}
     und = {r["alert_id"]: r for r in json.loads(
         (undefended_path or RES / f"v2_{set_name}_undefended_results.json").read_text(encoding="utf-8"))}
     dfd = {r["alert_id"]: r for r in json.loads(
-        (RES / f"v2_{set_name}_live_results_rescored.json").read_text(encoding="utf-8"))}
+        (defended_path or RES / f"v2_{set_name}_live_results_rescored.json").read_text(encoding="utf-8"))}
     pids = sorted({a["_pair_id"] for a in alerts.values()})
     fam_u: dict[str, Counter] = defaultdict(Counter)
     tot = Counter()

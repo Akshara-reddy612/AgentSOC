@@ -12,6 +12,28 @@ The history of the project and the reasons behind it, newest first. The current 
 
 ## Entries
 
+### 2026-11-28 (later): P9 B and a second model scored; JISA version built
+
+- **P9 B, 40 replays** (39 + the R6 cost row; scores `experiments/dedale_results/p9b_scores.json`, RESULTS.md section). Cells are attack cases of 72 / reviews per day:
+  - clean traffic: no rule 34.1; R1b 44.4; R1 63.7; R4 92.5; R6 36.2;
+  - test-period plants: 21 -> R1b 72 (46.9), R1 72, R4 21, R6 52;
+  - slow plants with the analyst (new baseline): 0 -> R1b 72 (44.8), R1 72, R6 0;
+  - after the intrusion: 72 with or without a rule;
+  - training-week plants: 2 -> R4 67 (92.1), all others 2;
+  - gate path (D7 off): 0 -> R1 and R1b 72.
+  - The design's predictions held for R1, R1b and R4. R6 did better than predicted (52 rather than "little change").
+- **Second model** (approved option A; Groq, 9 keys, 1,002 attempts for 1,000 answers):
+  - undefended gpt-oss-20b hijacked 202/419 (48.2%, CI 43.5-53.0%, p 3e-36);
+  - the same model inside the pipeline: 10/437 suppressed;
+  - `undefended_metrics.compare` gained `defended_path` (default unchanged), and Gemini's 130/439 and 4/428 reproduce exactly.
+  - The first Groq start used only the 5 keys present when it began; it was restarted with 9 workers (the run resumes; 308 answers kept).
+- **MemStream first-N passes (6):** about chance at every beta (b3: 235/473 attack events at a 50% alert rate). Suspected cause: the reference initialisation (the first 2,048 records, minutes of data) gives the hour feature a near-zero spread, so scores track time of day. Not reported until the sampled-init passes finish.
+- **Bug found while preparing the screenshot:** checkpoints pickled before P9 B would fail on restore (missing attributes); `__setstate__` defaults added, with a test.
+- **JISA:**
+  - JCST declined the paper on fit; target now JISA. Its guide (pasted by the user) states no length limit, an abstract of at most 250 words, highlights, mandatory CRediT roles, vitae with photos, and the Option C research-data deposit.
+  - The build (`paper/jisa/`, private) is at 29 pages; the abstract is 221 words.
+  - The console screenshot was taken on a copy of `D:\agentsoc_data\demo` with a throwaway account; the real home was untouched.
+
 ### 2026-11-28: B1 complete; P9 B implemented (options, off by default)
 
 - **B1 into RESULTS.md:**

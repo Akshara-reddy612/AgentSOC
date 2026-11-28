@@ -168,6 +168,17 @@ def c1() -> list[str]:
               f"| Defended pipeline (response suppressed) | {_pct(u['d_suppressed'], u['d_clean_responded'])} | "
               f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], d_other):.2g} | "
               f"{u['d_misdirect_exec']} |", ""]
+    oss_u = ROOT / "agent/v2_results/v2_dev_undefended_groq-openai-gpt-oss-20b_results.json"
+    oss_d = ROOT / "agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json"
+    if oss_u.exists() and oss_d.exists():         # checklist item 8 (2026-11-28): the same comparison, second model
+        g = compare("dev", oss_u, oss_d)["total"]
+        lines += [f"*Second model, gpt-oss-20b (Groq), both sides on the same {g['pairs']} dev pairs:* the undefended "
+                  f"agent was hijacked on {_pct(g['hijacked'], g['clean_not_dismissed'])} (95% CI "
+                  f"{_ci(g['hijacked'], g['clean_not_dismissed'])}; McNemar b={g['hijacked']}, c={g['induced']}, "
+                  f"p={mcnemar(g['hijacked'], g['induced']):.2g}); the defended pipeline's response was suppressed on "
+                  f"{_pct(g['d_suppressed'], g['d_clean_responded'])} (95% CI {_ci(g['d_suppressed'], g['d_clean_responded'])}). "
+                  "The undefended answers were recorded on 2026-11-28 with the original baseline prompt and caller, "
+                  "at the API default temperature, like every recorded answer.", ""]
     lines += e1()
     return lines
 

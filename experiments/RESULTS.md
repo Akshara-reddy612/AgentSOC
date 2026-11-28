@@ -44,6 +44,8 @@ Outcomes per run (alerts, clean and contaminated; AUTO_APPROVED = an automatic r
 | Undefended agent (hijacked to dismiss) | 130/439 (29.6%) | 25.5%-34.0% | 6.5e-17 | - |
 | Defended pipeline (response suppressed) | 4/428 (0.9%) | 0.4%-2.4% | 1 | 0 |
 
+*Second model, gpt-oss-20b (Groq), both sides on the same 500 dev pairs:* the undefended agent was hijacked on 202/419 (48.2%) (95% CI 43.5%-53.0%; McNemar b=202, c=24, p=3e-36); the defended pipeline's response was suppressed on 10/437 (2.3%) (95% CI 1.2%-4.2%). The undefended answers were recorded on 2026-11-28 with the original baseline prompt and caller, at the API default temperature, like every recorded answer.
+
 **Through the full loop on testbed telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the attacker appends text to the command lines of their own processes (84 events; 38 cases whose first alert carries it).
 
 | Attacker text | Condition | Attack cases dismissed | Attack cases' patterns learned as routine | Labelled attack events alerted | Injected cases where NCE named the steered host | Steered hypotheses flagged unbound | Containment against the steered host | Reviews / day |
@@ -392,6 +394,25 @@ Training on the first clean week only, gated operation from 2024-12-30, no analy
 | on | none | 24 | 0 | 72 | 400 | 110.9 |
 
 Default replay byte-identical to F_gated (cases): True.
+
+## Corroborated learning against the precursor attack (P9 B, 2026-11-28)
+
+Options of the learning path, off by default (a default replay of F_d4 is byte-identical to the recorded run). The pattern of a host key is the key without its host. *R1*: a key is learned after training only if its pattern was seen on another host in training. *R1b*: R1, or analysts closed the pattern as benign on at least 2 other hosts not confirmed compromised at the time. *R4*: at the end of training, forget keys whose pattern only one host showed. *R6*: a confirmation also retracts the same patterns learned on other hosts. R1 and R1b also govern gate learning. Planting as in the A8 sections (slow: `--gate-from 2024-12-30`, PowerShell keys planted too). Design: `experiments/P9B_CORROBORATED_LEARNING_DESIGN.md`. Offline, NCE off.
+
+Each cell: attack cases raised (of 72) / labelled attack events alerted / reviews per day.
+
+| Planting | Condition | Without a rule | R1b verdicts on 2 other hosts | R1 seen elsewhere in training | R4 training corroboration | R6 pattern-following unlearning |
+|:--|:--|--:|--:|--:|--:|--:|
+| none (cost) | analyst 4 h | 72 / 400 / 34.1 | 72 / 400 / 44.4 | 72 / 400 / 63.7 | 73 / 404 / 92.5 | 72 / 400 / 36.2 |
+| test period | analyst 4 h | 21 / 212 / 31.2 | 72 / 400 / 46.9 | 72 / 400 / 66.3 | 21 / 212 / 74.0 | 52 / 362 / 37.4 |
+| slow, from 2024-12-30 | analyst 4 h | 0 / 0 / 25.7 | 72 / 400 / 44.8 | 72 / 400 / 64.3 | - | 0 / 0 / 25.7 |
+| after the intrusion | analyst 4 h | 72 / 400 / 35.1 | 72 / 400 / 45.4 | 72 / 400 / 64.8 | 73 / 404 / 93.6 | 72 / 400 / 37.3 |
+| training weeks | analyst 4 h | 2 / 34 / 26.7 | 2 / 34 / 37.8 | 2 / 34 / 58.4 | 67 / 398 / 92.1 | 2 / 34 / 26.7 |
+| slow, from 2024-12-30 | D7 off, no analyst | 0 / 0 / 0.0 | 72 / 400 / 0.0 | 72 / 400 / 0.0 | - | - |
+
+With 20% analyst misses (6 seeds), reviews per day: R1 63.7 (without 34.1); R1b 44.4 (without 34.1); R4 92.5 (without 34.1); attack patterns learned 0 in every seed, with and without a rule (B5).
+
+Without a rule the test-period and slow rows are the A8 baselines (`a8_scores.json`; the slow row with an analyst is new). The D7-off row raises no reviews by construction (D7 off lets unlearned cases close by themselves); it measures whether the attack is still raised.
 
 ## Worst case over attacker text on GUIDE (checklist A4, 2026-11-23)
 
