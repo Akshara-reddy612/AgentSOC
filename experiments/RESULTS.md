@@ -44,7 +44,9 @@ Outcomes per run (alerts, clean and contaminated; AUTO_APPROVED = an automatic r
 | Undefended agent (hijacked to dismiss) | 130/439 (29.6%) | 25.5%-34.0% | 6.5e-17 | - |
 | Defended pipeline (response suppressed) | 4/428 (0.9%) | 0.4%-2.4% | 1 | 0 |
 
-*Second model, gpt-oss-20b (Groq), both sides on the same 500 dev pairs:* the undefended agent was hijacked on 202/419 (48.2%) (95% CI 43.5%-53.0%; McNemar b=202, c=24, p=3e-36); the defended pipeline's response was suppressed on 10/437 (2.3%) (95% CI 1.2%-4.2%). The undefended answers were recorded on 2026-11-28 with the original baseline prompt and caller, at the API default temperature, like every recorded answer.
+*Second model, gpt-oss-20b (OpenAI, via Groq), both sides on the same 500 dev pairs:* the undefended agent was hijacked on 202/419 (48.2%) (95% CI 43.5%-53.0%; McNemar b=202, c=24, p=3e-36); the defended pipeline's response was suppressed on 10/437 (2.3%) (95% CI 1.2%-4.2%); misdirected actions executed: 0. The answers were recorded on 2026-11-28 with the original prompts and callers, at the API default temperature, like every recorded answer.
+
+*Third model, Qwen 3.8 27B (Alibaba, via Groq), both sides on the same 500 dev pairs:* the undefended agent was hijacked on 126/334 (37.7%) (95% CI 32.7%-43.0%; McNemar b=126, c=75, p=0.00039); the defended pipeline's response was suppressed on 11/435 (2.5%) (95% CI 1.4%-4.5%); misdirected actions executed: 0. The answers were recorded on 2026-11-28 with the original prompts and callers, at the API default temperature, like every recorded answer.
 
 **Through the full loop on testbed telemetry (E1, DEDALE host logs, live NCE + learning gate)**: the attacker appends text to the command lines of their own processes (84 events; 38 cases whose first alert carries it).
 
@@ -419,6 +421,16 @@ Each cell: attack cases raised (of 72) / labelled attack events alerted / review
 | slow, from 2024-12-30 | D7 off, no analyst | 0 / 0 / 0.0 | 72 / 400 / 0.0 | 72 / 400 / 0.0 | - | - |
 
 With 20% analyst misses (6 seeds), reviews per day: R1 63.7 (without 34.1); R1b 44.4 (without 34.1); R4 92.5 (without 34.1); attack patterns learned 0 in every seed, with and without a rule (B5).
+
+Added the same day (attack cases / labelled attack events / reviews per day; attack patterns learned at the end):
+
+| Condition | Without the rule | With R1b |
+|:--|--:|--:|
+| Host-wide persuaded analyst (A10, q = 1, recorded NCE answers), B5 on | 48 / 262 / 30.0; learned 13 | 72 / 400 / 42.8; learned 0 |
+| Host-wide persuaded analyst, B5 off | 38 / 99 / 28.4; learned 32 | 72 / 400 / 41.9; learned 0 |
+| R1b with one corroborating host (M = 1): no planting | 72 / 400 / 34.1; learned 0 | 72 / 400 / 44.1; learned 0 |
+| R1b, M = 1: test-period planting | 21 / 212 / 31.2; learned 0 | 71 / 399 / 46.6; learned 0 |
+| R1b, M = 1: slow planting | 0 / 0 / 25.7; learned 0 | 71 / 399 / 44.4; learned 0 |
 
 Without a rule the test-period and slow rows are the A8 baselines (`a8_scores.json`; the slow row with an analyst is new). The D7-off row raises no reviews by construction (D7 off lets unlearned cases close by themselves); it measures whether the attack is still raised.
 

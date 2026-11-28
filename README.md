@@ -39,12 +39,17 @@ All numbers are from [experiments/RESULTS.md](experiments/RESULTS.md), built fro
   - An analyst who misses 20% of attacks lets 20 be learned. With unlearning on confirmed compromise, 0 are learned.
 - **C4, the LLM on testbed telemetry:** under the earlier acting rule, reviews fell by 16%; a closed-world feasibility rule dismissed 2 attack cases, the open-world rule 0. Under asymmetric trust (the default) the LLM cannot dismiss a case, and reviews stay at 65.2 per day.
 - **C5, the analyst loop:** reviews fell from 65 to 34 per day with an analyst who answers after 4 h (51.5 per day after 72 h).
+- **A second model (2026-11-28):** with gpt-oss-20b on both sides of the same 500 dev pairs, the undefended agent was hijacked on 202 / 419 (48.2%), and the pipeline's response was suppressed on 10 / 437 (2.3%).
+- **A third model (2026-11-28):** with Qwen 3.8 27B on both sides, 126 / 334 (37.7%) hijacked against 11 / 435 (2.5%) suppressed; no misdirected action executed with any of the three models.
+- **Corroborated learning (2026-11-28, option R1b):** an attacker who first runs its tools harmlessly hid 51 of 72 attack cases from the default store. With R1b, which requires benign verdicts on two other hosts before a pattern is learned, every test-time planting schedule raises all 72, at 44.4 instead of 34.1 reviews per day.
+- **A learned-memory baseline (2026-11-28):** MemStream, at the gated store's workload, raised 2 of 72 attack cases (7 labelled events), against 72 and 400.
 
 **Limits:**
 
 - one testbed dataset, with 2 labelled attacked hosts;
 - a simulated analyst;
-- one LLM on DEDALE;
+- one LLM on DEDALE (on GUIDE, also gpt-oss-20b and Qwen 3.8 27B);
+- planting in the training weeks is caught only by R4 (training corroboration), at 92.5 reviews per day;
 - synthetic entities and payloads in GUIDE v2.
 
 ## Quick start

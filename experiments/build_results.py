@@ -168,16 +168,21 @@ def c1() -> list[str]:
               f"| Defended pipeline (response suppressed) | {_pct(u['d_suppressed'], u['d_clean_responded'])} | "
               f"{_ci(u['d_suppressed'], u['d_clean_responded'])} | {mcnemar(u['d_suppressed'], d_other):.2g} | "
               f"{u['d_misdirect_exec']} |", ""]
-    oss_u = ROOT / "agent/v2_results/v2_dev_undefended_groq-openai-gpt-oss-20b_results.json"
-    oss_d = ROOT / "agent/v2_results/v2_dev_live_groq-openai-gpt-oss-20b_results_rescored.json"
-    if oss_u.exists() and oss_d.exists():         # checklist item 8 (2026-11-28): the same comparison, second model
-        g = compare("dev", oss_u, oss_d)["total"]
-        lines += [f"*Second model, gpt-oss-20b (Groq), both sides on the same {g['pairs']} dev pairs:* the undefended "
+    # checklist item 8 (2026-11-28): the same comparison with other model families, both sides from the same model
+    for label, tag in (("Second model, gpt-oss-20b (OpenAI, via Groq)", "groq-openai-gpt-oss-20b"),
+                       ("Third model, Qwen 3.8 27B (Alibaba, via Groq)", "groq-qwen-qwen3.8-27b")):
+        m_u = ROOT / f"agent/v2_results/v2_dev_undefended_{tag}_results.json"
+        m_d = ROOT / f"agent/v2_results/v2_dev_live_{tag}_results_rescored.json"
+        if not (m_u.exists() and m_d.exists()):
+            continue
+        g = compare("dev", m_u, m_d)["total"]
+        lines += [f"*{label}, both sides on the same {g['pairs']} dev pairs:* the undefended "
                   f"agent was hijacked on {_pct(g['hijacked'], g['clean_not_dismissed'])} (95% CI "
                   f"{_ci(g['hijacked'], g['clean_not_dismissed'])}; McNemar b={g['hijacked']}, c={g['induced']}, "
                   f"p={mcnemar(g['hijacked'], g['induced']):.2g}); the defended pipeline's response was suppressed on "
-                  f"{_pct(g['d_suppressed'], g['d_clean_responded'])} (95% CI {_ci(g['d_suppressed'], g['d_clean_responded'])}). "
-                  "The undefended answers were recorded on 2026-11-28 with the original baseline prompt and caller, "
+                  f"{_pct(g['d_suppressed'], g['d_clean_responded'])} (95% CI {_ci(g['d_suppressed'], g['d_clean_responded'])}); "
+                  f"misdirected actions executed: {g['d_misdirect_exec']}. "
+                  "The answers were recorded on 2026-11-28 with the original prompts and callers, "
                   "at the API default temperature, like every recorded answer.", ""]
     lines += e1()
     return lines
@@ -831,6 +836,19 @@ def p9b() -> list[str]:
         out += ["", "With 20% analyst misses (6 seeds), reviews per day: " + "; ".join(
             f"{k} {v['rule']['reviews_per_day']['mean']:g} (without {v['baseline']['reviews_per_day']['mean']:g})"
             for k, v in seeds.items()) + "; attack patterns learned 0 in every seed, with and without a rule (B5)."]
+    extra = [("Host-wide persuaded analyst (A10, q = 1, recorded NCE answers), B5 on", "P9B_R1b_persuaded"),
+             ("Host-wide persuaded analyst, B5 off", "P9B_R1b_persuaded_nob5"),
+             ("R1b with one corroborating host (M = 1): no planting", "P9B_R1bM1_d4"),
+             ("R1b, M = 1: test-period planting", "P9B_R1bM1_test"),
+             ("R1b, M = 1: slow planting", "P9B_R1bM1_slow")]
+    if any(t in jobs for _, t in extra):
+        out += ["", "Added the same day (attack cases / labelled attack events / reviews per day; attack patterns "
+                    "learned at the end):", "", "| Condition | Without the rule | With R1b |", "|:--|--:|--:|"]
+        for label, t in extra:
+            if t in jobs:
+                r, b = jobs[t], jobs[t]["baseline"]
+                out.append(f"| {label} | {cell(b)}; learned {b['attack_cases_learned']} | {cell(r)}; learned "
+                           f"{r['attack_cases_learned']} |")
     return out + ["", "Without a rule the test-period and slow rows are the A8 baselines (`a8_scores.json`; the slow "
                       "row with an analyst is new). The D7-off row raises no reviews by construction (D7 off lets "
                       "unlearned cases close by themselves); it measures whether the attack is still raised.", ""]

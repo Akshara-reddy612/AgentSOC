@@ -61,10 +61,24 @@ for rule in ("R1", "R1b"):
          "gated_A8g_off_slow_24")
 
 
+# Added 2026-11-28 (later): R1b against the host-wide persuaded analyst (A10, recorded NCE answers, no API call),
+# and R1b with one corroborating host (M = 1) instead of two.
+PERSUADED = ["--mode", "gated", "--nce", "cache", "--analyst", "oracle", "--case-store", "--llm-authority", "escalate",
+             "--inject", "fake_approval", "--analyst-persuaded", "1.0", "--persuasion", "host", "--analyst-seed", "0"]
+_add("P9B_R1b_persuaded", [*PERSUADED, *RULES["R1b"]], "gated_nce_analyst_Phost_q100_m00_s0_fake_approval")
+_add("P9B_R1b_persuaded_nob5", [*PERSUADED, "--no-unlearn", *RULES["R1b"]],
+     "gated_nce_analyst_Phost_q100_m00_nob5_s0_fake_approval")
+M1 = [*RULES["R1b"], "--corroboration-hosts", "1"]
+_add("P9B_R1bM1_d4", ["--mode", "gated", *ORACLE, *M1], "gated_analyst_F_d4")
+_add("P9B_R1bM1_test", [*ANALYST, "--plant", "test", *M1], "gated_analyst_A8_test_d4")
+_add("P9B_R1bM1_slow", [*ANALYST, *SLOW, *M1], "gated_analyst_P9B_base_slow")
+
+
 def run_name(tag: str) -> str:
-    """dedale_host_<run> name the replay gives this job (dedale_host_replay: mode, _analyst, _tag)."""
+    """dedale_host_<run> name the replay gives this job (dedale_host_replay: mode, _nce, _analyst, _tag)."""
     a = JOBS[tag]
-    return a[a.index("--mode") + 1] + ("_analyst" if "oracle" in a else "") + f"_{tag}"
+    nce = "--nce" in a and a[a.index("--nce") + 1] != "off"
+    return a[a.index("--mode") + 1] + ("_nce" if nce else "") + ("_analyst" if "oracle" in a else "") + f"_{tag}"
 
 
 def run(tag: str, redo: bool) -> tuple[str, int | str]:
